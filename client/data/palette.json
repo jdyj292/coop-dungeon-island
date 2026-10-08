@@ -135,7 +135,16 @@
         "sleepCloud": "#C9C3E8"
       },
       "env": {
-        "glow": "#F3E6A0"
+        "glow": "#F3E6A0",
+        "void": "#141D12",
+        "cliff": "#1A2416",
+        "moss": "#58733F",
+        "leaf": "#55703F",
+        "grass": "#86A564",
+        "trunk": "#6B5440",
+        "trunkDark": "#5A4632",
+        "shade": "#141C10",
+        "shadeAlpha": 0.5
       }
     },
     "2": {

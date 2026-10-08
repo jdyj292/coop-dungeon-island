@@ -7,6 +7,7 @@
    "u": "floors.1.monster.capUnder",
    "s": "floors.1.monster.mushroomStem"
   },
+  "idleSec": 0.4,
   "frames": {
    "idle1": {
     "rows": [
@@ -152,6 +153,7 @@
    "n": "floors.1.monster.boarNose",
    "w": "global.allyFx.white"
   },
+  "idleSec": 0.4,
   "frames": {
    "idle1": {
     "rows": [
@@ -345,6 +347,7 @@
    "l": "floors.1.monster.leaf",
    "r": "global.materials.leather"
   },
+  "idleSec": 0.5,
   "frames": {
    "idle1": {
     "rows": [
@@ -471,6 +474,7 @@
    "d": "floors.1.monster.hoof",
    "h": "floors.1.monster.eliteShield"
   },
+  "idleSec": 0.5,
   "frames": {
    "idle1": {
     "rows": [
@@ -738,6 +742,7 @@
    "n": "floors.1.monster.bearNose",
    "T": "floors.1.monster.tongue"
   },
+  "idleSec": 0.8,
   "frames": {
    "idle1": {
     "rows": [

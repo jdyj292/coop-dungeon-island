@@ -73,7 +73,11 @@ export const poseSchema = z.object({
 
 export const posesSchema = z.object({
   walk: z
-    .object({ cycle: z.array(z.string()).min(1), bob: z.array(z.number().int().min(0)).optional() })
+    .object({
+      cycle: z.array(z.string()).min(1),
+      bob: z.array(z.number().int().min(0)).optional(),
+      pxPerBeat: z.number().positive(),
+    })
     .refine((w) => !w.bob || w.bob.length === w.cycle.length, 'walk.bob 길이는 cycle과 같아야 함'),
   weapons: z.record(z.record(poseSchema)),
 });
@@ -119,6 +123,8 @@ export const monsterFrameSchema = z.object({
 
 export const monsterSchema = z.object({
   materials: z.record(z.string()),
+  /** 대기(idle) 순환 한 프레임 길이 (초) */
+  idleSec: z.number().positive(),
   fixedExtra: z.record(z.string()).optional(),
   frames: z.record(monsterFrameSchema),
   states: z.record(z.union([z.string(), z.array(z.string()).min(1)])),

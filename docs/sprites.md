@@ -105,7 +105,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 - origin: 손 대신 무기 시작점 지정 (광역 시전의 세운 스태프)
 - fx: 공격 순간 이펙트. smear(pivot, 반지름 r, 각도 arc, reverse), spark, bolt, circle, lines, throw. 모양은 art.md 7장
 - 행동과 포즈 연결은 행동 데이터에 적는다: `"poses": {"windup":"ready","active":"slash","recovery":"slash"}` (weapons.json, skills.json)
-- 걷기: bottom 프레임을 poses.json walk.cycle 순서로 순환. walk.bob = 박자별로 bottom 층을 뺀 나머지(몸·팔·무기)를 내리는 px. 박자 → 프레임·내림은 compose.ts walkStep
+- 걷기: bottom 프레임을 poses.json walk.cycle 순서로 순환. walk.bob = 박자별로 bottom 층을 뺀 나머지(몸·팔·무기)를 내리는 px. walk.pxPerBeat = 이동 거리 몇 px마다 한 박자 넘기는지(시간이 아니라 거리 기준이라 발이 미끄러져 보이지 않음). 박자 → 프레임·내림은 compose.ts walkStep
 - 이동·상태 모션(art.md 4장)이 추가되면 몸 프레임은 bottom의 frames 키(run1~4, backstep1~2, hurt, down, getup1~2, knocked)로, 상체 변화는 base.json에 몸 포즈로 추가. 형식 확정은 그릴 때
 
 ---
@@ -140,6 +140,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 | spin | 90°씩 돌려 그림 (1/8초마다). 구르기 |
 | superArmorOutline | 이 프레임 동안 외곽선을 슈퍼아머 색으로 (art.md 8장) |
 | fx | 프레임에 붙는 이펙트: dust, ring(r), stars, spore, sparks, zz, bubble(r), cloud, lines. at은 발밑 기준 상대 좌표 |
+| idleSec | 대기(idle) 순환 한 프레임 길이 (초) |
 | states | 상태 → 프레임. 배열이면 순환(대기·이동), `구간:공격id`는 shared/data/monsters.json 공격과 연결, selfStun·groggy는 해당 상태 |
 
 - shared/data/monsters.json의 sprite 값 = 이 파일의 키

@@ -23,5 +23,5 @@
   "_warnOnly": "MVP 밖 층. 위반은 경고로만 보여주고 0건 판정에서 뺀다. 해당 층을 만들 때 목록에서 지운다",
   "warnOnly": ["floors.2", "floors.3", "floors.4", "floors.5"],
   "_nonColor": "hex가 아닌 값이 허용되는 경로",
-  "nonColor": ["floors.*.name", "global.blobShadow.opacity"]
+  "nonColor": ["floors.*.name", "global.blobShadow.opacity", "floors.*.env.shadeAlpha"]
 }

@@ -1,0 +1,7 @@
+{
+  "_note": "플레이어 공통 수치. 의미는 docs/combat.md 3장, 형식은 docs/data.md 6장. 무기별 배율(moveMul)은 weapons.json",
+  "move": {
+    "walk": { "x": 60, "y": 40 },
+    "run": { "x": 120, "y": 75 }
+  }
+}

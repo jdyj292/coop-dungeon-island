@@ -1,6 +1,6 @@
 # 게임 데이터 형식 (docs/data.md)
 
-shared/data/의 weapons.json, skills.json, monsters.json 형식 기준 문서.
+shared/data/의 weapons.json, skills.json, monsters.json, player.json 형식 기준 문서.
 규칙의 의미는 docs/combat.md, 수치 근거는 docs/balance.md, 스킬 목록은 docs/skills.md, 그림 데이터는 docs/sprites.md.
 단위: 거리·크기 px (1타일 16), 시간 초, 속도 px/s.
 
@@ -157,3 +157,16 @@ shared/data/의 weapons.json, skills.json, monsters.json 형식 기준 문서.
 - 몬스터 패턴이 참조하는 공격 id가 attacks에 있는지, sprite가 존재하는지
 - 경고(오류 아님): 미작성 스킬 id, 디자인 미정 스프라이트
 - 평타 초당 계수를 계산해 balance.md 4장 목표와 ±15% 넘게 차이 나면 경고
+
+---
+
+## 6. player.json
+
+```json
+{ "move": { "walk": { "x": 60, "y": 40 }, "run": { "x": 120, "y": 75 } } }
+```
+| 필드 | 설명 |
+|---|---|
+| move.walk / move.run | 기본 이동 속도 px/s (x 좌우, y 깊이). 의미는 combat.md 3장, 무기별 배율은 weapons.json moveMul |
+
+- 이동 계산은 shared/src/movement.ts (클라이언트·서버 공용): 축마다 따로 움직이고 대각선도 정규화하지 않는다

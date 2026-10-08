@@ -423,7 +423,7 @@
     }
   },
   "walk": {
-    "_note": "걷기 = bottom 프레임 walkA(좁은 보폭) → walkB(발 들기) 번갈아 4박자. bob = 박자별로 다리를 뺀 몸을 내리는 px (디딜 때 1px)",
+    "_note": "걷기 = bottom 프레임 walkA(좁은 보폭) → walkB(발 들기) 번갈아 4박자. bob = 박자별로 다리를 뺀 몸을 내리는 px (디딜 때 1px). pxPerBeat = 이동 거리 몇 px마다 한 박자 넘기는지 (발이 미끄러져 보이지 않게)",
     "cycle": [
       "walkA",
       "walkB",
@@ -435,6 +435,7 @@
       0,
       1,
       0
-    ]
+    ],
+    "pxPerBeat": 8
   }
 }
