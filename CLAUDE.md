@@ -48,7 +48,7 @@ tools/                   개발 도구 (아래 표)
 | sprite-preview | M0 | 스프라이트 조합·확대 보기 |
 | motion-preview | M0 | 모션 슬로우·프레임 조정 (reference.html = 승인 데모) |
 | sfx-preview | M1 | 효과음 재생·조정 (reference-*.html = 승인 데모) |
-| palette-check | M0 | palette.json 색 규칙 검사 (art.md 8장) |
+| palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
 | data-validate | M1 | shared/data 교차 참조 검사 (data.md 5장) |
 | balance-check, ttk-sim | M1 | 스킬 예산·처치 시간 (balance.md 10장) |
 
@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- 설계 문서·게임 데이터·스프라이트 데이터·효과음·BGM(엔진 포함) 완료
-- M0 0-1 완료: pnpm 워크스페이스(client Vite+Phaser, server Colyseus 빈 방 :2567, shared), vitest. `pnpm dev` / `pnpm test` / `pnpm typecheck`
-- 다음: M0 0-2 — palette.json 로더 + tools/palette-check
+- M0 0-1·0-2 완료: pnpm 워크스페이스(client·server :2567·shared), palette 로더(client/src/palette.ts), palette-check(오류 0, 2~5층 경고만)
+- 명령: `pnpm dev` / `pnpm test` / `pnpm typecheck` / `pnpm palette-check`
+- 다음: M0 0-3 — 스프라이트 합성기 (마스크 → 레이어 → 자동 음영·외곽선 → 텍스처 캐시)

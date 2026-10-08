@@ -1,0 +1,27 @@
+{
+  "_note": "palette-check 기준. 범위는 docs/art.md 8장 '색 규칙' 표와 같은 값을 유지한다. s·l은 HSL 채도·명도(%)",
+  "ranges": {
+    "islandBg": { "s": [20, 65], "l": [40, 80] },
+    "dungeonBg": { "s": [5, 45], "l": [15, 45] },
+    "main": { "s": [35, 90], "l": [45, 85], "brighterThanBg": 18 },
+    "effect": { "s": [60, 100], "l": [75, 100] }
+  },
+  "roles": {
+    "islandBg": [
+      "island.grass", "island.grassAlt", "island.foliage", "island.foliageAlt",
+      "island.sand", "island.path", "island.water", "island.waterDeep", "island.dirt"
+    ],
+    "dungeonBg": ["floors.*.bg.*"],
+    "main": [
+      "global.playerColors.*",
+      "floors.1.monster.mushroomCap", "floors.1.monster.boar", "floors.1.monster.sporeFlower",
+      "floors.1.monster.eliteCap", "floors.1.monster.bear",
+      "floors.2.monster.*", "floors.3.monster.*", "floors.4.monster.*", "floors.5.monster.*"
+    ],
+    "effect": ["global.allyFx.*"]
+  },
+  "_warnOnly": "MVP 밖 층. 위반은 경고로만 보여주고 0건 판정에서 뺀다. 해당 층을 만들 때 목록에서 지운다",
+  "warnOnly": ["floors.2", "floors.3", "floors.4", "floors.5"],
+  "_nonColor": "hex가 아닌 값이 허용되는 경로",
+  "nonColor": ["floors.*.name", "global.blobShadow.opacity"]
+}

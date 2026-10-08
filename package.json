@@ -1,13 +1,17 @@
 {
   "name": "coop-dungeon-island",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@10.34.6",
   "scripts": {
     "dev": "pnpm --parallel --filter @game/client --filter @game/server dev",
     "test": "vitest run",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck && tsc -p tools",
+    "palette-check": "tsx tools/palette-check/index.ts"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }
