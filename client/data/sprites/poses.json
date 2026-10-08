@@ -280,14 +280,14 @@
         {
           "hand": "front",
           "dir": [
-            -1,
+            1,
             1
           ]
         },
         {
           "hand": "back",
           "dir": [
-            -1,
+            1,
             1
           ],
           "behind": true
