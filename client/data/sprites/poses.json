@@ -12,10 +12,9 @@
         {
           "hand": "front",
           "dir": [
-            -1,
-            1
-          ],
-          "behind": true
+            1,
+            0
+          ]
         }
       ]
     },
