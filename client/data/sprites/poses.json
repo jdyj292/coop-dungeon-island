@@ -199,6 +199,22 @@
     }
   },
   "fist": {
+    "idle": {
+      "front": {
+        "hand": [
+          9,
+          13
+        ],
+        "gauntlet": true
+      },
+      "back": {
+        "hand": [
+          2,
+          13
+        ],
+        "gauntlet": true
+      }
+    },
     "guard": {
       "front": {
         "hand": [
