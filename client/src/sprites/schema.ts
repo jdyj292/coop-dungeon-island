@@ -72,7 +72,9 @@ export const poseSchema = z.object({
 });
 
 export const posesSchema = z.object({
-  walk: z.object({ cycle: z.array(z.string()).min(1) }),
+  walk: z
+    .object({ cycle: z.array(z.string()).min(1), bob: z.array(z.number().int().min(0)).optional() })
+    .refine((w) => !w.bob || w.bob.length === w.cycle.length, 'walk.bob 길이는 cycle과 같아야 함'),
   weapons: z.record(z.record(poseSchema)),
 });
 

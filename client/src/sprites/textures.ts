@@ -6,13 +6,13 @@ import { renderMonsterFrame } from './monster';
 import { renderCharacter, type CharacterColors, type RenderedSprite } from './render';
 import { SLOTS } from './schema';
 
-/** 키 = 머리 모양 + 머리색 + 플레이어 색 + 의상 4칸 + 무기 외형 + 포즈 + 걷기 프레임 + 표정 */
+/** 키 = 머리 모양 + 머리색 + 플레이어 색 + 의상 4칸 + 무기 외형 + 포즈 + 걷기 프레임 + 몸 내림 + 표정 */
 export function characterKey(look: CharacterLook, colors: CharacterColors): string {
   const { items } = spriteData().outfits;
   const slots = SLOTS.map((slot) => look.outfit.find((id) => items[id]?.slot === slot) ?? '-');
   return [
     'chr', look.hair, colors.hairColor, colors.playerColor, ...slots,
-    look.weapon ?? '-', look.pose ?? '-', look.frame ?? 'stand', look.face,
+    look.weapon ?? '-', look.pose ?? '-', look.frame ?? 'stand', look.bob ?? 0, look.face,
   ].join('|');
 }
 

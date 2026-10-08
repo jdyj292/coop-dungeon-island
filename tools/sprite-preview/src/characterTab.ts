@@ -1,12 +1,14 @@
 // 캐릭터 탭: 머리·색·표정·의상·무기·포즈·걷기 조합
 import paletteJson from '../../../client/data/palette.json';
 import { spriteData } from '../../../client/src/sprites/data';
+import { walkStep } from '../../../client/src/sprites/compose';
 import { renderCharacter } from '../../../client/src/sprites/render';
 import { SLOTS } from '../../../client/src/sprites/schema';
 import { drawStage, type Background } from './draw';
 import { buttons, checkbox, el, opts, select, slider } from './ui';
 
 const STAGE = { width: 64, height: 48, footX: 32, footY: 40 };
+
 
 export function characterTab(): HTMLElement {
   const data = spriteData();
@@ -27,9 +29,11 @@ export function characterTab(): HTMLElement {
 
   const draw = (now = performance.now()) => {
     const cycle = data.poses.walk.cycle;
-    const frame = s.walking ? cycle[Math.floor(now / s.beatMs) % cycle.length]! : s.frame;
+    const step = s.walking ? walkStep(data, Math.floor(now / s.beatMs)) : undefined;
+    const frame = step?.frame ?? s.frame;
     const look = {
       hair: s.hair, face: s.face, frame,
+      bob: step?.bob ?? 0,
       outfit: Object.values(s.outfit).filter((id) => id !== '-'),
       weapon: s.weapon === '-' ? undefined : s.weapon,
       pose: s.weapon === '-' ? undefined : s.pose,
@@ -94,7 +98,7 @@ export function characterTab(): HTMLElement {
     poseSelect.node,
     el('h3', { text: '걷기' }),
     select('프레임', opts(['stand', 'walkA', 'walkB']), s.frame, (v) => { s.frame = v; redraw(); }).node,
-    checkbox('걷기 재생 (stand→walkA→stand→walkB)', s.walking, (v) => { s.walking = v; redraw(); }),
+    checkbox('걷기 재생', s.walking, (v) => { s.walking = v; redraw(); }),
     slider('한 박자', [60, 400, 10], s.beatMs, (v) => `${v}ms`, (v) => { s.beatMs = v; }),
     el('h3', { text: '보기' }),
     checkbox('왼쪽 보기 (좌우 반전)', s.flip, (v) => { s.flip = v; redraw(); }),

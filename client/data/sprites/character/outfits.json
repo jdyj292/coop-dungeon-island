@@ -1,5 +1,5 @@
 {
-  "_note": "의상 아이템. 슬롯: hat, top, bottom, cape. parts의 layer가 그리는 순서를 정한다(base.json layerOrder). bottom은 걷기 프레임별 rows. 상태: 확정(2026-10 검토), 걷기 프레임은 초안(M0에서 검토)",
+  "_note": "의상 아이템. 슬롯: hat, top, bottom, cape. parts의 layer가 그리는 순서를 정한다(base.json layerOrder). bottom은 걷기 프레임별 rows. 상태: 확정(2026-10 검토), 걷기 프레임: walkA 좁은 보폭(디딤), walkB 발 들기 (2026-10 검토)",
   "items": {
     "top_tunic": {
       "slot": "top",
@@ -37,14 +37,14 @@
               "...fff.fff.."
             ],
             "walkA": [
-              "..pp...pp...",
-              "..ss....ss..",
-              ".fff....fff."
+              "...pp.pp....",
+              "..ss...ss...",
+              "..ff...fff.."
             ],
             "walkB": [
-              "....pppp....",
-              "....ssss....",
-              "...ffffff..."
+              "....ppp.....",
+              "...ffss.....",
+              "......fff..."
             ]
           }
         }
@@ -110,12 +110,12 @@
             "walkA": [
               "..RRRRRRRR..",
               ".RRRRRRRRR..",
-              ".fff....fff."
+              "..ff...fff.."
             ],
             "walkB": [
               "..RRRRRRRR..",
               ".RRRRRRRRR..",
-              "...ffffff..."
+              "......fff..."
             ]
           }
         }
@@ -182,14 +182,14 @@
               "...fff.fff.."
             ],
             "walkA": [
+              "...PP.PP....",
               "..PP...PP...",
-              "..PP....PP..",
-              ".fff....fff."
+              "..ff...fff.."
             ],
             "walkB": [
-              "....PPPP....",
-              "....PPPP....",
-              "...ffffff..."
+              "....PPP.....",
+              "...ffPP.....",
+              "......fff..."
             ]
           }
         }
@@ -264,14 +264,14 @@
               "...fff.fff.."
             ],
             "walkA": [
-              "..PP...PP...",
-              "..AA....AA..",
-              ".fff....fff."
+              "...PP.PP....",
+              "..AA...AA...",
+              "..ff...fff.."
             ],
             "walkB": [
-              "....PPPP....",
-              "....AAAA....",
-              "...ffffff..."
+              "....PPP.....",
+              "...ffAA.....",
+              "......fff..."
             ]
           }
         }

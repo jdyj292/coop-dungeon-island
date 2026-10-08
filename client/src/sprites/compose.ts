@@ -14,6 +14,15 @@ export interface CharacterLook {
   pose?: string;
   /** 걷기 프레임 (stand / walkA / walkB) */
   frame?: string;
+  /** 걷기 몸 흔들림: 다리(bottom 층)를 뺀 나머지를 아래로 옮기는 px (walkStep이 정함) */
+  bob?: number;
+}
+
+/** 걷기 박자 → 다리 프레임과 몸 내림 (poses.json walk) */
+export function walkStep(data: SpriteData, beat: number): { frame: string; bob: number } {
+  const { cycle, bob } = data.poses.walk;
+  const i = ((beat % cycle.length) + cycle.length) % cycle.length;
+  return { frame: cycle[i]!, bob: bob?.[i] ?? 0 };
 }
 
 export interface Composed {
@@ -123,9 +132,11 @@ export function composeCharacter(data: SpriteData, look: CharacterLook): Compose
   const order = (layer: Layer) => base.layerOrder.indexOf(layer);
   const sorted = ops.map((op, i) => ({ op, i })).sort((a, b) => order(a.op.layer) - order(b.op.layer) || a.i - b.i);
   for (const { op } of sorted) {
+    // 걷기 몸 흔들림: 다리를 뺀 나머지가 함께 내려간다
+    const dy = op.layer === 'bottom' ? 0 : (look.bob ?? 0);
     for (const [x, y, ch] of op.pixels) {
       const gx = x + MARGIN;
-      const gy = y + MARGIN;
+      const gy = y + dy + MARGIN;
       if (gx < 0 || gy < 0 || gx >= W || gy >= H) throw new Error(`상자 밖 픽셀 (${x},${y})`);
       grid[gy]![gx] = ch === '_' ? '.' : ch;
     }

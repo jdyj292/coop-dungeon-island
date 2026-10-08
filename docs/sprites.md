@@ -11,7 +11,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 |---|---|---|
 | materials.json | 마스크 글자 → 색 연결 | 확정 |
 | character/base.json | 기본 몸(머리 피부, 스카프), 표정 3종, 머리 모양 3종, 어깨·손 기준점, 레이어 순서 | 확정 |
-| character/outfits.json | 의상 아이템(슬롯별)과 세트 | 확정 (걷기 프레임은 M0에서 검토) |
+| character/outfits.json | 의상 아이템(슬롯별)과 세트 | 확정 |
 | weapons_visual.json | 무기 외형 프로필 | 확정 |
 | poses.json | 무기 종류별 포즈(손 위치, 무기 방향, 이펙트), 걷기 순환 | 확정 |
 | monsters.json | 몬스터 스프라이트 (1층 다섯 종) | 확정 |
@@ -105,7 +105,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 - origin: 손 대신 무기 시작점 지정 (광역 시전의 세운 스태프)
 - fx: 공격 순간 이펙트. smear(pivot, 반지름 r, 각도 arc, reverse), spark, bolt, circle, lines, throw. 모양은 art.md 7장
 - 행동과 포즈 연결은 행동 데이터에 적는다: `"poses": {"windup":"ready","active":"slash","recovery":"slash"}` (weapons.json, skills.json)
-- 걷기: bottom 프레임을 poses.json walk.cycle 순서로 순환
+- 걷기: bottom 프레임을 poses.json walk.cycle 순서로 순환. walk.bob = 박자별로 bottom 층을 뺀 나머지(몸·팔·무기)를 내리는 px. 박자 → 프레임·내림은 compose.ts walkStep
 - 이동·상태 모션(art.md 4장)이 추가되면 몸 프레임은 bottom의 frames 키(run1~4, backstep1~2, hurt, down, getup1~2, knocked)로, 상체 변화는 base.json에 몸 포즈로 추가. 형식 확정은 그릴 때
 
 ---
@@ -153,7 +153,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 2. 걷기 프레임이 있는 파츠는 현재 프레임 rows 선택
 3. layerOrder 순서로 격자에 찍기 (`.`은 건너뜀, `_`는 지움)
 4. 완성된 격자에 자동 음영·외곽선 1회 적용 (art.md 5장)
-5. 텍스처로 캐시. 키 = 머리 모양 + 머리색 + 플레이어 색 + 의상 4칸 + 무기 외형 + 포즈 + 걷기 프레임 + 표정
+5. 텍스처로 캐시. 키 = 머리 모양 + 머리색 + 플레이어 색 + 의상 4칸 + 무기 외형 + 포즈 + 걷기 프레임 + 몸 내림 + 표정
 6. 왼쪽을 볼 때는 캐시된 텍스처를 좌우 반전해서 그림 (다시 생성하지 않음)
 
 - 장비를 바꿀 때 그 캐릭터의 텍스처만 다시 생성

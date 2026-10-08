@@ -423,12 +423,18 @@
     }
   },
   "walk": {
-    "_note": "걷기 = bottom 프레임 stand → walkA → stand → walkB 순환 (4박자)",
+    "_note": "걷기 = bottom 프레임 walkA(좁은 보폭) → walkB(발 들기) 번갈아 4박자. bob = 박자별로 다리를 뺀 몸을 내리는 px (디딜 때 1px)",
     "cycle": [
-      "stand",
       "walkA",
-      "stand",
+      "walkB",
+      "walkA",
       "walkB"
+    ],
+    "bob": [
+      1,
+      0,
+      1,
+      0
     ]
   }
 }
