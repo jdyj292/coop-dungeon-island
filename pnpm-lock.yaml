@@ -29,6 +29,9 @@ importers:
       phaser:
         specifier: ^3.88.0
         version: 3.90.0
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       vite:
         specifier: ^5.4.0
@@ -1268,6 +1271,9 @@ packages:
       utf-8-validate:
         optional: true
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
 snapshots:
 
   '@colyseus/auth@0.15.12(@colyseus/core@0.15.57(@colyseus/schema@2.0.37))(express@4.22.3)':
@@ -2402,3 +2408,5 @@ snapshots:
   ws@7.5.13: {}
 
   ws@8.22.0: {}
+
+  zod@3.25.76: {}

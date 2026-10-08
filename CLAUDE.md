@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 0-1·0-2 완료: pnpm 워크스페이스(client·server :2567·shared), palette 로더(client/src/palette.ts), palette-check(오류 0, 2~5층 경고만)
-- 명령: `pnpm dev` / `pnpm test` / `pnpm typecheck` / `pnpm palette-check`
-- 다음: M0 0-3 — 스프라이트 합성기 (마스크 → 레이어 → 자동 음영·외곽선 → 텍스처 캐시)
+- M0 0-1~0-3 완료: 워크스페이스, palette 로더·palette-check, 스프라이트 합성기(client/src/sprites: 스키마·합성·음영·텍스처 캐시, 승인 데모와 픽셀 일치 확인)
+- 명령: `pnpm dev` / `pnpm test` / `pnpm typecheck` / `pnpm palette-check`. Boot 씬은 임시로 기본 세트 4종 표시
+- 다음: M0 0-4 — tools/sprite-preview (의상·포즈·표정·몬스터 프레임 전환, 몬스터 스키마 검사 포함)

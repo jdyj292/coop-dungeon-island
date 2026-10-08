@@ -49,7 +49,8 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 { "layer": "bottom", "offset": [0, 14], "frames": { "stand": [...], "walkA": [...], "walkB": [...] } }
 ```
 - layer: 그리는 순서를 정함. 순서는 base.json `layerOrder`:
-  weapon_back → cape → back_arm → bottom → top → neck → head → face → hair → hat → shoulder → front_arm → weapon
+  weapon_back → cape → back_arm → bottom → top → neck → head → face → hair → hat → shoulder → weapon → front_arm
+  (앞팔·손이 무기를 덮는다: 무기를 쥔 손이 보이고, 대검 손잡이 끝은 소매 아래로 숨음. 승인 데모와 같은 순서)
 - 같은 층 안에서는 목록 순서대로
 - frames가 있는 파츠는 현재 걷기 프레임의 rows를 쓴다 (stand / walkA / walkB)
 
@@ -75,9 +76,9 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 
 ### 팔
 - 팔은 마스크가 아니라 포즈 데이터로 그린다
-- 어깨(shoulders)에서 손 위치까지 소매 재질로 잇고, 손 픽셀은 피부(s)
-- 건틀릿(gauntlet: true)이면 손 대신 2×2 덩어리: (x..x+1, y−1..y)
-- detached: true면 어깨에서 잇지 않고 손(또는 건틀릿)만 그린다 (몸 앞으로 나온 뒷손)
+- 어깨(shoulders)에서 손 위치까지 소매 재질로 잇고(대각선 우선, 최대 6칸), 손 픽셀은 피부(s). 상의가 없으면 소매도 피부(s)
+- 건틀릿(gauntlet: true)이면 손 대신 2×2 덩어리: (x..x+1, y−1..y). 재질은 무기 외형의 gauntlet.mat
+- detached: true면 어깨에서 잇지 않고 손(또는 건틀릿)만 그린다 (몸 앞으로 나온 뒷손 → front_arm 층)
 - back: null이면 뒷팔을 그리지 않는다
 
 ### 무기 외형 (weapons_visual.json)
@@ -87,8 +88,9 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
   {"from":3,"to":12,"mat":"m","width":2}, {"at":13,"mat":"m"} ] }
 ```
 - 손에서 무기 방향(dir)으로 뻗는 1차원 프로필. at / from~to = 손으로부터 칸 수 (음수 = 반대쪽)
-- width: 홀수는 가운데 정렬, 짝수는 기본선 + 한쪽. 대각선 방향의 두께는 가로 이웃 칸으로
-- block: 끝에 붙는 정사각 덩어리 (스태프 보석)
+- width: 홀수는 가운데 정렬로 무기 방향에 수직(대각선이면 반대 대각선, 예: 대검 가드). 짝수는 기본선 + 한쪽 — 곧은 방향이면 수직 이웃, 대각선이면 가로 이웃(+x) 칸 (예: 대검 날)
+- 파츠는 목록 순서로 그려 뒤 파츠가 앞 파츠를 덮는다
+- block: 끝에 붙는 정사각 덩어리 (스태프 보석). 그 칸에서 +x·+y로 펴되, 무기 방향이 음수인 축은 반대쪽으로
 - 같은 종류의 다른 디자인 무기는 프로필만 추가
 - 프로필 추가 필드: `source` (base / craft / boss / recolor), `floor`, `smearColor`(보스 외형, palette 경로), `recolorOf`+`materials`(색 변형: 원본 프로필 + 재질 덮어쓰기)
 

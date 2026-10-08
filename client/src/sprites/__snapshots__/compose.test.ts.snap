@@ -1,0 +1,119 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`composeCharacter > 기본 세트 beginner (대검 대기) 1`] = `
+{
+  "foot": [
+    10,
+    17,
+  ],
+  "rows": [
+    "m..............",
+    ".mm.........h..",
+    "..mm...hhhhhh..",
+    "...mm.hhhhhhhh.",
+    "....mhhhhhhhhhh",
+    ".....hhhhhhshhh",
+    "....hhhhsssssss",
+    "....hhhsssEssEs",
+    "....hhhsssEssEs",
+    ".....hhssBsssBs",
+    "........ssssss.",
+    "......kkkkkkkk.",
+    ".....ktttttttt.",
+    "......stttttts.",
+    ".......gggggg.y",
+    ".......pp.pp...",
+    ".......ss.ss...",
+    ".......fff.fff.",
+  ],
+}
+`;
+
+exports[`composeCharacter > 기본 세트 knight (대검 대기) 1`] = `
+{
+  "foot": [
+    10,
+    17,
+  ],
+  "rows": [
+    "m..............",
+    ".mm.........h..",
+    "..mm...hhhhhh..",
+    "...mm.hhhhhhhh.",
+    "....mhhhhhhhhhh",
+    ".....hhhhhhshhh",
+    "....hhhhsssssss",
+    "....hhhsssEssEs",
+    "....hhhsssEssEs",
+    ".....hhssBsssBs",
+    "........ssssss.",
+    ".....CkkkkkkkAA",
+    "...CCkAAAAAAAAA",
+    "..CCCCsAAAAAAs.",
+    "..CCCCCgggggg.y",
+    ".CCCCC.PP.PP...",
+    ".CCCCC.AA.AA...",
+    "CCCCC..fff.fff.",
+  ],
+}
+`;
+
+exports[`composeCharacter > 기본 세트 rogue (대검 대기) 1`] = `
+{
+  "foot": [
+    10,
+    17,
+  ],
+  "rows": [
+    "m...............",
+    ".mm....OOOOOO...",
+    "..mm..OOOOOOOO..",
+    ".OOmmOOOOOOOOOO.",
+    "..OOOOOOOOOOOOOO",
+    "....OOOOhhhshhOO",
+    "...OOOOhsssssss.",
+    "...OOOOsssEssEs.",
+    "...OOOOsssEssEs.",
+    "....OOOssBsssBs.",
+    "........kkkkkk..",
+    "......kkkkkkkk..",
+    ".....kVVVVVVVV..",
+    "......sVVVVVVs..",
+    ".......gggggg.y.",
+    ".......PP.PP....",
+    ".......PP.PP....",
+    ".......fff.fff..",
+  ],
+}
+`;
+
+exports[`composeCharacter > 기본 세트 wizard (대검 대기) 1`] = `
+{
+  "foot": [
+    10,
+    19,
+  ],
+  "rows": [
+    "....HHH..........",
+    "......HHH........",
+    "m......HHHH......",
+    ".mm....HHHHH.....",
+    "..mm..HHHHHHHH...",
+    "...mm.yyyyyyyy...",
+    "...HHHHHHHHHHHHHH",
+    ".....hhhhhhshhh..",
+    "....hhhhsssssss..",
+    "....hhhsssEssEs..",
+    "....hhhsssEssEs..",
+    ".....hhssBsssBs..",
+    "........ssssss...",
+    "......kkkkkkkk...",
+    ".....kRRRRRRRR...",
+    "......sRRRRRRs...",
+    ".......yyyyyy.y..",
+    "......RRRRRRRR...",
+    ".....RRRRRRRRR...",
+    ".......fff.fff...",
+  ],
+}
+`;
