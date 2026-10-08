@@ -102,7 +102,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 ```
 - dir: 8방향만 ([±1,0], [0,±1], [±1,±1])
 - behind: true면 weapon_back 층 (몸 뒤에 그림)
-- origin: 손 대신 무기 시작점 지정 (세워 든 스태프)
+- origin: 손 대신 무기 시작점 지정 (광역 시전의 세운 스태프)
 - fx: 공격 순간 이펙트. smear(pivot, 반지름 r, 각도 arc, reverse), spark, bolt, circle, lines, throw. 모양은 art.md 7장
 - 행동과 포즈 연결은 행동 데이터에 적는다: `"poses": {"windup":"ready","active":"slash","recovery":"slash"}` (weapons.json, skills.json)
 - 걷기: bottom 프레임을 poses.json walk.cycle 순서로 순환
