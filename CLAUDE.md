@@ -105,5 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- 설계 문서·게임 데이터·스프라이트 데이터·효과음·BGM(엔진 포함) 완료. 코드는 아직 없음
-- 다음: M0 — 프로젝트 뼈대(Vite + Phaser + TS, pnpm 워크스페이스) → 스프라이트 생성기 → sprite-preview
+- 설계 문서·게임 데이터·스프라이트 데이터·효과음·BGM(엔진 포함) 완료
+- M0 0-1 완료: pnpm 워크스페이스(client Vite+Phaser, server Colyseus 빈 방 :2567, shared), vitest. `pnpm dev` / `pnpm test` / `pnpm typecheck`
+- 다음: M0 0-2 — palette.json 로더 + tools/palette-check

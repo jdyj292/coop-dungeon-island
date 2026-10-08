@@ -1,0 +1,17 @@
+{
+  "name": "@game/client",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@game/shared": "workspace:*",
+    "phaser": "^3.88.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}
