@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>16px 캐릭터 색·표정 (확정)</title>
+<!-- 대화 중 승인·검토된 원본 데모 (2026-10). 수정 금지. 기준 자료로만 사용 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>:root{--surface-0:#f6f5f1;--surface-1:#f1efe8;--surface-2:#fff;--border:rgba(0,0,0,.15);--border-strong:rgba(0,0,0,.3);--border-accent:#378ADD;--text-primary:#222;--text-secondary:#666;--text-muted:#999;--text-accent:#185FA5;--text-danger:#a32d2d;--bg-accent:#E6F1FB;--radius:8px;--font-mono:monospace}
+body{font-family:system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;background:var(--surface-0);color:var(--text-primary)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+button{background:transparent;border:1px solid var(--border-strong);border-radius:var(--radius);padding:6px 10px;cursor:pointer}
+.t,.th{fill:#222}.ts{fill:#666}</style></head><body>
+<h2 class="sr-only">16픽셀 기본 캐릭터에 색과 음영을 입힌 표정 3종, 플레이어 색 4종, 던전 바닥 위 실제 배율 모습</h2>
+<p style="font-size:13px;color:var(--text-secondary);margin:0 0 6px;">표정 (8배 확대)</p>
+<div id="ex" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
+<p style="font-size:13px;color:var(--text-secondary);margin:14px 0 6px;">플레이어 색 (6배 확대)</p>
+<div id="pc" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
+<p style="font-size:13px;color:var(--text-secondary);margin:14px 0 6px;">던전 1층 바닥 위 실제 배율 (3배)</p>
+<div style="border-radius:var(--border-radius-lg);overflow:hidden;"><canvas id="real" style="width:100%;image-rendering:pixelated;display:block;"></canvas></div>
+<script>
+const OL='#2A2540';
+const h2r=h=>{h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
+function r2hsl(r,g2,b){r/=255;g2/=255;b/=255;const mx=Math.max(r,g2,b),mn=Math.min(r,g2,b);let h=0,s=0,l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g2-b)/d+(g2<b?6:0):mx===g2?(b-r)/d+2:(r-g2)/d+4;h*=60;}return[h,s,l];}
+function hsl2h(h,s,l){h=((h%360)+360)%360;s=Math.max(0,Math.min(1,s));l=Math.max(0,Math.min(1,l));const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;let a=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];return'#'+a.map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('');}
+const tw=(h,t,d)=>{const df=((t-h+540)%360)-180;return h+Math.sign(df)*Math.min(Math.abs(df),d);};
+function ramp(hex){const[h,s,l]=r2hsl(...h2r(hex));return[hsl2h(tw(h,55,10),s*1.06,l+.11),hex,hsl2h(tw(h,255,14),s*.95,l-.12),hsl2h(tw(h,265,24),s*.9,l-.25)];}
+function shadeMask(rows,M,FX){const h=rows.length,w=Math.max(...rows.map(r=>r.length));const c=document.createElement('canvas');c.width=w+2;c.height=h+2;const x=c.getContext('2d');
+const get=(i,j)=>(rows[j]&&rows[j][i])||'.',E=ch=>ch==='.';const pos=[];for(let j=0;j<h;j++)pos[j]=[];
+for(let i=0;i<w;i++){let j=0;while(j<h){const ch=get(i,j);if(E(ch)){j++;continue;}let k=j;while(k<h&&get(i,k)===ch)k++;for(let q=j;q<k;q++)pos[q][i]=(q-j+.5)/(k-j);j=k;}}
+const px=(i,j,col)=>{x.fillStyle=col;x.fillRect(i+1,j+1,1,1);};
+for(let j=-1;j<=h;j++)for(let i=-1;i<=w;i++){if(!E(get(i,j)))continue;let col=null;const dn=get(i,j+1),rt=get(i+1,j),up=get(i,j-1),lf=get(i-1,j);
+const pick=ch=>FX[ch]?OL:M[ch][3];if(!E(dn))col=pick(dn);else if(!E(rt))col=pick(rt);else if(!E(up))col=OL;else if(!E(lf))col=OL;if(col)px(i,j,col);}
+for(let j=0;j<h;j++)for(let i=0;i<w;i++){const ch=get(i,j);if(E(ch))continue;if(FX[ch]){px(i,j,FX[ch]);continue;}
+const r=M[ch],up=get(i,j-1),lf=get(i-1,j),dn=get(i,j+1),rt=get(i+1,j),p=pos[j][i];let t=1;
+if(p>.72)t=2;if(!E(up)&&up!==ch&&M[up])t=2;
+if(E(up)||(E(lf)&&p<.45))t=0;if(E(dn)||(E(rt)&&p>.35))t=Math.max(t,2);if(E(up)&&E(dn))t=1;px(i,j,r[t]);}return c;}
+const HEADS={
+base:["...hhhhhh...","..hhhhhhhh..",".hhhhhhhhhh.",".hhhhhhshhh.","hhhhsssssss.","hhhsssesses.","hhhsssesses.",".hhssbsssbs.","....ssssss.."],
+hurt:["...hhhhhh...","..hhhhhhhh..",".hhhhhhshhh.","hhhhhhhhhhh.","hhhhsssssss.","hhhsssesses.","hhhssessess.",".hhssbsssbs.","....ssmsss.."],
+smile:["...hhhhhh...","..hhhhhhhh..",".hhhhhhshhh.",".hhhhhhshhh.","hhhhsssssss.","hhhsssessse.","hhhsseseses.",".hhssbsssbs.","....ssmmss.."]};
+HEADS.hurt=["...hhhhhh...","..hhhhhhhh..",".hhhhhhhhhh.",".hhhhhhshhh.","hhhhsssssss.","hhhsseessss.","hhhsssseess.",".hhssbsssbs.","....sssmss.."];
+HEADS.smile=["...hhhhhh...","..hhhhhhhh..",".hhhhhhhhhh.",".hhhhhhshhh.","hhhhsssssss.","hhhsssessse.","hhhssesesse.",".hhssbsssbs.","....ssmmss.."];
+const BODY=["..kkkkkkkk..",".ktttttttt..","..stttttts..","...gggggg...","...pp.pp....","...ss.ss....","...fff.fff.."];
+const TUFT="........h...";
+function build(head,scarf){const M={h:ramp('#7A4E36'),s:ramp('#F6DCC0'),t:ramp('#C9734B'),g:ramp('#8a5a36'),p:ramp('#6B5444'),f:ramp('#5A4636'),k:ramp(scarf)};const FX={e:OL,b:'#F2A08F',m:'#B5555A'};return shadeMask([TUFT,...HEADS[head],...BODY],M,FX);}
+function mushRows(R){const capRy=Math.round(R*.78),stemH=Math.round(R*.95),shw=Math.round(R*.6),w=2*R+1,cx=R,rows=[],line=()=>Array(w).fill('.');
+for(let y=0;y<capRy;y++){const t=(capRy-y-.5)/capRy,hw=Math.round(R*Math.sqrt(Math.max(0,1-t*t))+.3),r=line();for(let i=cx-hw;i<=cx+hw;i++)if(i>=0&&i<w)r[i]=((i==cx-2&&y==1)||(i==cx+2&&y==2))?'W':'m';rows.push(r.join(''));}
+const u=line();for(let i=1;i<w-1;i++)u[i]='u';rows.push(u.join(''));const e1=cx-3,e2=cx;
+for(let y=0;y<stemH;y++){const r=line(),hw=shw-(y==stemH-1?1:0);for(let i=cx-hw;i<=cx+hw;i++)r[i]='s';if(y==1||y==2){r[e1]='e';r[e2]='e';}rows.push(r.join(''));}return rows;}
+const mush=shadeMask(mushRows(6),{m:ramp('#E8834A'),W:ramp('#FFF3DE'),u:ramp('#EAD7BE'),s:ramp('#F4E8D0')},{e:OL});
+function show(parent,spr,sc,bgc,label){const d=document.createElement('div');d.style.cssText=`background:${bgc};border-radius:var(--border-radius-lg);padding:8px;text-align:center;`;
+const W2=spr.width+8,H2=spr.height+5;const o=document.createElement('canvas');o.width=W2;o.height=H2;const ox=o.getContext('2d');
+ox.fillStyle='rgba(10,14,8,.35)';ox.fillRect(Math.floor(W2/2)-4,H2-4,9,1);ox.fillRect(Math.floor(W2/2)-5,H2-3,11,1);ox.drawImage(spr,4,H2-spr.height-3);
+const c=document.createElement('canvas');c.width=W2*sc;c.height=H2*sc;c.style.cssText='width:100%;max-width:'+(W2*sc)+'px;image-rendering:pixelated;display:block;margin:0 auto;';const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(o,0,0,W2*sc,H2*sc);d.appendChild(c);
+const l=document.createElement('div');l.textContent=label;l.style.cssText='font-size:13px;color:#e9f1df;margin-top:4px;';d.appendChild(l);parent.appendChild(d);}
+[['base','기본'],['hurt','피격'],['smile','기쁨']].forEach(([k,n])=>show(document.getElementById('ex'),build(k,'#6FC3E8'),8,'#2b3a24',n));
+[['#6FC3E8','1번'],['#F2C94C','2번'],['#8FD16A','3번'],['#F28DB2','4번']].forEach(([c,n])=>show(document.getElementById('pc'),build('base',c),6,'#2b3a24',n));
+const rc=document.getElementById('real'),LW=150,LH=40,SC=3;rc.width=LW*SC;rc.height=LH*SC;const o=document.createElement('canvas');o.width=LW;o.height=LH;const g=o.getContext('2d');
+const RF=ramp('#5F7A47'),RA=ramp('#66824D'),RW=ramp('#3E5434');
+for(let x=0;x<LW;x++)for(let y=0;y<12;y++){const ly=y,by=ly%7,bx=(x+(Math.floor(ly/7)%2?8:0))%16;let c=RW[1];if(by==6||bx==0)c=RW[3];else if(by==0)c=RW[0];else if(by==5||bx==15)c=RW[2];if(y>8)c=(x+y)%2?RW[3]:RW[2];g.fillStyle=c;g.fillRect(x,y,1,1);}
+for(let tz=0;tz<3;tz++)for(let tx=0;tx<10;tx++){const R=(tx+tz)%2?RF:RA;for(let y=0;y<10;y++)for(let x=0;x<16;x++){let c=R[1];if(y==0)c=R[0];if(y==9||x==15)c=R[2];if(x==0&&y>0)c=R[0];g.fillStyle=c;g.fillRect(tx*16+x,12+tz*10+y,1,1);}}
+for(let x=0;x<LW;x++)for(let y=12;y<18;y++)if((x+y)%2==0&&y<15||(x%2==0&&y%2==0)){g.fillStyle='rgba(20,28,16,.5)';g.fillRect(x,y,1,1);}
+function put(spr,cx,fy){g.fillStyle='rgba(10,14,8,.4)';g.fillRect(cx-4,fy,9,1);g.fillRect(cx-5,fy-1,11,1);g.drawImage(spr,cx-Math.floor(spr.width/2),fy-spr.height+1);}
+put(build('base','#6FC3E8'),20,33);put(build('smile','#F2C94C'),42,30);put(mush,70,32);put(build('base','#8FD16A'),98,34);put(build('hurt','#F28DB2'),124,31);
+const x=rc.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(o,0,0,LW*SC,LH*SC);
+</script>
+</body></html>

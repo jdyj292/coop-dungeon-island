@@ -1,0 +1,590 @@
+{
+  "_note": "무기 정의. 행동(action) 형식은 docs/data.md. 수치 근거는 docs/balance.md·skills.md",
+  "greatsword": {
+    "name": "대검",
+    "moveMul": 0.9,
+    "visual": "greatsword_basic",
+    "poseSet": "greatsword",
+    "trait": {
+      "type": "charge",
+      "maxTime": 1.0,
+      "bonusMax": 0.5,
+      "superArmorWhileCharging": true
+    },
+    "comboWindow": 0.3,
+    "basic": [
+      {
+        "id": "gs_b1",
+        "phases": {
+          "windup": 0.18,
+          "active": 0.08,
+          "recovery": 0.28
+        },
+        "coef": 200,
+        "hitbox": {
+          "forward": 2,
+          "width": 18,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "poses": {
+          "windup": "ready",
+          "active": "slash",
+          "recovery": "slash"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "gs_b2",
+        "phases": {
+          "windup": 0.18,
+          "active": 0.08,
+          "recovery": 0.28
+        },
+        "coef": 200,
+        "hitbox": {
+          "forward": 2,
+          "width": 18,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "poses": {
+          "windup": "ready",
+          "active": "slash",
+          "recovery": "slash"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "gs_b3",
+        "phases": {
+          "windup": 0.25,
+          "active": 0.1,
+          "recovery": 0.4
+        },
+        "coef": 350,
+        "hitbox": {
+          "forward": 2,
+          "width": 20,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "heavy",
+        "flags": [
+          "knockback"
+        ],
+        "poses": {
+          "windup": "ready",
+          "active": "slash",
+          "recovery": "slash"
+        },
+        "fx": {
+          "grade": "heavy"
+        }
+      }
+    ],
+    "dash": {
+      "id": "gs_dash",
+      "phases": {
+        "windup": 0.12,
+        "active": 0.12,
+        "recovery": 0.35
+      },
+      "coef": 420,
+      "hitbox": {
+        "forward": 2,
+        "width": 20,
+        "depth": 13,
+        "z": "both"
+      },
+      "strength": "medium",
+      "flags": [
+        "knockback"
+      ],
+      "move": {
+        "distance": 32,
+        "during": "active"
+      },
+      "poses": {
+        "windup": "ready",
+        "active": "slash",
+        "recovery": "slash"
+      },
+      "fx": {
+        "grade": "medium"
+      }
+    },
+    "baseSkills": [
+      "gs_launch",
+      "gs_earthsplit"
+    ]
+  },
+  "staff": {
+    "name": "스태프",
+    "moveMul": 1.0,
+    "visual": "staff_basic",
+    "poseSet": "staff",
+    "backstepStyle": "teleport",
+    "trait": {
+      "type": "cast",
+      "note": "windup이 다른 무기보다 김. 사거리·범위로 보상"
+    },
+    "comboWindow": 0.35,
+    "basic": [
+      {
+        "id": "st_b1",
+        "phases": {
+          "windup": 0.15,
+          "active": 0.05,
+          "recovery": 0.3
+        },
+        "coef": 120,
+        "projectile": {
+          "speed": 220,
+          "range": 96,
+          "radius": 4,
+          "pierce": false
+        },
+        "strength": "light",
+        "flags": [
+          "projectile"
+        ],
+        "poses": {
+          "windup": "ready",
+          "active": "bolt",
+          "recovery": "bolt"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "st_b2",
+        "phases": {
+          "windup": 0.15,
+          "active": 0.05,
+          "recovery": 0.3
+        },
+        "coef": 120,
+        "projectile": {
+          "speed": 220,
+          "range": 96,
+          "radius": 4,
+          "pierce": false
+        },
+        "strength": "light",
+        "flags": [
+          "projectile"
+        ],
+        "poses": {
+          "windup": "ready",
+          "active": "bolt",
+          "recovery": "bolt"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "st_b3",
+        "phases": {
+          "windup": 0.2,
+          "active": 0.05,
+          "recovery": 0.4
+        },
+        "coef": 180,
+        "projectile": {
+          "speed": 240,
+          "range": 96,
+          "radius": 5,
+          "pierce": false
+        },
+        "strength": "medium",
+        "flags": [
+          "projectile"
+        ],
+        "poses": {
+          "windup": "ready",
+          "active": "bolt",
+          "recovery": "bolt"
+        },
+        "fx": {
+          "grade": "medium"
+        }
+      }
+    ],
+    "dash": {
+      "id": "st_dash",
+      "phases": {
+        "windup": 0.1,
+        "active": 0.08,
+        "recovery": 0.35
+      },
+      "coef": 216,
+      "hitbox": {
+        "forward": 0,
+        "width": 14,
+        "depth": 13,
+        "z": "both"
+      },
+      "strength": "medium",
+      "flags": [
+        "knockback"
+      ],
+      "move": {
+        "distance": 24,
+        "during": "active"
+      },
+      "poses": {
+        "windup": "ready",
+        "active": "bolt",
+        "recovery": "bolt"
+      },
+      "fx": {
+        "grade": "medium"
+      }
+    },
+    "baseSkills": [
+      "st_fireburst",
+      "st_icefield"
+    ]
+  },
+  "fist": {
+    "name": "주먹",
+    "moveMul": 1.1,
+    "visual": "gauntlet_basic",
+    "poseSet": "fist",
+    "trait": null,
+    "comboWindow": 0.25,
+    "basic": [
+      {
+        "id": "fi_b1",
+        "phases": {
+          "windup": 0.08,
+          "active": 0.05,
+          "recovery": 0.17
+        },
+        "coef": 80,
+        "hitbox": {
+          "forward": 0,
+          "width": 10,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "poses": {
+          "windup": "guard",
+          "active": "jab",
+          "recovery": "jab"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "fi_b2",
+        "phases": {
+          "windup": 0.08,
+          "active": 0.05,
+          "recovery": 0.17
+        },
+        "coef": 80,
+        "hitbox": {
+          "forward": 0,
+          "width": 10,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "poses": {
+          "windup": "guard",
+          "active": "jab",
+          "recovery": "jab"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "fi_b3",
+        "phases": {
+          "windup": 0.08,
+          "active": 0.05,
+          "recovery": 0.17
+        },
+        "coef": 100,
+        "hitbox": {
+          "forward": 0,
+          "width": 10,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "poses": {
+          "windup": "guard",
+          "active": "jab",
+          "recovery": "jab"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "fi_b4",
+        "phases": {
+          "windup": 0.12,
+          "active": 0.06,
+          "recovery": 0.3
+        },
+        "coef": 180,
+        "hitbox": {
+          "forward": 0,
+          "width": 12,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "heavy",
+        "flags": [
+          "knockback"
+        ],
+        "poses": {
+          "windup": "guard",
+          "active": "jab",
+          "recovery": "jab"
+        },
+        "fx": {
+          "grade": "heavy"
+        }
+      }
+    ],
+    "dash": {
+      "id": "fi_dash",
+      "phases": {
+        "windup": 0.08,
+        "active": 0.1,
+        "recovery": 0.3
+      },
+      "coef": 216,
+      "hitbox": {
+        "forward": 0,
+        "width": 12,
+        "depth": 13,
+        "z": "both"
+      },
+      "strength": "medium",
+      "flags": [
+        "knockback"
+      ],
+      "move": {
+        "distance": 32,
+        "during": "active"
+      },
+      "poses": {
+        "windup": "guard",
+        "active": "jab",
+        "recovery": "jab"
+      },
+      "fx": {
+        "grade": "medium"
+      }
+    },
+    "baseSkills": [
+      "fi_uppercut",
+      "fi_grabthrow"
+    ]
+  },
+  "dual": {
+    "name": "쌍검",
+    "moveMul": 1.15,
+    "visual": "dagger_basic",
+    "poseSet": "dual",
+    "trait": {
+      "type": "backAttack",
+      "mul": 1.2
+    },
+    "comboWindow": 0.25,
+    "basic": [
+      {
+        "id": "du_b1",
+        "phases": {
+          "windup": 0.07,
+          "active": 0.04,
+          "recovery": 0.12
+        },
+        "coef": 70,
+        "hitbox": {
+          "forward": 0,
+          "width": 12,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "move": {
+          "distance": 4,
+          "during": "active"
+        },
+        "poses": {
+          "windup": "idle",
+          "active": "slash1",
+          "recovery": "slash1"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "du_b2",
+        "phases": {
+          "windup": 0.07,
+          "active": 0.04,
+          "recovery": 0.12
+        },
+        "coef": 70,
+        "hitbox": {
+          "forward": 0,
+          "width": 12,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "move": {
+          "distance": 4,
+          "during": "active"
+        },
+        "poses": {
+          "windup": "idle",
+          "active": "slash2",
+          "recovery": "slash2"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "du_b3",
+        "phases": {
+          "windup": 0.07,
+          "active": 0.04,
+          "recovery": 0.12
+        },
+        "coef": 70,
+        "hitbox": {
+          "forward": 0,
+          "width": 12,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "move": {
+          "distance": 4,
+          "during": "active"
+        },
+        "poses": {
+          "windup": "idle",
+          "active": "slash1",
+          "recovery": "slash1"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "du_b4",
+        "phases": {
+          "windup": 0.07,
+          "active": 0.04,
+          "recovery": 0.12
+        },
+        "coef": 70,
+        "hitbox": {
+          "forward": 0,
+          "width": 12,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "move": {
+          "distance": 4,
+          "during": "active"
+        },
+        "poses": {
+          "windup": "idle",
+          "active": "slash2",
+          "recovery": "slash2"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      },
+      {
+        "id": "du_b5",
+        "phases": {
+          "windup": 0.07,
+          "active": 0.04,
+          "recovery": 0.12
+        },
+        "coef": 70,
+        "hitbox": {
+          "forward": 0,
+          "width": 12,
+          "depth": 13,
+          "z": "both"
+        },
+        "strength": "light",
+        "move": {
+          "distance": 4,
+          "during": "active"
+        },
+        "poses": {
+          "windup": "idle",
+          "active": "slash1",
+          "recovery": "slash1"
+        },
+        "fx": {
+          "grade": "light"
+        }
+      }
+    ],
+    "dash": {
+      "id": "du_dash",
+      "phases": {
+        "windup": 0.06,
+        "active": 0.1,
+        "recovery": 0.25
+      },
+      "coef": 84,
+      "hitbox": {
+        "forward": 0,
+        "width": 14,
+        "depth": 13,
+        "z": "both"
+      },
+      "strength": "medium",
+      "flags": [
+        "knockback"
+      ],
+      "move": {
+        "distance": 40,
+        "during": "active"
+      },
+      "poses": {
+        "windup": "idle",
+        "active": "slash2",
+        "recovery": "slash2"
+      },
+      "fx": {
+        "grade": "medium"
+      }
+    },
+    "baseSkills": [
+      "du_throw",
+      "du_gale"
+    ]
+  }
+}

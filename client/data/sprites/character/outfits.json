@@ -1,0 +1,302 @@
+{
+  "_note": "의상 아이템. 슬롯: hat, top, bottom, cape. parts의 layer가 그리는 순서를 정한다(base.json layerOrder). bottom은 걷기 프레임별 rows. 상태: 확정(2026-10 검토), 걷기 프레임은 초안(M0에서 검토)",
+  "items": {
+    "top_tunic": {
+      "slot": "top",
+      "name": "초보 모험가 튜닉",
+      "sleeve": "t",
+      "parts": [
+        {
+          "layer": "top",
+          "offset": [
+            0,
+            11
+          ],
+          "rows": [
+            "...tttttt...",
+            "...tttttt...",
+            "...gggggg..."
+          ]
+        }
+      ]
+    },
+    "bottom_shorts": {
+      "slot": "bottom",
+      "name": "초보 모험가 바지",
+      "parts": [
+        {
+          "layer": "bottom",
+          "offset": [
+            0,
+            14
+          ],
+          "frames": {
+            "stand": [
+              "...pp.pp....",
+              "...ss.ss....",
+              "...fff.fff.."
+            ],
+            "walkA": [
+              "..pp...pp...",
+              "..ss....ss..",
+              ".fff....fff."
+            ],
+            "walkB": [
+              "....pppp....",
+              "....ssss....",
+              "...ffffff..."
+            ]
+          }
+        }
+      ]
+    },
+    "hat_wizard": {
+      "slot": "hat",
+      "name": "마법사 모자",
+      "parts": [
+        {
+          "layer": "hat",
+          "offset": [
+            -1,
+            -3
+          ],
+          "rows": [
+            ".HHH..........",
+            "...HHH........",
+            "....HHHH......",
+            "....HHHHH_....",
+            "...HHHHHHHH...",
+            "...yyyyyyyy...",
+            "HHHHHHHHHHHHHH"
+          ]
+        }
+      ]
+    },
+    "top_robe": {
+      "slot": "top",
+      "name": "마법사 로브(상)",
+      "sleeve": "R",
+      "parts": [
+        {
+          "layer": "top",
+          "offset": [
+            0,
+            11
+          ],
+          "rows": [
+            "...RRRRRR...",
+            "...RRRRRR...",
+            "...yyyyyy..."
+          ]
+        }
+      ]
+    },
+    "bottom_robe": {
+      "slot": "bottom",
+      "name": "마법사 로브(하)",
+      "parts": [
+        {
+          "layer": "bottom",
+          "offset": [
+            0,
+            14
+          ],
+          "frames": {
+            "stand": [
+              "..RRRRRRRR..",
+              ".RRRRRRRRR..",
+              "...fff.fff.."
+            ],
+            "walkA": [
+              "..RRRRRRRR..",
+              ".RRRRRRRRR..",
+              ".fff....fff."
+            ],
+            "walkB": [
+              "..RRRRRRRR..",
+              ".RRRRRRRRR..",
+              "...ffffff..."
+            ]
+          }
+        }
+      ]
+    },
+    "hat_hood": {
+      "slot": "hat",
+      "name": "도적 후드(복면 포함)",
+      "parts": [
+        {
+          "layer": "hat",
+          "offset": [
+            -3,
+            0
+          ],
+          "rows": [
+            "......OOOOOO...",
+            ".....OOOOOOOO..",
+            "OO..OOOOOOOOOO.",
+            ".OOOOOOOOOOOOOO",
+            "...OOOO......OO",
+            "..OOOO.........",
+            "..OOOO.........",
+            "..OOOO.........",
+            "...OOO.........",
+            ".......kkkkkk.."
+          ]
+        }
+      ]
+    },
+    "top_vest": {
+      "slot": "top",
+      "name": "도적 가죽옷",
+      "sleeve": "V",
+      "parts": [
+        {
+          "layer": "top",
+          "offset": [
+            0,
+            11
+          ],
+          "rows": [
+            "...VVVVVV...",
+            "...VVVVVV...",
+            "...gggggg..."
+          ]
+        }
+      ]
+    },
+    "bottom_pants": {
+      "slot": "bottom",
+      "name": "도적 바지",
+      "parts": [
+        {
+          "layer": "bottom",
+          "offset": [
+            0,
+            14
+          ],
+          "frames": {
+            "stand": [
+              "...PP.PP....",
+              "...PP.PP....",
+              "...fff.fff.."
+            ],
+            "walkA": [
+              "..PP...PP...",
+              "..PP....PP..",
+              ".fff....fff."
+            ],
+            "walkB": [
+              "....PPPP....",
+              "....PPPP....",
+              "...ffffff..."
+            ]
+          }
+        }
+      ]
+    },
+    "cape_blue": {
+      "slot": "cape",
+      "name": "기사 망토",
+      "parts": [
+        {
+          "layer": "cape",
+          "offset": [
+            -4,
+            10
+          ],
+          "rows": [
+            ".....CC",
+            "...CCCC",
+            "..CCCCC",
+            "..CCCCC",
+            ".CCCCC.",
+            ".CCCCC.",
+            "CCCCC.."
+          ]
+        }
+      ]
+    },
+    "top_armor": {
+      "slot": "top",
+      "name": "기사 갑옷",
+      "sleeve": "A",
+      "parts": [
+        {
+          "layer": "top",
+          "offset": [
+            0,
+            11
+          ],
+          "rows": [
+            "...AAAAAA...",
+            "...AAAAAA...",
+            "...gggggg..."
+          ]
+        },
+        {
+          "layer": "shoulder",
+          "offset": [
+            9,
+            10
+          ],
+          "rows": [
+            "AA",
+            ".A"
+          ]
+        }
+      ]
+    },
+    "bottom_armor": {
+      "slot": "bottom",
+      "name": "기사 다리 갑옷",
+      "parts": [
+        {
+          "layer": "bottom",
+          "offset": [
+            0,
+            14
+          ],
+          "frames": {
+            "stand": [
+              "...PP.PP....",
+              "...AA.AA....",
+              "...fff.fff.."
+            ],
+            "walkA": [
+              "..PP...PP...",
+              "..AA....AA..",
+              ".fff....fff."
+            ],
+            "walkB": [
+              "....PPPP....",
+              "....AAAA....",
+              "...ffffff..."
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "sets": {
+    "beginner": [
+      "top_tunic",
+      "bottom_shorts"
+    ],
+    "wizard": [
+      "hat_wizard",
+      "top_robe",
+      "bottom_robe"
+    ],
+    "rogue": [
+      "hat_hood",
+      "top_vest",
+      "bottom_pants"
+    ],
+    "knight": [
+      "cape_blue",
+      "top_armor",
+      "bottom_armor"
+    ]
+  }
+}

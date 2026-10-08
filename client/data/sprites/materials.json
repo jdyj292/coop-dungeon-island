@@ -1,0 +1,30 @@
+{
+  "_note": "마스크 글자 → 색. 소문자·대문자 = 음영 재질(palette 경로), fixed = 음영 없는 고정색. '.' 빈칸, '_' 지우기",
+  "shaded": {
+    "s": "global.player.skin",
+    "h": "$hairColor",
+    "k": "$playerColor",
+    "t": "global.materials.tunic",
+    "g": "global.materials.leather",
+    "p": "global.materials.shorts",
+    "f": "global.materials.boots",
+    "R": "global.materials.robe",
+    "H": "global.materials.robe",
+    "y": "global.materials.gold",
+    "O": "global.materials.hood",
+    "V": "global.materials.vest",
+    "P": "global.materials.darkPants",
+    "A": "global.materials.armor",
+    "C": "global.materials.cape",
+    "K": "global.materials.gauntlet",
+    "m": "global.materials.steel",
+    "w": "global.materials.wood",
+    "G": "global.materials.grip",
+    "o": "global.materials.orb"
+  },
+  "fixed": {
+    "E": "global.outline",
+    "B": "global.materials.blush",
+    "M": "global.materials.mouth"
+  }
+}

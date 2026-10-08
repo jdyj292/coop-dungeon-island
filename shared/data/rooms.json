@@ -1,0 +1,120 @@
+{
+  "_note": "층별 방 구성. 위치는 Tiled(maps/floorN/roomM.tmx)의 출현 지점, 종류·수·웨이브는 여기서. 형식은 docs/dungeon.md 맵 작성 규칙",
+  "floor1": {
+    "returnAfterRoom": 3,
+    "rooms": [
+      {
+        "id": "f1_r1",
+        "name": "숲 입구",
+        "size": [
+          20,
+          7
+        ],
+        "waves": [
+          {
+            "monsters": {
+              "mushroom": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "f1_r2",
+        "name": "멧돼지 오솔길",
+        "size": [
+          22,
+          8
+        ],
+        "waves": [
+          {
+            "monsters": {
+              "boar": 2,
+              "mushroom": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "f1_r3",
+        "name": "포자 공터",
+        "size": [
+          24,
+          9
+        ],
+        "waves": [
+          {
+            "monsters": {
+              "sporeflower": 2,
+              "mushroom": 3,
+              "boar": 1
+            }
+          }
+        ],
+        "onClear": [
+          "return_point",
+          "chest"
+        ]
+      },
+      {
+        "id": "f1_r4",
+        "name": "기사의 길",
+        "size": [
+          20,
+          9
+        ],
+        "waves": [
+          {
+            "monsters": {
+              "capknight": 1,
+              "mushroom": 2
+            }
+          },
+          {
+            "monsters": {
+              "sporeflower": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "f1_r5",
+        "name": "버섯 군락",
+        "size": [
+          26,
+          9
+        ],
+        "waves": [
+          {
+            "monsters": {
+              "mushroom": 3,
+              "boar": 1,
+              "sporeflower": 1
+            }
+          },
+          {
+            "monsters": {
+              "capknight": 1,
+              "boar": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "f1_boss",
+        "name": "이끼곰의 둥지",
+        "size": [
+          28,
+          9
+        ],
+        "boss": "mossbear",
+        "waves": [
+          {
+            "monsters": {
+              "mossbear": 1
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

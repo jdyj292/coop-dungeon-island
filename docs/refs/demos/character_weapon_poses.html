@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>16px 캐릭터 무기 포즈 (확정)</title>
+<!-- 대화 중 승인·검토된 원본 데모 (2026-10). 수정 금지. 기준 자료로만 사용 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>:root{--surface-0:#f6f5f1;--surface-1:#f1efe8;--surface-2:#fff;--border:rgba(0,0,0,.15);--border-strong:rgba(0,0,0,.3);--border-accent:#378ADD;--text-primary:#222;--text-secondary:#666;--text-muted:#999;--text-accent:#185FA5;--text-danger:#a32d2d;--bg-accent:#E6F1FB;--radius:8px;--font-mono:monospace}
+body{font-family:system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;background:var(--surface-0);color:var(--text-primary)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+button{background:transparent;border:1px solid var(--border-strong);border-radius:var(--radius);padding:6px 10px;cursor:pointer}
+.t,.th{fill:#222}.ts{fill:#666}</style></head><body>
+<h2 class="sr-only">16픽셀 캐릭터의 무기 4종(대검, 스태프, 주먹, 쌍검) 대기와 공격 동작, 실제 배율 애니메이션 미리보기</h2>
+<div id="rows"></div>
+<p style="font-size:13px;color:var(--text-secondary);margin:14px 0 6px;">실제 배율 동작 미리보기 (3배)</p>
+<div style="border-radius:var(--border-radius-lg);overflow:hidden;"><canvas id="real" style="width:100%;image-rendering:pixelated;display:block;"></canvas></div>
+<script>
+const OL='#2A2540';
+const h2r=h=>{h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
+function r2hsl(r,g2,b){r/=255;g2/=255;b/=255;const mx=Math.max(r,g2,b),mn=Math.min(r,g2,b);let h=0,s=0,l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g2-b)/d+(g2<b?6:0):mx===g2?(b-r)/d+2:(r-g2)/d+4;h*=60;}return[h,s,l];}
+function hsl2h(h,s,l){h=((h%360)+360)%360;s=Math.max(0,Math.min(1,s));l=Math.max(0,Math.min(1,l));const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;let a=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];return'#'+a.map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('');}
+const tw=(h,t,d)=>{const df=((t-h+540)%360)-180;return h+Math.sign(df)*Math.min(Math.abs(df),d);};
+function ramp(hex){const[h,s,l]=r2hsl(...h2r(hex));return[hsl2h(tw(h,55,10),s*1.06,l+.11),hex,hsl2h(tw(h,255,14),s*.95,l-.12),hsl2h(tw(h,265,24),s*.9,l-.25)];}
+function shadeMask(rows,M,FX){const h=rows.length,w=Math.max(...rows.map(r=>r.length));const c=document.createElement('canvas');c.width=w+2;c.height=h+2;const x=c.getContext('2d');
+const get=(i,j)=>(rows[j]&&rows[j][i])||'.',E=ch=>ch==='.';const pos=[];for(let j=0;j<h;j++)pos[j]=[];
+for(let i=0;i<w;i++){let j=0;while(j<h){const ch=get(i,j);if(E(ch)){j++;continue;}let k=j;while(k<h&&get(i,k)===ch)k++;for(let q=j;q<k;q++)pos[q][i]=(q-j+.5)/(k-j);j=k;}}
+const px=(i,j,col)=>{x.fillStyle=col;x.fillRect(i+1,j+1,1,1);};
+for(let j=-1;j<=h;j++)for(let i=-1;i<=w;i++){if(!E(get(i,j)))continue;let col=null;const dn=get(i,j+1),rt=get(i+1,j),up=get(i,j-1),lf=get(i-1,j);
+const pick=ch=>FX[ch]?OL:M[ch][3];if(!E(dn))col=pick(dn);else if(!E(rt))col=pick(rt);else if(!E(up))col=OL;else if(!E(lf))col=OL;if(col)px(i,j,col);}
+for(let j=0;j<h;j++)for(let i=0;i<w;i++){const ch=get(i,j);if(E(ch))continue;if(FX[ch]){px(i,j,FX[ch]);continue;}
+const r=M[ch],up=get(i,j-1),lf=get(i-1,j),dn=get(i,j+1),rt=get(i+1,j),p=pos[j][i];let t=1;
+if(p>.72)t=2;if(!E(up)&&up!==ch&&M[up])t=2;
+if(E(up)||(E(lf)&&p<.45))t=0;if(E(dn)||(E(rt)&&p>.35))t=Math.max(t,2);if(E(up)&&E(dn))t=1;px(i,j,r[t]);}return c;}
+const BASE=["........h...","...hhhhhh...","..hhhhhhhh..",".hhhhhhhhhh.",".hhhhhhshhh.","hhhhsssssss.","hhhsssesses.","hhhsssesses.",".hhssbsssbs.","....ssssss..","..kkkkkkkk..",".ktttttttt..","..stttttts..","...gggggg...","...pp.pp....","...ss.ss....","...fff.fff.."];
+const GW=34,GH=32,OX=11,OY=9;
+const S={x:OX+9,y:OY+11},B={x:OX+2,y:OY+11};
+function newGrid(){const g=[...Array(GH)].map(()=>Array(GW).fill('.'));BASE.forEach((r,j)=>[...r].forEach((ch,i)=>{if(ch!=='.')g[OY+j][OX+i]=ch;}));g[S.y][S.x]='.';g[S.y+1][S.x]='.';return g;}
+const set1=(g,x,y,ch,beh)=>{if(g[y]&&x>=0&&x<GW&&(!beh||g[y][x]==='.'))g[y][x]=ch;};
+function arm(g,sh,H,gaunt){const dx=Math.sign(H.x-sh.x),dy=Math.sign(H.y-sh.y);let x=sh.x,y=sh.y;let n=0;while((x!==H.x||y!==H.y)&&n<6){set1(g,x,y,'t');if(x!==H.x)x+=dx;if(y!==H.y)y+=dy;n++;}
+if(gaunt){for(let j=0;j<2;j++)for(let i=0;i<2;i++)set1(g,H.x+i,H.y-1+j,'K');}else set1(g,H.x,H.y,'s');}
+function sword(g,H,d,beh){const diag=d[0]&&d[1],p=diag?[1,0]:[-d[1],d[0]];set1(g,H.x-d[0],H.y-d[1],'Y',beh);set1(g,H.x+d[0],H.y+d[1],'G',beh);
+for(let k=-1;k<=1;k++)set1(g,H.x+2*d[0]+(diag?[k,-k][0]:p[0]*k),H.y+2*d[1]+(diag?-k*d[0]*d[1]:p[1]*k),'Y',beh);
+for(let k=3;k<14;k++){set1(g,H.x+d[0]*k,H.y+d[1]*k,'M',beh);if(k<13)set1(g,H.x+d[0]*k+p[0],H.y+d[1]*k+p[1],'M',beh);}}
+function staff(g,H,d,up,down,beh){for(let k=-down;k<=up;k++)set1(g,H.x+d[0]*k,H.y+d[1]*k,'W',beh);const tx=H.x+d[0]*(up+1),ty=H.y+d[1]*(up+1);set1(g,H.x+d[0]*up,H.y+d[1]*up,'Y',beh);
+for(let j=0;j<2;j++)for(let i=0;i<2;i++)set1(g,tx+i-(d[0]<0?1:0)+(d[0]>0?0:0),ty+j-(d[1]<0?1:0),'O',beh);}
+function dagger(g,H,d,beh){set1(g,H.x+d[0],H.y+d[1],'Y',beh);for(let k=2;k<7;k++)set1(g,H.x+d[0]*k,H.y+d[1]*k,'M',beh);}
+const P=(x,y)=>({x,y});
+const W=[
+{n:'대검',poses:[
+{n:'대기',f:g=>{const H=P(S.x,S.y+1);sword(g,H,[-1,-1],true);arm(g,S,H);}},
+{n:'준비',f:g=>{const H=P(S.x,S.y-2);sword(g,H,[-1,-1],true);arm(g,S,H);}},
+{n:'내려베기',f:g=>{const H=P(S.x+1,S.y);sword(g,H,[1,0]);arm(g,S,H);},fx:{t:'smear',c:S,r:[9,14],a:[-1.7,.35]}},
+{n:'올려베기',f:g=>{const H=P(S.x+1,S.y-1);sword(g,H,[1,-1]);arm(g,S,H);},fx:{t:'smear',c:S,r:[9,14],a:[-1.5,.9],rev:1}}]},
+{n:'스태프',poses:[
+{n:'대기',f:g=>{const H=P(S.x,S.y+1);staff(g,P(H.x+1,H.y),[0,-1],9,4);arm(g,S,H);}},
+{n:'시전 준비',f:g=>{const H=P(S.x+1,S.y-1);staff(g,H,[1,-1],7,2);arm(g,S,H);},fx:{t:'spark',c:P(S.x+9,S.y-10)}},
+{n:'마법탄',f:g=>{const H=P(S.x+1,S.y);staff(g,H,[1,0],7,2);arm(g,S,H);},fx:{t:'bolt',c:P(S.x+12,S.y-1)}},
+{n:'광역 시전',f:g=>{const H=P(S.x,S.y-2);staff(g,P(H.x+1,H.y),[0,-1],8,2);arm(g,S,H);},fx:{t:'circle',c:P(OX+6,OY+17)}}]},
+{n:'주먹',poses:[
+{n:'가드',f:g=>{g[B.y+1][B.x]='.';arm(g,S,P(S.x+1,S.y-1),1);for(let j=0;j<2;j++)for(let i=0;i<2;i++)set1(g,S.x-3+i,S.y-1+j,'K');}},
+{n:'잽',f:g=>{arm(g,S,P(S.x+3,S.y),1);},fx:{t:'lines',c:P(S.x+6,S.y-1),dir:'h'}},
+{n:'어퍼컷',f:g=>{arm(g,S,P(S.x+1,S.y-3),1);},fx:{t:'lines',c:P(S.x+2,S.y-6),dir:'v'}},
+{n:'잡기',f:g=>{g[B.y][B.x]='.';g[B.y+1][B.x]='.';arm(g,S,P(S.x+2,S.y+1),1);for(let j=0;j<2;j++)for(let i=0;i<2;i++)set1(g,S.x+i,S.y+1+j,'K');}}]},
+{n:'쌍검',poses:[
+{n:'대기',f:g=>{const H=P(S.x,S.y+1);dagger(g,H,[-1,1]);arm(g,S,H);dagger(g,P(B.x,B.y+1),[-1,1],true);}},
+{n:'베기 1',f:g=>{const H=P(S.x+1,S.y-1);dagger(g,H,[1,-1]);arm(g,S,H);dagger(g,P(B.x,B.y+1),[-1,1],true);},fx:{t:'smear',c:S,r:[5,9],a:[-1.3,.7],rev:1}},
+{n:'베기 2',f:g=>{g[B.y][B.x]='.';g[B.y+1][B.x]='.';const H=P(S.x,S.y+1);dagger(g,H,[1,1]);arm(g,S,H);const H2=P(S.x+1,S.y);dagger(g,H2,[1,0]);set1(g,H2.x,H2.y,'s');},fx:{t:'smear',c:S,r:[5,9],a:[-.9,.9]}},
+{n:'던지기',f:g=>{arm(g,S,P(S.x+2,S.y));dagger(g,P(B.x,B.y+1),[-1,1],true);},fx:{t:'throw',c:P(S.x+8,S.y-1)}}]}];
+const MAT=sc=>({h:ramp('#7A4E36'),s:ramp('#F6DCC0'),t:ramp('#C9734B'),g:ramp('#8a5a36'),p:ramp('#6B5444'),f:ramp('#5A4636'),k:ramp(sc),G:ramp('#5a3a2a'),Y:ramp('#F5C542'),M:ramp('#D9DDE3'),W:ramp('#9A6B45'),O:ramp('#9EE3FF'),K:ramp('#8C93A6')});
+const FX={e:OL,b:'#F2A08F'};
+const cache={};function spr(wi,pi,sc){const k=wi+'_'+pi+'_'+sc;if(!cache[k]){const g=newGrid();W[wi].poses[pi].f(g);cache[k]=shadeMask(g.map(r=>r.join('')),MAT(sc),FX);}return cache[k];}
+function fx(x,e,ox,oy){if(!e)return;const c=e.c,cx=ox+c.x+1,cy=oy+c.y+1;
+if(e.t=='smear'){const[R1,R2]=e.r;for(let dy=-R2;dy<=R2;dy++)for(let dx=-R2;dx<=R2;dx++){const d=Math.hypot(dx,dy),a=Math.atan2(dy,dx);if(a<e.a[0]||a>e.a[1])continue;let f=(a-e.a[0])/(e.a[1]-e.a[0]);if(e.rev)f=1-f;const th=(R2-R1)*Math.sin(f*Math.PI);if(d>R2||d<R2-th-.5)continue;x.fillStyle=d>R2-1?'#C9A24A':d>R2-2.2?'#FFE08A':'#FFF8E7';x.fillRect(cx+dx,cy+dy,1,1);}}
+if(e.t=='spark'){[[0,-3],[3,0],[-3,1],[2,-2],[-2,-2]].forEach(([a,b],i)=>{x.fillStyle=i%2?'#9EE3FF':'#FFF8E7';x.fillRect(cx+a,cy+b,1,1);});}
+if(e.t=='bolt'){x.fillStyle='#4FA3C8';x.fillRect(cx-6,cy,5,1);x.fillStyle='#9EE3FF';x.fillRect(cx-3,cy,3,1);x.fillRect(cx-1,cy-1,3,3);x.fillStyle='#FFF8E7';x.fillRect(cx,cy,1,1);x.fillStyle='#9EE3FF';x.fillRect(cx+2,cy-2,1,1);x.fillRect(cx+2,cy+2,1,1);}
+if(e.t=='circle'){for(let dy=-3;dy<=3;dy++){const hw=Math.round(10*Math.sqrt(1-(dy/3.4)**2));x.fillStyle='#9EE3FF';x.fillRect(cx-hw,cy+dy,1,1);x.fillRect(cx+hw,cy+dy,1,1);if(Math.abs(dy)==3)x.fillRect(cx-hw,cy+dy,hw*2+1,1);}x.fillStyle='rgba(158,227,255,.35)';for(let dy=-2;dy<=2;dy++){const hw=Math.round(8*Math.sqrt(1-(dy/3)**2));for(let i=-hw;i<=hw;i++)if((i+dy)%2==0)x.fillRect(cx+i,cy+dy,1,1);}}
+if(e.t=='lines'){x.fillStyle='#FFF8E7';if(e.dir=='h'){x.fillRect(cx,cy-2,3,1);x.fillRect(cx+1,cy,4,1);x.fillRect(cx,cy+2,3,1);}else{x.fillRect(cx-2,cy,1,3);x.fillRect(cx,cy-1,1,4);x.fillRect(cx+2,cy,1,3);}}
+if(e.t=='throw'){x.fillStyle='rgba(255,248,231,.6)';x.fillRect(cx-6,cy,5,1);x.fillStyle='#D9DDE3';x.fillRect(cx,cy-1,1,1);x.fillRect(cx+1,cy,1,1);x.fillRect(cx+2,cy+1,1,1);x.fillStyle='#F5C542';x.fillRect(cx-1,cy-2,1,1);x.fillStyle='#FFF8E7';x.fillRect(cx+3,cy-2,1,1);x.fillRect(cx+3,cy+2,1,1);}}
+const rows=document.getElementById('rows');
+W.forEach((w,wi)=>{const t=document.createElement('p');t.textContent=w.n;t.style.cssText='font-size:14px;font-weight:500;color:var(--text-primary);margin:'+(wi?'12px':'0')+' 0 6px;';rows.appendChild(t);
+const row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;';rows.appendChild(row);
+w.poses.forEach((p,pi)=>{const s=spr(wi,pi,'#6FC3E8');const o=document.createElement('canvas');o.width=GW+2;o.height=GH+2;const ox=o.getContext('2d');
+ox.fillStyle='rgba(10,14,8,.35)';ox.fillRect(OX+3,OY+18,9,1);ox.fillRect(OX+2,OY+17,11,1);ox.drawImage(s,0,0);fx(ox,p.fx,0,0);
+const card=document.createElement('div');card.style.cssText='background:#2b3a24;border-radius:var(--border-radius-lg);padding:6px;';
+const c=document.createElement('canvas');const sc=4;c.width=(GW+2)*sc;c.height=(GH+2)*sc;c.style.cssText='width:100%;image-rendering:pixelated;display:block;';const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(o,0,0,c.width,c.height);card.appendChild(c);
+const l=document.createElement('div');l.textContent=p.n;l.style.cssText='font-size:12px;color:#e9f1df;text-align:center;margin-top:2px;';card.appendChild(l);row.appendChild(card);});});
+const rc=document.getElementById('real'),LW=4*38+4,LH=42,SC=3;rc.width=LW*SC;rc.height=LH*SC;const o=document.createElement('canvas');o.width=LW;o.height=LH;const g=o.getContext('2d');const rx=rc.getContext('2d');rx.imageSmoothingEnabled=false;
+const RF=ramp('#5F7A47'),RA=ramp('#66824D'),RW=ramp('#3E5434');const bgc=document.createElement('canvas');bgc.width=LW;bgc.height=LH;const b=bgc.getContext('2d');
+for(let x=0;x<LW;x++)for(let y=0;y<14;y++){const by=y%7,bx=(x+(Math.floor(y/7)%2?8:0))%16;let c=RW[1];if(by==6||bx==0)c=RW[3];else if(by==0)c=RW[0];else if(by==5||bx==15)c=RW[2];if(y>10)c=(x+y)%2?RW[3]:RW[2];b.fillStyle=c;b.fillRect(x,y,1,1);}
+for(let tz=0;tz<3;tz++)for(let tx=0;tx<11;tx++){const R=(tx+tz)%2?RF:RA;for(let y=0;y<10;y++)for(let x=0;x<16;x++){let c=R[1];if(y==0)c=R[0];if(y==9||x==15)c=R[2];if(x==0&&y>0)c=R[0];b.fillStyle=c;b.fillRect(tx*16+x,14+tz*10+y,1,1);}}
+const cols=['#6FC3E8','#F2C94C','#8FD16A','#F28DB2'],dur=[.7,.15,.3,.35];let t0=performance.now();
+function loop(now){g.drawImage(bgc,0,0);const t=(now-t0)/1000;
+W.forEach((w,wi)=>{const lt=(t+wi*.37)%(dur.reduce((a,b2)=>a+b2,0));let acc=0,pi=0;for(let k=0;k<4;k++){if(lt<acc+dur[k]){pi=k;break;}acc+=dur[k];}
+const s=spr(wi,pi,cols[wi]);const ox=4+wi*38-OX+4,oy=36-(OY+17);g.fillStyle='rgba(10,14,8,.4)';g.fillRect(ox+OX+3,oy+OY+18,9,1);g.fillRect(ox+OX+2,oy+OY+17,11,1);g.drawImage(s,ox,oy);if(pi>=2||w.poses[pi].fx&&w.poses[pi].fx.t=='spark')fx(g,w.poses[pi].fx,ox,oy);});
+rx.drawImage(o,0,0,LW*SC,LH*SC);requestAnimationFrame(loop);}requestAnimationFrame(loop);
+</script>
+</body></html>

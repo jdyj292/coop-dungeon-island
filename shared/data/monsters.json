@@ -1,0 +1,459 @@
+{
+  "_note": "몬스터 정의. 층별 실제 값(1층 기준치). 실행 중 보정은 인원 체력 배율만. 형식은 docs/data.md",
+  "mushroom": {
+    "name": "통통버섯",
+    "floor": 1,
+    "rank": "normal",
+    "sprite": "mushroom",
+    "hp": 60,
+    "weight": "light",
+    "hurtbox": {
+      "width": 12,
+      "height": 12,
+      "depth": 8
+    },
+    "move": {
+      "x": 30,
+      "y": 20,
+      "style": "hop"
+    },
+    "detectRange": 80,
+    "usesToken": true,
+    "superArmor": "none",
+    "ai": {
+      "type": "melee",
+      "preferRange": [
+        0,
+        16
+      ]
+    },
+    "attacks": [
+      {
+        "id": "mushroom_slam",
+        "phases": {
+          "windup": 0.6,
+          "active": 0.15,
+          "recovery": 0.5
+        },
+        "damage": 60,
+        "hitbox": {
+          "forward": 6,
+          "width": 10,
+          "depth": 10,
+          "z": "ground"
+        },
+        "strength": "light",
+        "move": {
+          "distance": 16,
+          "during": "active"
+        },
+        "telegraph": {
+          "type": "shake"
+        },
+        "cooldown": 1.5
+      }
+    ],
+    "pattern": {
+      "type": "choose",
+      "rules": [
+        {
+          "attack": "mushroom_slam",
+          "range": [
+            0,
+            20
+          ]
+        }
+      ]
+    },
+    "reward": {
+      "coins": [
+        6,
+        9
+      ],
+      "exp": 8,
+      "material": 0.15
+    }
+  },
+  "boar": {
+    "name": "아기 멧돼지",
+    "floor": 1,
+    "rank": "normal",
+    "sprite": "boar",
+    "hp": 80,
+    "weight": "medium",
+    "hurtbox": {
+      "width": 16,
+      "height": 12,
+      "depth": 10
+    },
+    "move": {
+      "x": 40,
+      "y": 25,
+      "style": "walk"
+    },
+    "detectRange": 96,
+    "usesToken": true,
+    "superArmor": "none",
+    "ai": {
+      "type": "charger",
+      "preferRange": [
+        32,
+        96
+      ]
+    },
+    "attacks": [
+      {
+        "id": "boar_charge",
+        "phases": {
+          "windup": 0.8,
+          "active": 0.6,
+          "recovery": 0.4
+        },
+        "damage": 120,
+        "hitbox": {
+          "forward": 0,
+          "width": 14,
+          "depth": 12,
+          "z": "ground"
+        },
+        "strength": "heavy",
+        "move": {
+          "speed": 160,
+          "maxDistance": 96,
+          "during": "active",
+          "stopOnWall": true
+        },
+        "telegraph": {
+          "type": "shake+line",
+          "length": 96
+        },
+        "onWallHit": {
+          "selfStun": 1.0
+        },
+        "cooldown": 2.5
+      }
+    ],
+    "pattern": {
+      "type": "choose",
+      "rules": [
+        {
+          "attack": "boar_charge",
+          "range": [
+            24,
+            96
+          ],
+          "alignDepth": 6
+        }
+      ]
+    },
+    "reward": {
+      "coins": [
+        6,
+        9
+      ],
+      "exp": 8,
+      "material": 0.15
+    }
+  },
+  "sporeflower": {
+    "name": "포자꽃",
+    "floor": 1,
+    "rank": "normal",
+    "sprite": "sporeflower",
+    "hp": 40,
+    "weight": "fixed",
+    "hurtbox": {
+      "width": 12,
+      "height": 14,
+      "depth": 8
+    },
+    "move": null,
+    "detectRange": 112,
+    "usesToken": true,
+    "superArmor": "none",
+    "ai": {
+      "type": "turret"
+    },
+    "attacks": [
+      {
+        "id": "spore_shot",
+        "phases": {
+          "windup": 0.5,
+          "active": 0.05,
+          "recovery": 1.45
+        },
+        "damage": 50,
+        "projectile": {
+          "speed": 60,
+          "range": 112,
+          "radius": 3,
+          "pierce": false,
+          "reflectable": true
+        },
+        "strength": "light",
+        "flags": [
+          "projectile"
+        ],
+        "telegraph": {
+          "type": "glow"
+        },
+        "cooldown": 0
+      }
+    ],
+    "pattern": {
+      "type": "choose",
+      "rules": [
+        {
+          "attack": "spore_shot",
+          "range": [
+            0,
+            112
+          ],
+          "alignDepth": 10
+        }
+      ]
+    },
+    "reward": {
+      "coins": [
+        6,
+        9
+      ],
+      "exp": 8,
+      "material": 0.15
+    }
+  },
+  "capknight": {
+    "name": "갓버섯 기사",
+    "floor": 1,
+    "rank": "elite",
+    "sprite": "capknight",
+    "hp": 300,
+    "weight": "heavy",
+    "hurtbox": {
+      "width": 22,
+      "height": 22,
+      "depth": 12
+    },
+    "move": {
+      "x": 30,
+      "y": 20,
+      "style": "walk"
+    },
+    "detectRange": 96,
+    "usesToken": false,
+    "superArmor": "attack",
+    "ai": {
+      "type": "melee",
+      "preferRange": [
+        0,
+        28
+      ]
+    },
+    "attacks": [
+      {
+        "id": "capknight_slam",
+        "phases": {
+          "windup": 1.0,
+          "active": 0.1,
+          "recovery": 1.0
+        },
+        "damage": 160,
+        "area": {
+          "shape": "circle",
+          "at": [
+            20,
+            0
+          ],
+          "radius": 24,
+          "z": "ground"
+        },
+        "strength": "heavy",
+        "telegraph": {
+          "type": "area"
+        },
+        "cooldown": 1.2
+      }
+    ],
+    "pattern": {
+      "type": "choose",
+      "rules": [
+        {
+          "attack": "capknight_slam",
+          "range": [
+            0,
+            32
+          ]
+        }
+      ]
+    },
+    "reward": {
+      "coins": [
+        40,
+        40
+      ],
+      "exp": 30,
+      "material": 1.0
+    }
+  },
+  "mossbear": {
+    "name": "졸린 이끼곰",
+    "floor": 1,
+    "rank": "boss",
+    "sprite": "mossbear",
+    "hp": 3000,
+    "weight": "boss",
+    "hurtbox": {
+      "width": 56,
+      "height": 42,
+      "depth": 24
+    },
+    "move": {
+      "x": 28,
+      "y": 18,
+      "style": "walk"
+    },
+    "detectRange": 999,
+    "usesToken": false,
+    "superArmor": "always",
+    "ai": {
+      "type": "boss",
+      "idleBetween": [
+        0.6,
+        1.0
+      ]
+    },
+    "attacks": [
+      {
+        "id": "bear_paw",
+        "phases": {
+          "windup": 0.8,
+          "active": 0.12,
+          "recovery": 0.6
+        },
+        "damage": 180,
+        "area": {
+          "shape": "circle",
+          "at": [
+            24,
+            0
+          ],
+          "radius": 28,
+          "z": "ground"
+        },
+        "strength": "heavy",
+        "telegraph": {
+          "type": "area"
+        },
+        "fx": {
+          "grade": "heavy",
+          "shake": "vertical"
+        }
+      },
+      {
+        "id": "bear_roll",
+        "phases": {
+          "windup": 0.6,
+          "active": 2.5,
+          "recovery": 0.5
+        },
+        "damage": 150,
+        "hitbox": {
+          "forward": 0,
+          "width": 40,
+          "depth": 24,
+          "z": "ground"
+        },
+        "strength": "heavy",
+        "move": {
+          "speed": 180,
+          "maxDistance": 400,
+          "during": "active",
+          "stopOnWall": true
+        },
+        "telegraph": {
+          "type": "shake+line",
+          "length": 400
+        },
+        "onWallHit": {
+          "groggy": true
+        }
+      },
+      {
+        "id": "bear_yawn",
+        "phases": {
+          "windup": 0.8,
+          "active": 0.1,
+          "recovery": 0.6
+        },
+        "damage": 0,
+        "zone": {
+          "shape": "circle",
+          "at": [
+            0,
+            0
+          ],
+          "radius": 40,
+          "duration": 6,
+          "effect": {
+            "type": "slow",
+            "amount": 0.5
+          }
+        },
+        "telegraph": {
+          "type": "glow"
+        }
+      }
+    ],
+    "pattern": {
+      "type": "loop",
+      "phases": [
+        {
+          "until": "hp<0.5",
+          "sequence": [
+            "bear_paw",
+            "bear_paw",
+            "bear_roll"
+          ]
+        },
+        {
+          "sequence": [
+            "bear_paw",
+            "bear_yawn",
+            "bear_roll",
+            "bear_paw",
+            "bear_roll"
+          ]
+        }
+      ]
+    },
+    "groggy": {
+      "duration": 3.0,
+      "superArmor": false,
+      "extend": {
+        "by": 1.0,
+        "max": 1,
+        "party": "hitsFromDistinctPlayers>=2",
+        "solo": "hitsBySinglePlayer>=15"
+      }
+    },
+    "reward": {
+      "coins": [
+        100,
+        100
+      ],
+      "exp": 60,
+      "material": 3,
+      "trophy": "trophy_mossbear",
+      "firstClear": {
+        "sp": 1,
+        "outfit": "floor1_outfit"
+      },
+      "skinDrop": {
+        "skin": "mossbear_{weapon}",
+        "chance": 0.05,
+        "pity": 20,
+        "perPlayer": true
+      }
+    }
+  }
+}

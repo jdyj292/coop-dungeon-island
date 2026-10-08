@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BGM 승인본</title>
+<!-- 2026-10 승인된 BGM 원본 (procedural_bgm_v10). 수정 금지: 엔진(engine.js + bgm.json)이 이 소리와 같아야 한다 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root{--surface-2:#fff;--border:rgba(0,0,0,.15);--border-accent:#378ADD;--text-secondary:#666;--text-accent:#185FA5}
+body{font-family:system-ui,sans-serif;max-width:420px;margin:24px auto;padding:0 16px;background:#f6f5f1}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+button{background:transparent;border:1px solid rgba(0,0,0,.3);cursor:pointer}
+</style></head><body>
+<h2 class="sr-only">섬, 던전, 보스전 배경음악 세 곡을 브라우저에서 합성해 재생하는 플레이어</h2>
+<style>
+.trk{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.trk.on{border:2px solid var(--border-accent)}
+.trk button{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+.trk .nm{font-size:15px;font-weight:500;margin:0}
+.trk .ds{font-size:13px;color:var(--text-secondary);margin:2px 0 0}
+.trk .st{font-size:12px;color:var(--text-accent);margin:4px 0 0;min-height:16px}
+</style>
+<div style="padding:0.5rem 0">
+<div class="trk" id="c0"><button id="b0" aria-label="섬 재생"><i class="ti ti-player-play" style="font-size:20px" aria-hidden="true"></i></button><div><p class="nm">섬 · 오후의 바닷바람</p><p class="ds">로파이 · 78 BPM · 변경 없음</p><p class="st" id="s0"></p></div></div>
+<div class="trk" id="c1"><button id="b1" aria-label="던전 재생"><i class="ti ti-player-play" style="font-size:20px" aria-hidden="true"></i></button><div><p class="nm">던전 1층 · 포자빛 숲길</p><p class="ds">신비로운 숲 · 96 BPM · 숲의 주제</p><p class="st" id="s1"></p></div></div>
+<div class="trk" id="c2"><button id="b2" aria-label="보스전 재생"><i class="ti ti-player-play" style="font-size:20px" aria-hidden="true"></i></button><div><p class="nm">보스전 · 깨어난 숲의 주인</p><p class="ds">시네마틱 · 100 BPM · 어두워진 숲의 주제</p><p class="st" id="s2"></p></div></div>
+<div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+<label for="vol" style="font-size:13px;color:var(--text-secondary)">음량</label>
+<input type="range" id="vol" min="0" max="100" step="1" value="70" style="flex:1">
+<span id="volo" style="font-size:13px;min-width:28px;text-align:right">70</span>
+</div>
+</div>
+<script>
+let ctx,master,dry,duck,rev,delIn,delay,noiseBuf,timer=null,cur=null,curId=-1,step=0,nextT=0,prevF=null;
+const NI={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function nf(n){const m=n.match(/^([A-G])(#|b)?(-?\d)$/);const st=NI[m[1]]+(m[2]=='#'?1:m[2]=='b'?-1:0);return 440*Math.pow(2,((+m[3]+1)*12+st-69)/12)}
+function init(){if(ctx)return;ctx=new (window.AudioContext||window.webkitAudioContext)();
+const comp=ctx.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;
+master=ctx.createGain();master.gain.value=.7;master.connect(comp).connect(ctx.destination);
+dry=ctx.createGain();dry.connect(master);duck=ctx.createGain();duck.connect(master);
+rev=ctx.createConvolver();const len=ctx.sampleRate*3.2,ir=ctx.createBuffer(2,len,ctx.sampleRate);
+for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5)}
+rev.buffer=ir;const rg=ctx.createGain();rg.gain.value=.55;rev.connect(rg).connect(master);
+delIn=ctx.createGain();delay=ctx.createDelay(2);const fb=ctx.createGain();fb.gain.value=.36;const dl=ctx.createBiquadFilter();dl.type='lowpass';dl.frequency.value=2600;
+delIn.connect(delay);delay.connect(dl).connect(fb).connect(delay);const dg=ctx.createGain();dg.gain.value=.5;dl.connect(dg).connect(master);
+noiseBuf=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate);const nd=noiseBuf.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1}
+function route(n,o={}){let src=n;if(o.pan&&ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=o.pan;n.connect(p);src=p}src.connect(o.duck?duck:dry);if(o.rev){const s=ctx.createGain();s.gain.value=o.rev;src.connect(s).connect(rev)}if(o.del){const s=ctx.createGain();s.gain.value=o.del;src.connect(s).connect(delIn)}}
+function osc(type,f,t,d,det){const o=ctx.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t);if(det)o.detune.value=det;o.start(t);o.stop(t+d+.5);return o}
+function gn(t,a,v,d){const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d);return g}
+function sus(t,a,v,d,r){const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.setValueAtTime(v,t+Math.max(a,d-r));g.gain.linearRampToValueAtTime(0,t+d);return g}
+function noise(t,d){const s=ctx.createBufferSource();s.buffer=noiseBuf;s.start(t);s.stop(t+d+.05);return s}
+function filt(type,f,q){const b=ctx.createBiquadFilter();b.type=type;b.frequency.value=f;if(q)b.Q.value=q;return b}
+function vib(o,t,d,rate,depth,dl){const lf=osc('sine',rate,t,d),lg=ctx.createGain();lg.gain.setValueAtTime(0,t);lg.gain.linearRampToValueAtTime(depth,t+(dl||.4));lf.connect(lg).connect(o.frequency)}
+function rhodes(t,f,d,v){const c=osc('sine',f,t,d),m=osc('sine',f,t,d),mg=ctx.createGain();mg.gain.setValueAtTime(f*1.1,t);mg.gain.exponentialRampToValueAtTime(f*.04,t+.5);m.connect(mg).connect(c.frequency);const g=gn(t,.006,v,d);const tr=osc('sine',4.5,t,d),tg=ctx.createGain();tg.gain.value=v*.25;tr.connect(tg).connect(g.gain);c.connect(g);route(g,{rev:.4})}
+function sub(t,f,d,v,dk){const o=osc('sine',f,t,d),g=sus(t,.02,v,d,.2);o.connect(g);route(g,{duck:dk})}
+function kick(t,v,soft){const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(soft?110:140,t);o.frequency.exponentialRampToValueAtTime(soft?42:40,t+.14);o.start(t);o.stop(t+.6);const g=gn(t,.002,v,soft?.4:.45);o.connect(g);route(g)}
+function pump(t,sd,depth){duck.gain.cancelScheduledValues(t);duck.gain.setValueAtTime(depth||.3,t);duck.gain.linearRampToValueAtTime(1,t+sd*3)}
+function snare(t,v){const n=noise(t,.2),b=filt('bandpass',1300,.7),g=gn(t,.002,v,.12);n.connect(b).connect(g);route(g,{rev:.35});const o=osc('triangle',170,t,.1),g2=gn(t,.002,v*.8,.07);o.connect(g2);route(g2)}
+function bigSnare(t,v){const n=noise(t,.5),b=filt('bandpass',1100,.6),g=gn(t,.003,v,.32);n.connect(b).connect(g);route(g,{rev:.8});const o=osc('triangle',150,t,.2),g2=gn(t,.002,v*.9,.12);o.connect(g2);route(g2,{rev:.4})}
+function hat(t,v,cut,pan){const n=noise(t,.2),b=filt(cut?'bandpass':'highpass',cut||7500,cut?1.5:0),g=gn(t,.001,v,.035);n.connect(b).connect(g);route(g,{pan})}
+function shaker(t,v){const n=noise(t,.08),b=filt('bandpass',6500,1.2),g=gn(t,.008,v,.05);n.connect(b).connect(g);route(g,{rev:.2})}
+function rim(t,v){const o=osc('triangle',820,t,.05),g=gn(t,.001,v,.035);o.connect(g);route(g,{rev:.4,del:.15})}
+function tom(t,f,v){const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*.55,t+.28);o.start(t);o.stop(t+.6);const g=gn(t,.002,v,.38);o.connect(g);const n=noise(t,.05),b=filt('lowpass',800),g2=gn(t,.001,v*.35,.03);n.connect(b).connect(g2);route(g,{rev:.55});route(g2,{rev:.3})}
+function impact(t,v){const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(32,t+1.2);o.start(t);o.stop(t+2);const g=gn(t,.003,v,1.8);o.connect(g);route(g,{rev:.5});const n=noise(t,1.5),b=filt('lowpass',700),g2=gn(t,.003,v*.5,1.2);n.connect(b).connect(g2);route(g2,{rev:.7})}
+function riser(t,d,v,top){const n=noise(t,d),b=ctx.createBiquadFilter();b.type='bandpass';b.Q.value=3;b.frequency.setValueAtTime(250,t);b.frequency.exponentialRampToValueAtTime(top||6000,t+d);const g=ctx.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+d);g.gain.linearRampToValueAtTime(0,t+d+.02);n.connect(b).connect(g);route(g,{rev:.6})}
+function wind(t,d,v){const n=noise(t,d),b=ctx.createBiquadFilter();b.type='bandpass';b.Q.value=.8;b.frequency.setValueAtTime(400,t);b.frequency.linearRampToValueAtTime(1300,t+d*.5);b.frequency.linearRampToValueAtTime(450,t+d);const g=sus(t,d*.4,v,d,d*.4);n.connect(b).connect(g);route(g,{rev:.5})}
+function crk(t){const n=noise(t,.01),b=filt('highpass',3000),g=gn(t,.0005,.03+Math.random()*.03,.004);n.connect(b).connect(g);route(g)}
+function glock(t,f,v){const o=osc('sine',f,t,1.3),g=gn(t,.002,v,1.2);o.connect(g);const o2=osc('sine',f*2.76,t,.4),g2=gn(t,.002,v*.3,.3);o2.connect(g2);route(g,{rev:.7,del:.3});route(g2,{rev:.5})}
+function marimba(t,f,v,pan){const o=osc('sine',f,t,.6),g=gn(t,.002,v,.45);o.connect(g);const o2=osc('sine',f*4,t,.1),g2=gn(t,.001,v*.35,.05);o2.connect(g2);route(g,{rev:.35,del:.3,pan});route(g2,{rev:.2,pan})}
+function softLead(t,f,d,v){const o=osc('triangle',f,t,d+.5);vib(o,t,d+.5,5,f*.005,.01);const lp=filt('lowpass',2600),g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.04);g.gain.setValueAtTime(v*.75,t+d);g.gain.exponentialRampToValueAtTime(.0001,t+d+.4);o.connect(lp).connect(g);route(g,{rev:.45,del:.18})}
+function flute(t,f,d,v,noGlide){const from=noGlide?f:(prevF||f);prevF=f;const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(from,t);o.frequency.exponentialRampToValueAtTime(f,t+.05);o.start(t);o.stop(t+d+.5);
+const o2=ctx.createOscillator();o2.type='triangle';o2.frequency.setValueAtTime(from*2,t);o2.frequency.exponentialRampToValueAtTime(f*2,t+.05);o2.start(t);o2.stop(t+d+.5);const g2=ctx.createGain();g2.gain.value=.12;
+vib(o,t,d+.5,5.2,f*.008,Math.min(d,.6));
+const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.07);g.gain.setValueAtTime(v*.8,t+d);g.gain.exponentialRampToValueAtTime(.0001,t+d+.35);o.connect(g);o2.connect(g2).connect(g);
+const n=noise(t,d+.3),nb=filt('bandpass',f*2,4),ng=gn(t,.03,v*.5,.25);n.connect(nb).connect(ng);route(ng,{rev:.5});route(g,{rev:.6,del:.25})}
+function pad(t,ns,d,v,c1,c2){ns.forEach((n,i)=>{const f=nf(n);[-14,0,14].forEach(dt=>{const o=osc('sawtooth',f,t,d,dt),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(c1||1300,t);lp.frequency.linearRampToValueAtTime(c2||c1||1300,t+d);const g=sus(t,d*.3,v,d,d*.2);o.connect(lp).connect(g);route(g,{duck:1,rev:.45,pan:(i%2?.3:-.3)})})})}
+function pulse(t,f,v,cut,pan){const o=osc('sawtooth',f,t,.25),o2=osc('square',f,t,.25,8),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.Q.value=4;lp.frequency.setValueAtTime(cut*1.6,t);lp.frequency.exponentialRampToValueAtTime(cut*.5,t+.12);const g=gn(t,.002,v,.14);const m=ctx.createGain();m.gain.value=.5;o.connect(lp);o2.connect(m).connect(lp);lp.connect(g);route(g,{duck:1,del:.12,pan})}
+function mono(t,f,d,v){const from=prevF||f;prevF=f;const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.03);g.gain.setValueAtTime(v*.85,t+d);g.gain.exponentialRampToValueAtTime(.0001,t+d+.35);
+const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.Q.value=2;lp.frequency.setValueAtTime(2400,t);lp.frequency.exponentialRampToValueAtTime(1300,t+.4);lp.connect(g);
+[['sawtooth',-5,.45],['sawtooth',5,.45],['triangle',-1200,.5]].forEach(([ty,dt,gg])=>{const o=ctx.createOscillator();o.type=ty;o.detune.value=dt;o.frequency.setValueAtTime(from,t);o.frequency.exponentialRampToValueAtTime(f,t+.06);o.start(t);o.stop(t+d+.5);vib(o,t,d+.5,5,f*.006,Math.min(d,.5));const og=ctx.createGain();og.gain.value=gg;o.connect(og).connect(lp)});
+route(g,{rev:.4,del:.22})}
+function P(a){return a.map(bar=>bar?bar.split(' ').map(x=>{const [n,s,l]=x.split(':');return{f:nf(n),s:+s,l:+l}}):[])}
+function C(a){return a.map(([b,n])=>({b,n:n.split(' ')}))}
+const SPK=['D6','E6','F6','A6','C7','G6','D7'].map(nf);
+const AR=[0,2,1,3,2,1,3,2];
+const BC=C([['D2','F3 A3 C4 E4'],['Bb1','F3 A3 D4 E4'],['G1','F3 Bb3 D4 A4'],['A1','G3 C#4 E4 Bb4'],['D2','F3 A3 C4 E4'],['C2','E3 A3 C4 F4'],['Eb2','G3 Bb3 D4 A4'],['A1','G3 C#4 E4 A4']]);
+const T=[
+{bpm:78,swing:.18,dly:3,spb:16,
+ch:C([['F2','A3 C4 E4 G4'],['E2','G3 B3 D4 E4'],['D2','F3 A3 C4 E4'],['C2','E3 G3 B3 D4'],['F2','A3 C4 E4 G4'],['E2','G#3 B3 D4 E4'],['A1','G3 C4 E4'],['G1','F3 C4 D4 G4']]),
+mel:P(['E5:2:2 G5:4:2 A5:6:4 C6:11:3','B5:0:4 A5:4:2 G5:6:2 E5:10:4','F5:2:2 A5:4:2 C6:6:4 D6:11:3','B5:0:6 G5:8:2 E5:10:4','A5:2:2 C6:4:2 E6:6:4 D6:11:3','G#5:0:4 B5:4:2 D6:6:4 B5:12:2','C6:0:4 B5:4:2 A5:6:2 E5:10:4','D5:0:4 F5:4:2 G5:8:8']),
+fn(b,s,t,sd,ch){if(s==0||s==10)ch.n.forEach((n,i)=>rhodes(t+i*.03,nf(n),sd*(s==0?10:6),.08));
+if(s==0||s==7||s==10)sub(t,nf(ch.b),sd*(s==0?6:3),.3);if(s==0||s==7||s==10)kick(t,.5,1);if(s==4||s==12)snare(t,.13);
+if(s%2==0)hat(t,s%4==0?.03:.045);if((b==3||b==7)&&s>=8&&s%2==0)glock(t,nf(ch.n[(s/2)%ch.n.length])*4,.06);if(Math.random()<.45)crk(t+Math.random()*sd)},
+ld(t,f,d){softLead(t,f,d,.11)}},
+{bpm:96,swing:.1,dly:3,spb:16,
+ch:C([['D2','F3 A3 C4 E4'],['D2','G3 B3 D4 G4'],['Bb1','F3 A3 D4 E4'],['C2','G3 A3 C4 E4'],['D2','F3 A3 C4 E4'],['D2','G3 B3 D4 G4'],['Bb1','F3 A3 D4 E4'],['A1','G3 C#4 E4 A4']]),
+mel:P(['A5:4:4 C6:8:2 D6:10:6','B5:0:4 A5:4:2 G5:6:2 A5:8:8','F5:2:2 A5:4:2 E6:6:6 D6:12:4','C6:0:4 G5:4:4 A5:8:8','D6:2:2 E6:4:2 F6:6:6 E6:12:2 D6:14:2','B5:0:6 D6:6:2 G5:8:8','A5:0:2 E6:2:4 D6:6:2 C6:8:4 A5:12:4','C#6:0:6 B5:6:2 A5:8:8']),
+fn(b,s,t,sd,ch){if(s==0){pad(t,ch.n,sd*16,.009,1100,1400);if(b%2==0)wind(t,sd*32,.06)}
+if(b==0&&s==0)impact(t,.2);
+if(s==0)sub(t,nf(ch.b),sd*9,.24);if(s==12)sub(t,nf(ch.b),sd*4,.16);
+if(s==0||s==10)kick(t,.32,1);if(s==6||s==14)tom(t,240,.12);if(s==12)rim(t,.09);if(s%2==1)shaker(t,s%4==3?.03:.018);
+if(s%2==0)marimba(t,nf(ch.n[AR[s/2]%ch.n.length])*2,.07);
+if(Math.random()<.07)glock(t+Math.random()*sd,SPK[Math.floor(Math.random()*SPK.length)],.025)},
+ld(t,f,d){flute(t,f,d,.1)}},
+{bpm:100,swing:0,dly:3,spb:16,
+ch:BC.concat(BC),
+mel:P(['','','','',
+'A4:4:4 C5:8:2 D5:10:6','Bb4:0:4 A4:4:2 F4:6:2 A4:8:8','F4:2:2 A4:4:2 D5:6:6 Bb4:12:4','A4:0:16',
+'A4:0:4 C5:4:2 D5:6:10','Bb4:0:4 A4:4:2 F4:6:2 A4:8:8','F4:2:2 A4:4:2 E5:6:6 D5:12:4','C#5:0:4 Bb4:4:4 A4:8:8','D5:2:2 E5:4:2 F5:6:6 E5:12:2 D5:14:2','C5:0:6 E5:6:2 A4:8:8','Bb4:0:2 G5:2:4 F5:6:2 D5:8:4 Bb4:12:4','C#5:0:6 B4:6:2 A4:8:8']),
+fn(b,s,t,sd,ch){const full=b>=8,drums=b>=4;
+if(s==0){pad(t,ch.n,sd*16,.011,full?900:600,full?2000:1200);sub(t,nf(ch.b),sd*16,.2,1)}
+if(s==0&&b%4==0)wind(t,sd*64,full?.035:.055);
+if(b==0&&s==0||b==8&&s==0)impact(t,.5);
+const pp=[1,1,1.5,2,1,1,1.5,2,1,1,1.5,2,1,2,1.5,1];pulse(t,nf(ch.b)*2*pp[s],(s%4==0?.06:.04)*(drums?1:.8),full?1700:(drums?1200:800)+s*20,s%2?.35:-.35);
+if(s%2==0)marimba(t,nf(ch.n[AR[s/2]%ch.n.length])*(full?2:1),full?.035:.05,s%4?.3:-.3);
+if(!drums&&s%4==0)pump(t,sd,.6);
+if(b<4&&Math.random()<.05)glock(t+Math.random()*sd,SPK[Math.floor(Math.random()*SPK.length)]/2,.02);
+if(drums&&(s==0||s==10||(full&&s==7))){kick(t,.75);pump(t,sd,.3)}
+if(drums&&s==8)bigSnare(t,.2);
+if(full){if(s%2==1)hat(t,.018,5000,s%4==1?.4:-.4);if(s==12)tom(t,110,.26);if(s==14)tom(t,88,.26)}
+if((b==7||b==15)&&s>=8)tom(t,[150,140,128,118,108,98,90,82][s-8],.22+(s-8)*.02);
+if((b==6||b==14)&&s==0)riser(t,sd*32,.11,3000)},
+ld(t,f,d){if(step<128)flute(t,f,d,.1);else{mono(t,f,d,.11);flute(t,f,d,.045,1)}}}];
+function tick(){const sd=60/cur.bpm/4,spb=cur.spb,tot=spb*cur.ch.length;while(nextT<ctx.currentTime+.2){const b=Math.floor(step/spb),s=step%spb,t=nextT+(s%2==1?sd*cur.swing:0),ch=cur.ch[b];
+cur.fn(b,s,t,sd,ch);cur.mel[b].forEach(n=>{if(n.s==s)cur.ld(t,n.f,n.l*sd)});
+if(s==0){const id=curId,bb=b,nb=cur.ch.length;setTimeout(()=>{if(curId==id)document.getElementById('s'+id).textContent='재생 중 · '+(bb+1)+' / '+nb+'마디'},Math.max(0,(t-ctx.currentTime)*1000))}
+nextT+=sd;step=(step+1)%tot}}
+function setBtn(i,on){const c=document.getElementById('c'+i),b=document.getElementById('b'+i);c.classList.toggle('on',on);b.innerHTML='<i class="ti '+(on?'ti-player-pause':'ti-player-play')+'" style="font-size:20px" aria-hidden="true"></i>';if(!on)document.getElementById('s'+i).textContent=''}
+function stop(){if(timer)clearInterval(timer);timer=null;if(curId>=0)setBtn(curId,false);curId=-1;cur=null}
+function play(i){init();ctx.resume();stop();cur=T[i];curId=i;step=0;prevF=null;delay.delayTime.value=60/cur.bpm/4*cur.dly;nextT=ctx.currentTime+.1;setBtn(i,true);timer=setInterval(tick,25)}
+[0,1,2].forEach(i=>document.getElementById('b'+i).addEventListener('click',()=>{curId==i?stop():play(i)}));
+const vol=document.getElementById('vol');vol.addEventListener('input',()=>{document.getElementById('volo').textContent=vol.value;if(master)master.gain.value=vol.value/100});
+</script>
+</body></html>

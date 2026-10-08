@@ -1,0 +1,224 @@
+{
+  "_note": "모든 색의 단일 출처. 역할 설명과 규칙은 docs/art.md. 코드에서 hex 하드코딩 금지",
+  "global": {
+    "outline": "#2A2540",
+    "blobShadow": {
+      "color": "#000000",
+      "opacity": 0.35
+    },
+    "player": {
+      "skin": "#F6DCC0",
+      "hair": "#7A4E36",
+      "cloth": "#C9734B",
+      "pants": "#6B5444",
+      "metal": "#D9DDE3"
+    },
+    "playerColors": [
+      "#6FC3E8",
+      "#F2C94C",
+      "#8FD16A",
+      "#F28DB2"
+    ],
+    "semantic": {
+      "danger": "#FF5A3C",
+      "heal": "#7CE38B",
+      "superArmor": "#F5C542",
+      "interact": "#FFFFFF"
+    },
+    "allyFx": {
+      "white": "#FFF8E7",
+      "gold": "#FFE08A",
+      "sky": "#9EE3FF"
+    },
+    "damageText": {
+      "own": "#FFFFFF",
+      "ownSkill": "#FFE08A",
+      "ally": "#B8B2A6"
+    },
+    "materials": {
+      "tunic": "#C9734B",
+      "leather": "#8a5a36",
+      "shorts": "#6B5444",
+      "boots": "#5A4636",
+      "robe": "#5D63B8",
+      "hood": "#3F7F86",
+      "vest": "#4A4558",
+      "darkPants": "#3E3B4E",
+      "armor": "#B8C2CC",
+      "cape": "#4F6FB0",
+      "gauntlet": "#8C93A6",
+      "wood": "#9A6B45",
+      "grip": "#5a3a2a",
+      "orb": "#9EE3FF",
+      "gold": "#F5C542",
+      "steel": "#D9DDE3",
+      "mouth": "#B5555A",
+      "blush": "#F2A08F"
+    },
+    "hairColors": [
+      "#7A4E36",
+      "#4E3A3A",
+      "#D9A35B",
+      "#8C5A8C"
+    ],
+    "ui": {
+      "panel": "#1d1830",
+      "panelBorder": "#4b4268",
+      "panelInner": "#2A2540",
+      "barTrack": "#3a3550",
+      "hp": "#7CE38B",
+      "hpDark": "#5fbf6e",
+      "mp": "#6FC3E8",
+      "mpDark": "#4fa3c8",
+      "bossHp": "#FF9A3C",
+      "bossHpDark": "#E8823A",
+      "keyLabel": "#b9b0dc",
+      "textDim": "#cfc8e8",
+      "coin": "#F5C542",
+      "groggy": "#9EE3FF",
+      "placeOk": "#7CE38B",
+      "placeBlocked": "#3C3C50",
+      "gridDot": "#ffffff"
+    }
+  },
+  "island": {
+    "grass": "#8DAA68",
+    "grassAlt": "#9BB874",
+    "foliage": "#5E8A48",
+    "sand": "#EBD9A8",
+    "path": "#CDB894",
+    "water": "#6FB7C9",
+    "waterDeep": "#4E97AD",
+    "wood": "#A7764E",
+    "roof": "#D9774B",
+    "stone": "#B8B0A0",
+    "dirt": "#9C7A58",
+    "awningA": "#7FC9E0",
+    "awningB": "#F4E8D0",
+    "iron": "#4E4A5A",
+    "mailbox": "#7FA4C8",
+    "foliageAlt": "#6E9A55",
+    "foam": "#ffffff"
+  },
+  "floors": {
+    "1": {
+      "name": "버섯 숲",
+      "bg": {
+        "floor": "#5F7A47",
+        "floorAlt": "#66824D",
+        "wall": "#3E5434",
+        "wallDark": "#2F4128",
+        "prop": "#4A6339"
+      },
+      "monster": {
+        "mushroomCap": "#E8834A",
+        "mushroomStem": "#F4E8D0",
+        "cream": "#FFF3DE",
+        "capUnder": "#EAD7BE",
+        "boar": "#C4936A",
+        "boarBelly": "#EED9BE",
+        "boarNose": "#7A5040",
+        "hoof": "#5A4636",
+        "moss": "#6E9A55",
+        "mossLight": "#8FBF6A",
+        "sporeFlower": "#D97BA6",
+        "sporeCenter": "#F7E3B5",
+        "sporeGlow": "#FFF6C8",
+        "stemGreen": "#5E8A48",
+        "leaf": "#7DB35A",
+        "eliteCap": "#A97BC4",
+        "eliteShield": "#B892D6",
+        "bear": "#BFA07A",
+        "bearBelly": "#F0E0C4",
+        "bearNose": "#3a2a2a",
+        "tongue": "#E88AA0",
+        "sleepCloud": "#C9C3E8"
+      },
+      "env": {
+        "glow": "#F3E6A0"
+      }
+    },
+    "2": {
+      "name": "수정 동굴",
+      "bg": {
+        "floor": "#3A4466",
+        "floorAlt": "#404B70",
+        "wall": "#2A3150",
+        "wallDark": "#1F2540",
+        "prop": "#323A5C"
+      },
+      "monster": {
+        "mole": "#8C7A6B",
+        "bat": "#6A5A8C",
+        "golem": "#7FB7C9",
+        "elite": "#C7A6F0"
+      },
+      "env": {
+        "crystal": "#5FD4C8",
+        "crystalAlt": "#A68BE0",
+        "torch": "#FFB45C"
+      }
+    },
+    "3": {
+      "name": "지하 호수",
+      "bg": {
+        "floor": "#4F6E6E",
+        "floorAlt": "#567575",
+        "wall": "#3A5555",
+        "wallDark": "#2C4444",
+        "prop": "#5E6C68"
+      },
+      "monster": {
+        "jelly": "#E7A4D8",
+        "frog": "#7DB35A",
+        "crab": "#C98A4E",
+        "eliteCrab": "#B0703A"
+      },
+      "env": {
+        "water": "#4FA3B5",
+        "waterShallow": "#6CBAC4"
+      }
+    },
+    "4": {
+      "name": "용암 갱도",
+      "bg": {
+        "floor": "#4A3A36",
+        "floorAlt": "#514039",
+        "wall": "#33272A",
+        "wallDark": "#2E2427",
+        "prop": "#8A6040"
+      },
+      "monster": {
+        "imp": "#FFB04A",
+        "mole": "#7A6A5C",
+        "slime": "#E8A03A",
+        "elite": "#6F7480"
+      },
+      "env": {
+        "lava": "#FF9A3C",
+        "lavaGlow": "#FFC266",
+        "rail": "#8E8E92"
+      }
+    },
+    "5": {
+      "name": "고대 유적",
+      "bg": {
+        "floor": "#6A6E66",
+        "floorAlt": "#72766D",
+        "wall": "#4C5450",
+        "wallDark": "#3A413E",
+        "prop": "#6E8C5A"
+      },
+      "monster": {
+        "doll": "#B8A890",
+        "mask": "#E9E2D0",
+        "archer": "#8C8C84",
+        "elite": "#5A8A88"
+      },
+      "env": {
+        "gold": "#E8C35A",
+        "shadowTeal": "#3E5A58"
+      }
+    }
+  }
+}

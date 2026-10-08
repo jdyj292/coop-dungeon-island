@@ -1,0 +1,190 @@
+{
+  "_note": "기본 몸. 좌표는 '기본 상자'(가로 12 × 세로 17, 0행 = 머리 위 삐침 줄) 기준. 발밑 중앙 = (6,16). 상태: 확정(2026-10 검토)",
+  "box": [
+    12,
+    17
+  ],
+  "foot": [
+    6,
+    16
+  ],
+  "shoulders": {
+    "front": [
+      9,
+      11
+    ],
+    "back": [
+      2,
+      11
+    ]
+  },
+  "defaultHands": {
+    "front": [
+      9,
+      12
+    ],
+    "back": [
+      2,
+      12
+    ]
+  },
+  "layerOrder": [
+    "weapon_back",
+    "cape",
+    "back_arm",
+    "bottom",
+    "top",
+    "neck",
+    "head",
+    "face",
+    "hair",
+    "hat",
+    "shoulder",
+    "front_arm",
+    "weapon"
+  ],
+  "parts": [
+    {
+      "layer": "head",
+      "offset": [
+        0,
+        1
+      ],
+      "rows": [
+        "...ssssss...",
+        "..ssssssss..",
+        ".ssssssssss.",
+        ".ssssssssss.",
+        "sssssssssss.",
+        "sssssssssss.",
+        "sssssssssss.",
+        ".ssssssssss.",
+        "....ssssss.."
+      ]
+    },
+    {
+      "layer": "neck",
+      "offset": [
+        0,
+        10
+      ],
+      "rows": [
+        "..kkkkkkkk..",
+        ".k.........."
+      ]
+    }
+  ],
+  "faces": {
+    "normal": {
+      "offset": [
+        0,
+        6
+      ],
+      "rows": [
+        "......E..E..",
+        "......E..E..",
+        ".....B...B.."
+      ]
+    },
+    "hurt": {
+      "offset": [
+        0,
+        6
+      ],
+      "rows": [
+        ".....EE.....",
+        ".......EE...",
+        ".....B...B..",
+        "............"
+      ]
+    },
+    "smile": {
+      "offset": [
+        0,
+        6
+      ],
+      "rows": [
+        "......E...E.",
+        ".....E.E..E.",
+        ".....B...B..",
+        "......MM...."
+      ]
+    }
+  },
+  "hairStyles": {
+    "short": [
+      {
+        "layer": "hair",
+        "offset": [
+          0,
+          0
+        ],
+        "rows": [
+          "........h...",
+          "...hhhhhh...",
+          "..hhhhhhhh..",
+          ".hhhhhhhhhh.",
+          ".hhhhhh.hhh.",
+          "hhhh........",
+          "hhh.........",
+          "hhh.........",
+          ".hh........."
+        ]
+      }
+    ],
+    "ponytail": [
+      {
+        "layer": "hair",
+        "offset": [
+          0,
+          1
+        ],
+        "rows": [
+          "...hhhhhh...",
+          "..hhhhhhhh..",
+          ".hhhhhhhhhh.",
+          ".hhhhhh.hhh.",
+          "hhhh........",
+          "hhh.........",
+          "hhh.........",
+          ".hh........."
+        ]
+      },
+      {
+        "layer": "hair",
+        "offset": [
+          -3,
+          4
+        ],
+        "rows": [
+          "..h",
+          ".hh",
+          ".h.",
+          "hh.",
+          ".hh"
+        ]
+      }
+    ],
+    "spiky": [
+      {
+        "layer": "hair",
+        "offset": [
+          -1,
+          -1
+        ],
+        "rows": [
+          ".....h..h....",
+          "...h.h.hh.h..",
+          "....hhhhhh.h.",
+          "...hhhhhhhhh.",
+          "..hhhhhhhhhhh",
+          "h.hhhhhh.hhh.",
+          "hhhhh........",
+          ".hhh.........",
+          ".hhh.........",
+          "..hh........."
+        ]
+      }
+    ]
+  }
+}

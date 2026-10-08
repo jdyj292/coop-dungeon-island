@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전투 효과음 승인 데모 (action 버스, 구 던파식)</title>
+<!-- 대화 중 승인·검토된 원본 데모 (2026-10). 수정 금지. 기준 자료로만 사용 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>:root{--surface-0:#f6f5f1;--surface-1:#f1efe8;--surface-2:#fff;--border:rgba(0,0,0,.15);--border-strong:rgba(0,0,0,.3);--border-accent:#378ADD;--text-primary:#222;--text-secondary:#666;--text-muted:#999;--text-accent:#185FA5;--text-danger:#a32d2d;--bg-accent:#E6F1FB;--radius:8px;--font-mono:monospace}
+body{font-family:system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;background:var(--surface-0);color:var(--text-primary)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+button{background:transparent;border:1px solid var(--border-strong);border-radius:var(--radius);padding:6px 10px;cursor:pointer}
+.t,.th{fill:#222}.ts{fill:#666}</style></head><body>
+<h2 class="sr-only">날카로운 휘두름과 금속성·찌그러진 타격음 위주의 액션 RPG 스타일 합성 효과음 샘플러</h2>
+<div style="padding:.5rem 0">
+<div id="g"></div>
+<div style="display:flex;align-items:center;gap:12px;margin-top:14px"><label style="font-size:14px;color:var(--text-secondary)">볼륨</label><input id="vol" type="range" min="0" max="100" step="1" value="55" style="flex:1"><span id="vo" style="font-size:14px;min-width:32px">55</span></div>
+</div>
+<script>
+let A=null,M=null,RV=null,DS=null;
+function curve(k){const n=1024,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=(1+k)*x/(1+k*Math.abs(x));}return c;}
+function ctx(){if(!A){A=new (window.AudioContext||window.webkitAudioContext)();const c=A.createDynamicsCompressor();c.threshold.value=-12;c.ratio.value=8;c.attack.value=.002;c.release.value=.12;M=A.createGain();M.gain.value=.55;M.connect(c);c.connect(A.destination);
+const len=A.sampleRate*.6,ir=A.createBuffer(2,len,A.sampleRate);for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,4);}const cv=A.createConvolver();cv.buffer=ir;RV=A.createGain();RV.gain.value=.22;RV.connect(cv);cv.connect(M);
+DS=A.createWaveShaper();DS.curve=curve(18);DS.oversample='4x';const dg=A.createGain();dg.gain.value=.5;DS.connect(dg);dg.connect(M);}
+if(A.state==='suspended')A.resume();return A;}
+document.getElementById('vol').oninput=e=>{document.getElementById('vo').textContent=e.target.value;if(M)M.gain.value=e.target.value/100;};
+function out(n,o){o=o||{};if(o.dist)n.connect(DS);else n.connect(M);if(o.wet){const g=A.createGain();g.gain.value=o.wet;n.connect(g);g.connect(RV);}}
+function env(p,t,a,d,v){p.setValueAtTime(0.0001,t);p.exponentialRampToValueAtTime(v,t+a);p.exponentialRampToValueAtTime(0.0001,t+a+d);}
+function tone(type,f0,f1,dur,v,at,o){o=o||{};const a=ctx(),t=a.currentTime+(at||0),osc=a.createOscillator(),g=a.createGain();osc.type=type;osc.frequency.setValueAtTime(f0,t);osc.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur*(o.bend||1));env(g.gain,t,o.atk||.002,dur,v);
+let n=osc;if(o.lp){const f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=o.lp;osc.connect(f);n=f;}n.connect(g);out(g,o);osc.start(t);osc.stop(t+dur+.1);}
+let NB=null;function nbuf(){if(!NB){NB=A.createBuffer(1,A.sampleRate,A.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,v,f0,f1,type,at,q,o){o=o||{};const a=ctx(),t=a.currentTime+(at||0),s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=nbuf();s.loop=true;s.playbackRate.value=o.rate||1;f.type=type||'bandpass';f.Q.value=q||1;f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(Math.max(30,f1),t+dur);
+if(o.swell){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+dur*.55);g.gain.exponentialRampToValueAtTime(.0001,t+dur);}else env(g.gain,t,.001,dur,v);s.connect(f);f.connect(g);out(g,o);s.start(t);s.stop(t+dur+.1);}
+function metal(f,dur,v,at,wet){[1,2.76,5.4,8.93].forEach((r,i)=>tone('sine',f*r,f*r*.995,dur/(1+i*.6),v/(1+i*.8),at,{wet:wet??.35}));}
+function click(v,at){noise(.012,v,6000,3000,'highpass',at,.7);}
+function boom(f0,dur,v,at){tone('sine',f0,f0*.3,dur,v,at,{bend:.45,dist:true});tone('sine',f0*.5,f0*.25,dur*1.3,v*.8,at,{bend:.6,lp:200});}
+const S={
+swing:at=>{noise(.13,.5,1200,6500,'bandpass',at,2.5,{swell:1});},
+swingHeavy:at=>{noise(.24,.55,500,4200,'bandpass',at,2.2,{swell:1,wet:.12});noise(.24,.3,200,900,'lowpass',at,1,{swell:1});},
+hitLight:at=>{click(.7,at);noise(.06,.55,3500,1200,'bandpass',at,.8,{dist:true});tone('square',240,90,.07,.25,at,{dist:true,lp:2200});metal(980,.16,.12,at+.003,.25);},
+hitHeavy:at=>{click(.9,at);noise(.1,.7,2800,500,'bandpass',at,.7,{dist:true});boom(140,.32,.9,at);metal(620,.38,.18,at+.004,.4);noise(.28,.25,600,120,'lowpass',at+.03,1,{wet:.25});},
+launch:at=>{click(.6,at);noise(.2,.5,700,5500,'bandpass',at,3,{swell:1});tone('sawtooth',160,720,.18,.12,at,{lp:2500,dist:true});},
+bounce:at=>{click(.4,at);boom(120,.14,.6,at);},
+down:at=>{click(.5,at);boom(95,.4,1,at);noise(.4,.35,1200,150,'lowpass',at,1,{wet:.3});},
+backstep:at=>{noise(.1,.4,2500,7000,'highpass',at,1,{swell:1});tone('sine',900,1600,.06,.08,at);},
+dash:at=>{noise(.2,.4,900,3500,'bandpass',at,2,{swell:1});noise(.06,.2,400,200,'lowpass',at,1);},
+slashSkill:at=>{noise(.18,.55,900,7000,'bandpass',at,3,{swell:1,wet:.2});click(.8,at+.16);metal(1320,.5,.2,at+.16,.5);noise(.12,.5,4000,900,'bandpass',at+.16,.8,{dist:true});},
+fireburst:at=>{noise(.5,.35,3000,300,'lowpass',at,1,{swell:1});click(.9,at+.45);boom(110,.6,1,at+.45);noise(.7,.5,1800,120,'lowpass',at+.45,.8,{dist:true,wet:.4});},
+iceField:at=>{[2400,3100,3800,2900,4200].forEach((f,i)=>metal(f,.25,.07,at+i*.035,.5));noise(.3,.25,6000,2500,'highpass',at,1);},
+mushWindup:at=>{for(let i=0;i<5;i++)noise(.04,.25,600,400,'bandpass',at+i*.06,3);},
+boarCharge:at=>{tone('sawtooth',110,70,.45,.25,at,{lp:600,dist:true});for(let i=0;i<4;i++)boom(90,.07,.35,at+i*.1);},
+spore:at=>{noise(.08,.35,1500,700,'bandpass',at,2);tone('sine',500,250,.1,.15,at);},
+bossRoar:at=>{tone('sawtooth',105,62,.9,.35,at,{lp:900,atk:.05,dist:true,wet:.4});tone('sawtooth',109,65,.9,.25,at,{lp:700,atk:.05,dist:true});noise(.8,.3,800,200,'lowpass',at,1,{swell:1,wet:.3});},
+guard:at=>{click(.8,at);metal(760,.45,.3,at,.5);},
+coin:at=>{metal(1800,.15,.12,at,.2);metal(2400,.25,.12,at+.06,.25);},
+potion:at=>{noise(.15,.2,800,1800,'bandpass',at,4);tone('sine',600,1400,.18,.15,at+.1,{wet:.3});},
+levelup:at=>{[[262,330,392],[349,440,523],[392,494,587,784]].forEach((ch,i)=>ch.forEach(f=>tone('sawtooth',f,f,i==2?.7:.18,.07,at+i*.16,{lp:2200,atk:.01,wet:.4})));metal(1568,.8,.1,at+.32,.6);},
+clear:at=>{[523,659,784].forEach((f,i)=>tone('sawtooth',f,f,.15,.08,at+i*.08,{lp:2400,wet:.3}));metal(1047,.6,.12,at+.24,.5);},
+uiClick:at=>{click(.4,at);tone('square',1400,1000,.025,.08,at,{lp:3000});},
+combo:()=>{S.swing(0);S.hitLight(.05);S.swing(.36);S.hitLight(.41);S.swingHeavy(.8);S.hitHeavy(.9);S.launch(.95);S.bounce(1.62);S.down(1.95);}};
+const G=[['전투',[['swing','휘두르기'],['swingHeavy','휘두르기 (강)'],['hitLight','타격 (약)'],['hitHeavy','타격 (강)'],['launch','띄우기'],['bounce','바운드'],['down','다운'],['backstep','백스텝'],['dash','달리기 시작'],['guard','막기']]],
+['스킬',[['slashSkill','검기 베기'],['fireburst','화염 폭발'],['iceField','얼음 장판']]],
+['몬스터',[['mushWindup','버섯 예고 (떨림)'],['boarCharge','멧돼지 돌진'],['spore','포자탄 발사'],['bossRoar','이끼곰 포효']]],
+['보상·UI',[['coin','코인 획득'],['potion','물약'],['levelup','레벨업'],['clear','방 클리어'],['uiClick','버튼']]],
+['조합',[['combo','대검 3연타 (데모와 같은 타이밍)']]]];
+const root=document.getElementById('g');G.forEach(([t,list],gi)=>{const p=document.createElement('p');p.textContent=t;p.style.cssText='font-size:13px;color:var(--text-secondary);margin:'+(gi?'14px':'0')+' 0 6px';root.appendChild(p);const d=document.createElement('div');d.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px';list.forEach(([k,n])=>{const b=document.createElement('button');b.innerHTML='<i class="ti ti-player-play" aria-hidden="true" style="margin-right:6px"></i>'+n;b.style.textAlign='left';b.onclick=()=>{ctx();S[k](0);};d.appendChild(b);});root.appendChild(d);});
+</script>
+</body></html>

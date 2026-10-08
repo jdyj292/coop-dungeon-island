@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./client/data/sprites/monsters.json)",
+      "Read(./client/public/maps/**)",
+      "Read(./client/public/assets/**)",
+      "Read(./node_modules/**)",
+      "Read(./**/node_modules/**)",
+      "Read(./**/dist/**)",
+      "Read(./**/*.sqlite)",
+      "Read(./.env)"
+    ]
+  }
+}

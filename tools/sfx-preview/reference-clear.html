@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UI·보상 효과음 승인 데모 (clear 버스, 맑은 소리)</title>
+<!-- 대화 중 승인·검토된 원본 데모 (2026-10). 수정 금지. 기준 자료로만 사용 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>:root{--surface-0:#f6f5f1;--surface-1:#f1efe8;--surface-2:#fff;--border:rgba(0,0,0,.15);--border-strong:rgba(0,0,0,.3);--border-accent:#378ADD;--text-primary:#222;--text-secondary:#666;--text-muted:#999;--text-accent:#185FA5;--text-danger:#a32d2d;--bg-accent:#E6F1FB;--radius:8px;--font-mono:monospace}
+body{font-family:system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;background:var(--surface-0);color:var(--text-primary)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+button{background:transparent;border:1px solid var(--border-strong);border-radius:var(--radius);padding:6px 10px;cursor:pointer}
+.t,.th{fill:#222}.ts{fill:#666}</style></head><body>
+<h2 class="sr-only">둥글고 맑은 아기자기한 RPG 스타일로 합성한 효과음 샘플러</h2>
+<div style="padding:.5rem 0">
+<div id="g"></div>
+<div style="display:flex;align-items:center;gap:12px;margin-top:14px"><label style="font-size:14px;color:var(--text-secondary)">볼륨</label><input id="vol" type="range" min="0" max="100" step="1" value="60" style="flex:1"><span id="vo" style="font-size:14px;min-width:32px">60</span></div>
+</div>
+<script>
+let A=null,M=null,RV=null;
+function ctx(){if(!A){A=new (window.AudioContext||window.webkitAudioContext)();const c=A.createDynamicsCompressor();c.threshold.value=-16;c.ratio.value=4;M=A.createGain();M.gain.value=.6;M.connect(c);c.connect(A.destination);
+const len=A.sampleRate*1.4,ir=A.createBuffer(2,len,A.sampleRate);for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);}const cv=A.createConvolver();cv.buffer=ir;RV=A.createGain();RV.gain.value=.28;RV.connect(cv);cv.connect(M);}
+if(A.state==='suspended')A.resume();return A;}
+document.getElementById('vol').oninput=e=>{document.getElementById('vo').textContent=e.target.value;if(M)M.gain.value=e.target.value/100;};
+function out(n,wet){n.connect(M);if(wet){const g=A.createGain();g.gain.value=wet;n.connect(g);g.connect(RV);}}
+function env(p,t,a,d,v){p.setValueAtTime(0.0001,t);p.exponentialRampToValueAtTime(v,t+a);p.exponentialRampToValueAtTime(0.0001,t+a+d);}
+function tone(type,f0,f1,dur,v,at,o){o=o||{};const a=ctx(),t=a.currentTime+(at||0),osc=a.createOscillator(),g=a.createGain();osc.type=type;osc.frequency.setValueAtTime(f0,t);osc.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur*(o.bend||1));env(g.gain,t,o.atk||.005,dur,v);
+let n=osc;if(o.lp){const f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=o.lp;osc.connect(f);n=f;}n.connect(g);out(g,o.wet);osc.start(t);osc.stop(t+dur+.1);}
+function bell(f,dur,v,at,o){o=o||{};const a=ctx(),t=a.currentTime+(at||0),c=a.createOscillator(),m=a.createOscillator(),mg=a.createGain(),g=a.createGain();c.type='sine';m.type='sine';c.frequency.value=f;m.frequency.value=f*(o.ratio||3.5);
+mg.gain.setValueAtTime(f*(o.idx||2.2),t);mg.gain.exponentialRampToValueAtTime(f*.05,t+dur*.6);m.connect(mg);mg.connect(c.frequency);env(g.gain,t,.003,dur,v);c.connect(g);out(g,o.wet??.5);c.start(t);m.start(t);c.stop(t+dur+.1);m.stop(t+dur+.1);}
+function marimba(f,dur,v,at,wet){tone('sine',f,f,dur,v,at,{wet:wet??.35});tone('sine',f*4,f*4,dur*.25,v*.35,at,{wet:wet??.35});tone('triangle',f*2,f*2,dur*.4,v*.15,at);}
+let NB=null;function nbuf(){if(!NB){NB=A.createBuffer(1,A.sampleRate,A.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}return NB;}
+function noise(dur,v,f0,f1,type,at,q,wet){const a=ctx(),t=a.currentTime+(at||0),s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=nbuf();s.loop=true;f.type=type||'bandpass';f.Q.value=q||1;f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(Math.max(30,f1),t+dur);env(g.gain,t,dur>.15?.03:.004,dur,v);s.connect(f);f.connect(g);out(g,wet);s.start(t);s.stop(t+dur+.1);}
+function thump(f0,f1,dur,v,at){tone('sine',f0,f1,dur,v,at,{bend:.5});tone('triangle',f0*2,f1*2,dur*.5,v*.3,at,{bend:.5});}
+const S={
+swing:at=>{noise(.16,.3,700,2600,'bandpass',at,2.2,.1);},
+swingHeavy:at=>{noise(.26,.38,350,1800,'bandpass',at,2,.15);tone('sine',260,140,.2,.12,at);},
+hitLight:at=>{thump(320,120,.11,.55,at);noise(.04,.25,2500,1200,'bandpass',at,1.2);bell(1760,.18,.07,at+.005,{wet:.4});},
+hitHeavy:at=>{thump(200,55,.24,.85,at);noise(.12,.35,1600,400,'bandpass',at,.9,.2);bell(1320,.35,.1,at+.01,{wet:.6,idx:3});tone('sine',90,40,.35,.5,at+.02,{lp:300});},
+launch:at=>{tone('sine',300,1100,.28,.28,at,{wet:.3});noise(.22,.18,900,3200,'bandpass',at,3,.2);bell(2093,.25,.05,at+.2);},
+bounce:at=>{thump(260,110,.12,.5,at);tone('sine',520,700,.08,.08,at+.04,{wet:.2});},
+down:at=>{thump(150,45,.32,.8,at);noise(.35,.25,900,200,'lowpass',at,1,.25);},
+backstep:at=>{tone('sine',500,1000,.1,.22,at,{wet:.25});noise(.12,.15,2000,5000,'bandpass',at,2);},
+dash:at=>{noise(.22,.25,700,2400,'bandpass',at,2,.15);},
+mushWindup:at=>{for(let i=0;i<4;i++)tone('triangle',420+i*30,380+i*30,.06,.12,at+i*.09,{wet:.15});},
+boarCharge:at=>{tone('sawtooth',140,90,.35,.12,at,{lp:700});[0,.11,.22,.33].forEach(d=>thump(180,90,.08,.3,at+d));},
+spore:at=>{tone('sine',380,900,.08,.25,at,{wet:.3});tone('sine',900,500,.12,.15,at+.07,{wet:.3});},
+bossRoar:at=>{tone('sawtooth',150,85,.8,.18,at,{lp:700,atk:.1,wet:.4});tone('triangle',155,88,.8,.22,at,{atk:.1,wet:.4});thump(90,40,.5,.5,at);},
+yawn:at=>{tone('sine',440,190,.9,.25,at,{atk:.2,wet:.5});tone('triangle',660,280,.8,.08,at+.05,{atk:.25,wet:.5});},
+coin:at=>{bell(1568,.18,.12,at,{idx:1.4});bell(2093,.35,.12,at+.07,{idx:1.4});},
+potion:at=>{[0,1,2].forEach(i=>tone('sine',500+i*180,700+i*180,.06,.2,at+i*.06,{wet:.3}));[1047,1319,1568].forEach((f,i)=>bell(f,.4,.06,at+.2+i*.05));},
+levelup:at=>{[523,659,784,1047,1319].forEach((f,i)=>marimba(f,.5,.28,at+i*.08));[2093,2637,3136].forEach((f,i)=>bell(f,.8,.05,at+.42+i*.06,{wet:.7}));},
+clear:at=>{[784,988,1175].forEach((f,i)=>marimba(f,.4,.25,at+i*.07));bell(1568,.7,.1,at+.21,{wet:.6});},
+click:at=>{marimba(1175,.12,.2,at,.1);},
+place:at=>{thump(220,120,.12,.45,at);marimba(784,.25,.18,at+.05);},
+combo:()=>{S.swing(0);S.hitLight(.04);S.swing(.36);S.hitLight(.40);S.swingHeavy(.82);S.hitHeavy(.88);S.launch(.95);S.bounce(1.62);S.down(1.95);}};
+const G=[['전투',[['swing','휘두르기'],['swingHeavy','휘두르기 (강)'],['hitLight','타격 (약)'],['hitHeavy','타격 (강)'],['launch','띄우기'],['bounce','바운드'],['down','다운'],['backstep','백스텝'],['dash','달리기 시작']]],
+['몬스터',[['mushWindup','버섯 예고 (떨림)'],['boarCharge','멧돼지 돌진'],['spore','포자탄 발사'],['bossRoar','이끼곰 포효'],['yawn','이끼곰 하품']]],
+['보상·UI',[['coin','코인 획득'],['potion','물약'],['levelup','레벨업'],['clear','방 클리어'],['click','버튼'],['place','장식 놓기']]],
+['조합',[['combo','대검 3연타 (데모와 같은 타이밍)']]]];
+const root=document.getElementById('g');G.forEach(([t,list],gi)=>{const p=document.createElement('p');p.textContent=t;p.style.cssText='font-size:13px;color:var(--text-secondary);margin:'+(gi?'14px':'0')+' 0 6px';root.appendChild(p);const d=document.createElement('div');d.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px';list.forEach(([k,n])=>{const b=document.createElement('button');b.innerHTML='<i class="ti ti-player-play" aria-hidden="true" style="margin-right:6px"></i>'+n;b.style.textAlign='left';b.onclick=()=>{ctx();S[k](0);};d.appendChild(b);});root.appendChild(d);});
+</script>
+</body></html>

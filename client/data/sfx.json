@@ -1,0 +1,890 @@
+{
+ "_note": "효과음 레시피 (승인 2026-10). 소리 = 레이어 목록, 모두 런타임 합성. 형식·버스 설정은 docs/audio.md",
+ "buses": {
+  "action": {
+   "compressor": {
+    "threshold": -12,
+    "ratio": 8,
+    "attack": 0.002,
+    "release": 0.12
+   },
+   "reverb": {
+    "length": 0.6,
+    "decay": 4,
+    "send": 0.22
+   },
+   "distortion": {
+    "amount": 18,
+    "gain": 0.5
+   }
+  },
+  "clear": {
+   "compressor": {
+    "threshold": -16,
+    "ratio": 4
+   },
+   "reverb": {
+    "length": 1.4,
+    "decay": 3,
+    "send": 0.28
+   }
+  }
+ },
+ "action": {
+  "swing": [
+   {
+    "k": "noise",
+    "f": [
+     1200,
+     6500
+    ],
+    "dur": 0.13,
+    "v": 0.5,
+    "filter": "bandpass",
+    "q": 2.5,
+    "at": 0,
+    "swell": true
+   }
+  ],
+  "swingHeavy": [
+   {
+    "k": "noise",
+    "f": [
+     500,
+     4200
+    ],
+    "dur": 0.24,
+    "v": 0.55,
+    "filter": "bandpass",
+    "q": 2.2,
+    "at": 0,
+    "swell": true,
+    "wet": 0.12
+   },
+   {
+    "k": "noise",
+    "f": [
+     200,
+     900
+    ],
+    "dur": 0.24,
+    "v": 0.3,
+    "filter": "lowpass",
+    "q": 1,
+    "at": 0,
+    "swell": true
+   }
+  ],
+  "hitLight": [
+   {
+    "k": "click",
+    "v": 0.7,
+    "at": 0
+   },
+   {
+    "k": "noise",
+    "f": [
+     3500,
+     1200
+    ],
+    "dur": 0.06,
+    "v": 0.55,
+    "filter": "bandpass",
+    "q": 0.8,
+    "at": 0,
+    "dist": true
+   },
+   {
+    "k": "tone",
+    "wave": "square",
+    "f": [
+     240,
+     90
+    ],
+    "dur": 0.07,
+    "v": 0.25,
+    "at": 0,
+    "dist": true,
+    "lp": 2200
+   },
+   {
+    "k": "metal",
+    "f": 980,
+    "dur": 0.16,
+    "v": 0.12,
+    "at": 0.003,
+    "wet": 0.25
+   }
+  ],
+  "hitHeavy": [
+   {
+    "k": "click",
+    "v": 0.9,
+    "at": 0
+   },
+   {
+    "k": "noise",
+    "f": [
+     2800,
+     500
+    ],
+    "dur": 0.1,
+    "v": 0.7,
+    "filter": "bandpass",
+    "q": 0.7,
+    "at": 0,
+    "dist": true
+   },
+   {
+    "k": "boom",
+    "f": 140,
+    "dur": 0.32,
+    "v": 0.9,
+    "at": 0
+   },
+   {
+    "k": "metal",
+    "f": 620,
+    "dur": 0.38,
+    "v": 0.18,
+    "at": 0.004,
+    "wet": 0.4
+   },
+   {
+    "k": "noise",
+    "f": [
+     600,
+     120
+    ],
+    "dur": 0.28,
+    "v": 0.25,
+    "filter": "lowpass",
+    "q": 1,
+    "at": 0.03,
+    "wet": 0.25
+   }
+  ],
+  "launch": [
+   {
+    "k": "click",
+    "v": 0.6,
+    "at": 0
+   },
+   {
+    "k": "noise",
+    "f": [
+     700,
+     5500
+    ],
+    "dur": 0.2,
+    "v": 0.5,
+    "filter": "bandpass",
+    "q": 3,
+    "at": 0,
+    "swell": true
+   },
+   {
+    "k": "tone",
+    "wave": "sawtooth",
+    "f": [
+     160,
+     720
+    ],
+    "dur": 0.18,
+    "v": 0.12,
+    "at": 0,
+    "lp": 2500,
+    "dist": true
+   }
+  ],
+  "bounce": [
+   {
+    "k": "click",
+    "v": 0.4,
+    "at": 0
+   },
+   {
+    "k": "boom",
+    "f": 120,
+    "dur": 0.14,
+    "v": 0.6,
+    "at": 0
+   }
+  ],
+  "down": [
+   {
+    "k": "click",
+    "v": 0.5,
+    "at": 0
+   },
+   {
+    "k": "boom",
+    "f": 95,
+    "dur": 0.4,
+    "v": 1,
+    "at": 0
+   },
+   {
+    "k": "noise",
+    "f": [
+     1200,
+     150
+    ],
+    "dur": 0.4,
+    "v": 0.35,
+    "filter": "lowpass",
+    "q": 1,
+    "at": 0,
+    "wet": 0.3
+   }
+  ],
+  "backstep": [
+   {
+    "k": "noise",
+    "f": [
+     2500,
+     7000
+    ],
+    "dur": 0.1,
+    "v": 0.4,
+    "filter": "highpass",
+    "q": 1,
+    "at": 0,
+    "swell": true
+   },
+   {
+    "k": "tone",
+    "wave": "sine",
+    "f": [
+     900,
+     1600
+    ],
+    "dur": 0.06,
+    "v": 0.08,
+    "at": 0
+   }
+  ],
+  "dash": [
+   {
+    "k": "noise",
+    "f": [
+     900,
+     3500
+    ],
+    "dur": 0.2,
+    "v": 0.4,
+    "filter": "bandpass",
+    "q": 2,
+    "at": 0,
+    "swell": true
+   },
+   {
+    "k": "noise",
+    "f": [
+     400,
+     200
+    ],
+    "dur": 0.06,
+    "v": 0.2,
+    "filter": "lowpass",
+    "q": 1,
+    "at": 0
+   }
+  ],
+  "guard": [
+   {
+    "k": "click",
+    "v": 0.8,
+    "at": 0
+   },
+   {
+    "k": "metal",
+    "f": 760,
+    "dur": 0.45,
+    "v": 0.3,
+    "at": 0,
+    "wet": 0.5
+   }
+  ],
+  "skill_slash": [
+   {
+    "k": "noise",
+    "f": [
+     900,
+     7000
+    ],
+    "dur": 0.18,
+    "v": 0.55,
+    "filter": "bandpass",
+    "q": 3,
+    "at": 0,
+    "swell": true,
+    "wet": 0.2
+   },
+   {
+    "k": "click",
+    "v": 0.8,
+    "at": 0.16
+   },
+   {
+    "k": "metal",
+    "f": 1320,
+    "dur": 0.5,
+    "v": 0.2,
+    "at": 0.16,
+    "wet": 0.5
+   },
+   {
+    "k": "noise",
+    "f": [
+     4000,
+     900
+    ],
+    "dur": 0.12,
+    "v": 0.5,
+    "filter": "bandpass",
+    "q": 0.8,
+    "at": 0.16,
+    "dist": true
+   }
+  ],
+  "skill_fireburst": [
+   {
+    "k": "noise",
+    "f": [
+     3000,
+     300
+    ],
+    "dur": 0.5,
+    "v": 0.35,
+    "filter": "lowpass",
+    "q": 1,
+    "at": 0,
+    "swell": true
+   },
+   {
+    "k": "click",
+    "v": 0.9,
+    "at": 0.45
+   },
+   {
+    "k": "boom",
+    "f": 110,
+    "dur": 0.6,
+    "v": 1,
+    "at": 0.45
+   },
+   {
+    "k": "noise",
+    "f": [
+     1800,
+     120
+    ],
+    "dur": 0.7,
+    "v": 0.5,
+    "filter": "lowpass",
+    "q": 0.8,
+    "at": 0.45,
+    "dist": true,
+    "wet": 0.4
+   }
+  ],
+  "skill_icefield": [
+   {
+    "k": "metal",
+    "f": 2400,
+    "dur": 0.25,
+    "v": 0.07,
+    "at": 0.0,
+    "wet": 0.5
+   },
+   {
+    "k": "metal",
+    "f": 3100,
+    "dur": 0.25,
+    "v": 0.07,
+    "at": 0.035,
+    "wet": 0.5
+   },
+   {
+    "k": "metal",
+    "f": 3800,
+    "dur": 0.25,
+    "v": 0.07,
+    "at": 0.07,
+    "wet": 0.5
+   },
+   {
+    "k": "metal",
+    "f": 2900,
+    "dur": 0.25,
+    "v": 0.07,
+    "at": 0.10500000000000001,
+    "wet": 0.5
+   },
+   {
+    "k": "metal",
+    "f": 4200,
+    "dur": 0.25,
+    "v": 0.07,
+    "at": 0.14,
+    "wet": 0.5
+   },
+   {
+    "k": "noise",
+    "f": [
+     6000,
+     2500
+    ],
+    "dur": 0.3,
+    "v": 0.25,
+    "filter": "highpass",
+    "q": 1,
+    "at": 0
+   }
+  ],
+  "mon_mushroom_windup": [
+   {
+    "k": "noise",
+    "f": [
+     600,
+     400
+    ],
+    "dur": 0.04,
+    "v": 0.25,
+    "filter": "bandpass",
+    "q": 3,
+    "at": 0.0
+   },
+   {
+    "k": "noise",
+    "f": [
+     600,
+     400
+    ],
+    "dur": 0.04,
+    "v": 0.25,
+    "filter": "bandpass",
+    "q": 3,
+    "at": 0.06
+   },
+   {
+    "k": "noise",
+    "f": [
+     600,
+     400
+    ],
+    "dur": 0.04,
+    "v": 0.25,
+    "filter": "bandpass",
+    "q": 3,
+    "at": 0.12
+   },
+   {
+    "k": "noise",
+    "f": [
+     600,
+     400
+    ],
+    "dur": 0.04,
+    "v": 0.25,
+    "filter": "bandpass",
+    "q": 3,
+    "at": 0.18
+   },
+   {
+    "k": "noise",
+    "f": [
+     600,
+     400
+    ],
+    "dur": 0.04,
+    "v": 0.25,
+    "filter": "bandpass",
+    "q": 3,
+    "at": 0.24
+   }
+  ],
+  "mon_boar_charge": [
+   {
+    "k": "tone",
+    "wave": "sawtooth",
+    "f": [
+     110,
+     70
+    ],
+    "dur": 0.45,
+    "v": 0.25,
+    "at": 0,
+    "lp": 600,
+    "dist": true
+   },
+   {
+    "k": "boom",
+    "f": 90,
+    "dur": 0.07,
+    "v": 0.35,
+    "at": 0.0
+   },
+   {
+    "k": "boom",
+    "f": 90,
+    "dur": 0.07,
+    "v": 0.35,
+    "at": 0.1
+   },
+   {
+    "k": "boom",
+    "f": 90,
+    "dur": 0.07,
+    "v": 0.35,
+    "at": 0.2
+   },
+   {
+    "k": "boom",
+    "f": 90,
+    "dur": 0.07,
+    "v": 0.35,
+    "at": 0.30000000000000004
+   }
+  ],
+  "mon_spore_shot": [
+   {
+    "k": "noise",
+    "f": [
+     1500,
+     700
+    ],
+    "dur": 0.08,
+    "v": 0.35,
+    "filter": "bandpass",
+    "q": 2,
+    "at": 0
+   },
+   {
+    "k": "tone",
+    "wave": "sine",
+    "f": [
+     500,
+     250
+    ],
+    "dur": 0.1,
+    "v": 0.15,
+    "at": 0
+   }
+  ],
+  "mon_bear_roar": [
+   {
+    "k": "tone",
+    "wave": "sawtooth",
+    "f": [
+     105,
+     62
+    ],
+    "dur": 0.9,
+    "v": 0.35,
+    "at": 0,
+    "lp": 900,
+    "atk": 0.05,
+    "dist": true,
+    "wet": 0.4
+   },
+   {
+    "k": "tone",
+    "wave": "sawtooth",
+    "f": [
+     109,
+     65
+    ],
+    "dur": 0.9,
+    "v": 0.25,
+    "at": 0,
+    "lp": 700,
+    "atk": 0.05,
+    "dist": true
+   },
+   {
+    "k": "noise",
+    "f": [
+     800,
+     200
+    ],
+    "dur": 0.8,
+    "v": 0.3,
+    "filter": "lowpass",
+    "q": 1,
+    "at": 0,
+    "swell": true,
+    "wet": 0.3
+   }
+  ]
+ },
+ "clear": {
+  "coin": [
+   {
+    "k": "bell",
+    "f": 1568,
+    "dur": 0.18,
+    "v": 0.12,
+    "at": 0,
+    "idx": 1.4
+   },
+   {
+    "k": "bell",
+    "f": 2093,
+    "dur": 0.35,
+    "v": 0.12,
+    "at": 0.07,
+    "idx": 1.4
+   }
+  ],
+  "potion": [
+   {
+    "k": "tone",
+    "wave": "sine",
+    "f": [
+     500,
+     700
+    ],
+    "dur": 0.06,
+    "v": 0.2,
+    "at": 0.0,
+    "wet": 0.3
+   },
+   {
+    "k": "tone",
+    "wave": "sine",
+    "f": [
+     680,
+     880
+    ],
+    "dur": 0.06,
+    "v": 0.2,
+    "at": 0.06,
+    "wet": 0.3
+   },
+   {
+    "k": "tone",
+    "wave": "sine",
+    "f": [
+     860,
+     1060
+    ],
+    "dur": 0.06,
+    "v": 0.2,
+    "at": 0.12,
+    "wet": 0.3
+   },
+   {
+    "k": "bell",
+    "f": 1047,
+    "dur": 0.4,
+    "v": 0.06,
+    "at": 0.2
+   },
+   {
+    "k": "bell",
+    "f": 1319,
+    "dur": 0.4,
+    "v": 0.06,
+    "at": 0.25
+   },
+   {
+    "k": "bell",
+    "f": 1568,
+    "dur": 0.4,
+    "v": 0.06,
+    "at": 0.30000000000000004
+   }
+  ],
+  "levelup": [
+   {
+    "k": "marimba",
+    "f": 523,
+    "dur": 0.5,
+    "v": 0.28,
+    "at": 0.0
+   },
+   {
+    "k": "marimba",
+    "f": 659,
+    "dur": 0.5,
+    "v": 0.28,
+    "at": 0.08
+   },
+   {
+    "k": "marimba",
+    "f": 784,
+    "dur": 0.5,
+    "v": 0.28,
+    "at": 0.16
+   },
+   {
+    "k": "marimba",
+    "f": 1047,
+    "dur": 0.5,
+    "v": 0.28,
+    "at": 0.24
+   },
+   {
+    "k": "marimba",
+    "f": 1319,
+    "dur": 0.5,
+    "v": 0.28,
+    "at": 0.32
+   },
+   {
+    "k": "bell",
+    "f": 2093,
+    "dur": 0.8,
+    "v": 0.05,
+    "at": 0.42,
+    "wet": 0.7
+   },
+   {
+    "k": "bell",
+    "f": 2637,
+    "dur": 0.8,
+    "v": 0.05,
+    "at": 0.48,
+    "wet": 0.7
+   },
+   {
+    "k": "bell",
+    "f": 3136,
+    "dur": 0.8,
+    "v": 0.05,
+    "at": 0.54,
+    "wet": 0.7
+   }
+  ],
+  "roomClear": [
+   {
+    "k": "marimba",
+    "f": 784,
+    "dur": 0.4,
+    "v": 0.25,
+    "at": 0.0
+   },
+   {
+    "k": "marimba",
+    "f": 988,
+    "dur": 0.4,
+    "v": 0.25,
+    "at": 0.07
+   },
+   {
+    "k": "marimba",
+    "f": 1175,
+    "dur": 0.4,
+    "v": 0.25,
+    "at": 0.14
+   },
+   {
+    "k": "bell",
+    "f": 1568,
+    "dur": 0.7,
+    "v": 0.1,
+    "at": 0.21,
+    "wet": 0.6
+   }
+  ],
+  "click": [
+   {
+    "k": "marimba",
+    "f": 1175,
+    "dur": 0.12,
+    "v": 0.2,
+    "at": 0,
+    "wet": 0.1
+   }
+  ],
+  "place": [
+   {
+    "k": "thump",
+    "f": [
+     220,
+     120
+    ],
+    "dur": 0.12,
+    "v": 0.45,
+    "at": 0
+   },
+   {
+    "k": "marimba",
+    "f": 784,
+    "dur": 0.25,
+    "v": 0.18,
+    "at": 0.05
+   }
+  ],
+  "bearYawn": [
+   {
+    "k": "tone",
+    "wave": "sine",
+    "f": [
+     440,
+     190
+    ],
+    "dur": 0.9,
+    "v": 0.25,
+    "at": 0,
+    "atk": 0.2,
+    "wet": 0.5
+   },
+   {
+    "k": "tone",
+    "wave": "triangle",
+    "f": [
+     660,
+     280
+    ],
+    "dur": 0.8,
+    "v": 0.08,
+    "at": 0.05,
+    "atk": 0.25,
+    "wet": 0.5
+   }
+  ]
+ },
+ "combos": {
+  "demo_greatsword_3hit": [
+   [
+    "action.swing",
+    0
+   ],
+   [
+    "action.hitLight",
+    0.05
+   ],
+   [
+    "action.swing",
+    0.36
+   ],
+   [
+    "action.hitLight",
+    0.41
+   ],
+   [
+    "action.swingHeavy",
+    0.8
+   ],
+   [
+    "action.hitHeavy",
+    0.9
+   ],
+   [
+    "action.launch",
+    0.95
+   ],
+   [
+    "action.bounce",
+    1.62
+   ],
+   [
+    "action.down",
+    1.95
+   ]
+  ]
+ }
+}

@@ -1,0 +1,223 @@
+{
+  "_note": "스킬 정의 (MVP: 대검·스태프 공용 기본만). cooldown은 기준 쿨 (실제 = ×COOLDOWN_SCALE), mp = 기준 쿨 × 2. 형식은 docs/data.md",
+  "gs_launch": {
+    "id": "gs_launch",
+    "phases": {
+      "windup": 0.2,
+      "active": 0.1,
+      "recovery": 0.35
+    },
+    "coef": 400,
+    "hitbox": {
+      "forward": 4,
+      "width": 18,
+      "depth": 13,
+      "z": "ground"
+    },
+    "strength": "medium",
+    "flags": [
+      "launch"
+    ],
+    "launchVz": 220,
+    "poses": {
+      "windup": "slash",
+      "active": "upslash",
+      "recovery": "upslash"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "weapon": "greatsword",
+    "name": "올려베기",
+    "branch": "base",
+    "cooldown": 5,
+    "mp": 10,
+    "variants": {
+      "double": {
+        "name": "연속 올려베기",
+        "coef": 250,
+        "reinput": 1
+      },
+      "wind": {
+        "name": "검풍",
+        "hitbox": {
+          "forward": 4,
+          "width": 30,
+          "depth": 20,
+          "z": "ground",
+          "back": 10
+        }
+      }
+    }
+  },
+  "gs_earthsplit": {
+    "id": "gs_earthsplit",
+    "phases": {
+      "windup": 0.35,
+      "active": 0.12,
+      "recovery": 0.55
+    },
+    "coef": 600,
+    "hitbox": {
+      "forward": 4,
+      "width": 48,
+      "depth": 13,
+      "z": "both"
+    },
+    "strength": "heavy",
+    "flags": [
+      "down",
+      "downhit"
+    ],
+    "poses": {
+      "windup": "ready",
+      "active": "slash",
+      "recovery": "slash"
+    },
+    "fx": {
+      "grade": "heavy",
+      "shake": "vertical"
+    },
+    "weapon": "greatsword",
+    "name": "대지가르기",
+    "branch": "base",
+    "cooldown": 7,
+    "mp": 14,
+    "variants": {
+      "crack": {
+        "name": "균열",
+        "after": {
+          "delay": 1.0,
+          "coef": 300
+        }
+      },
+      "fan": {
+        "name": "부채꼴",
+        "coef": 500,
+        "hitbox": null,
+        "area": {
+          "shape": "fan",
+          "at": [
+            0,
+            0
+          ],
+          "radius": 40,
+          "angle": 70,
+          "z": "ground"
+        }
+      }
+    }
+  },
+  "st_fireburst": {
+    "id": "st_fireburst",
+    "phases": {
+      "windup": 0.5,
+      "active": 0.1,
+      "recovery": 0.3
+    },
+    "coef": 700,
+    "area": {
+      "shape": "circle",
+      "at": [
+        64,
+        0
+      ],
+      "radius": 24,
+      "z": "both"
+    },
+    "strength": "medium",
+    "flags": [
+      "launch"
+    ],
+    "launchVz": 120,
+    "poses": {
+      "windup": "ready",
+      "active": "bolt",
+      "recovery": "bolt"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "weapon": "staff",
+    "name": "화염 폭발",
+    "branch": "base",
+    "cooldown": 6,
+    "mp": 12,
+    "variants": {
+      "chain": {
+        "name": "연쇄",
+        "repeat": {
+          "count": 3,
+          "interval": 0.2
+        },
+        "coef": 300
+      },
+      "instant": {
+        "name": "즉발",
+        "phases": {
+          "windup": 0.2
+        },
+        "coef": 550
+      }
+    },
+    "note": "예산 약 530 대비 +33%: 0.5초 지연 폭발이라 맞히기 어려움 (balance.md 3장 검산 예시)"
+  },
+  "st_icefield": {
+    "id": "st_icefield",
+    "phases": {
+      "windup": 0.4,
+      "active": 0.1,
+      "recovery": 0.4
+    },
+    "coef": 150,
+    "area": {
+      "shape": "rect",
+      "at": [
+        48,
+        0
+      ],
+      "width": 48,
+      "depth": 32,
+      "z": "ground"
+    },
+    "strength": "light",
+    "status": {
+      "type": "freeze",
+      "time": 1.5
+    },
+    "poses": {
+      "windup": "ready",
+      "active": "area",
+      "recovery": "area"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "weapon": "staff",
+    "name": "얼음 장판",
+    "branch": "base",
+    "cooldown": 10,
+    "mp": 20,
+    "variants": {
+      "shatter": {
+        "name": "빙결 폭발",
+        "onStatusEnd": {
+          "coef": 400
+        }
+      },
+      "permafrost": {
+        "name": "동토",
+        "status": {
+          "type": "slow",
+          "amount": 0.4,
+          "time": 4
+        },
+        "area": {
+          "width": 96,
+          "depth": 48
+        }
+      }
+    },
+    "note": "예산 대비 크게 낮음: 빙결 1.5초 제어가 주 가치, 딜은 의도적으로 낮게"
+  }
+}

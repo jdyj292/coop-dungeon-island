@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BGM 미리보기</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:440px;margin:24px auto;padding:0 16px;background:#f6f5f1;color:#222}
+.trk{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.trk.on{border:2px solid #378ADD}
+button{width:44px;height:44px;border-radius:50%;border:1px solid #999;background:#fff;font-size:16px;cursor:pointer}
+.nm{margin:0;font-weight:600}.ds,.st{margin:2px 0 0;font-size:13px;color:#666}.st{color:#185FA5}
+.err{color:#a32d2d;font-size:13px}
+</style>
+</head>
+<body>
+<h1 style="font-size:18px">BGM 미리보기</h1>
+<p style="font-size:13px;color:#666">client/data/bgm.json을 읽어 engine.js로 재생. 저장소 루트에서 정적 서버로 열기 (예: <code>npx serve .</code> → /tools/bgm-preview/). 원본 비교는 reference.html.</p>
+<div id="list"></div>
+<label style="font-size:13px">음량 <input type="range" id="vol" min="0" max="100" value="70"></label>
+<p id="err" class="err"></p>
+<script src="engine.js"></script>
+<script>
+let data=null,cur=null;
+const list=document.getElementById('list');
+function render(){
+  list.textContent='';
+  Object.entries(data.tracks).forEach(([id,tr])=>{
+    const c=document.createElement('div');c.className='trk';c.id='c-'+id;
+    const b=document.createElement('button');b.textContent='▶';b.setAttribute('aria-label',tr.name+' 재생');
+    const info=document.createElement('div');
+    const nm=document.createElement('p');nm.className='nm';nm.textContent=tr.name;
+    const ds=document.createElement('p');ds.className='ds';ds.textContent=tr.style+' · '+tr.bpm+' BPM · '+tr.chords.length+'마디';
+    const st=document.createElement('p');st.className='st';
+    info.append(nm,ds,st);c.append(b,info);list.append(c);
+    b.onclick=()=>{
+      if(cur===id){BGM.stop();set(id,false);cur=null;return}
+      if(cur)set(cur,false);
+      cur=id;set(id,true);
+      BGM.play(data,id,(bar,n)=>{if(cur===id)st.textContent='재생 중 · '+(bar+1)+' / '+n+'마디'});
+      BGM.setVolume(document.getElementById('vol').value/100);
+    };
+  });
+}
+function set(id,on){const c=document.getElementById('c-'+id);c.classList.toggle('on',on);c.querySelector('button').textContent=on?'❚❚':'▶';if(!on)c.querySelector('.st').textContent=''}
+document.getElementById('vol').oninput=e=>BGM.setVolume(e.target.value/100);
+fetch('../../client/data/bgm.json').then(r=>r.json()).then(d=>{data=d;render()})
+  .catch(()=>{document.getElementById('err').textContent='bgm.json을 읽지 못했습니다. 저장소 루트에서 정적 서버로 여세요.'});
+</script>
+</body>
+</html>

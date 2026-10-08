@@ -1,0 +1,423 @@
+{
+  "_note": "무기 종류별 포즈. 좌표는 base.json 기본 상자 기준. front/back: 손 위치(없으면 기본, null이면 팔 숨김). weapons: 무기 그리기 목록. fx: 이펙트(art.md 7장). 상태: 확정(2026-10 검토)",
+  "greatsword": {
+    "idle": {
+      "front": {
+        "hand": [
+          9,
+          12
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            -1
+          ],
+          "behind": true
+        }
+      ]
+    },
+    "ready": {
+      "front": {
+        "hand": [
+          9,
+          9
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            -1
+          ],
+          "behind": true
+        }
+      ]
+    },
+    "slash": {
+      "front": {
+        "hand": [
+          10,
+          11
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            0
+          ]
+        }
+      ],
+      "fx": {
+        "type": "smear",
+        "pivot": [
+          9,
+          11
+        ],
+        "r": [
+          9,
+          14
+        ],
+        "arc": [
+          -1.7,
+          0.35
+        ]
+      }
+    },
+    "upslash": {
+      "front": {
+        "hand": [
+          10,
+          10
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            -1
+          ]
+        }
+      ],
+      "fx": {
+        "type": "smear",
+        "pivot": [
+          9,
+          11
+        ],
+        "r": [
+          9,
+          14
+        ],
+        "arc": [
+          -1.5,
+          0.9
+        ],
+        "reverse": true
+      }
+    }
+  },
+  "staff": {
+    "idle": {
+      "front": {
+        "hand": [
+          9,
+          12
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            0,
+            -1
+          ],
+          "origin": [
+            10,
+            12
+          ]
+        }
+      ]
+    },
+    "ready": {
+      "front": {
+        "hand": [
+          10,
+          10
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            -1
+          ]
+        }
+      ],
+      "fx": {
+        "type": "spark",
+        "at": [
+          18,
+          1
+        ]
+      }
+    },
+    "bolt": {
+      "front": {
+        "hand": [
+          10,
+          11
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            0
+          ]
+        }
+      ],
+      "fx": {
+        "type": "bolt",
+        "at": [
+          21,
+          10
+        ]
+      }
+    },
+    "area": {
+      "front": {
+        "hand": [
+          9,
+          9
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            0,
+            -1
+          ],
+          "origin": [
+            10,
+            9
+          ]
+        }
+      ],
+      "fx": {
+        "type": "circle",
+        "at": [
+          6,
+          17
+        ]
+      }
+    }
+  },
+  "fist": {
+    "guard": {
+      "front": {
+        "hand": [
+          10,
+          10
+        ],
+        "gauntlet": true
+      },
+      "back": {
+        "hand": [
+          6,
+          10
+        ],
+        "gauntlet": true,
+        "detached": true
+      }
+    },
+    "jab": {
+      "front": {
+        "hand": [
+          12,
+          11
+        ],
+        "gauntlet": true
+      },
+      "fx": {
+        "type": "lines",
+        "at": [
+          15,
+          10
+        ],
+        "dir": "h"
+      }
+    },
+    "uppercut": {
+      "front": {
+        "hand": [
+          10,
+          8
+        ],
+        "gauntlet": true
+      },
+      "fx": {
+        "type": "lines",
+        "at": [
+          11,
+          5
+        ],
+        "dir": "v"
+      }
+    },
+    "grab": {
+      "front": {
+        "hand": [
+          11,
+          12
+        ],
+        "gauntlet": true
+      },
+      "back": {
+        "hand": [
+          9,
+          13
+        ],
+        "gauntlet": true,
+        "detached": true
+      }
+    }
+  },
+  "dual": {
+    "idle": {
+      "front": {
+        "hand": [
+          9,
+          12
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            1
+          ]
+        },
+        {
+          "hand": "back",
+          "dir": [
+            -1,
+            1
+          ],
+          "behind": true
+        }
+      ]
+    },
+    "slash1": {
+      "front": {
+        "hand": [
+          10,
+          10
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            -1
+          ]
+        },
+        {
+          "hand": "back",
+          "dir": [
+            -1,
+            1
+          ],
+          "behind": true
+        }
+      ],
+      "fx": {
+        "type": "smear",
+        "pivot": [
+          9,
+          11
+        ],
+        "r": [
+          5,
+          9
+        ],
+        "arc": [
+          -1.3,
+          0.7
+        ],
+        "reverse": true
+      }
+    },
+    "slash2": {
+      "front": {
+        "hand": [
+          9,
+          12
+        ]
+      },
+      "back": {
+        "hand": [
+          10,
+          11
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            1
+          ]
+        },
+        {
+          "hand": "back",
+          "dir": [
+            1,
+            0
+          ]
+        }
+      ],
+      "fx": {
+        "type": "smear",
+        "pivot": [
+          9,
+          11
+        ],
+        "r": [
+          5,
+          9
+        ],
+        "arc": [
+          -0.9,
+          0.9
+        ]
+      }
+    },
+    "throw": {
+      "front": {
+        "hand": [
+          11,
+          11
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "back",
+          "dir": [
+            -1,
+            1
+          ],
+          "behind": true
+        }
+      ],
+      "fx": {
+        "type": "throw",
+        "at": [
+          17,
+          10
+        ]
+      }
+    }
+  },
+  "walk": {
+    "_note": "걷기 = bottom 프레임 stand → walkA → stand → walkB 순환 (4박자)",
+    "cycle": [
+      "stand",
+      "walkA",
+      "stand",
+      "walkB"
+    ]
+  }
+}

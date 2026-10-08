@@ -1,0 +1,73 @@
+{
+  "_note": "무기 외형 = 손에서 무기 방향(dir)으로 뻗는 1차원 프로필. at/from~to는 손으로부터 칸 수(음수 = 반대쪽). width 홀수는 가운데 정렬, 짝수는 기본선 + 한쪽. block = 끝에 붙는 정사각 덩어리. 상태: 확정(2026-10 검토)",
+  "profiles": {
+    "greatsword_basic": {
+      "type": "greatsword",
+      "parts": [
+        {
+          "at": -1,
+          "mat": "y"
+        },
+        {
+          "at": 1,
+          "mat": "G"
+        },
+        {
+          "at": 2,
+          "mat": "y",
+          "width": 3
+        },
+        {
+          "from": 3,
+          "to": 12,
+          "mat": "m",
+          "width": 2
+        },
+        {
+          "at": 13,
+          "mat": "m"
+        }
+      ]
+    },
+    "staff_basic": {
+      "type": "staff",
+      "parts": [
+        {
+          "from": -3,
+          "to": 7,
+          "mat": "w"
+        },
+        {
+          "at": 8,
+          "mat": "y"
+        },
+        {
+          "at": 9,
+          "mat": "o",
+          "block": 2
+        }
+      ]
+    },
+    "dagger_basic": {
+      "type": "dual",
+      "parts": [
+        {
+          "at": 1,
+          "mat": "y"
+        },
+        {
+          "from": 2,
+          "to": 6,
+          "mat": "m"
+        }
+      ]
+    },
+    "gauntlet_basic": {
+      "type": "fist",
+      "gauntlet": {
+        "mat": "K",
+        "size": 2
+      }
+    }
+  }
+}
