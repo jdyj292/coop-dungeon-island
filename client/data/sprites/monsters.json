@@ -145,9 +145,12 @@
   "materials": {
    "b": "floors.1.monster.boar",
    "c": "floors.1.monster.boarBelly",
-   "n": "floors.1.monster.boarNose",
    "m": "floors.1.monster.moss",
    "d": "floors.1.monster.hoof"
+  },
+  "fixedExtra": {
+   "n": "floors.1.monster.boarNose",
+   "w": "global.allyFx.white"
   },
   "frames": {
    "idle1": {

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sprite-preview</title>
+    <style>
+      /* 개발 도구 화면 색 (게임 색은 palette.json) */
+      :root { --bg: #16131f; --panel: #221d30; --line: #3a3350; --text: #e8e4f4; --dim: #a39cbd; --accent: #6fc3e8; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, sans-serif; }
+      header { display: flex; align-items: center; gap: 16px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+      h1 { font-size: 15px; margin: 0; }
+      h3 { font-size: 12px; margin: 14px 0 6px; color: var(--dim); text-transform: uppercase; letter-spacing: .04em; }
+      nav button, .buttons button { background: none; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+      nav button.on { border-color: var(--accent); color: var(--accent); }
+      .tab { display: flex; gap: 16px; padding: 12px 16px; align-items: flex-start; }
+      .panel { width: 260px; flex: none; background: var(--panel); border-radius: 8px; padding: 4px 12px 12px; }
+      .field { display: grid; grid-template-columns: 84px 1fr auto; gap: 6px; align-items: center; margin: 4px 0; }
+      .field.check { grid-template-columns: auto 1fr; }
+      .field select, .field input[type=range] { width: 100%; }
+      .buttons { display: flex; flex-wrap: wrap; gap: 4px; }
+      .view { flex: 1; min-width: 0; overflow-x: auto; }
+      .stage { display: block; image-rendering: pixelated; }
+      .labels { display: grid; color: var(--dim); font-size: 11px; text-align: center; margin: 2px 0 10px; }
+      .info { color: var(--dim); margin: 4px 0; }
+      .approved { display: block; max-width: 100%; border-radius: 6px; }
+      @media (max-width: 720px) { .tab { flex-direction: column; } .panel { width: 100%; } }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

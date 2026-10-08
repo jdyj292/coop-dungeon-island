@@ -2,6 +2,7 @@
 import type Phaser from 'phaser';
 import type { CharacterLook } from './compose';
 import { spriteData } from './data';
+import { renderMonsterFrame } from './monster';
 import { renderCharacter, type CharacterColors, type RenderedSprite } from './render';
 import { SLOTS } from './schema';
 
@@ -35,6 +36,17 @@ export interface CharacterTexture {
 }
 
 const feet = new Map<string, [number, number]>();
+
+/** 몬스터 프레임 텍스처. 슈퍼아머 외곽선은 별도 키 */
+export function monsterTexture(scene: Phaser.Scene, id: string, frame: string, superArmor = false): CharacterTexture {
+  const key = ['mon', id, frame, superArmor ? 'sa' : '-'].join('|');
+  if (!scene.textures.exists(key)) {
+    const sprite = renderMonsterFrame(spriteData(), id, frame, { superArmor });
+    scene.textures.addCanvas(key, paintCanvas(sprite));
+    feet.set(key, sprite.foot);
+  }
+  return { key, foot: feet.get(key)! };
+}
 
 /** 캐시에 없을 때만 만든다. 왼쪽을 볼 때는 같은 텍스처를 flipX로 그린다 */
 export function characterTexture(scene: Phaser.Scene, look: CharacterLook, colors: CharacterColors): CharacterTexture {

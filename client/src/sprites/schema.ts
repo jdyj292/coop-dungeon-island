@@ -104,7 +104,29 @@ export const materialsSchema = z.object({
   fixed: z.record(z.string()),
 });
 
+/** 몬스터: 프레임마다 완성된 재질 격자 (docs/sprites.md 6장) */
+export const monsterFrameSchema = z.object({
+  rows,
+  foot: point,
+  offset: point.optional(),
+  shake: z.boolean().optional(),
+  spin: z.boolean().optional(),
+  superArmorOutline: z.boolean().optional(),
+  fx: z.array(z.object({ type: z.string(), at: point }).passthrough()).optional(),
+});
+
+export const monsterSchema = z.object({
+  materials: z.record(z.string()),
+  fixedExtra: z.record(z.string()).optional(),
+  frames: z.record(monsterFrameSchema),
+  states: z.record(z.union([z.string(), z.array(z.string()).min(1)])),
+});
+
+export const monstersSchema = z.record(monsterSchema);
+
 export type Point = z.infer<typeof point>;
+export type MonsterFrame = z.infer<typeof monsterFrameSchema>;
+export type Monster = z.infer<typeof monsterSchema>;
 export type Layer = z.infer<typeof layer>;
 export type Part = z.infer<typeof partSchema>;
 export type Base = z.infer<typeof baseSchema>;

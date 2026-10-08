@@ -164,7 +164,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 ## 8. 검증
 
 - 로드 시 스키마 검사(zod): rows 길이 일치, 정의된 글자만 사용, 슬롯·층 이름 유효, dir은 8방향
-- tools/sprite-preview: JSON을 읽어 확대 표시 + 의상·포즈·표정 조합 전환
+- tools/sprite-preview (`pnpm sprite-preview`, localhost:5174): 게임과 같은 합성 코드로 확대 표시. 캐릭터 조합·걷기 재생 / 승인 캡처와 나란히 비교 / 몬스터 프레임·상태 재생(offset·shake·spin·슈퍼아머 외곽선 반영)
 - 확정 데이터 회귀 테스트: 기본 세트 4종의 합성 결과(재질 격자)를 스냅샷으로 저장하고 비교
 
 ---

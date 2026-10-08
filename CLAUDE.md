@@ -45,7 +45,7 @@ tools/                   개발 도구 (아래 표)
 | 도구 | 상태 | 용도 |
 |---|---|---|
 | bgm-preview | 완성 | bgm.json 재생. reference.html = 승인 원본 |
-| sprite-preview | M0 | 스프라이트 조합·확대 보기 |
+| sprite-preview | 완성 | 스프라이트 조합·확대 보기, 승인 캡처 비교. `pnpm sprite-preview` |
 | motion-preview | M0 | 모션 슬로우·프레임 조정 (reference.html = 승인 데모) |
 | sfx-preview | M1 | 효과음 재생·조정 (reference-*.html = 승인 데모) |
 | palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 0-1~0-3 완료: 워크스페이스, palette 로더·palette-check, 스프라이트 합성기(client/src/sprites: 스키마·합성·음영·텍스처 캐시, 승인 데모와 픽셀 일치 확인)
-- 명령: `pnpm dev` / `pnpm test` / `pnpm typecheck` / `pnpm palette-check`. Boot 씬은 임시로 기본 세트 4종 표시
-- 다음: M0 0-4 — tools/sprite-preview (의상·포즈·표정·몬스터 프레임 전환, 몬스터 스키마 검사 포함)
+- M0 0-1~0-4 완료: 워크스페이스, palette-check, 스프라이트 합성기(캐릭터·몬스터, 승인 데모와 픽셀 일치), sprite-preview
+- 명령: `pnpm dev` / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm sprite-preview`
+- 다음: M0 0-5 — 던전 테스트 씬 (바닥·벽, 벨트스크롤 투영, 걷기, 통통버섯 배치)

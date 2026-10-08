@@ -17,19 +17,21 @@ export interface RenderedSprite extends Shaded {
   foot: Point;
 }
 
-/** materials.json의 재질 글자를 색으로 바꾼다. 몬스터는 extra로 덮어쓴다 */
+/** materials.json의 재질 글자를 색으로 바꾼다. 몬스터는 extra로 덮어쓴다 (colors가 없으면 $특수값 재질은 뺀다) */
 export function resolveMaterials(
   data: SpriteData,
-  colors: CharacterColors,
+  colors: CharacterColors | undefined,
   extra?: { shaded?: Record<string, string>; fixed?: Record<string, string> },
 ): { shaded: Record<string, Ramp>; fixed: Record<string, string> } {
-  const special: Record<string, string> = { $hairColor: colors.hairColor, $playerColor: colors.playerColor };
-  const hex = (ref: string) => color(special[ref] ?? ref);
+  const special: Record<string, string | undefined> = { $hairColor: colors?.hairColor, $playerColor: colors?.playerColor };
   const shaded: Record<string, Ramp> = {};
   const fixed: Record<string, string> = {};
-  for (const [ch, ref] of Object.entries({ ...data.materials.shaded, ...extra?.shaded })) shaded[ch] = ramp(hex(ref));
+  for (const [ch, ref] of Object.entries({ ...data.materials.shaded, ...extra?.shaded })) {
+    if (ref.startsWith('$') && !special[ref]) continue;
+    shaded[ch] = ramp(color(special[ref] ?? ref));
+  }
   for (const [ch, ref] of Object.entries({ ...data.materials.fixed, ...extra?.fixed })) {
-    fixed[ch] = hex(ref);
+    fixed[ch] = color(ref);
     delete shaded[ch];
   }
   return { shaded, fixed };

@@ -58,6 +58,8 @@ export interface ShadeInput {
   outlineOverride?: string;
   /** 그림자 경계 디더링 (큰 스프라이트만) */
   dither?: boolean;
+  /** 체크무늬 기준 행 (발밑 줄). 프레임이 바뀌어도 무늬가 흔들리지 않게 한다 */
+  ditherRow?: number;
 }
 
 export interface Shaded {
@@ -123,7 +125,7 @@ export function shade(input: ShadeInput): Shaded {
       const p = pos[j]![i]!;
       let t = 1;
       if (p > 0.72) t = 2;
-      else if (input.dither && p > 0.58 && (i + j) % 2) t = 2;
+      else if (input.dither && p > 0.58 && (i + j + (input.ditherRow ?? 0)) % 2) t = 2;
       if (!E(up) && up !== ch && M[up]) t = 2;
       if (E(up) || (E(lf) && p < 0.45)) t = 0;
       if (E(dn) || (E(rt) && p > 0.35)) t = Math.max(t, 2);
