@@ -12,9 +12,13 @@ describe('weaponPixels', () => {
     const p = weaponPixels({ type: 't', parts: [{ at: 2, mat: 'y', width: 3 }] }, [0, 0], [-1, -1]);
     expect(fmt(p)).toEqual(['-3,-1y', '-2,-2y', '-1,-3y']);
   });
-  it('짝수 폭: 대각선이면 가로 이웃', () => {
+  it('짝수 폭: 대각선이면 가로 이웃을 한 칸 더', () => {
     const p = weaponPixels({ type: 't', parts: [{ at: 3, mat: 'm', width: 2 }] }, [0, 0], [1, -1]);
-    expect(fmt(p)).toEqual(['3,-3m', '4,-3m']);
+    expect(fmt(p)).toEqual(['3,-3m', '4,-3m', '5,-3m']);
+  });
+  it('짝수 폭: 곧은 방향이면 수직 이웃', () => {
+    const p = weaponPixels({ type: 't', parts: [{ at: 3, mat: 'm', width: 2 }] }, [0, 0], [1, 0]);
+    expect(fmt(p)).toEqual(['3,0m', '3,1m']);
   });
   it('from~to, 음수 at', () => {
     const p = weaponPixels({ type: 't', parts: [{ at: -1, mat: 'y' }, { from: 1, to: 2, mat: 'w' }] }, [5, 5], [0, -1]);
