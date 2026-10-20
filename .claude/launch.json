@@ -4,14 +4,26 @@
     {
       "name": "dev",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev"],
+      "runtimeArgs": [
+        "dev"
+      ],
       "port": 5173
     },
     {
       "name": "sprite-preview",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["sprite-preview"],
+      "runtimeArgs": [
+        "sprite-preview"
+      ],
       "port": 5174
+    },
+    {
+      "name": "motion-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "motion-preview"
+      ],
+      "port": 5175
     }
   ]
 }

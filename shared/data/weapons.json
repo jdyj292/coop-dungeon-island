@@ -16,7 +16,7 @@
       {
         "id": "gs_b1",
         "phases": {
-          "windup": 0.18,
+          "windup": 0.12,
           "active": 0.08,
           "recovery": 0.28
         },
@@ -40,7 +40,7 @@
       {
         "id": "gs_b2",
         "phases": {
-          "windup": 0.18,
+          "windup": 0.12,
           "active": 0.08,
           "recovery": 0.28
         },
@@ -64,7 +64,7 @@
       {
         "id": "gs_b3",
         "phases": {
-          "windup": 0.25,
+          "windup": 0.24,
           "active": 0.1,
           "recovery": 0.4
         },

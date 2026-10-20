@@ -46,7 +46,7 @@ tools/                   개발 도구 (아래 표)
 |---|---|---|
 | bgm-preview | 완성 | bgm.json 재생. reference.html = 승인 원본 |
 | sprite-preview | 완성 | 스프라이트 조합·확대 보기, 승인 캡처 비교. `pnpm sprite-preview` |
-| motion-preview | M0 | 모션 슬로우·프레임 조정 (reference.html = 승인 데모) |
+| motion-preview | 완성 | 모션 슬로우·프레임 넘기기·값 조정 → JSON 복사, 승인 데모와 비교. `pnpm motion-preview` |
 | sfx-preview | M1 | 효과음 재생·조정 (reference-*.html = 승인 데모) |
 | palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
 | data-validate | M1 | shared/data 교차 참조 검사 (data.md 5장) |
@@ -97,7 +97,7 @@ tools/                   개발 도구 (아래 표)
 - 사용자 입력은 텍스트로만 표시 (innerHTML 금지), DB 쿼리는 매개변수 바인딩
 
 ## 개발 순서 (상세: docs/roadmap.md)
-- [ ] M0 스타일 테스트
+- [x] M0 스타일 테스트
 - [ ] M1 로컬 전투
 - [ ] M2 멀티플레이
 - [ ] M3 던전 1층 완성
@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 0-1~0-6 구현: 워크스페이스, palette-check, 스프라이트 합성기·sprite-preview, 던전 테스트 씬, 대검 3연타(J)·올려베기(U)·타격 패키지·띄우기·바운드·다운 (0-6은 reference.html 비교 승인 대기)
-- 명령: `pnpm dev`(Boot → Dungeon) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm sprite-preview`
-- 다음: 0-6 승인 → M0 0-7 tools/motion-preview (타이밍을 데이터·데모 중 어디에 맞출지 여기서 조정)
+- M0 0-1~0-7 완료: 스프라이트 합성기·sprite-preview, 던전 테스트 씬(대검 3연타 J·올려베기 U·타격 패키지), motion-preview. 대검 평타 타이밍은 데모 값(windup 0.12/0.12/0.24)으로 확정
+- 명령: `pnpm dev`(Boot → Dungeon) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm sprite-preview` / `pnpm motion-preview`
+- 다음: M1 로컬 전투 (roadmap M1 행). 대검 평타 초당 계수가 목표 +15%를 넘으므로 M1 data-validate·balance-check에서 확인

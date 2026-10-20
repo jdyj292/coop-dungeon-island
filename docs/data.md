@@ -13,7 +13,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 ```json
 {
   "id": "gs_b3",
-  "phases": { "windup": 0.25, "active": 0.10, "recovery": 0.40 },
+  "phases": { "windup": 0.24, "active": 0.10, "recovery": 0.40 },
   "coef": 350,
   "hitbox": { "forward": 2, "width": 20, "depth": 13, "z": "both" },
   "strength": "heavy",

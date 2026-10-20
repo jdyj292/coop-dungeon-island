@@ -8,6 +8,10 @@ export class HitStop {
     this.left = Math.max(this.left, sec);
   }
 
+  clear(): void {
+    this.left = 0;
+  }
+
   get active(): boolean {
     return this.left > 0;
   }
@@ -35,6 +39,10 @@ export class Shake {
       this.dir = dir;
     }
     this.left = Math.max(this.left, sec);
+  }
+
+  clear(): void {
+    this.left = 0;
   }
 
   update(dt: number): void {

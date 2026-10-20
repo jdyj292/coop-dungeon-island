@@ -22,6 +22,10 @@ export class FxLayer {
     this.list.push(e);
   }
 
+  clear(): void {
+    this.list = [];
+  }
+
   /** 히트스톱 동안은 dt = 0으로 불러 멈춘 채 보이게 한다 (승인 데모와 같음) */
   update(dt: number): void {
     for (const e of this.list) {
