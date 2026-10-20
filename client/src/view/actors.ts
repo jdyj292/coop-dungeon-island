@@ -1,7 +1,6 @@
 // 캐릭터·몬스터 이미지 배치: 발밑 맞춤, 높이(z), 피격 반응 프레임·회전·번쩍임 (motion.md 4장)
 import type Phaser from 'phaser';
-import combatData from '../../../shared/data/combat.json';
-import monstersData from '../../../shared/data/monsters.json';
+import { COMBAT, MONSTERS } from '@game/shared';
 import fx from '../../data/fx.json';
 import type { LocalMonster } from '../local/combatSim';
 import { colorInt } from '../palette';
@@ -61,7 +60,7 @@ export function place(v: ActorView, tex: CharacterTexture, p: Placement): void {
 
 /** 피격 프레임: hurt / hurtAir가 없으면 첫 공격의 windup 프레임으로 대체 (sprites.md 6장) */
 function hurtFrame(data: SpriteData, kind: string, name: 'hurt' | 'hurtAir'): string {
-  const sprite = (monstersData as unknown as Record<string, { sprite: string; attacks: { id: string }[] }>)[kind]!;
+  const sprite = MONSTERS[kind]!;
   if (data.monsters[sprite.sprite]!.frames[name]) return name;
   return stateFrames(data, sprite.sprite, `windup:${sprite.attacks[0]!.id}`)[0]!;
 }
@@ -77,7 +76,7 @@ export function monsterPose(data: SpriteData, m: LocalMonster, idleFrame: string
     case 'down':
       return { frame: hurtFrame(data, m.kind, 'hurt'), angle: turn };
     case 'getup':
-      return combatData.getupSec - b.timer < r.getupSquashSec
+      return COMBAT.getupSec - b.timer < r.getupSquashSec
         ? { frame: hurtFrame(data, m.kind, 'hurt'), angle: 0 }
         : { frame: idleFrame, angle: 0 };
     default:
@@ -87,7 +86,7 @@ export function monsterPose(data: SpriteData, m: LocalMonster, idleFrame: string
 
 export function placeMonster(scene: Phaser.Scene, v: ActorView, data: SpriteData, m: LocalMonster, idleFrame: string): void {
   const { frame, angle } = monsterPose(data, m, idleFrame);
-  const sprite = (monstersData as unknown as Record<string, { sprite: string }>)[m.kind]!.sprite;
+  const sprite = MONSTERS[m.kind]!.sprite;
   place(v, monsterTexture(scene, sprite, frame), {
     x: m.body.x, y: m.body.y, z: m.body.z, facing: m.facing, angle, flash: m.flash > 0,
   });

@@ -1,8 +1,8 @@
 // 피격 반응과 높이(z): 경직·밀림·띄우기·바운드·다운·기상 (docs/combat.md 3장, 수치 shared/data/combat.json)
-import combatData from '../data/combat.json';
+import { COMBAT } from './data/load';
 import type { Strength } from './actions';
 
-export type Weight = 'light' | 'medium' | 'heavy' | 'boss';
+export type Weight = 'light' | 'medium' | 'heavy' | 'fixed' | 'boss';
 export type BodyState = 'idle' | 'hitstun' | 'air' | 'down' | 'getup';
 
 export interface Body {
@@ -49,19 +49,21 @@ export function canBeHit(b: Body, flags: string[] = []): boolean {
 
 export function applyHit(b: Body, hit: HitInfo): void {
   const flags = hit.flags ?? [];
-  const mul = combatData.weightMul[b.weight];
-  const stun = combatData.stun[hit.strength];
+  const mul = COMBAT.weightMul[b.weight];
+  const stun = COMBAT.stun[hit.strength];
+  // fixed(고정형): 경직만 받고 밀림·띄우기·넉백은 무시 (combat.md 3장 경직)
+  const fixed = b.weight === 'fixed';
   b.hitDir = hit.dir;
-  b.push = hit.dir * stun.push * mul;
-  b.knockback = flags.includes('knockback');
+  b.push = fixed ? 0 : hit.dir * stun.push * mul;
+  b.knockback = !fixed && flags.includes('knockback');
   if (b.state === 'air') {
-    if (!flags.includes('hold')) b.vz = Math.max(b.vz, 0) + combatData.airHitVz;
+    if (!flags.includes('hold')) b.vz = Math.max(b.vz, 0) + COMBAT.airHitVz;
     else b.vz = 0;
     b.airHits++;
-    b.gravityMul *= combatData.airGravityMul;
-    if (b.airHits > combatData.maxAirHits || flags.includes('down')) b.forceDown = true;
-  } else if (flags.includes('launch') && mul > 0) {
-    Object.assign(b, { state: 'air', vz: hit.launchVz ?? combatData.launchVz, bounced: false, forceDown: false });
+    b.gravityMul *= COMBAT.airGravityMul;
+    if (b.airHits > COMBAT.maxAirHits || flags.includes('down')) b.forceDown = true;
+  } else if (flags.includes('launch') && mul > 0 && !fixed) {
+    Object.assign(b, { state: 'air', vz: hit.launchVz ?? COMBAT.launchVz, bounced: false, forceDown: false });
   } else if (mul > 0) {
     b.state = 'hitstun';
     b.timer = stun.time * mul;
@@ -72,7 +74,7 @@ export function applyHit(b: Body, hit: HitInfo): void {
 export function stepBody(b: Body, dt: number, minX: number, maxX: number): BodyEvent[] {
   const events: BodyEvent[] = [];
   if (b.push !== 0) {
-    let d = b.push * Math.min(1, combatData.pushRate * dt);
+    let d = b.push * Math.min(1, COMBAT.pushRate * dt);
     if (Math.abs(b.push - d) < 0.05) d = b.push;
     b.x += d;
     b.push -= d;
@@ -80,7 +82,7 @@ export function stepBody(b: Body, dt: number, minX: number, maxX: number): BodyE
       b.x = Math.min(maxX, Math.max(minX, b.x));
       b.push = 0;
       if (b.knockback && b.state === 'hitstun') {
-        b.timer += combatData.wallStunSec;
+        b.timer += COMBAT.wallStunSec;
         events.push('wall');
       }
       b.knockback = false;
@@ -88,16 +90,16 @@ export function stepBody(b: Body, dt: number, minX: number, maxX: number): BodyE
   }
   switch (b.state) {
     case 'air':
-      b.vz -= combatData.gravity * b.gravityMul * dt;
+      b.vz -= COMBAT.gravity * b.gravityMul * dt;
       b.z += b.vz * dt;
       if (b.z <= 0 && b.vz < 0) {
         b.z = 0;
         if (!b.bounced && !b.forceDown) {
           b.bounced = true;
-          b.vz = combatData.bounceVz;
+          b.vz = COMBAT.bounceVz;
           events.push('bounce');
         } else {
-          Object.assign(b, { state: 'down', vz: 0, timer: combatData.downSec, push: b.hitDir * combatData.downSlide });
+          Object.assign(b, { state: 'down', vz: 0, timer: COMBAT.downSec, push: b.hitDir * COMBAT.downSlide });
           events.push('down');
         }
       }
@@ -109,7 +111,7 @@ export function stepBody(b: Body, dt: number, minX: number, maxX: number): BodyE
     case 'down':
       b.timer -= dt;
       if (b.timer <= 0) {
-        Object.assign(b, { state: 'getup', timer: combatData.getupSec, airHits: 0, gravityMul: 1, forceDown: false });
+        Object.assign(b, { state: 'getup', timer: COMBAT.getupSec, airHits: 0, gravityMul: 1, forceDown: false });
         events.push('getup');
       }
       break;

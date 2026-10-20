@@ -2,9 +2,8 @@
 import {
   applyHit, canBeHit, canTurn, damageOf, hitTest, newBody, newFighter, stepBody, stepFighter, stepMove,
   type ActionDef, type Body, type BodyEvent, type Bounds, type Fighter, type MoveSpeed, type Vec2,
-  type WeaponDef, type Weight,
+  type WeaponDef, MONSTERS,
 } from '@game/shared';
-import monstersData from '../../../shared/data/monsters.json';
 
 export interface LocalMonster {
   kind: string;
@@ -36,10 +35,9 @@ export interface HitResult {
   damage: number;
 }
 
-type MonsterDef = { weight: Weight; hurtbox: { width: number; depth: number } };
-
 export function spawnMonster(kind: string, x: number, y: number): LocalMonster {
-  const def = (monstersData as unknown as Record<string, MonsterDef>)[kind]!;
+  const def = MONSTERS[kind];
+  if (!def) throw new Error(`몬스터 '${kind}' 없음`);
   return { kind, body: newBody(x, y, def.weight), facing: -1, hurtbox: def.hurtbox, flash: 0, hurt: 0, airT: 0 };
 }
 

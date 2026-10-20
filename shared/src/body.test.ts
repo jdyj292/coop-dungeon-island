@@ -60,6 +60,14 @@ describe('띄우기 → 바운드 → 다운 → 기상', () => {
     applyHit(b, { dir: 1, strength: 'light', flags: ['down'] });
     expect(simulate(b, 2)).toEqual(['down', 'getup']);
   });
+  it('fixed 무게는 경직만 받고 밀림·띄우기 무시', () => {
+    const b = newBody(100, 0, 'fixed');
+    applyHit(b, { dir: 1, strength: 'heavy', flags: ['launch', 'knockback'] });
+    expect(b.state).toBe('hitstun');
+    expect(b.timer).toBeCloseTo(0.6);
+    simulate(b, 1);
+    expect(b.x).toBe(100);
+  });
   it('boss 무게는 띄우기·경직 무시', () => {
     const b = newBody(100, 0, 'boss');
     applyHit(b, { dir: 1, strength: 'heavy', flags: ['launch'] });

@@ -1,46 +1,26 @@
 // 행동 진행: windup → active → recovery, 평타 연타·선입력·캔슬 (docs/combat.md 1·2장, 형식 docs/data.md 1·2장)
-import combatData from '../data/combat.json';
-import skillsData from '../data/skills.json';
-import weaponsData from '../data/weapons.json';
+import { COMBAT, SKILLS, WEAPONS } from './data/load';
+import type { PlayerAction, Weapon } from './data/schema';
 
 export type Phase = 'windup' | 'active' | 'recovery';
 export type Strength = 'light' | 'medium' | 'heavy';
 export type FxGrade = 'light' | 'medium' | 'heavy' | 'ultimate';
 
-export interface Hitbox {
-  forward: number;
-  width: number;
-  depth: number;
-  z: 'ground' | 'air' | 'both';
-  back?: number;
-}
+export type Hitbox = NonNullable<PlayerAction['hitbox']>;
 
-export interface ActionDef {
-  id: string;
-  phases: Record<Phase, number>;
-  coef?: number;
-  hitbox?: Hitbox;
-  strength?: Strength;
-  flags?: string[];
-  launchVz?: number;
-  poses?: Partial<Record<Phase, string>>;
-  fx?: { grade: FxGrade; shake?: 'vertical' | 'horizontal' };
-}
-
-export interface WeaponDef {
-  comboWindow: number;
-  basic: ActionDef[];
-}
+/** 플레이어 행동 (평타·대시·스킬). 형식은 data/schema.ts */
+export type ActionDef = PlayerAction;
+export type WeaponDef = Weapon;
 
 export function weaponDef(id: string): WeaponDef {
-  const w = (weaponsData as unknown as Record<string, WeaponDef | string>)[id];
-  if (!w || typeof w === 'string') throw new Error(`무기 '${id}' 없음`);
+  const w = WEAPONS[id];
+  if (!w) throw new Error(`무기 '${id}' 없음`);
   return w;
 }
 
 export function skillDef(id: string): ActionDef {
-  const s = (skillsData as unknown as Record<string, ActionDef | string>)[id];
-  if (!s || typeof s === 'string') throw new Error(`스킬 '${id}' 없음`);
+  const s = SKILLS[id];
+  if (!s) throw new Error(`스킬 '${id}' 없음`);
   return s;
 }
 
@@ -142,5 +122,5 @@ export function canTurn(f: Fighter): boolean {
   if (!f.run) return true;
   const { windup, active } = f.run.def.phases;
   const since = f.run.t - windup - active;
-  return f.run.kind === 'basic' && since >= 0 && since < combatData.turnWindow;
+  return f.run.kind === 'basic' && since >= 0 && since < COMBAT.turnWindow;
 }

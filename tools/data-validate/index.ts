@@ -1,0 +1,39 @@
+// 실행: pnpm data-validate — shared/data 형식(zod) + 교차 참조 검사 (docs/data.md 5장)
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { crossCheck, type GameData, type Issue, type Rules } from '../../shared/src/data/crossCheck';
+import { FILE_SCHEMAS, formatIssues, withoutNotes } from '../../shared/src/data/schema';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const root = join(here, '../..');
+const readJson = (path: string) => JSON.parse(readFileSync(join(root, path), 'utf8'));
+
+// 1. 파일별 형식
+const issues: Issue[] = [];
+const data: Record<string, unknown> = {};
+for (const [name, { schema, notes }] of Object.entries(FILE_SCHEMAS)) {
+  const raw = readJson(`shared/data/${name}`);
+  const value = notes ? withoutNotes(raw) : raw;
+  for (const i of formatIssues(value, schema)) issues.push({ level: 'error', where: `${name} ${i.path}`, message: i.message });
+  data[name.replace('.json', '')] = value;
+}
+
+// 2. 교차 참조 (형식이 맞을 때만). 그림 데이터는 이름(키)만 뽑는다
+if (!issues.length) {
+  const poses = withoutNotes(readJson('client/data/sprites/poses.json')) as Record<string, object>;
+  delete poses.walk;
+  const refs = {
+    poseSets: Object.fromEntries(Object.entries(poses).map(([k, v]) => [k, Object.keys(v)])),
+    visuals: Object.keys(readJson('client/data/sprites/weapons_visual.json').profiles),
+    sprites: Object.keys(withoutNotes(readJson('client/data/sprites/monsters.json'))),
+  };
+  issues.push(...crossCheck(data as unknown as GameData, refs, readJson('tools/data-validate/rules.json') as Rules));
+}
+
+const errors = issues.filter((i) => i.level === 'error');
+const warns = issues.filter((i) => i.level === 'warn');
+for (const i of warns) console.log(`  경고  ${i.where}: ${i.message}`);
+for (const i of errors) console.log(`  오류  ${i.where}: ${i.message}`);
+console.log(`\ndata-validate: 오류 ${errors.length}건, 경고 ${warns.length}건`);
+process.exit(errors.length ? 1 : 0);

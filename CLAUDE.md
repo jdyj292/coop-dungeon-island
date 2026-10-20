@@ -49,7 +49,7 @@ tools/                   개발 도구 (아래 표)
 | motion-preview | 완성 | 모션 슬로우·프레임 넘기기·값 조정 → JSON 복사, 승인 데모와 비교. `pnpm motion-preview` |
 | sfx-preview | M1 | 효과음 재생·조정 (reference-*.html = 승인 데모) |
 | palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
-| data-validate | M1 | shared/data 교차 참조 검사 (data.md 5장) |
+| data-validate | 완성 | shared/data 형식·교차 참조 검사 (data.md 5장). `pnpm data-validate`, 기준 rules.json |
 | balance-check, ttk-sim | M1 | 스킬 예산·처치 시간 (balance.md 10장) |
 
 ## 문서 지도 — 작업에 필요한 문서만 읽는다
@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 0-1~0-7 완료: 스프라이트 합성기·sprite-preview, 던전 테스트 씬(대검 3연타 J·올려베기 U·타격 패키지), motion-preview. 대검 평타 타이밍은 데모 값(windup 0.12/0.12/0.24)으로 확정
-- 명령: `pnpm dev`(Boot → Dungeon) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm sprite-preview` / `pnpm motion-preview`
-- 다음: M1 로컬 전투 (roadmap M1 행). 대검 평타 초당 계수가 목표 +15%를 넘으므로 M1 data-validate·balance-check에서 확인
+- M0 완료. M1 1-1 완료: shared 데이터 로더(zod, `WEAPONS`·`MONSTERS` 등) + 교차 검사 + data-validate (오류 0, 경고 5: 대검 평타 초당 계수 441%·미작성 주먹/쌍검 스킬)
+- 명령: `pnpm dev` / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm sprite-preview` / `pnpm motion-preview`
+- 다음: M1 1-2 — shared movement·actions (구간 계산, 판정 모양), 고정 60Hz. 대검 평타 경고는 1-9 balance-check에서 처리

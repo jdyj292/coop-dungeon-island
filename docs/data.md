@@ -149,14 +149,17 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 
 ---
 
-## 5. 검증 (로드 시, zod)
+## 5. 검증 (로드 시 zod + `pnpm data-validate`)
 
-- 플래그·strength·판정 모양 값이 정의된 것인지
-- 포즈 이름이 poses.json의 해당 세트에 있는지, visual이 weapons_visual.json에 있는지
-- 스킬 mp = 기준 쿨 × 2
-- 몬스터 패턴이 참조하는 공격 id가 attacks에 있는지, sprite가 존재하는지
-- 경고(오류 아님): 미작성 스킬 id, 디자인 미정 스프라이트
-- 평타 초당 계수를 계산해 balance.md 4장 목표와 ±15% 넘게 차이 나면 경고
+- **형식 (로드 시)**: shared/src/data/schema.ts. 게임·서버는 shared/src/data/load.ts의 `WEAPONS`·`SKILLS`·`MONSTERS`·`ROOMS`·`PLAYER`·`COMBAT`만 쓴다 (JSON 직접 import 금지). 틀리면 로드할 때 파일·경로와 함께 오류
+  - 모르는 키(오타) 금지, 플래그·strength·판정 모양·telegraph 값은 정의된 것만, 판정은 hitbox / area / projectile / zone 중 하나 (damage 0이면 생략 가능)
+- **교차 참조 (`pnpm data-validate`, shared/src/data/crossCheck.ts)**. 오류:
+  - 포즈 이름이 무기 poseSet 세트(poses.json)에 있는지, visual이 weapons_visual.json에 있는지
+  - 스킬 mp = 기준 쿨 × 2 (반올림), 스킬의 weapon이 있는지, 변형을 적용한 결과도 스킬 형식인지
+  - 몬스터 패턴이 참조하는 공격 id가 attacks에 있는지, sprite가 client/data/sprites/monsters.json에 있는지, 보스에 groggy가 있는지
+  - rooms.json의 몬스터·보스 id가 있는지, 행동 id가 전체에서 고유한지
+- 경고(오류 아님): baseSkills 중 skills.json에 아직 없는 스킬, 평타 초당 계수(계수 합 ÷ 구간 길이 합)가 balance.md 4장 목표와 ±15% 넘게 차이
+- 평타 목표값은 tools/data-validate/rules.json (balance.md 4장과 같은 값 유지)
 
 ---
 
@@ -185,7 +188,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | pushRate | 밀림이 남은 거리를 줄이는 속도 (초당 비율, 클수록 짧고 세게 밀림) |
 | turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 |
 | stun.{light,medium,heavy} | `{ time, push }` 경직 시간·밀림 거리 |
-| weightMul | 무게별 경직·밀림 배율 |
+| weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |
 | grades.{light,medium,heavy,ultimate} | `{ hitstop, shake }` 히트스톱 초, 흔들림 px (0 = 없음) |
 | shakeAfterHitstop | 흔들림 길이 = 히트스톱 + 이 값 |
 

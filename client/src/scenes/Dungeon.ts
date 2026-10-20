@@ -1,7 +1,6 @@
 // 던전 테스트 씬 (roadmap 0-5·0-6): 1층 1번 방, 걷기, 대검 3연타(J)·올려베기(U), 타격 패키지. 서버 없이 로컬
 import Phaser from 'phaser';
-import { skillDef, TILE, type Vec2 } from '@game/shared';
-import rooms from '../../../shared/data/rooms.json';
+import { ROOMS, skillDef, TILE, type Vec2 } from '@game/shared';
 import { color, colorInt } from '../palette';
 import { CombatStage } from '../stage/combatStage';
 import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
@@ -17,7 +16,7 @@ const LAUNCH = skillDef('gs_launch');
 type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'skill1';
 
 export class Dungeon extends Phaser.Scene {
-  private room = rooms.floor1.rooms[0]!;
+  private room = ROOMS.floor1!.rooms[0]!;
   private roomW = 0;
   private stage!: CombatStage;
   private camCenter = 0;
@@ -37,7 +36,7 @@ export class Dungeon extends Phaser.Scene {
     this.add.image(0, 0, 'room-bg').setOrigin(0, 0).setDepth(-1000);
 
     // Tiled 맵(roadmap 3장) 전까지 임시 배치: 방 오른쪽 2/3에 고르게, 깊이는 번갈아
-    const count = (this.room.waves[0]!.monsters as Record<string, number>).mushroom ?? 0;
+    const count = this.room.waves[0]!.monsters.mushroom ?? 0;
     const mushrooms: Vec2[] = Array.from({ length: count }, (_, i) => ({
       x: this.roomW / 3 + ((i + 0.5) * (this.roomW * 2 / 3 - TILE)) / count,
       y: roomD * (i % 2 ? 0.3 : 0.75),

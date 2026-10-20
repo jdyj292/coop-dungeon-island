@@ -18,7 +18,7 @@
     "medium": { "time": 0.45, "push": 12 },
     "heavy": { "time": 0.6, "push": 24 }
   },
-  "weightMul": { "light": 1, "medium": 0.8, "heavy": 0.5, "boss": 0 },
+  "weightMul": { "light": 1, "medium": 0.8, "heavy": 0.5, "fixed": 1, "boss": 0 },
   "grades": {
     "light": { "hitstop": 0.05, "shake": 0 },
     "medium": { "hitstop": 0.09, "shake": 1 },
