@@ -1,0 +1,29 @@
+{
+  "_note": "전투 공통 수치. 의미는 docs/combat.md 3·5장, 형식은 docs/data.md 7장. 단위: px, 초, px/s",
+  "baseAtk": 10,
+  "gravity": 600,
+  "launchVz": 220,
+  "airHitVz": 60,
+  "airGravityMul": 1.1,
+  "maxAirHits": 12,
+  "bounceVz": 90,
+  "downSec": 0.8,
+  "downSlide": 6,
+  "getupSec": 0.5,
+  "wallStunSec": 0.3,
+  "pushRate": 20,
+  "turnWindow": 0.1,
+  "stun": {
+    "light": { "time": 0.3, "push": 6 },
+    "medium": { "time": 0.45, "push": 12 },
+    "heavy": { "time": 0.6, "push": 24 }
+  },
+  "weightMul": { "light": 1, "medium": 0.8, "heavy": 0.5, "boss": 0 },
+  "grades": {
+    "light": { "hitstop": 0.05, "shake": 0 },
+    "medium": { "hitstop": 0.09, "shake": 1 },
+    "heavy": { "hitstop": 0.13, "shake": 2 },
+    "ultimate": { "hitstop": 0.2, "shake": 3 }
+  },
+  "shakeAfterHitstop": 0.12
+}

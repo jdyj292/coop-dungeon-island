@@ -1,6 +1,6 @@
 # 게임 데이터 형식 (docs/data.md)
 
-shared/data/의 weapons.json, skills.json, monsters.json, player.json 형식 기준 문서.
+shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.json 형식 기준 문서.
 규칙의 의미는 docs/combat.md, 수치 근거는 docs/balance.md, 스킬 목록은 docs/skills.md, 그림 데이터는 docs/sprites.md.
 단위: 거리·크기 px (1타일 16), 시간 초, 속도 px/s.
 
@@ -170,3 +170,24 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json 형식 기
 | move.walk / move.run | 기본 이동 속도 px/s (x 좌우, y 깊이). 의미는 combat.md 3장, 무기별 배율은 weapons.json moveMul |
 
 - 이동 계산은 shared/src/movement.ts (클라이언트·서버 공용): 축마다 따로 움직이고 대각선도 정규화하지 않는다
+
+---
+
+## 7. combat.json
+
+combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 형식만.
+
+| 필드 | 설명 |
+|---|---|
+| baseAtk | 숙련도 1레벨 ATK (balance.md 1장). 데미지 = ATK × coef / 100 |
+| gravity, launchVz, airHitVz, airGravityMul, maxAirHits, bounceVz | 높이(z)·공중 콤보 보정 |
+| downSec, downSlide, getupSec, wallStunSec | 다운 시간·다운 미끄러짐(px)·기상 무적·벽꿍 추가 경직 |
+| pushRate | 밀림이 남은 거리를 줄이는 속도 (초당 비율, 클수록 짧고 세게 밀림) |
+| turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 |
+| stun.{light,medium,heavy} | `{ time, push }` 경직 시간·밀림 거리 |
+| weightMul | 무게별 경직·밀림 배율 |
+| grades.{light,medium,heavy,ultimate} | `{ hitstop, shake }` 히트스톱 초, 흔들림 px (0 = 없음) |
+| shakeAfterHitstop | 흔들림 길이 = 히트스톱 + 이 값 |
+
+- 행동 진행은 shared/src/actions.ts, 판정·데미지는 hit.ts, 피격 반응·높이는 body.ts (클라이언트·서버 공용)
+- 연출 값(번쩍임 프레임, 섬광, 숫자, 스미어 모양, 리듬 오프셋)은 client/data/fx.json (docs/motion.md)

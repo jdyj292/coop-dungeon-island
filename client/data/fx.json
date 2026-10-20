@@ -1,0 +1,33 @@
+{
+  "_note": "타격 패키지·피격 반응 연출 값. 의미는 docs/motion.md 1~4장, 모양은 docs/art.md 7장. 시간 초, 프레임 = 1/60초, 위치 px (발밑 기준)",
+  "frame": 0.016667,
+  "flashFrames": { "light": 2, "medium": 4, "heavy": 4, "ultimate": 4 },
+  "star": { "frames": 2, "at": [-3, -8], "radius": { "light": 3, "medium": 4, "heavy": 4, "ultimate": 5 } },
+  "sparks": { "count": 6, "speed": [50, 40], "lift": 30, "gravity": 200, "sec": 0.25 },
+  "dust": { "sec": 0.4, "gravity": 20, "spread": 12, "lift": [12, 22], "bounce": 6, "down": 8 },
+  "ring": { "sec": 0.3, "r0": 4, "grow": 14, "flat": 0.4 },
+  "downShake": { "px": 1, "sec": 0.12 },
+  "number": {
+    "sec": 0.7,
+    "above": 18,
+    "rise": 8,
+    "riseSec": 0.18,
+    "popSec": 0.056,
+    "blinkLast": 0.25,
+    "light": { "scale": [2, 1], "color": "global.damageText.own" },
+    "medium": { "scale": [2, 2], "color": "global.damageText.ownSkill" },
+    "heavy": { "scale": [3, 2], "color": "global.damageText.ownSkill" },
+    "ultimate": { "scale": [3, 2], "color": "global.damageText.ownSkill" }
+  },
+  "smear": {
+    "sec": 0.06,
+    "center": [3, -11],
+    "shapes": {
+      "slash": { "a0": -1.7, "a1": 0.35, "r1": 8, "r2": 13 },
+      "upslash": { "a0": -1.5, "a1": 0.9, "r1": 9, "r2": 15, "rev": true }
+    },
+    "grow": { "light": 0, "medium": 1, "heavy": 2, "ultimate": 3 }
+  },
+  "rhythm": { "back": 1, "forward": { "light": 2, "medium": 3, "heavy": 3 }, "returnSec": 0.12 },
+  "reaction": { "hurtSec": 0.1, "airSpinSec": 0.08, "getupSquashSec": 0.1, "airShadowZ": 30, "airShadowMin": 0.4 }
+}

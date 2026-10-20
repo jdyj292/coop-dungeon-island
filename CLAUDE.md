@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 0-1~0-5 완료: 워크스페이스, palette-check, 스프라이트 합성기·sprite-preview(대기 자세·걷기·표정 개선 반영), 던전 테스트 씬(1층 1번 방 배경·투영·걷기·카메라·통통버섯)
+- M0 0-1~0-6 구현: 워크스페이스, palette-check, 스프라이트 합성기·sprite-preview, 던전 테스트 씬, 대검 3연타(J)·올려베기(U)·타격 패키지·띄우기·바운드·다운 (0-6은 reference.html 비교 승인 대기)
 - 명령: `pnpm dev`(Boot → Dungeon) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm sprite-preview`
-- 다음: M0 0-6 — 대검 3연타 + 타격 패키지(히트스톱·스미어·번쩍임·숫자) + 띄우기·바운드 (로컬)
+- 다음: 0-6 승인 → M0 0-7 tools/motion-preview (타이밍을 데이터·데모 중 어디에 맞출지 여기서 조정)

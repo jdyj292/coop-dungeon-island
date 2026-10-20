@@ -30,6 +30,13 @@
       "gold": "#FFE08A",
       "sky": "#9EE3FF"
     },
+    "fx": {
+      "flash": "#FFFFFF",
+      "smearEdge": "#C9A24A",
+      "dustLight": "#D6CBB3",
+      "dustDark": "#A59781",
+      "ring": "#E9DFC6"
+    },
     "damageText": {
       "own": "#FFFFFF",
       "ownSkill": "#FFE08A",

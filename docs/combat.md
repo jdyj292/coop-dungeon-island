@@ -97,7 +97,7 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 ### 높이(z)
 - 몬스터마다 z, vz (서버 상태에 포함). 렌더링은 z 높이, 그림자는 바닥 고정
 - 몬스터도 좌우로만 바라본다 (백어택 판정 기준: 몬스터가 바라보는 반대쪽에서 맞음)
-- 중력 600px/s². launch 기본 vz 220 → 체공 약 0.7초
+- 중력 600px/s². launch 기본 vz 220 → 체공 약 0.7초 (이 장의 수치는 shared/data/combat.json, 형식 docs/data.md 7장)
 - 공중 피격 시 재부양 vz +60 (hold는 vz 0 유지)
 - 플레이어는 z 없음 (항상 지상). **점프 없음 (확정)** — 뛰어오르는 모습은 스킬 연출(예: 승천검)로만, 판정은 지상
 
@@ -155,7 +155,7 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 | 강 (마무리 타격) | 0.13초 | 방향성 흔들림 | 먼지·충격파 링 |
 | 필살 | 0.2초 + 0.3초 슬로우 | 강하게 | 발동 시 화면 정지 + 캐릭터 컷인 (확대 대신 정수 배율 유지) |
 
-- 이 표는 시간 값(히트스톱·흔들림)의 기준. 번쩍임 프레임 수·섬광·숫자 등 타격 패키지 구성은 docs/motion.md 3장
+- 이 표는 시간 값(히트스톱·흔들림)의 기준 (데이터: shared/data/combat.json grades). 번쩍임 프레임 수·섬광·숫자 등 타격 패키지 구성은 docs/motion.md 3장
 - 타격음은 저음 강조 (docs/audio.md). 바운드·벽꿍·다운 미끄러짐에도 각각 짧은 효과음과 먼지
 - 흔들림 방향: 내려찍기는 상하, 옆으로 날리는 기술은 좌우
 - 내 행동은 입력 즉시 windup 애니메이션 재생
