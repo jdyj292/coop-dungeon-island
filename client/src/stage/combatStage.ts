@@ -1,7 +1,7 @@
 // 로컬 전투 무대: 플레이어·몬스터 진행, 타격 패키지, 그리기. 던전 씬과 tools/motion-preview가 같이 쓴다
 import type Phaser from 'phaser';
 import {
-  fighterPose, newFighter, newBody, PLAYER_MOVE, weaponDef,
+  FixedStep, fighterPose, newBody, newFighter, newRunState, TICK, weaponDef,
   type ActionDef, type BodyEvent, type Bounds, type FighterEvent, type Vec2,
 } from '@game/shared';
 import fx from '../../data/fx.json';
@@ -41,8 +41,13 @@ export class CombatStage {
   private playerView: ActorView;
   private mushrooms: { m: LocalMonster; view: ActorView }[];
   private beat = 0;
+  private walking = false;
   /** 게임 시간 누적 (대기 순환용, 히트스톱·슬로우를 따른다) */
   private clock = 0;
+  /** 1/60초 고정 틱 (docs/network.md 12장) */
+  private ticks = new FixedStep();
+  /** 틱이 돌기 전에 들어온 누름 입력을 다음 틱까지 보관 */
+  private pending: Pick<StageInput, 'attack' | 'skill'> = { attack: false, skill: null };
 
   constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, mushrooms: Vec2[]) {
     this.player = newPlayer(player);
@@ -57,7 +62,7 @@ export class CombatStage {
 
   /** 처음 자리로 되돌린다 (연출 반복 재생용) */
   reset(player: Vec2, mushrooms: Vec2[]): void {
-    Object.assign(this.player, { pos: { ...player }, facing: 1, fighter: newFighter() });
+    Object.assign(this.player, { pos: { ...player }, facing: 1, fighter: newFighter(), run: newRunState() });
     this.mushrooms.forEach((e, i) => Object.assign(e.m, {
       body: newBody(mushrooms[i]!.x, mushrooms[i]!.y, e.m.body.weight), facing: -1, flash: 0, hurt: 0, airT: 0,
     }));
@@ -65,22 +70,37 @@ export class CombatStage {
     this.fx.layer.clear();
     this.fx.stop.clear();
     this.fx.shake.clear();
+    this.ticks.reset();
+    this.pending = { attack: false, skill: null };
   }
 
-  /** dt = 실제 경과 시간 (슬로우는 호출하는 쪽에서 곱함). 히트스톱 중에는 흔들림만 진행 (motion.md 3장) */
+  /** realDt = 실제 경과 시간 (슬로우는 호출하는 쪽에서 곱함). 1/60초 틱으로 나눠 진행하고 한 번 그린다 */
   update(realDt: number, input: StageInput): void {
-    const dt = this.fx.stop.filter(realDt);
-    this.fx.shake.update(realDt);
+    this.pending.attack ||= input.attack;
+    this.pending.skill ??= input.skill;
+    const n = this.ticks.advance(realDt);
+    let moved = 0;
+    for (let i = 0; i < n; i++) {
+      moved += this.tick({ ...input, ...this.pending });
+      this.pending = { attack: false, skill: null };
+    }
+    this.draw(n > 0 ? moved : null);
+  }
+
+  /** 한 틱. 히트스톱 중에는 게임 시간이 멈추고 흔들림만 진행 (motion.md 3장). 반환 = 걸은 거리 */
+  private tick(input: StageInput): number {
+    const dt = this.fx.stop.filter(TICK);
+    this.fx.shake.update(TICK);
     this.clock += dt;
     const p = this.player, b = this.bounds;
     // 몬스터를 먼저 진행: 이번 틱에 맞은 번쩍임·경직이 같은 틱에 깎이지 않게
     for (const m of this.monsters) stepMonster(m, dt, p.pos.x, b.minX, b.maxX).forEach((e) => this.onMonsterEvent(m, e));
-    const res = stepPlayer(p, this.weapon, input, dt, PLAYER_MOVE.walk, b, this.monsters);
+    const res = stepPlayer(p, this.weapon, input, dt, b, this.monsters);
     res.events.forEach((e) => this.onPlayerEvent(e));
     res.hits.forEach((h) => this.onHit(h));
     this.rhythm.update(dt, !!p.fighter.run);
     this.fx.layer.update(dt);
-    this.draw(res.moved);
+    return res.moved;
   }
 
   private onPlayerEvent(e: FighterEvent): void {
@@ -119,12 +139,16 @@ export class CombatStage {
     }
   }
 
-  private draw(moved: number): void {
+  /** moved = 이번 프레임에 걸은 거리 (틱이 안 돌았으면 null: 걷기 박자 유지) */
+  private draw(moved: number | null): void {
     const data = spriteData(), p = this.player;
     const acting = !!p.fighter.run;
     // 걷기 박자는 이동 거리로 넘긴다 (발이 미끄러져 보이지 않게)
-    this.beat = moved > 0 ? this.beat + moved / data.poses.walk.pxPerBeat : 0;
-    const step = moved > 0 && !acting ? walkStep(data, Math.floor(this.beat)) : { frame: 'stand', bob: 0 };
+    if (moved !== null) {
+      this.walking = moved > 0;
+      this.beat = this.walking ? this.beat + moved / data.poses.walk.pxPerBeat : 0;
+    }
+    const step = this.walking && !acting ? walkStep(data, Math.floor(this.beat)) : { frame: 'stand', bob: 0 };
     const look: CharacterLook = {
       hair: 'short', face: 'normal', outfit: data.outfits.sets.beginner!,
       weapon: 'greatsword_basic', pose: fighterPose(p.fighter) ?? 'idle', frame: step.frame, bob: step.bob,

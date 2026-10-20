@@ -163,7 +163,9 @@ export const monster = z.object({
 }).strict();
 
 const speed = z.object({ x: pos, y: pos }).strict();
-export const player = z.object({ _note: z.string().optional(), move: z.object({ walk: speed, run: speed }).strict() }).strict();
+export const player = z.object({
+  _note: z.string().optional(), move: z.object({ walk: speed, run: speed }).strict(), runDoubleTap: pos,
+}).strict();
 
 const stun = z.object({ time: sec, push: sec }).strict();
 export const combat = z.object({
@@ -188,6 +190,10 @@ export const rooms = z.record(z.object({
 }).strict());
 
 export type PlayerAction = z.infer<typeof playerAction>;
+export type Hitbox = z.infer<typeof hitbox>;
+export type Area = z.infer<typeof area>;
+export type Zone = z.infer<typeof zone>;
+export type ActionMove = z.infer<typeof move>;
 export type Skill = z.infer<typeof skill>;
 export type MonsterAttack = z.infer<typeof monsterAttack>;
 export type Weapon = z.infer<typeof weapon>;

@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 완료. M1 1-1 완료: shared 데이터 로더(zod, `WEAPONS`·`MONSTERS` 등) + 교차 검사 + data-validate (오류 0, 경고 5: 대검 평타 초당 계수 441%·미작성 주먹/쌍검 스킬)
+- M0 완료. M1 1-1 데이터 로더(zod)·data-validate (오류 0, 경고 5), 1-2 고정 60Hz 틱·달리기(두 번 누르기)·행동 중 이동·판정 모양 4종(shapes.ts)
 - 명령: `pnpm dev` / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm sprite-preview` / `pnpm motion-preview`
-- 다음: M1 1-2 — shared movement·actions (구간 계산, 판정 모양), 고정 60Hz. 대검 평타 경고는 1-9 balance-check에서 처리
+- 다음: M1 1-3 — 로컬 전투 루프 (평타·대시·백스텝·스킬 2개, 캔슬 규칙), 대검으로 통통버섯 처치. 대검 평타 경고는 1-9에서

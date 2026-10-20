@@ -233,7 +233,9 @@ IslandState
 | messages.ts | 메시지·이벤트 타입과 zod 스키마 |
 | movement.ts | 입력 → 이동 (속도, 걷기·달리기, 깊이 이동 배율) |
 | collision.ts | 맵 충돌 (Tiled walls) |
-| actions.ts | 행동 구간 계산, 행동 중 이동, 판정 모양 계산 |
+| actions.ts | 행동 구간 계산, 행동 중 이동 |
+| shapes.ts | 판정 모양 (hitbox · area circle/rect/fan · projectile · zone) |
+| tick.ts | 고정 1/60초 틱 누적기 (FixedStep) |
 | constants.ts | 틱 속도, 보간 지연, 보정 임계값 등 이 문서의 숫자 |
 
 - 클라이언트·서버가 같은 결과를 내도록 이동 계산은 고정 시간 간격(1/60초) 단위로

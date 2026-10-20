@@ -166,13 +166,15 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 ## 6. player.json
 
 ```json
-{ "move": { "walk": { "x": 60, "y": 40 }, "run": { "x": 120, "y": 75 } } }
+{ "move": { "walk": { "x": 60, "y": 40 }, "run": { "x": 120, "y": 75 } }, "runDoubleTap": 0.25 }
 ```
 | 필드 | 설명 |
 |---|---|
-| move.walk / move.run | 기본 이동 속도 px/s (x 좌우, y 깊이). 의미는 combat.md 3장, 무기별 배율은 weapons.json moveMul |
+| move.walk / move.run | 기본 이동 속도 px/s (x 좌우, y 깊이). 의미는 combat.md 1장, 무기별 배율은 weapons.json moveMul |
+| runDoubleTap | 달리기: 같은 방향 좌우를 두 번 누르는 사이 최대 시간 (초) |
 
-- 이동 계산은 shared/src/movement.ts (클라이언트·서버 공용): 축마다 따로 움직이고 대각선도 정규화하지 않는다
+- 이동 계산은 shared/src/movement.ts (클라이언트·서버 공용): 축마다 따로 움직이고 대각선도 정규화하지 않는다. 행동 중 이동(move)은 actions.ts actionMoveDelta, 판정 모양은 shapes.ts
+- 모든 진행은 1/60초 고정 틱 (shared/src/tick.ts, docs/network.md 12장)
 
 ---
 

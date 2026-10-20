@@ -1,30 +1,6 @@
-// 공격 판정과 데미지 (docs/combat.md 2장, 공식 docs/balance.md 1장)
+// 데미지와 연출 등급 시간 (공식 docs/balance.md 1장, 시간 docs/combat.md 5장). 판정 모양은 shapes.ts
+import type { FxGrade } from './actions';
 import { COMBAT } from './data/load';
-import type { FxGrade, Hitbox } from './actions';
-
-export interface Attacker {
-  x: number;
-  y: number;
-  /** 1 = 오른쪽, -1 = 왼쪽 */
-  facing: number;
-}
-
-export interface HitTarget {
-  x: number;
-  y: number;
-  airborne: boolean;
-  hurtbox: { width: number; depth: number };
-}
-
-/** 사각형 판정: 바라보는 방향으로 forward부터 width 길이(뒤로 back 추가), 깊이는 판정·피격 상자 겹침 */
-export function hitTest(a: Attacker, box: Hitbox, t: HitTarget): boolean {
-  if (box.z === 'ground' && t.airborne) return false;
-  if (box.z === 'air' && !t.airborne) return false;
-  const rel = (t.x - a.x) * a.facing;
-  const half = t.hurtbox.width / 2;
-  if (rel + half < box.forward - (box.back ?? 0) || rel - half > box.forward + box.width) return false;
-  return Math.abs(t.y - a.y) <= (box.depth + t.hurtbox.depth) / 2;
-}
 
 /** 최종 데미지 = ATK × 계수 (레벨·피해 증가·상황 보정은 M1 이후) */
 export const damageOf = (coef: number, atk = COMBAT.baseAtk): number => Math.round((atk * coef) / 100);

@@ -12,3 +12,7 @@ export const MIN_SCALE = 2;
 
 /** 깊이(y) 압축: 바닥 타일이 화면에서 16×10px */
 export const DEPTH_RATIO = 10 / 16;
+
+/** 시뮬레이션 틱 (docs/network.md 2장): 클라이언트·서버 모두 1/60초 고정 간격으로 진행 */
+export const TICK_RATE = 60;
+export const TICK = 1 / TICK_RATE;

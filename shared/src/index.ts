@@ -4,6 +4,8 @@ export * from './palettePath';
 export * from './movement';
 export * from './actions';
 export * from './hit';
+export * from './shapes';
+export * from './tick';
 export * from './body';
 export * from './data/load';
 export * from './data/crossCheck';
