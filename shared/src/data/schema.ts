@@ -165,6 +165,7 @@ export const monster = z.object({
 const speed = z.object({ x: pos, y: pos }).strict();
 export const player = z.object({
   _note: z.string().optional(), move: z.object({ walk: speed, run: speed }).strict(), runDoubleTap: pos,
+  hurtbox: z.object({ width: pos, height: pos, depth: pos }).strict(),
   backstep: z.object({ distance: pos, sec: pos, invuln: sec, cooldown: sec }).strict(),
 }).strict();
 
@@ -178,6 +179,10 @@ export const combat = z.object({
   grades: z.object(Object.fromEntries(GRADES.map((g) => [g, z.object({ hitstop: sec, shake: sec }).strict()])) as
     Record<(typeof GRADES)[number], z.ZodObject<{ hitstop: typeof sec; shake: typeof sec }>>).strict(),
   shakeAfterHitstop: sec,
+  tokens: z.array(z.number().int().positive()).min(1),
+  ai: z.object({
+    hopSec: pos, hopMove: z.number().min(0).max(1), orbitDistance: pos, orbitDepth: sec, chargerDistance: pos, separation: sec,
+  }).strict(),
 }).strict();
 
 export const rooms = z.record(z.object({
@@ -198,7 +203,7 @@ export type ActionMove = z.infer<typeof move>;
 export type Skill = z.infer<typeof skill>;
 export type MonsterAttack = z.infer<typeof monsterAttack>;
 export type Weapon = z.infer<typeof weapon>;
-export type Monster = z.infer<typeof monster>;
+export type MonsterDef = z.infer<typeof monster>;
 export type Combat = z.infer<typeof combat>;
 export type Rooms = z.infer<typeof rooms>;
 

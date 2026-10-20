@@ -137,7 +137,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 | frames.foot | 발밑 기준점 (격자 좌표). 화면의 몬스터 위치에 맞춘다 |
 | offset | 그릴 때 추가로 옮기는 양 (튀어오름 [0,−3], 앞으로 기울기 [3,0]) |
 | shake | 그리는 동안 좌우 1px 떨림 (예고 동작) |
-| spin | 90°씩 돌려 그림 (1/8초마다). 구르기 |
+| spin | 90°씩 돌려 그림 (1/8초마다). 구르기. 회전 중에는 모든 각도에서 그림 가운데를 축으로 돌리고, 돌린 뒤 아래 끝을 발밑 줄에 맞춘다 (공중 회전·다운 눕힘도 같음) |
 | superArmorOutline | 이 프레임 동안 외곽선을 슈퍼아머 색으로 (art.md 8장) |
 | fx | 프레임에 붙는 이펙트: dust, ring(r), stars, spore, sparks, zz, bubble(r), cloud, lines. at은 발밑 기준 상대 좌표 |
 | idleSec | 대기(idle) 순환 한 프레임 길이 (초) |

@@ -28,11 +28,13 @@ export interface Body {
   ko: boolean;
   /** 기절이 끝나 퇴장함 */
   gone: boolean;
+  /** 슈퍼아머: 맞아도 경직·밀림·띄우기 없이 데미지만 (AI가 틱마다 정함, combat.md 3장) */
+  armor: boolean;
 }
 
 export const newBody = (x: number, y: number, weight: Weight): Body => ({
   x, y, z: 0, vz: 0, state: 'idle', timer: 0, push: 0, hitDir: 1, knockback: false,
-  bounced: false, forceDown: false, airHits: 0, gravityMul: 1, weight, ko: false, gone: false,
+  bounced: false, forceDown: false, airHits: 0, gravityMul: 1, weight, ko: false, gone: false, armor: false,
 });
 
 export interface HitInfo {
@@ -57,6 +59,7 @@ export function applyHit(b: Body, hit: HitInfo): void {
   const mul = COMBAT.weightMul[b.weight];
   const stun = COMBAT.stun[hit.strength];
   // fixed(고정형): 경직만 받고 밀림·띄우기·넉백은 무시 (combat.md 3장 경직)
+  if (b.armor) return;
   const fixed = b.weight === 'fixed';
   b.hitDir = hit.dir;
   b.push = fixed ? 0 : hit.dir * stun.push * mul;

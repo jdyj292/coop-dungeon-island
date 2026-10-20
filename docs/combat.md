@@ -138,6 +138,8 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 - 보스: 기본 슈퍼아머. 졸음(그로기) 상태에서만 해제
 - 정예 몬스터: 자신의 공격 windup~active 동안 슈퍼아머 (맞으면서 때린다)
 - 슈퍼아머 대상: 경직·밀림·띄우기·잡기 무시, 데미지만 받음
+- 슈퍼아머가 없는 몬스터는 예고(windup) 중 맞으면 공격이 끊기고 토큰을 반납한다
+- 구현: AI가 틱마다 body.armor를 정함 (shared/src/monster/state.ts hasArmor)
 
 ---
 
@@ -175,6 +177,9 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 - 감지 거리 기본 5타일. 체력 0 → 기절 → 코인·재료 드롭 후 퇴장
 - **공격 토큰**: 동시에 공격 동작에 들어갈 수 있는 몬스터 수 제한. 토큰 없는 몬스터는 거리를 두고 맴돌며 위치를 잡음 (토큰 수는 balance.md, 규칙은 dungeon.md)
 - 모든 몬스터 공격은 예고(windup)가 보여야 한다. 강 공격은 예고를 더 길게
+- 상태: 대기(감지 전) → 추적·위치 잡기 / 토큰 없으면 맴돌기 → 공격 → (벽 충돌) 어지러움·그로기. 피격 반응 중에는 행동을 멈춤
+- 판정: 몬스터 공격도 active 동안 매 틱, 한 공격에 플레이어는 한 번. 투사체는 날아가며 판정
+- 구현: shared/src/monster/ (state·ai·attack·tokens·hazards), 방 한 틱은 shared/src/sim/room.ts (클라이언트 로컬·서버 공용). AI 값은 combat.json ai (data.md 7장)
 
 ---
 

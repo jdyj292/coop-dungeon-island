@@ -1,8 +1,9 @@
-// 던전 테스트 씬: 1층 1번 방. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 (combat.md 1장). 서버 없이 로컬
+// 던전 테스트 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 (combat.md 1장). 서버 없이 로컬
 import Phaser from 'phaser';
-import { ROOMS, skillDef, TILE, type Vec2 } from '@game/shared';
+import { skillDef, TILE } from '@game/shared';
 import { color, colorInt } from '../palette';
 import { CombatStage } from '../stage/combatStage';
+import { floorRoom, waveSpawns } from '../stage/roomSetup';
 import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
 import { drawRoomBg } from '../view/roomBg';
 
@@ -17,8 +18,12 @@ const SKILLS = { skill1: skillDef('gs_launch'), skill2: skillDef('gs_earthsplit'
 type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2';
 
 export class Dungeon extends Phaser.Scene {
-  private room = ROOMS.floor1!.rooms[0]!;
+  private room = floorRoom('floor1', Number(new URLSearchParams(location.search).get('room') ?? 1));
   private roomW = 0;
+  private roomD = 0;
+  /** 다음에 나올 웨이브 (모두 끝나면 waves.length) */
+  private wave = 0;
+  cleared = false;
   private stage!: CombatStage;
   private camCenter = 0;
   private hud!: Phaser.GameObjects.Rectangle;
@@ -31,19 +36,13 @@ export class Dungeon extends Phaser.Scene {
   create(): void {
     const [tw, td] = this.room.size as [number, number];
     this.roomW = tw * TILE;
-    const roomD = td * TILE;
+    const roomD = (this.roomD = td * TILE);
     this.cameras.main.setBackgroundColor(color(`floors.${FLOOR}.env.void`));
     this.textures.addCanvas('room-bg', drawRoomBg(FLOOR, this.roomW, td, FIELD_BOTTOM + BG_EXTRA));
     this.add.image(0, 0, 'room-bg').setOrigin(0, 0).setDepth(-1000);
 
-    // Tiled 맵(roadmap 3장) 전까지 임시 배치: 방 오른쪽 2/3에 고르게, 깊이는 번갈아
-    const count = this.room.waves[0]!.monsters.mushroom ?? 0;
-    const mushrooms: Vec2[] = Array.from({ length: count }, (_, i) => ({
-      x: this.roomW / 3 + ((i + 0.5) * (this.roomW * 2 / 3 - TILE)) / count,
-      y: roomD * (i % 2 ? 0.3 : 0.75),
-    }));
     const bounds = { minX: TILE / 2, maxX: this.roomW - TILE / 2, minY: 0, maxY: roomD };
-    this.stage = new CombatStage(this, bounds, { x: 3 * TILE, y: roomD / 2 }, mushrooms);
+    this.stage = new CombatStage(this, bounds, { x: 3 * TILE, y: roomD / 2 }, this.nextWave());
     this.camCenter = this.stage.player.pos.x;
 
     this.hud = this.add.rectangle(0, 0, 1, HUD_HEIGHT, colorInt('global.ui.panel')).setOrigin(0, 0).setScrollFactor(0).setDepth(10000);
@@ -57,6 +56,25 @@ export class Dungeon extends Phaser.Scene {
     }) as typeof this.keys;
   }
 
+  /** 다음 웨이브 출현 목록 (없으면 빈 목록) */
+  private nextWave() {
+    const w = this.room.waves[this.wave];
+    if (!w) return [];
+    this.wave++;
+    return waveSpawns(w.monsters, this.roomW, this.roomD);
+  }
+
+  /** 몬스터를 모두 기절시키면 다음 웨이브, 마지막이면 방 클리어 (CLAUDE.md 핵심 게임 규칙) */
+  private checkWave(): void {
+    if (this.cleared || this.stage.monsters.length) return;
+    const next = this.nextWave();
+    if (next.length) this.stage.spawn(next);
+    else {
+      this.cleared = true;
+      console.info(`방 클리어: ${this.room.name}`);
+    }
+  }
+
   private layoutHud(): void {
     const { width, height } = this.scale.gameSize;
     this.hud.setPosition(0, height - HUD_HEIGHT).setSize(width, HUD_HEIGHT);
@@ -64,6 +82,7 @@ export class Dungeon extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     const k = this.keys;
+    this.checkWave();
     this.stage.update(delta / 1000, {
       x: (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0),
       y: (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0),

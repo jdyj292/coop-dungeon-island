@@ -28,7 +28,7 @@ export interface Rules {
 export interface GameData {
   weapons: Record<string, S.Weapon>;
   skills: Record<string, S.Skill>;
-  monsters: Record<string, S.Monster>;
+  monsters: Record<string, S.MonsterDef>;
   rooms: S.Rooms;
 }
 

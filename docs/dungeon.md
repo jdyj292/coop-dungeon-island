@@ -34,6 +34,7 @@
 - 토큰이 없는 몬스터는 거리를 유지하며 맴돌거나 위치를 잡음
 - 토큰 수는 인원에 따라 다름 (balance.md). 솔로는 포위당해도 한 번에 2마리까지만 공격
 - 정예·보스는 토큰과 무관하게 공격 (단, 정예 2마리 이상이 동시에 공격하지 않음)
+- 토큰은 windup 진입 때 받고 recovery 진입 때(또는 공격이 끊기면) 반납. 수는 shared/data/combat.json tokens, 구현 shared/src/monster/tokens.ts
 
 ### 쓰러짐
 - 파티: 동료가 부활 (combat.md)

@@ -18,10 +18,11 @@ const DIGITS: Record<string, string[]> = {
 export const textLeft = (text: string, cx: number, scale: number) =>
   Math.round(cx - (text.length * 4 * scale - scale) / 2);
 
-export function damageNumber(value: number, x: number, y: number, grade: FxGrade): Effect {
+/** colorPath: 기본은 등급별 색, 플레이어가 맞은 숫자 등은 따로 */
+export function damageNumber(value: number, x: number, y: number, grade: FxGrade, colorPath?: string): Effect {
   const n = fx.number, style = n[grade];
   const text = String(value);
-  const fill = colorInt(style.color), outline = colorInt('global.outline');
+  const fill = colorInt(colorPath ?? style.color), outline = colorInt('global.outline');
   const draw = (g: Phaser.GameObjects.Graphics, left: number, top: number, sc: number, col: number, ox: number, oy: number) =>
     [...text].forEach((ch, i) => DIGITS[ch]?.forEach((row, j) => [...row].forEach((b, k) => {
       if (b === '1') dot(g, left + i * 4 * sc + k * sc + ox, top + j * sc + oy, col, sc, sc);

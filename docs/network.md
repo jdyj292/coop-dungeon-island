@@ -236,6 +236,9 @@ IslandState
 | actions.ts | 행동 구간 계산, 행동 중 이동 |
 | shapes.ts | 판정 모양 (hitbox · area circle/rect/fan · projectile · zone) |
 | tick.ts | 고정 1/60초 틱 누적기 (FixedStep) |
+| player.ts | 플레이어 한 틱 (행동·대시·백스텝·쿨타임·이동) |
+| monster/ | 몬스터 상태·AI·공격·토큰·투사체·장판 |
+| sim/room.ts | 방 한 틱 (RoomSim): 몬스터 → 투사체·장판 → 플레이어 → 겹침 풀기. 서버 DungeonRoom이 그대로 돌린다 |
 | constants.ts | 틱 속도, 보간 지연, 보정 임계값 등 이 문서의 숫자 |
 
 - 클라이언트·서버가 같은 결과를 내도록 이동 계산은 고정 시간 간격(1/60초) 단위로

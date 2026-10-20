@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 완료. M1 1-1 데이터 로더·data-validate, 1-2 60Hz 틱·달리기·판정 모양, 1-3 대시·백스텝(K)·스킬 2개(U 올려베기·I 대지가르기, 쿨타임)·캔슬·기절→퇴장 (shared/player.ts)
+- M0 완료. M1 1-1~1-3 데이터 로더·60Hz 틱·플레이어 행동(shared/player.ts), 1-4 몬스터 상태 머신·5종 AI·공격 토큰·투사체·장판·예고 표시 (shared/monster, sim/room.ts RoomSim). `?room=1~6`으로 방 선택
 - 명령: `pnpm dev` / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm sprite-preview` / `pnpm motion-preview`
-- 다음: M1 1-4 — 몬스터 상태 머신 + 5종 AI + 공격 토큰, 1번 방 혼자 클리어. MP는 1-5, 대검 평타 경고는 1-9
+- 다음: M1 1-5 — 플레이어 피격·다운·기상, HP·MP·물약 (지금은 맞으면 번쩍임·숫자만). 대검 평타 경고는 1-9

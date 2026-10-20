@@ -95,7 +95,7 @@ app.append(
       el('div', { className: 'label', text: '승인 데모 tools/motion-preview/reference.html (아래는 스타일리시)' }), reference)),
 );
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: stageBox,
   width: VIEW_W,
@@ -105,3 +105,6 @@ new Phaser.Game({
   scale: { mode: Phaser.Scale.NONE, zoom: ZOOM },
   scene: [MotionScene],
 });
+
+// 개발 중 브라우저 콘솔에서 상태를 볼 수 있게 (client/src/main.ts와 같음)
+if (import.meta.env.DEV) (window as unknown as { game: Phaser.Game }).game = game;

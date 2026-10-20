@@ -1,12 +1,8 @@
-// 캐릭터·몬스터 이미지 배치: 발밑 맞춤, 높이(z), 피격 반응 프레임·회전·번쩍임 (motion.md 4장)
+// 캐릭터·몬스터 이미지 배치: 발밑 맞춤, 높이(z), 90° 회전, 번쩍임, 그림자. 몬스터 프레임 고르기는 monsterView.ts
 import type Phaser from 'phaser';
-import { COMBAT, MONSTERS } from '@game/shared';
 import fx from '../../data/fx.json';
-import type { LocalMonster } from '../local/combatSim';
 import { colorInt } from '../palette';
-import type { SpriteData } from '../sprites/data';
-import { stateFrames } from '../sprites/monster';
-import { monsterTexture, type CharacterTexture } from '../sprites/textures';
+import type { CharacterTexture } from '../sprites/textures';
 import { project } from './layout';
 import { shadowRadius, shadowTexture } from './shadow';
 
@@ -26,8 +22,10 @@ export interface Placement {
   y: number;
   z?: number;
   facing: number;
-  /** 90° 단위 회전 (도). 0이면 발밑 기준, 아니면 가운데 기준으로 돌려 바닥에 얹는다 */
+  /** 90° 단위 회전 (도) */
   angle?: number;
+  /** 회전 중 (구르기·공중 회전): 0°도 가운데 기준으로 놓아 각도가 바뀌어도 높이가 튀지 않게 */
+  spin?: boolean;
   flash?: boolean;
 }
 
@@ -41,11 +39,13 @@ export function place(v: ActorView, tex: CharacterTexture, p: Placement): void {
   img.setFlipX(flip).setAngle(angle);
   const ground = project(p.x, p.y);
   const { sx, sy } = project(p.x, p.y, p.z ?? 0);
-  if (angle % 180 === 0) {
+  if (angle === 0 && !p.spin) {
     img.setOrigin((flip ? w - 1 - fx0 : fx0) / w, (fy + 1) / h).setPosition(sx, sy);
   } else {
-    // 누운 높이(w)의 절반만큼 올린다. 홀수 폭이면 반 픽셀 → 정수로 내림
-    img.setOrigin(0.5, 0.5).setPosition(sx, sy - Math.floor(w / 2) + 1);
+    // 가운데 기준으로 돌리고, 돌린 뒤 아래 끝(외곽선 줄)이 발밑 줄에 오도록 높이(누우면 w)의 절반만큼 올린다.
+    // 180°를 발밑 기준으로 돌리면 그림이 바닥 아래로 뒤집혀 내려간다
+    const tall = angle % 180 === 0 ? h : w;
+    img.setOrigin(0.5, 0.5).setPosition(sx, sy - Math.floor(tall / 2) + 1);
   }
   img.setDepth(p.y);
   if (p.flash) img.setTintFill(colorInt('global.fx.flash'));
@@ -56,42 +56,4 @@ export function place(v: ActorView, tex: CharacterTexture, p: Placement): void {
   const rx = Math.max(2, Math.round(shadowRadius(w) * scale));
   shadow.setTexture(shadowTexture(img.scene, rx));
   shadow.setOrigin(rx / (rx * 2 + 1), 3 / 4).setPosition(ground.sx, ground.sy);
-}
-
-/** 피격 프레임: hurt / hurtAir가 없으면 첫 공격의 windup 프레임으로 대체 (sprites.md 6장) */
-function hurtFrame(data: SpriteData, kind: string, name: 'hurt' | 'hurtAir'): string {
-  const sprite = MONSTERS[kind]!;
-  if (data.monsters[sprite.sprite]!.frames[name]) return name;
-  return stateFrames(data, sprite.sprite, `windup:${sprite.attacks[0]!.id}`)[0]!;
-}
-
-/** 몬스터 상태 → 프레임·회전 */
-export function monsterPose(data: SpriteData, m: LocalMonster, idleFrame: string): { frame: string; angle: number; hidden?: boolean } {
-  const b = m.body, r = fx.reaction;
-  const turn = 90 * b.hitDir;
-  switch (b.state) {
-    case 'air':
-      if (m.hurt > 0 && b.bounced) return { frame: hurtFrame(data, m.kind, 'hurt'), angle: 0 };
-      return { frame: hurtFrame(data, m.kind, 'hurtAir'), angle: (Math.floor(m.airT / r.airSpinSec) % 4) * turn };
-    case 'down':
-      return { frame: hurtFrame(data, m.kind, 'hurt'), angle: turn };
-    case 'stunned':
-      // 기절: 누운 채 깜빡이다 퇴장 (motion.md 4장)
-      return { frame: hurtFrame(data, m.kind, 'hurt'), angle: turn, hidden: Math.floor(b.timer / r.stunBlink) % 2 === 1 };
-    case 'getup':
-      return COMBAT.getupSec - b.timer < r.getupSquashSec
-        ? { frame: hurtFrame(data, m.kind, 'hurt'), angle: 0 }
-        : { frame: idleFrame, angle: 0 };
-    default:
-      return { frame: m.hurt > 0 ? hurtFrame(data, m.kind, 'hurt') : idleFrame, angle: 0 };
-  }
-}
-
-export function placeMonster(scene: Phaser.Scene, v: ActorView, data: SpriteData, m: LocalMonster, idleFrame: string): void {
-  const { frame, angle, hidden } = monsterPose(data, m, idleFrame);
-  v.img.setVisible(!hidden);
-  const sprite = MONSTERS[m.kind]!.sprite;
-  place(v, monsterTexture(scene, sprite, frame), {
-    x: m.body.x, y: m.body.y, z: m.body.z, facing: m.facing, angle, flash: m.flash > 0,
-  });
 }

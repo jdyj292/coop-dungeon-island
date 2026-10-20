@@ -146,6 +146,9 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 ### pattern
 - choose: 조건이 맞는 규칙 중 무작위 선택. 조건 = range(거리 범위), alignDepth(깊이 차이 이내일 때만, 돌진·발사형에 사용), hp 조건
 - loop: 보스용. phases 배열을 순서대로, 각 phase는 sequence를 반복. `until: "hp<0.5"`를 만족하면 다음 phase로
+- 깊이 조건: alignDepth가 없으면 공격 판정 깊이의 절반 (hitbox.depth / 2, area면 radius / 2) 안에서만 공격
+- loop 공격은 거리 조건이 없으므로 닿을 수 있을 때(판정에 들어옴, 돌진형은 깊이 정렬)까지 다가간 뒤 쓴다. 공격 사이 ai.idleBetween 쉼
+- 공격이 없을 때 위치: melee는 첫 규칙 range 가운데 거리, charger는 combat.json ai.chargerDistance, turret은 제자리, 토큰이 없으면 ai.orbitDistance에서 맴돌기
 
 ---
 
@@ -172,6 +175,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 |---|---|
 | move.walk / move.run | 기본 이동 속도 px/s (x 좌우, y 깊이). 의미는 combat.md 1장, 무기별 배율은 weapons.json moveMul |
 | runDoubleTap | 달리기: 같은 방향 좌우를 두 번 누르는 사이 최대 시간 (초) |
+| hurtbox | 플레이어 피격 판정 크기 `{ width, height, depth }` (몬스터 공격·투사체) |
 | backstep | `{ distance, sec, invuln, cooldown }` 백스텝 거리(px)·시간·앞쪽 무적 시간·쿨 (combat.md 1장) |
 
 - 이동 계산은 shared/src/movement.ts (클라이언트·서버 공용): 축마다 따로 움직이고 대각선도 정규화하지 않는다. 행동 중 이동(move)은 actions.ts actionMoveDelta, 판정 모양은 shapes.ts
@@ -196,6 +200,8 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |
 | grades.{light,medium,heavy,ultimate} | `{ hitstop, shake }` 히트스톱 초, 흔들림 px (0 = 없음) |
 | shakeAfterHitstop | 흔들림 길이 = 히트스톱 + 이 값 |
+| tokens | 공격 토큰 수 (인원 1~4 순서, balance.md·dungeon.md 3장) |
+| ai | 몬스터 AI 공통: hopSec·hopMove(튀기 박자·이동 비율), orbitDistance·orbitDepth(토큰 없을 때 맴도는 거리), chargerDistance(돌진형이 거리 두는 위치), separation(겹침 풀기 여유 px) |
 
 - 행동 진행은 shared/src/actions.ts, 판정·데미지는 hit.ts, 피격 반응·높이는 body.ts (클라이언트·서버 공용)
 - 연출 값(번쩍임 프레임, 섬광, 숫자, 스미어 모양, 리듬 오프셋)은 client/data/fx.json (docs/motion.md)

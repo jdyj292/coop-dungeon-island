@@ -32,5 +32,11 @@
   "afterimage": { "every": 0.04, "sec": 0.18, "alpha": 0.35 },
   "backstepHop": 3,
   "rhythm": { "back": 1, "forward": { "light": 2, "medium": 3, "heavy": 3 }, "returnSec": 0.12 },
-  "reaction": { "hurtSec": 0.1, "airSpinSec": 0.08, "getupSquashSec": 0.1, "airShadowZ": 30, "airShadowMin": 0.4, "stunBlink": 0.08 }
+  "reaction": { "hurtSec": 0.1, "airSpinSec": 0.08, "getupSquashSec": 0.1, "airShadowZ": 30, "airShadowMin": 0.4, "stunBlink": 0.08 },
+  "hazard": {
+    "projectile": { "spore_shot": { "fill": "floors.1.monster.sporeGlow", "edge": "floors.1.monster.sporeFlower", "height": 7 } },
+    "zone": { "bear_yawn": { "fill": "floors.1.monster.sleepCloud", "alpha": 0.45 } },
+    "telegraphDash": 2
+  },
+  "monster": { "walkFrameSec": 0.15, "shakeSec": 0.033, "spinSec": 0.125, "armorBlink": 0.1 }
 }
