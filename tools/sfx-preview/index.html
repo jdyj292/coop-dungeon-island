@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sfx-preview</title>
+    <style>
+      /* 개발 도구 화면 색 (게임 색은 palette.json). motion-preview와 같은 모양 */
+      :root { --bg: #16131f; --panel: #221d30; --line: #3a3350; --text: #e8e4f4; --dim: #a39cbd; --accent: #6fc3e8; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, sans-serif; }
+      header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+      h1 { font-size: 15px; margin: 0; }
+      h3 { font-size: 12px; margin: 14px 0 6px; color: var(--dim); text-transform: uppercase; letter-spacing: .04em; }
+      button { background: none; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+      button.on { border-color: var(--accent); color: var(--accent); }
+      .tab { display: flex; gap: 16px; padding: 12px 16px; align-items: flex-start; }
+      .panel { width: 300px; flex: none; background: var(--panel); border-radius: 8px; padding: 4px 12px 12px; max-height: calc(100vh - 70px); overflow-y: auto; }
+      .field { display: grid; grid-template-columns: 96px 1fr 44px; gap: 6px; align-items: center; margin: 4px 0; }
+      .field.changed span { color: var(--accent); }
+      .field select, .field input[type=range] { width: 100%; }
+      .buttons { display: flex; flex-wrap: wrap; gap: 4px; }
+      header .field { display: flex; gap: 6px; margin: 0; white-space: nowrap; }
+      .view { flex: 1; min-width: 0; overflow-x: auto; }
+      .view canvas { display: block; image-rendering: pixelated; }
+      .info { color: var(--dim); margin: 6px 0; font-family: ui-monospace, monospace; white-space: pre; }
+      .label { color: var(--dim); margin: 12px 0 4px; }
+      iframe { width: 100%; height: 560px; border: 1px solid var(--line); border-radius: 8px; background: #f6f5f1; }
+      .refs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .sounds { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; }
+      .sounds button { text-align: left; }
+      .sounds button.sel { border-color: var(--accent); }
+      .ok { color: #7ce38b; } .bad { color: #ff7a5c; }
+      .result { font: 12px ui-monospace, monospace; white-space: pre-wrap; color: var(--dim); }
+      @media (max-width: 900px) { .refs { grid-template-columns: 1fr; } }
+      textarea { width: 100%; height: 120px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; font: 11px ui-monospace, monospace; }
+      @media (max-width: 720px) { .tab { flex-direction: column; } .panel { width: 100%; max-height: none; } }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

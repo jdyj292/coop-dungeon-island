@@ -50,7 +50,8 @@
         "telegraph": {
           "type": "shake"
         },
-        "cooldown": 1.5
+        "cooldown": 1.5,
+        "sfx": { "windup": "mon_mushroom_windup" }
       }
     ],
     "pattern": {
@@ -130,7 +131,8 @@
         "onWallHit": {
           "selfStun": 1.0
         },
-        "cooldown": 2.5
+        "cooldown": 2.5,
+        "sfx": { "active": "mon_boar_charge" }
       }
     ],
     "pattern": {
@@ -197,7 +199,8 @@
         "telegraph": {
           "type": "glow"
         },
-        "cooldown": 0
+        "cooldown": 0,
+        "sfx": { "active": "mon_spore_shot" }
       }
     ],
     "pattern": {
@@ -401,7 +404,8 @@
         },
         "telegraph": {
           "type": "glow"
-        }
+        },
+        "sfx": { "windup": "bearYawn" }
       }
     ],
     "pattern": {

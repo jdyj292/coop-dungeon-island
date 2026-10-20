@@ -15,6 +15,8 @@ export interface CrossRefs {
   visuals: string[];
   /** client/data/sprites/monsters.json 몬스터 id */
   sprites: string[];
+  /** client/data/sfx.json 소리 이름 (action·clear) */
+  sounds: string[];
 }
 
 /** tools/data-validate/rules.json (balance.md 4장과 같은 값) */
@@ -64,6 +66,11 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
     if (ids.has(id)) err(where, `행동 id '${id}'가 ${ids.get(id)}에도 있음 (전체에서 고유해야 함)`);
     else ids.set(id, where);
   };
+  const checkSfx = (where: string, sfx: Record<string, string | undefined> | undefined) => {
+    for (const [k, name] of Object.entries(sfx ?? {})) {
+      if (name && !refs.sounds.includes(name)) err(`${where}.sfx.${k}`, `소리 '${name}'가 sfx.json에 없음`);
+    }
+  };
   const checkPoses = (where: string, poses: Record<string, string | undefined>, set: string) => {
     const names = refs.poseSets[set];
     if (!names) return;
@@ -80,6 +87,7 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
       const where = i < w.basic.length ? `${at}.basic.${i}` : `${at}.dash`;
       uniqueId(a.id, where);
       checkPoses(where, a.poses, w.poseSet);
+      checkSfx(where, a.sfx);
     });
     for (const s of w.baseSkills) if (!d.skills[s]) warn(`${at}.baseSkills`, `스킬 '${s}'가 skills.json에 아직 없음`);
     const target = rules.basicDps[id];
@@ -95,6 +103,7 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
     const at = `skills.${id}`;
     if (s.id !== id) err(`${at}.id`, `키와 id('${s.id}')가 다름`);
     uniqueId(s.id, at);
+    checkSfx(at, s.sfx);
     const w = d.weapons[s.weapon];
     if (!w) err(`${at}.weapon`, `무기 '${s.weapon}' 없음`);
     else checkPoses(at, s.poses, w.poseSet);
@@ -112,7 +121,10 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
     const at = `monsters.${id}`;
     if (!refs.sprites.includes(m.sprite)) err(`${at}.sprite`, `'${m.sprite}'가 client/data/sprites/monsters.json에 없음`);
     const attacks = new Set(m.attacks.map((a) => a.id));
-    m.attacks.forEach((a, i) => uniqueId(a.id, `${at}.attacks.${i}`));
+    m.attacks.forEach((a, i) => {
+      uniqueId(a.id, `${at}.attacks.${i}`);
+      checkSfx(`${at}.attacks.${i}`, a.sfx);
+    });
     const used = m.pattern.type === 'choose' ? m.pattern.rules.map((r) => r.attack) : m.pattern.phases.flatMap((p) => p.sequence);
     for (const a of new Set(used)) if (!attacks.has(a)) err(`${at}.pattern`, `공격 '${a}'가 attacks에 없음`);
     if (m.rank === 'boss' && !m.groggy) err(at, '보스에는 groggy 필요');

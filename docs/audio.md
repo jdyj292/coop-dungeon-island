@@ -33,8 +33,10 @@
 | thump | f[시작,끝], dur, v | 둥근 몸통 소리 (clear) |
 
 - wet = 잔향 보내기 양, dist = action 버스의 일그러짐 통과
-- 버스 설정(압축기, 잔향 길이, 일그러짐 세기)은 sfx.json buses
-- 구현: client/src/audio/ (synth.ts = 레이어 재생, buses.ts, player.ts)
+- 버스 설정(음량 gain, 압축기, 잔향 길이, 일그러짐 세기)은 sfx.json buses. gain은 승인 데모의 기본 볼륨 (action 0.55, clear 0.6)
+- 같은 레이어라도 버스마다 원본 기본값이 다르다 (tone 시작 action 0.002초 / clear 0.005초, noise 시작 action 0.001초 / clear 0.004초(0.15초 넘으면 0.03초), clear noise에는 swell 없음)
+- 구현: client/src/audio/ (synth.ts = 레이어 재생, buses.ts, player.ts = 재생 규칙·볼륨, sfxEvents.ts = 전투 이벤트 연결)
+- 원본과 같은지: compareRef.ts가 원본 스크립트와 엔진을 기록용 가짜 AudioContext(recorder.ts)로 돌려 노드·값·연결을 소리마다 비교. `pnpm test`와 sfx-preview에서 확인
 - 승인 데모의 소리와 같아야 한다. 새 소리·수정은 sfx-preview로 들려주고 승인 후 데이터 반영
 
 ---
@@ -48,7 +50,10 @@
 | 몬스터 | mon_mushroom_windup, mon_boar_charge, mon_spore_shot, mon_bear_roar | bearYawn |
 | 보상·UI | | coin, potion, levelup, roomClear, click, place |
 
-- 데이터 연결: 행동(action) 데이터에 `sfx: { windup?, active?, hit? }` 키로 소리 이름 지정 (예: 대검 평타 active = swing, hit = hitLight)
+- 데이터 연결: 행동(action) 데이터에 `sfx: { windup?, active?, hit? }` 키로 소리 이름 지정 (예: 대검 평타 active = swing, hit = hitLight). 이름은 두 버스에서 겹치지 않으므로 버스 없이 쓴다. data-validate가 sfx.json에 있는지 검사
+- 지금 연결 (데이터 sfx): 대검 1·2타 swing/hitLight, 3타 swingHeavy/hitHeavy, 대시 dash/hitHeavy, 올려베기 launch/hitLight, 대지가르기 skill_slash/hitHeavy, 버섯 박치기 예고 mon_mushroom_windup, 멧돼지 돌진 mon_boar_charge, 포자탄 mon_spore_shot, 이끼곰 하품 예고 bearYawn
+- 지금 연결 (이벤트, client/src/audio/sfxEvents.ts): 달리기 시작 dash, 백스텝 backstep, 몬스터 바운드 bounce·다운 down, 플레이어 피격 hitLight(강 공격이면 hitHeavy), 이끼곰 그로기 진입 mon_bear_roar, 물약 potion, 방 클리어 roomClear
+- 아직 연결 안 함 (기능이 생길 때): coin, levelup, click, place, guard, skill_fireburst, skill_icefield
 - 아직 없는 소리(멧돼지 벽 충돌, 포자탄 적중, 문 열림, 잡화점 구매, 채팅 알림, 오류 등)는 만들 때 같은 절차로 추가
 
 ---
@@ -56,9 +61,9 @@
 ## 4. 재생 규칙
 
 - **타격 패키지와 같은 프레임에**: hit 소리는 적중 이벤트 순간 재생 (히트스톱과 무관하게 즉시)
-- 음높이 무작위 ±4% (반복해도 덜 질리게). 레벨업·클리어 같은 음악적 소리는 제외
+- 음높이 무작위 ±4% (반복해도 덜 질리게). 레벨업·클리어 같은 음악적 소리는 제외 (sfx.json noJitter)
 - 같은 소리 동시 최대 4개, 같은 소리 50ms 안 재생은 하나로 합침
-- 동료의 소리는 볼륨 60%, 내 소리 100%. 화면 밖 소리는 생략
+- 동료의 소리는 볼륨 60%, 내 소리 100%. 화면 밖 소리는 생략 (둘 다 M2 멀티플레이에서)
 - 볼륨 설정: 전체 / 효과음 / 음악 (로컬 저장, 기본 100 / 100 / 70)
 - 브라우저 정책상 첫 클릭·키 입력 전에는 소리를 낼 수 없으므로 첫 입력에서 오디오 시작
 
@@ -130,5 +135,5 @@
 ---
 
 ## 7. 도구
-- tools/sfx-preview (M1에서 작성): sfx.json을 읽어 버튼으로 재생, 레이어 값 슬라이더 조정 → JSON 복사 (승인 데모와 같은 구성)
+- tools/sfx-preview (완성, `pnpm sfx-preview`, 포트 5176): sfx.json을 게임과 같은 엔진으로 재생, 레이어 값 슬라이더 조정 → 바꾼 소리만 `{ "버스.이름": [레이어...] }` JSON 복사, 조합(combos) 재생, 승인 원본 두 개를 나란히 띄워 듣기 + 원본 자동 비교(✓/✗)
 - tools/bgm-preview (완성): index.html = bgm.json 재생 / reference.html = 승인 원본 / engine.js = 합성 엔진

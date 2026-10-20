@@ -27,6 +27,7 @@ if (!issues.length) {
     poseSets: Object.fromEntries(Object.entries(poses).map(([k, v]) => [k, Object.keys(v)])),
     visuals: Object.keys(readJson('client/data/sprites/weapons_visual.json').profiles),
     sprites: Object.keys(withoutNotes(readJson('client/data/sprites/monsters.json'))),
+    sounds: ['action', 'clear'].flatMap((bus) => Object.keys(readJson('client/data/sfx.json')[bus])),
   };
   issues.push(...crossCheck(data as unknown as GameData, refs, readJson('tools/data-validate/rules.json') as Rules));
 }

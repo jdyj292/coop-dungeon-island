@@ -47,7 +47,7 @@ tools/                   개발 도구 (아래 표)
 | bgm-preview | 완성 | bgm.json 재생. reference.html = 승인 원본 |
 | sprite-preview | 완성 | 스프라이트 조합·확대 보기, 승인 캡처 비교. `pnpm sprite-preview` |
 | motion-preview | 완성 | 모션 슬로우·프레임 넘기기·값 조정 → JSON 복사, 승인 데모와 비교. `pnpm motion-preview` |
-| sfx-preview | M1 | 효과음 재생·조정 (reference-*.html = 승인 데모) |
+| sfx-preview | 완성 | 효과음 재생·조정 → JSON 복사, 승인 원본 나란히 듣기·자동 비교. `pnpm sfx-preview` |
 | palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
 | data-validate | 완성 | shared/data 형식·교차 참조 검사 (data.md 5장). `pnpm data-validate`, 기준 rules.json |
 | balance-check, ttk-sim | M1 | 스킬 예산·처치 시간 (balance.md 10장) |
@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 완료. M1 1-1~1-4 데이터 로더·60Hz 틱·플레이어 행동·몬스터 AI(RoomSim), 1-5 플레이어 피격·다운·기상·HP·MP·물약(Z/X)·부활의 깃털·전멸 재시작 (shared/playerHurt.ts). `?room=1~6`, 개발 모드 좌상단에 HP·MP 글자
-- 명령: `pnpm dev` / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm sprite-preview` / `pnpm motion-preview`
-- 다음: M1 1-6 — 효과음 엔진 + tools/sfx-preview (reference-*.html과 같은 소리). 대검 평타 경고는 1-9
+- M0 완료. M1 1-1~1-5 데이터 로더·60Hz 틱·플레이어 행동·몬스터 AI(RoomSim)·플레이어 피격·HP·MP·물약, 1-6 효과음 엔진(client/src/audio, 승인 원본과 24/24 같음)·sfx-preview·전투 소리 연결
+- 명령: `pnpm dev`(?room=1~6) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
+- 다음: M1 1-7 — HUD 아래 띠 + 데미지 숫자·콤보 (dungeon_room_hud.png와 비교). 대검 평타 경고는 1-9

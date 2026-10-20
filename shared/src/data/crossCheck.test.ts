@@ -11,6 +11,7 @@ const refs: CrossRefs = {
   poseSets: Object.fromEntries(Object.entries(poses).map(([k, v]) => [k, Object.keys(v)])),
   visuals: Object.keys(readJson('client/data/sprites/weapons_visual.json').profiles),
   sprites: Object.keys(withoutNotes(readJson('client/data/sprites/monsters.json'))),
+  sounds: ['action', 'clear'].flatMap((bus) => Object.keys(readJson('client/data/sfx.json')[bus])),
 };
 const rules = { basicDps: {}, tolerance: 0.15 };
 const fresh = (): GameData => structuredClone({ weapons: WEAPONS, skills: SKILLS, monsters: MONSTERS, rooms: ROOMS });
@@ -44,6 +45,11 @@ describe('crossCheck 오류', () => {
     d.rooms.floor1!.rooms[0]!.waves[0]!.monsters = { slime: 1 };
     d.skills.gs_launch!.id = 'gs_b1';
     expect(errors(d)).toEqual(expect.arrayContaining(['monsters.boar.sprite', 'rooms.floor1.rooms.0.waves.0', 'skills.gs_launch.id']));
+  });
+  it('sfx.json에 없는 소리', () => {
+    const d = fresh();
+    d.weapons.greatsword!.basic[0]!.sfx = { active: 'whoosh' };
+    expect(errors(d)).toEqual(['weapons.greatsword.basic.0.sfx.active']);
   });
   it('변형 적용 결과도 검사: 판정을 지우기만 하면 오류', () => {
     const d = fresh();

@@ -1,6 +1,7 @@
 // 던전 테스트 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 (combat.md 1장). 서버 없이 로컬
 import Phaser from 'phaser';
 import { skillDef, TILE } from '@game/shared';
+import { sfx } from '../audio/player';
 import { color, colorInt } from '../palette';
 import { CombatStage } from '../stage/combatStage';
 import { floorRoom, waveSpawns } from '../stage/roomSetup';
@@ -50,6 +51,7 @@ export class Dungeon extends Phaser.Scene {
     const bounds = { minX: TILE / 2, maxX: this.roomW - TILE / 2, minY: 0, maxY: roomD };
     this.stage = new CombatStage(this, bounds, { x: 3 * TILE, y: roomD / 2 }, this.nextWave());
     this.camCenter = this.stage.player.pos.x;
+    sfx.unlockOnFirstInput();
     this.stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
 
     this.hud = this.add.rectangle(0, 0, 1, HUD_HEIGHT, colorInt('global.ui.panel')).setOrigin(0, 0).setScrollFactor(0).setDepth(10000);
@@ -78,6 +80,7 @@ export class Dungeon extends Phaser.Scene {
     if (next.length) this.stage.spawn(next);
     else {
       this.cleared = true;
+      sfx.play('roomClear');
       console.info(`방 클리어: ${this.room.name}`);
     }
   }

@@ -24,6 +24,14 @@
         "motion-preview"
       ],
       "port": 5175
+    },
+    {
+      "name": "sfx-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "sfx-preview"
+      ],
+      "port": 5176
     }
   ]
 }

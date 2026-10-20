@@ -1,7 +1,9 @@
 {
  "_note": "효과음 레시피 (승인 2026-10). 소리 = 레이어 목록, 모두 런타임 합성. 형식·버스 설정은 docs/audio.md",
+ "noJitter": ["levelup", "roomClear"],
  "buses": {
   "action": {
+   "gain": 0.55,
    "compressor": {
     "threshold": -12,
     "ratio": 8,
@@ -19,6 +21,7 @@
    }
   },
   "clear": {
+   "gain": 0.6,
    "compressor": {
     "threshold": -16,
     "ratio": 4

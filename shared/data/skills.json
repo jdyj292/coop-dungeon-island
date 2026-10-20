@@ -48,7 +48,8 @@
           "back": 10
         }
       }
-    }
+    },
+    "sfx": { "active": "launch", "hit": "hitLight" }
   },
   "gs_earthsplit": {
     "id": "gs_earthsplit",
@@ -106,7 +107,8 @@
           "z": "ground"
         }
       }
-    }
+    },
+    "sfx": { "active": "skill_slash", "hit": "hitHeavy" }
   },
   "st_fireburst": {
     "id": "st_fireburst",

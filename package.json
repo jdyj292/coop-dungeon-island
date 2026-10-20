@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "pnpm --parallel --filter @game/client --filter @game/server dev",
     "test": "vitest run",
-    "typecheck": "pnpm -r typecheck && tsc -p tools && tsc -p tools/sprite-preview && tsc -p tools/motion-preview",
+    "typecheck": "pnpm -r typecheck && tsc -p tools && tsc -p tools/sprite-preview && tsc -p tools/motion-preview && tsc -p tools/sfx-preview",
     "palette-check": "tsx tools/palette-check/index.ts",
     "sprite-preview": "vite tools/sprite-preview",
     "motion-preview": "vite tools/motion-preview",
-    "data-validate": "tsx tools/data-validate/index.ts"
+    "data-validate": "tsx tools/data-validate/index.ts",
+    "sfx-preview": "vite tools/sfx-preview"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

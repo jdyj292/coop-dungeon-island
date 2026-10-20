@@ -35,7 +35,8 @@
         },
         "fx": {
           "grade": "light"
-        }
+        },
+        "sfx": { "active": "swing", "hit": "hitLight" }
       },
       {
         "id": "gs_b2",
@@ -59,7 +60,8 @@
         },
         "fx": {
           "grade": "light"
-        }
+        },
+        "sfx": { "active": "swing", "hit": "hitLight" }
       },
       {
         "id": "gs_b3",
@@ -86,7 +88,8 @@
         },
         "fx": {
           "grade": "heavy"
-        }
+        },
+        "sfx": { "active": "swingHeavy", "hit": "hitHeavy" }
       }
     ],
     "dash": {
@@ -118,7 +121,8 @@
       },
       "fx": {
         "grade": "medium"
-      }
+      },
+      "sfx": { "active": "dash", "hit": "hitHeavy" }
     },
     "baseSkills": [
       "gs_launch",

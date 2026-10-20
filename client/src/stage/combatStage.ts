@@ -6,6 +6,8 @@ import {
   type Vec2,
 } from '@game/shared';
 import fx from '../../data/fx.json';
+import { sfx } from '../audio/player';
+import { soundsFor } from '../audio/sfxEvents';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { HazardLayer } from '../fx/hazards';
@@ -61,6 +63,10 @@ export class CombatStage {
   private drawDt = 0;
   /** 전멸(깃털 없이 HP 0) 때 한 번 불림 */
   onWipe: (() => void) | null = null;
+  /** 효과음 재생 (도구에서 끌 수 있게) */
+  sound: (name: string) => void = (name) => { sfx.play(name); };
+  /** 달리기 시작 소리용 */
+  private wasRunning = false;
 
   constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, spawns: Spawn[], readonly opts: SimOptions = {}) {
     this.sim = new RoomSim(this.weapon, bounds, player, opts);
@@ -124,6 +130,11 @@ export class CombatStage {
     for (const m of this.sim.alive) this.view(m).update(m, dt);
     const { events, moved } = this.sim.tick(dt, input);
     events.forEach((e) => this.onEvent(e));
+    // 효과음은 이벤트 순간 바로 (히트스톱과 무관, audio.md 4장)
+    events.forEach((e) => soundsFor(e).forEach((n) => this.sound(n)));
+    const running = this.player.run.running && !this.player.fighter.run;
+    if (running && !this.wasRunning) this.sound('dash');
+    this.wasRunning = running;
     this.rhythm.update(dt, !!this.player.fighter.run);
     this.fx.layer.update(dt);
     return moved;
