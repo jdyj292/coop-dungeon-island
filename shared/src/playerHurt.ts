@@ -23,13 +23,15 @@ export interface Vitals {
   feathers: number;
   /** 깃털 없이 HP 0 → 전멸 */
   downed: boolean;
+  /** 필살기 게이지 0~max (balance.md 8장). 필살기 발동은 아직 없음 */
+  ult: number;
 }
 
 export function newVitals(level = 1): Vitals {
   const maxHp = maxHpFor(level), pt = PLAYER.potions;
   return {
     hp: maxHp, maxHp, mp: PLAYER.mp.max, potions: { hp: pt.hp.carry, mp: pt.mp.carry }, potionCd: { hp: 0, mp: 0 },
-    hurt: null, invuln: 0, feathers: PLAYER.revive.feathers, downed: false,
+    hurt: null, invuln: 0, feathers: PLAYER.revive.feathers, downed: false, ult: 0,
   };
 }
 
@@ -88,6 +90,11 @@ export function usePotion(p: PlayerState, kind: PotionKind): boolean {
   p.potions[kind]--;
   p.potionCd[kind] = pt[kind].cooldown;
   return true;
+}
+
+/** 필살기 게이지: 적중 1회 onHit, 피격 1회 onHurt (balance.md 8장) */
+export function gainUlt(p: PlayerState, amount: number): void {
+  p.ult = Math.min(PLAYER.ultimate.max, p.ult + amount);
 }
 
 /** 평타·스킬 적중 1회당 MP 회복 */

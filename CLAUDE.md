@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 완료. M1 1-1~1-5 데이터 로더·60Hz 틱·플레이어 행동·몬스터 AI(RoomSim)·플레이어 피격·HP·MP·물약, 1-6 효과음 엔진(client/src/audio, 승인 원본과 24/24 같음)·sfx-preview·전투 소리 연결
+- M0 완료. M1 1-1~1-6 데이터 로더·60Hz 틱·플레이어 행동·몬스터 AI(RoomSim)·피격·HP·MP·물약·효과음, 1-7 HUD 아래 띠(client/src/ui)·콤보·CLEAR 띠·필살기 게이지
 - 명령: `pnpm dev`(?room=1~6) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: M1 1-7 — HUD 아래 띠 + 데미지 숫자·콤보 (dungeon_room_hud.png와 비교). 대검 평타 경고는 1-9
+- 다음: M1 1-8 — 그림 추가 (몬스터 hurt·hurtAir, MVP 스킬 포즈, 이동·상태 모션), 미리보기 검토 → 승인 후 반영. 대검 평타 경고는 1-9

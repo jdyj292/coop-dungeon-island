@@ -38,5 +38,6 @@
     "zone": { "bear_yawn": { "fill": "floors.1.monster.sleepCloud", "alpha": 0.45 } },
     "telegraphDash": 2
   },
+  "hud": { "trailSec": 0.4, "readyFlashSec": 0.2, "clearSec": 0.8, "ultBlinkSec": 0.15, "countPopSec": 0.15, "coverAlpha": 0.6, "dimAlpha": 0.6, "ultFillAlpha": 0.35, "bannerAlpha": 0.75 },
   "monster": { "walkFrameSec": 0.15, "shakeSec": 0.033, "spinSec": 0.125, "armorBlink": 0.1 }
 }

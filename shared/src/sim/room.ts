@@ -10,7 +10,8 @@ import { monsterBounds, newMonster, type Monster } from '../monster/state';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
 import { newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
-import { gainMpOnHit, hurtPlayer, isInvulnerable, type HurtEvent, type PotionKind } from '../playerHurt';
+import { gainMpOnHit, gainUlt, hurtPlayer, isInvulnerable, type HurtEvent, type PotionKind } from '../playerHurt';
+import { comboHit, newCombo, stepCombo, type Combo } from '../combo';
 import { actionHits, type HitTarget } from '../shapes';
 import { attackPhase } from '../monster/state';
 
@@ -44,6 +45,8 @@ export class RoomSim {
   projectiles: Projectile[] = [];
   zones: ZoneArea[] = [];
   tokens: AttackTokens;
+  /** 개인 콤보 (팀 콤보는 M2) */
+  combo: Combo = newCombo();
   private ids = 1;
   /** 행동마다 이미 맞은 몬스터 id (같은 행동에 한 대상은 한 번, combat.md 2장) */
   private struck = new WeakMap<ActionRun, Set<number>>();
@@ -73,6 +76,7 @@ export class RoomSim {
   tick(dt: number, input: PlayerInput): { events: SimEvent[]; moved: number } {
     const events: SimEvent[] = [];
     const p = this.player, b = this.bounds;
+    stepCombo(this.combo, dt);
     const ctx: AiContext = {
       player: { x: p.pos.x, y: p.pos.y }, target: this.playerTarget(), tokens: this.tokens, bounds: b,
       eliteBusy: (self) => this.alive.some((m) => m !== self && m.def.rank === 'elite' && m.mode === 'attack'),
@@ -111,7 +115,12 @@ export class RoomSim {
       if (e.type === 'active') runs.add(e.run);
     }
     if (p.fighter.run && phaseIsActive(p.fighter.run)) runs.add(p.fighter.run);
-    for (const run of runs) for (const h of this.strike(run)) events.push(h);
+    let hits = 0;
+    for (const run of runs) for (const h of this.strike(run)) {
+      events.push(h);
+      hits++;
+    }
+    comboHit(this.combo, hits);
     // 4. 몬스터끼리 겹침 풀기 (지상·공격 중 아닐 때)
     this.separate();
     return { events, moved: res.moved };
@@ -133,6 +142,7 @@ export class RoomSim {
       m.hp = Math.max(0, m.hp - damage);
       if (m.hp === 0) m.body.ko = true;
       gainMpOnHit(p);
+      gainUlt(p, PLAYER.ultimate.onHit);
       out.push({ type: 'hit', m, def, damage });
     }
     return out;
@@ -143,6 +153,7 @@ export class RoomSim {
     const hurt = hurtPlayer(this.player, damage, def.strength);
     if (!hurt.length) return;
     events.push({ type: 'playerHit', from, def, damage });
+    gainUlt(this.player, PLAYER.ultimate.onHurt);
     hurt.forEach((e) => events.push({ type: 'playerHurt', e }));
   }
 

@@ -2,11 +2,12 @@
 import Phaser from 'phaser';
 import { skillDef, TILE } from '@game/shared';
 import { sfx } from '../audio/player';
-import { color, colorInt } from '../palette';
+import { color } from '../palette';
 import { CombatStage } from '../stage/combatStage';
 import { floorRoom, waveSpawns } from '../stage/roomSetup';
 import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
-import { showDevStats } from '../ui/devStats';
+import { HudBottom } from '../ui/hudBottom';
+import { HudOverlay } from '../ui/hudOverlay';
 import { drawRoomBg } from '../view/roomBg';
 
 const FLOOR = 1;
@@ -16,6 +17,7 @@ const DEADZONE = 2 * TILE;
 const BG_EXTRA = 200;
 /** 전멸 뒤 방을 다시 시작하기까지 (정산·섬 복귀는 M3·M4) */
 const WIPE_RESTART_MS = 2000;
+const HUD_DEPTH = 10000;
 /** 스킬 슬롯 (임시 고정 장착, 슬롯 UI는 M4) */
 const SKILLS = { skill1: skillDef('gs_launch'), skill2: skillDef('gs_earthsplit') };
 
@@ -30,7 +32,8 @@ export class Dungeon extends Phaser.Scene {
   cleared = false;
   private stage!: CombatStage;
   private camCenter = 0;
-  private hud!: Phaser.GameObjects.Rectangle;
+  private hud!: HudBottom;
+  private overlay!: HudOverlay;
   private keys!: Record<KeyName, Phaser.Input.Keyboard.Key>;
 
   constructor() {
@@ -54,9 +57,9 @@ export class Dungeon extends Phaser.Scene {
     sfx.unlockOnFirstInput();
     this.stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
 
-    this.hud = this.add.rectangle(0, 0, 1, HUD_HEIGHT, colorInt('global.ui.panel')).setOrigin(0, 0).setScrollFactor(0).setDepth(10000);
-    this.layoutHud();
-    this.scale.on('resize', () => this.layoutHud());
+    // HUD는 카메라 흔들림과 무관하게 화면에 고정 (hud.md 1·3장)
+    this.hud = new HudBottom(this, HUD_DEPTH);
+    this.overlay = new HudOverlay(this, HUD_DEPTH - 1);
 
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({
@@ -81,13 +84,9 @@ export class Dungeon extends Phaser.Scene {
     else {
       this.cleared = true;
       sfx.play('roomClear');
+      this.overlay.showClear();
       console.info(`방 클리어: ${this.room.name}`);
     }
-  }
-
-  private layoutHud(): void {
-    const { width, height } = this.scale.gameSize;
-    this.hud.setPosition(0, height - HUD_HEIGHT).setSize(width, HUD_HEIGHT);
   }
 
   update(_time: number, delta: number): void {
@@ -102,7 +101,12 @@ export class Dungeon extends Phaser.Scene {
       backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
       potion: Phaser.Input.Keyboard.JustDown(k.potionHp) ? 'hp' : Phaser.Input.Keyboard.JustDown(k.potionMp) ? 'mp' : null,
     });
-    showDevStats(this.stage.player, this.cleared ? '방 클리어' : '');
+    const { width, height } = this.scale.gameSize, dt = delta / 1000;
+    this.hud.draw({
+      player: this.stage.player, weapon: 'greatsword', skills: [SKILLS.skill1, SKILLS.skill2, null, null],
+      level: 1, coins: 0, materials: 0,
+    }, dt, width, height - HUD_HEIGHT);
+    this.overlay.draw(this.stage.sim.combo.count, dt, width);
 
     const cam = followCamera(this.camCenter, this.stage.player.pos.x, DEADZONE, this.scale.gameSize.width, this.roomW);
     this.camCenter = cam.center;

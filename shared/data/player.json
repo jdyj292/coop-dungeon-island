@@ -12,6 +12,7 @@
     "hp": { "heal": 0.3, "cooldown": 5, "carry": 5 },
     "mp": { "amount": 50, "cooldown": 5, "carry": 5 }
   },
+  "ultimate": { "max": 100, "onHit": 1, "onHurt": 5 },
   "revive": { "feathers": 1, "hpRatio": 0.5, "invuln": 2 },
   "hurtbox": { "width": 10, "height": 16, "depth": 8 },
   "backstep": { "distance": 40, "sec": 0.25, "invuln": 0.2, "cooldown": 2 }

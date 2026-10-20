@@ -98,6 +98,7 @@ describe('RoomSim 연결', () => {
     expect(ev).toContain('playerHit');
     expect(ev).toContain('hurt:stun');
     expect(sim.player.hp).toBe(1000 - 60);
+    expect(sim.player.ult).toBe(PLAYER.ultimate.onHurt);
   });
   it('졸음 구름 안에서는 이동 속도 -50%', () => {
     const sim = new RoomSim(gs, { minX: 0, maxX: 1000, minY: 0, maxY: 200 }, { x: 100, y: 56 }, { ai: false });
@@ -105,5 +106,18 @@ describe('RoomSim 연결', () => {
     const free = walk();
     sim.zones.push({ id: 99, attackId: 'bear_yawn', def: { shape: 'circle', at: [0, 0], radius: 400, duration: 6, effect: { type: 'slow', amount: 0.5 } }, x: 200, y: 56, left: 6 });
     expect(walk()).toBeCloseTo(free / 2, 0);
+  });
+});
+
+describe('콤보·필살기 게이지', () => {
+  it('적중이 1.5초 안에 이어지면 콤보 유지, 끊기면 0. 게이지는 적중 1회당 +1', () => {
+    const sim = new RoomSim(gs, { minX: 0, maxX: 1000, minY: 0, maxY: 100 }, { x: 100, y: 50 }, { ai: false });
+    sim.spawn([{ kind: 'mushroom', x: 114, y: 50 }, { kind: 'mushroom', x: 118, y: 52 }]);
+    for (let i = 0; i < 40; i++) sim.tick(TICK, { ...none, attack: i === 0 });
+    expect(sim.combo.count).toBe(2);
+    expect(sim.player.ult).toBe(2 * PLAYER.ultimate.onHit);
+    for (let t = 0; t < 1.6; t += TICK) sim.tick(TICK, none);
+    expect(sim.combo.count).toBe(0);
+    expect(sim.combo.best).toBe(2);
   });
 });

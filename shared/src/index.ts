@@ -9,6 +9,7 @@ export * from './tick';
 export * from './body';
 export * from './player';
 export * from './playerHurt';
+export * from './combo';
 export * from './monster/state';
 export * from './monster/tokens';
 export * from './monster/hazards';
