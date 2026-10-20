@@ -1,6 +1,6 @@
-// 몬스터 탭: 프레임 하나 / 전체 프레임 / 상태 재생. 승인 캡처를 함께 띄운다
+// 몬스터 탭: 프레임 하나 / 전체 프레임 / 상태 재생. 승인 캡처를 함께 띄운다. "초안 보기"는 drafts/monsters.json을 겹쳐 본다
 import approvedUrl from '../../../docs/refs/approved/floor1_monsters.png?url';
-import { spriteData } from '../../../client/src/sprites/data';
+import { draftFrameNames, draftsOn, setUseDrafts, spriteData } from '../../../client/src/sprites/data';
 import { renderMonsterFrame } from '../../../client/src/sprites/monster';
 import { drawStage, type Background, type Item } from './draw';
 import { checkbox, el, opts, select, slider } from './ui';
@@ -8,14 +8,14 @@ import { checkbox, el, opts, select, slider } from './ui';
 type Mode = 'frame' | 'all' | 'state';
 
 export function monsterTab(): HTMLElement {
-  const data = spriteData();
-  const ids = Object.keys(data.monsters);
+  const data = () => spriteData();
+  const ids = Object.keys(data().monsters);
   const s = {
     id: ids[0]!, mode: 'frame' as Mode, frame: '', state: 'idle',
     frameMs: 400, superArmor: true, blink: true, blinkMs: 100,
     shake: true, offset: true, spin: true, flip: false, scale: 4, bg: 'dungeon' as Background, shadow: true, foot: false,
   };
-  const monster = () => data.monsters[s.id]!;
+  const monster = () => data().monsters[s.id]!;
   s.frame = Object.keys(monster().frames)[0]!;
 
   const canvas = el('canvas', { className: 'stage' });
@@ -25,7 +25,7 @@ export function monsterTab(): HTMLElement {
   const item = (name: string, x: number, y: number, t: number): Item => {
     const f = monster().frames[name]!;
     const sa = s.superArmor && !!f.superArmorOutline && (!s.blink || Math.floor(t / s.blinkMs) % 2 === 0);
-    const sprite = renderMonsterFrame(data, s.id, name, { superArmor: sa });
+    const sprite = renderMonsterFrame(data(), s.id, name, { superArmor: sa });
     let dx = s.offset ? (f.offset?.[0] ?? 0) : 0;
     const dy = s.offset ? (f.offset?.[1] ?? 0) : 0;
     if (s.shake && f.shake) dx += Math.floor(t / 33) % 2 ? 1 : -1;
@@ -50,7 +50,8 @@ export function monsterTab(): HTMLElement {
     drawStage(canvas, items, {
       width: cellW * shown.length, height, scale: s.scale, bg: s.bg, shadow: s.shadow, showFoot: s.foot,
     });
-    labels.replaceChildren(...shown.map((n) => el('span', { text: n })));
+    const drafts = draftsOn() ? draftFrameNames(s.id) : [];
+    labels.replaceChildren(...shown.map((n) => el('span', { text: drafts.includes(n) ? `${n} (초안)` : n })));
     labels.style.gridTemplateColumns = `repeat(${shown.length}, ${cellW * s.scale}px)`;
     const f = frames[shown[0]!]!;
     info.textContent = s.mode === 'all' ? `${names.length}프레임` : [
@@ -89,6 +90,11 @@ export function monsterTab(): HTMLElement {
     frameSelect.node,
     stateSelect.node,
     slider('상태 프레임 길이', [100, 1000, 50], s.frameMs, ms, on((v: number) => { s.frameMs = v; })),
+    checkbox('초안 보기 (drafts/monsters.json)', draftsOn(), on((v: boolean) => {
+      setUseDrafts(v);
+      frameSelect.set(frameNames(), s.frame = Object.keys(monster().frames).includes(s.frame) ? s.frame : Object.keys(monster().frames)[0]!);
+      stateSelect.set(stateNames(), s.state);
+    })),
     el('h3', { text: '프레임 데이터 반영' }),
     checkbox('offset', s.offset, on((v: boolean) => { s.offset = v; })),
     checkbox('shake (좌우 1px 떨림)', s.shake, on((v: boolean) => { s.shake = v; })),

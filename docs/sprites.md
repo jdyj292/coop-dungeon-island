@@ -145,7 +145,8 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 
 - shared/data/monsters.json의 sprite 값 = 이 파일의 키
 - 피격 흰색 번쩍임과 다운(90° 눕힘)은 자동 처리
-- 피격 프레임 `hurt`(찌그러짐)·`hurtAir`(늘어남)는 M1에서 추가 예정. 없으면 windup 프레임으로 대체 (docs/motion.md 4장)
+- 피격 프레임 `hurt`(찌그러짐: 한 줄 낮고 좌우 1칸 넓게 + 감은 눈)·`hurtAir`(늘어남: 한 줄 높고 좌우 1칸 좁게 + 감은 눈). 없으면 windup 프레임으로 대체 (docs/motion.md 4장)
+  - 포자꽃(고정형, 띄우기 불가)은 hurt만, 이끼곰(보스, 경직 없음)은 둘 다 없음. 어지러움·그로기 중에는 그 자세가 피격 프레임보다 우선
 - 1층 이후 몬스터도 같은 절차(사양 → 실루엣 → 색 → 동작 검토)로 추가
 
 ## 7. 합성 절차
@@ -176,3 +177,10 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 3. outfits.json에 아이템 추가 (slot, parts, 상의면 sleeve)
 4. sprite-preview로 모든 포즈·걷기 프레임에서 확인
 5. 확정되면 docs/refs/approved/에 캡처
+
+---
+
+## 10. 초안 검토 (그림 추가·수정)
+- 승인 데이터는 바로 고치지 않는다. 새 프레임은 client/data/sprites/drafts/에 먼저 그린다 (지금: drafts/monsters.json = 몬스터 프레임 초안. 형식은 monsters.json과 같고 frames·states만)
+- 보기: sprite-preview 몬스터 탭 "초안 보기" (초안 프레임은 이름 옆에 "(초안)"), 게임은 개발 모드에서 `?drafts=1`
+- 승인되면 초안을 승인 파일로 옮기고 초안 파일에서 지운다. 코드: client/src/sprites/data.ts setUseDrafts·withMonsterDrafts

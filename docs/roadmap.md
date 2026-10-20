@@ -65,5 +65,7 @@ MVP 범위, 마일스톤별 목표·읽을 문서·완료 기준, 세션 단위 
 | 1-5 | 플레이어 피격·다운·기상, HP·MP·물약 | balance.md 9장 항목 튜닝 |
 | 1-6 | 효과음 엔진 + tools/sfx-preview (reference-*.html과 같은 소리) | 나란히 들어 비교 → 승인 |
 | 1-7 | HUD 아래 띠 + 데미지 숫자·콤보 | docs/refs/approved/dungeon_room_hud.png와 비교 |
-| 1-8 | 그림 추가: 몬스터 hurt·hurtAir, MVP 스킬 포즈, 이동·상태 모션 | 미리보기 검토 → 승인 후 데이터 반영 |
+| 1-8a | 그림 추가: 몬스터 hurt·hurtAir (초안 → sprite-preview "초안 보기") | 미리보기 검토 → 승인 후 데이터 반영 |
+| 1-8b | 그림 추가: 대검·스태프 MVP 스킬 포즈 (art.md 4장 MVP 표시) | 미리보기 검토 → 승인 후 데이터 반영 |
+| 1-8c | 그림 추가: 캐릭터 이동·상태 모션 (art.md 4장), 몸 포즈 형식 확정 | 미리보기 검토 → 승인 후 데이터 반영 |
 | 1-9 | tools/balance-check, ttk-sim | 경고 0건 또는 note 기록 |

@@ -2,6 +2,7 @@
 import baseJson from '../../data/sprites/character/base.json';
 import outfitsJson from '../../data/sprites/character/outfits.json';
 import materialsJson from '../../data/sprites/materials.json';
+import draftMonstersJson from '../../data/sprites/drafts/monsters.json';
 import monstersJson from '../../data/sprites/monsters.json';
 import posesJson from '../../data/sprites/poses.json';
 import weaponsJson from '../../data/sprites/weapons_visual.json';
@@ -93,11 +94,39 @@ function checkMonster(id: string, monster: Monster, materials: Materials): void 
 }
 
 let cached: SpriteData | undefined;
+let useDrafts = false;
+
+/** 초안(drafts/) 겹쳐 보기 켜기·끄기 (sprite-preview "초안 보기", 게임 ?drafts=1). 바꾸면 다시 읽는다 */
+export function setUseDrafts(on: boolean): void {
+  if (on !== useDrafts) cached = undefined;
+  useDrafts = on;
+}
+
+export const draftsOn = () => useDrafts;
+
+type MonsterDraft = { frames?: Record<string, unknown>; states?: Record<string, unknown> };
+
+/** 초안 몬스터 프레임·상태를 승인 데이터 위에 겹친다 (승인 파일은 그대로) */
+export function withMonsterDrafts(base: Record<string, unknown>, drafts: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...base };
+  for (const [id, d] of Object.entries(withoutNotes(drafts)) as [string, MonsterDraft][]) {
+    const m = base[id] as { frames: Record<string, unknown>; states: Record<string, unknown> } | undefined;
+    if (!m) continue;
+    out[id] = { ...m, frames: { ...m.frames, ...d.frames }, states: { ...m.states, ...d.states } };
+  }
+  return out;
+}
+
+/** 초안 프레임 이름 (sprite-preview 표시용) */
+export function draftFrameNames(id: string): string[] {
+  const d = (draftMonstersJson as Record<string, MonsterDraft>)[id];
+  return Object.keys(d?.frames ?? {});
+}
 
 export function spriteData(): SpriteData {
   cached ??= parseSpriteData({
-    base: baseJson, outfits: outfitsJson, poses: posesJson, weapons: weaponsJson,
-    materials: materialsJson, monsters: monstersJson,
+    base: baseJson, outfits: outfitsJson, poses: posesJson, weapons: weaponsJson, materials: materialsJson,
+    monsters: useDrafts ? withMonsterDrafts(monstersJson, draftMonstersJson) : monstersJson,
   });
   return cached;
 }

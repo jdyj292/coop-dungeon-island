@@ -126,6 +126,46 @@
      3,
      0
     ]
+   },
+   "hurt": {
+    "foot": [
+     7,
+     10
+    ],
+    "rows": [
+     "...mmmmmmmmm...",
+     ".mmmmWWmmmmmmm.",
+     ".mmmmmmmmWWmmm.",
+     "mmmmWmmmmmmmmmm",
+     "mmmmmmmmmmmmmmm",
+     ".uuuuuuuuuuuuu.",
+     "..sssssssssss..",
+     "..sssssEEssEE..",
+     "..sssssBssBss..",
+     "..sssssssssss..",
+     "...sssssssss..."
+    ]
+   },
+   "hurtAir": {
+    "foot": [
+     6,
+     12
+    ],
+    "rows": [
+     "....mmmmm....",
+     "..mmWWmmmmm..",
+     "..mmmmmmWWm..",
+     ".mmWmmmmmmmm.",
+     ".mmmmmmmmmmm.",
+     "..uuuuuuuuu..",
+     "...sssssss...",
+     "...sssssss...",
+     "...sssssss...",
+     "...ssEEsEE...",
+     "...ssBssBs...",
+     "...sssssss...",
+     "....sssss...."
+    ]
    }
   },
   "states": {
@@ -321,6 +361,47 @@
       ]
      }
     ]
+   },
+   "hurt": {
+    "foot": [
+     9,
+     10
+    ],
+    "rows": [
+     "......mmmm.........",
+     ".....mmmmmm.bb.....",
+     "....mmmmmmmmbc.....",
+     "....bbbbbbbbbbbbb..",
+     "bb.bbbbbbbbbbbEEbb.",
+     "bbbbbbbbbbbbbbcccc.",
+     ".bbbbbbbbbbbbBcccnn",
+     ".bbbbccccccccccbww.",
+     "..bbcccccccccccc...",
+     "...ddcccccccdd.....",
+     "...dd.......dd....."
+    ]
+   },
+   "hurtAir": {
+    "foot": [
+     8,
+     13
+    ],
+    "rows": [
+     ".....mmmm........",
+     "....mmmmmm.bb....",
+     "...mmmmmmmmbc....",
+     "....bbbbbbbbbbb..",
+     "b.bbbbbbbbbbbEEb.",
+     "bbbbbbbbbbbbbccc.",
+     ".bbbbbbbbbbbBcccn",
+     ".bbbbbbbbbbbbcccn",
+     ".bbbbbbbbbbbbccc.",
+     ".bbbccccccccccbw.",
+     "..bccccccccccc...",
+     "...ddcccccdd.....",
+     "...dd.....dd.....",
+     "...dd.....dd....."
+    ]
    }
   },
   "states": {
@@ -452,6 +533,27 @@
        -9
       ]
      }
+    ]
+   },
+   "hurt": {
+    "foot": [
+     8,
+     12
+    ],
+    "rows": [
+     ".....ppppp.....",
+     ".pppp.ppp.pppp.",
+     ".ppppppcpppppp.",
+     "..pppcccccppp..",
+     "pppppEEccEEpppp",
+     "pppppBccccBpppp",
+     ".pp.pccMMcp.pp.",
+     ".ppppppcpppppp.",
+     "..ppppppppppp..",
+     "...p..ppglllll.",
+     ".....lllglll...",
+     "....llllg......",
+     ".....rrrrrrr..."
     ]
    }
   },
@@ -712,6 +814,66 @@
      20
     ],
     "shake": true
+   },
+   "hurt": {
+    "rows": [
+     "......vvvvvWvvvvvv........",
+     "....vvvvvvvvvvvWWvvv......",
+     "...vvvWWvvvvvvvvvvvvv.....",
+     "..vvvvvvvvvvvvvvvvvvvv....",
+     ".vvvvvvvvvvvvvWvvvWvvvv...",
+     ".vvvvWvvvvvvvvvvvvvvvvv...",
+     ".vvvvvvvvvvvvvvvvvvvvvv...",
+     ".vvvvvvvvvvvvvvvvvvvvvv...",
+     "vvvvvvvvvvvvvvvvvvvvvvvv..",
+     ".......ssssssssss...hh....",
+     ".......sssssssssss.hWhh...",
+     ".......sssssEEsEE.hhhhhh..",
+     ".......ssssssssss.hhhhhh..",
+     "......sssssssssssshhhhhhh.",
+     ".......sssssssssshhhyyhhh.",
+     ".......sssssssssshhhhhhhh.",
+     ".......ssssssssss.hhhhWh..",
+     ".......ssssssssss.hhhhhh..",
+     ".......ssssssssss.hWhhhh..",
+     "........dd...dd...hhhhhh..",
+     "........dd...dd.....hh...."
+    ],
+    "foot": [
+     13,
+     20
+    ]
+   },
+   "hurtAir": {
+    "rows": [
+     ".......vvvWvvvv.........",
+     ".....vvvvvvvvvWWv.......",
+     "....vWWvvvvvvvvvvv......",
+     "...vvvvvvvvvvvvvvvv.....",
+     "..vvvvvvvvvvvWvvvWvv....",
+     "..vvWvvvvvvvvvvvvvvv....",
+     "..vvvvvvvvvvvvvvvvvv....",
+     "..vvvvvvvvvvvvvvvvvv....",
+     ".vvvvvvvvvvvvvvvvvvvv...",
+     "........ssssss.....hh...",
+     "........sssssss...hWhh..",
+     "........sssEEs...hhhhhh.",
+     "........ssssss...hhhhhh.",
+     ".......sssssssssshhhhh..",
+     "........sssssssshhhyyhh.",
+     "........sssssssshhhyyhh.",
+     "........ssssss..hhhyyhhh",
+     "........ssssss..hhhhhhhh",
+     "........ssssss...hhhhWh.",
+     "........ssssss...hhhhhh.",
+     "........ssssss...hWhhhh.",
+     ".......dd...dd....hhhh..",
+     ".......dd...dd.....hh..."
+    ],
+    "foot": [
+     12,
+     22
+    ]
    }
   },
   "states": {

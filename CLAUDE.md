@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 완료. M1 1-1~1-6 데이터 로더·60Hz 틱·플레이어 행동·몬스터 AI(RoomSim)·피격·HP·MP·물약·효과음, 1-7 HUD 아래 띠(client/src/ui)·콤보·CLEAR 띠·필살기 게이지
+- M0 완료. M1 1-1~1-7 완료 (데이터·틱·플레이어·몬스터 AI·피격·효과음·HUD), 1-8a 몬스터 hurt·hurtAir 승인·반영 (초안 절차: sprites.md 10장)
 - 명령: `pnpm dev`(?room=1~6) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: M1 1-8 — 그림 추가 (몬스터 hurt·hurtAir, MVP 스킬 포즈, 이동·상태 모션), 미리보기 검토 → 승인 후 반영. 대검 평타 경고는 1-9
+- 다음: 1-8b MVP 스킬 포즈 → 1-8c 이동·상태 모션. 대검 평타 경고는 1-9

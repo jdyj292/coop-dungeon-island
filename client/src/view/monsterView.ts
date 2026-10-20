@@ -75,9 +75,10 @@ export function monsterPose(data: SpriteData, m: Monster, v: MonsterView, clock:
     case 'hitstun':
       return { frame: v.hurt > 0 ? hurtFrame(data, m, 'hurt') : idle, angle: 0 };
   }
-  if (v.hurt > 0) return { frame: hurtFrame(data, m, 'hurt'), angle: 0 };
+  // 어지러움·그로기 자세가 피격 프레임보다 우선 (보스는 경직이 없어 그로기 중 맞아도 자세 유지)
   if (m.mode === 'selfStun') return { frame: stateFrame(data, m, 'selfStun') ?? idle, angle: 0 };
   if (m.mode === 'groggy') return { frame: stateFrame(data, m, 'groggy') ?? idle, angle: 0 };
+  if (v.hurt > 0) return { frame: hurtFrame(data, m, 'hurt'), angle: 0 };
   const ph = attackPhase(m);
   if (ph && m.attack) return { frame: stateFrame(data, m, `${ph}:${m.attack.def.id}`) ?? idle, angle: 0 };
   if (m.moving) {
