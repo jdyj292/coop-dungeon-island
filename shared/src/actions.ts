@@ -1,14 +1,14 @@
 // 행동 진행: windup → active → recovery, 평타 연타·선입력·캔슬 (docs/combat.md 1·2장, 형식 docs/data.md 1·2장)
 import { COMBAT, SKILLS, WEAPONS } from './data/load';
-import type { ActionMove, PlayerAction, Weapon } from './data/schema';
+import type { ActionMove, PlayerAction, Skill, Weapon } from './data/schema';
 
 export type Phase = 'windup' | 'active' | 'recovery';
 export type Strength = 'light' | 'medium' | 'heavy';
 export type FxGrade = 'light' | 'medium' | 'heavy' | 'ultimate';
 
 
-/** 플레이어 행동 (평타·대시·스킬). 형식은 data/schema.ts */
-export type ActionDef = PlayerAction;
+/** 플레이어 행동 (평타·대시·스킬). 스킬이면 mp가 있음. 형식은 data/schema.ts */
+export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp'>>;
 export type WeaponDef = Weapon;
 
 export function weaponDef(id: string): WeaponDef {

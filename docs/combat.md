@@ -145,7 +145,8 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 
 ## 4. 플레이어 피격
 
-- HP 바와 데미지 숫자 사용 (수치는 balance.md)
+- HP 바와 데미지 숫자 사용 (수치는 balance.md, 데이터 shared/data/player.json hp·hurt·revive, 계산 shared/src/playerHurt.ts)
+- 약·중 공격은 경직, 강 공격만 다운. 맞으면 하던 행동(공격·백스텝)이 끊긴다. 다운 중에는 맞지 않는다 (downhit 공격 없음)
 - 약 공격: 경직 0.2초 / 강 공격(몬스터 데이터에 표시): 다운 1.0초
 - 다운 후 기상 시 1.0초 무적 (공용 패시브 "기상 회피"로 기상 즉시 백스텝 가능)
 - 경직 중 연속 피격 가능. 포위당하면 위험하다는 것이 의도

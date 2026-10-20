@@ -175,6 +175,11 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 |---|---|
 | move.walk / move.run | 기본 이동 속도 px/s (x 좌우, y 깊이). 의미는 combat.md 1장, 무기별 배율은 weapons.json moveMul |
 | runDoubleTap | 달리기: 같은 방향 좌우를 두 번 누르는 사이 최대 시간 (초) |
+| hp | `{ base, perLevel }` 최대 HP = base × (1 + perLevel × (숙련도 − 1)) (balance.md 5장) |
+| mp | `{ max, regen, onHit }` 최대 MP·초당 회복·적중 1회당 회복 (balance.md 6장) |
+| hurt | `{ stunSec, downSec, getupInvuln }` 약·중 공격 경직, 강 공격 다운, 기상 무적 (combat.md 4장) |
+| potions | `hp { heal(최대 HP 비율), cooldown, carry }`, `mp { amount, cooldown, carry }` (balance.md 6장, carry = 반입 한도) |
+| revive | `{ feathers, hpRatio, invuln }` 솔로 부활의 깃털 (dungeon.md 3장) |
 | hurtbox | 플레이어 피격 판정 크기 `{ width, height, depth }` (몬스터 공격·투사체) |
 | backstep | `{ distance, sec, invuln, cooldown }` 백스텝 거리(px)·시간·앞쪽 무적 시간·쿨 (combat.md 1장) |
 

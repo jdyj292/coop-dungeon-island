@@ -3,7 +3,8 @@ import { skillDef, weaponDef } from './actions';
 import { applyHit, newBody, stepBody } from './body';
 import { TICK } from './constants';
 import { COMBAT, PLAYER } from './data/load';
-import { isInvulnerable, newPlayerState, skillReady, stepPlayerState, type PlayerInput, type PlayerState } from './player';
+import { newPlayerState, skillReady, stepPlayerState, type PlayerInput, type PlayerState } from './player';
+import { isInvulnerable } from './playerHurt';
 
 const gs = weaponDef('greatsword');
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };

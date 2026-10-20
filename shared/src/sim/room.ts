@@ -5,11 +5,12 @@ import { PLAYER, COMBAT } from '../data/load';
 import type { MonsterAttack } from '../data/schema';
 import { damageOf } from '../hit';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
-import { spawnProjectile, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
+import { inZone, spawnProjectile, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
 import { monsterBounds, newMonster, type Monster } from '../monster/state';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
-import { isInvulnerable, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
+import { newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
+import { gainMpOnHit, hurtPlayer, isInvulnerable, type HurtEvent, type PotionKind } from '../playerHurt';
 import { actionHits, type HitTarget } from '../shapes';
 import { attackPhase } from '../monster/state';
 
@@ -25,8 +26,10 @@ export type SimEvent =
   /** 플레이어 → 몬스터 적중 */
   | { type: 'hit'; m: Monster; def: ActionDef; damage: number }
   | { type: 'monster'; m: Monster; e: MonsterEvent }
-  /** 몬스터 공격·투사체 → 플레이어 적중 (데미지·경직은 M1 1-5) */
-  | { type: 'playerHit'; from: Monster | undefined; def: MonsterAttack; damage: number };
+  /** 몬스터 공격·투사체 → 플레이어 적중 (HP 감소·경직·다운은 playerHurt) */
+  | { type: 'playerHit'; from: Monster | undefined; def: MonsterAttack; damage: number }
+  | { type: 'playerHurt'; e: HurtEvent }
+  | { type: 'potion'; kind: PotionKind };
 
 export interface SimOptions {
   /** false면 몬스터가 움직이거나 공격하지 않음 (tools/motion-preview) */
@@ -83,7 +86,7 @@ export class RoomSim {
       if (this.opts.ai === false && m.body.state === 'idle') m.facing = p.pos.x < m.body.x ? -1 : 1;
       for (const e of evs) {
         events.push({ type: 'monster', m, e });
-        if (e.type === 'playerHit') events.push({ type: 'playerHit', from: m, def: e.def, damage: e.damage });
+        if (e.type === 'playerHit') this.hitPlayer(events, m, e.def, e.damage);
         if (e.type === 'shoot') this.projectiles.push(spawnProjectile(this.ids++, m.id, e.def, m.body.x, m.body.y, m.attack?.dir ?? m.facing));
         if (e.type === 'zone') this.zones.push(spawnZone(this.ids++, e.def, { x: m.body.x, y: m.body.y, facing: m.facing }));
       }
@@ -91,15 +94,17 @@ export class RoomSim {
     // 2. 투사체·장판
     for (const pr of this.projectiles) {
       if (stepProjectile(pr, dt, b.minX, b.maxX, this.playerTarget())) {
-        events.push({ type: 'playerHit', from: this.monsters.find((m) => m.id === pr.ownerId), def: pr.def, damage: pr.def.damage });
+        this.hitPlayer(events, this.monsters.find((m) => m.id === pr.ownerId), pr.def, pr.def.damage);
       }
     }
     this.projectiles = this.projectiles.filter((pr) => !pr.done);
     this.zones.forEach((z) => stepZone(z, dt));
     this.zones = this.zones.filter((z) => z.left > 0);
     // 3. 플레이어 행동과 판정 (active 동안 매 틱)
-    const res = stepPlayerState(p, this.weapon, input, dt, b);
+    const res = stepPlayerState(p, this.weapon, input, dt, b, this.zoneSpeedMul());
     if (res.backstepStarted) events.push({ type: 'backstep' });
+    res.hurt.forEach((e) => events.push({ type: 'playerHurt', e }));
+    if (res.potion) events.push({ type: 'potion', kind: res.potion });
     const runs = new Set<ActionRun>();
     for (const e of res.events) {
       events.push({ type: 'fighter', e });
@@ -127,9 +132,28 @@ export class RoomSim {
       const damage = damageOf(def.coef);
       m.hp = Math.max(0, m.hp - damage);
       if (m.hp === 0) m.body.ko = true;
+      gainMpOnHit(p);
       out.push({ type: 'hit', m, def, damage });
     }
     return out;
+  }
+
+  /** 몬스터 공격 적중 → HP·경직·다운 (무적이면 무시) */
+  private hitPlayer(events: SimEvent[], from: Monster | undefined, def: MonsterAttack, damage: number): void {
+    const hurt = hurtPlayer(this.player, damage, def.strength);
+    if (!hurt.length) return;
+    events.push({ type: 'playerHit', from, def, damage });
+    hurt.forEach((e) => events.push({ type: 'playerHurt', e }));
+  }
+
+  /** 감속 장판(졸음 구름) 안이면 이동 속도 × (1 - amount) */
+  private zoneSpeedMul(): number {
+    const p = this.player, t = { x: p.pos.x, y: p.pos.y, airborne: false, hurtbox: PLAYER.hurtbox };
+    let mul = 1;
+    for (const z of this.zones) {
+      if (z.def.effect.type === 'slow' && inZone(z, t)) mul = Math.min(mul, 1 - (z.def.effect.amount ?? 0));
+    }
+    return mul;
   }
 
   private separate(): void {

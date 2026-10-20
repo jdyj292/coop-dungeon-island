@@ -5,6 +5,14 @@
     "run": { "x": 120, "y": 75 }
   },
   "runDoubleTap": 0.25,
+  "hp": { "base": 1000, "perLevel": 0.04 },
+  "mp": { "max": 100, "regen": 1, "onHit": 1 },
+  "hurt": { "stunSec": 0.2, "downSec": 1.0, "getupInvuln": 1.0 },
+  "potions": {
+    "hp": { "heal": 0.3, "cooldown": 5, "carry": 5 },
+    "mp": { "amount": 50, "cooldown": 5, "carry": 5 }
+  },
+  "revive": { "feathers": 1, "hpRatio": 0.5, "invuln": 2 },
   "hurtbox": { "width": 10, "height": 16, "depth": 8 },
   "backstep": { "distance": 40, "sec": 0.25, "invuln": 0.2, "cooldown": 2 }
 }

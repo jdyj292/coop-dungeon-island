@@ -165,6 +165,14 @@ export const monster = z.object({
 const speed = z.object({ x: pos, y: pos }).strict();
 export const player = z.object({
   _note: z.string().optional(), move: z.object({ walk: speed, run: speed }).strict(), runDoubleTap: pos,
+  hp: z.object({ base: pos, perLevel: sec }).strict(),
+  mp: z.object({ max: pos, regen: sec, onHit: sec }).strict(),
+  hurt: z.object({ stunSec: sec, downSec: sec, getupInvuln: sec }).strict(),
+  potions: z.object({
+    hp: z.object({ heal: z.number().min(0).max(1), cooldown: sec, carry: z.number().int().nonnegative() }).strict(),
+    mp: z.object({ amount: pos, cooldown: sec, carry: z.number().int().nonnegative() }).strict(),
+  }).strict(),
+  revive: z.object({ feathers: z.number().int().nonnegative(), hpRatio: z.number().min(0).max(1), invuln: sec }).strict(),
   hurtbox: z.object({ width: pos, height: pos, depth: pos }).strict(),
   backstep: z.object({ distance: pos, sec: pos, invuln: sec, cooldown: sec }).strict(),
 }).strict();

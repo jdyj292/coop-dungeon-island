@@ -2,7 +2,8 @@
 import type Phaser from 'phaser';
 import {
   FixedStep, fighterPose, PLAYER, RoomSim, TICK, weaponDef,
-  type ActionDef, type Bounds, type Monster, type PlayerState, type SimEvent, type SimOptions, type Spawn, type Vec2,
+  type ActionDef, type Bounds, type Monster, type PlayerState, type PotionKind, type SimEvent, type SimOptions, type Spawn,
+  type Vec2,
 } from '@game/shared';
 import fx from '../../data/fx.json';
 import { Afterimages } from '../fx/afterimage';
@@ -31,10 +32,11 @@ export interface StageInput {
   attack: boolean;
   skill: ActionDef | null;
   backstep: boolean;
+  potion: PotionKind | null;
 }
 
-type Presses = Pick<StageInput, 'attack' | 'skill' | 'backstep'>;
-const NO_PRESS: Presses = { attack: false, skill: null, backstep: false };
+type Presses = Pick<StageInput, 'attack' | 'skill' | 'backstep' | 'potion'>;
+const NO_PRESS: Presses = { attack: false, skill: null, backstep: false, potion: null };
 export const NO_INPUT: StageInput = { x: 0, y: 0, ...NO_PRESS };
 
 export class CombatStage {
@@ -57,6 +59,8 @@ export class CombatStage {
   private pending: Presses = { ...NO_PRESS };
   /** 지난 그리기 이후 흐른 게임 시간 (잔상용) */
   private drawDt = 0;
+  /** 전멸(깃털 없이 HP 0) 때 한 번 불림 */
+  onWipe: (() => void) | null = null;
 
   constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, spawns: Spawn[], readonly opts: SimOptions = {}) {
     this.sim = new RoomSim(this.weapon, bounds, player, opts);
@@ -100,6 +104,7 @@ export class CombatStage {
     this.pending.attack ||= input.attack;
     this.pending.skill ??= input.skill;
     this.pending.backstep ||= input.backstep;
+    this.pending.potion ??= input.potion;
     const n = this.ticks.advance(realDt);
     let moved = 0;
     for (let i = 0; i < n; i++) {
@@ -144,10 +149,17 @@ export class CombatStage {
         x: sx + ax * facing, y: sy + ay, numberX: sx, numberY: sy - fx.number.above,
       }, e.damage, e.def.fx?.shake);
     } else if (e.type === 'playerHit') {
-      // 플레이어 피격: 번쩍임 + 위험색 숫자만 (HP·경직·다운은 M1 1-5)
+      // 플레이어 피격: 번쩍임 + 위험색 숫자 (경직·다운은 playerHurt 이벤트)
       const p = this.player, { sx, sy } = project(p.pos.x, p.pos.y);
       this.playerFlash = fx.flashFrames.light * fx.frame;
       this.fx.layer.add(damageNumber(e.damage, sx, sy - fx.number.above, 'light', 'global.semantic.danger'));
+    } else if (e.type === 'playerHurt') {
+      const p = this.player, { sx, sy } = project(p.pos.x, p.pos.y);
+      if (e.e === 'down') {
+        add(dust(sx, sy, fx.dust.down));
+        this.fx.shake.start(fx.downShake.sec, fx.downShake.px);
+      }
+      if (e.e === 'wipe') this.onWipe?.();
     } else if (e.type === 'monster') {
       const { sx, sy } = project(e.m.body.x, e.m.body.y), ev = e.e;
       if (ev.type === 'wallHit') {
@@ -195,16 +207,21 @@ export class CombatStage {
       this.beat = this.walking ? this.beat + moved / data.poses.walk.pxPerBeat : 0;
     }
     const step = this.walking && !acting ? walkStep(data, Math.floor(this.beat)) : { frame: 'stand', bob: 0 };
+    // 다운·쓰러짐: 뒤로 눕힘. 무기를 몸 옆에 둔 전용 그림(art.md 4장)은 M1 1-8, 그때까지 무기는 그리지 않음
+    const lying = p.hurt?.kind === 'down' || p.downed;
     const look: CharacterLook = {
-      hair: 'short', face: 'normal', outfit: data.outfits.sets.beginner!,
-      weapon: 'greatsword_basic', pose: fighterPose(p.fighter) ?? 'idle', frame: step.frame, bob: step.bob,
+      hair: 'short', face: p.hurt || p.downed ? 'hurt' : 'normal', outfit: data.outfits.sets.beginner!,
+      weapon: lying ? undefined : 'greatsword_basic', pose: lying ? undefined : fighterPose(p.fighter) ?? 'idle', frame: step.frame, bob: step.bob,
     };
     const tex = characterTexture(this.scene, look, { hairColor: 'global.hairColors.0', playerColor: 'global.playerColors.0' });
     // 백스텝: 뛰어 물러나는 높이는 위치 오프셋으로만 (판정은 지상, motion.md 6장)
     const hop = p.backstep ? Math.round(Math.sin((p.backstep.t / PLAYER.backstep.sec) * Math.PI) * fx.backstepHop) : 0;
+    // 기상·부활 무적: 깜빡임 (motion.md 4장)
     place(this.playerView, tex, {
       x: p.pos.x + this.rhythm.px * p.facing, y: p.pos.y, z: hop, facing: p.facing, flash: this.playerFlash > 0,
+      angle: lying ? -90 * p.facing : 0,
     });
+    this.playerView.img.setVisible(!(p.invuln > 0 && Math.floor(this.clock / fx.reaction.stunBlink) % 2 === 1));
     this.ghosts.update(this.drawDt, !!p.backstep, this.playerView.img);
     this.drawDt = 0;
 

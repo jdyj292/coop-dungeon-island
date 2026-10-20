@@ -5,8 +5,9 @@ import {
 } from './actions';
 import { COMBAT, PLAYER } from './data/load';
 import { moveSpeed, newRunState, stepMove, stepRun, type Bounds, type RunState, type Vec2 } from './movement';
+import { newVitals, stepVitals, usePotion, type HurtEvent, type PotionKind, type Vitals } from './playerHurt';
 
-export interface PlayerState {
+export interface PlayerState extends Vitals {
   pos: Vec2;
   /** 1 = 오른쪽, -1 = 왼쪽 */
   facing: number;
@@ -20,7 +21,7 @@ export interface PlayerState {
 }
 
 export const newPlayerState = (pos: Vec2): PlayerState => ({
-  pos, facing: 1, fighter: newFighter(), run: newRunState(), backstep: null, backstepCd: 0, cooldowns: {},
+  pos, facing: 1, fighter: newFighter(), run: newRunState(), backstep: null, backstepCd: 0, cooldowns: {}, ...newVitals(),
 });
 
 export interface PlayerInput {
@@ -30,6 +31,8 @@ export interface PlayerInput {
   attack: boolean;
   skill: ActionDef | null;
   backstep: boolean;
+  /** Z = hp, X = mp */
+  potion?: PotionKind | null;
 }
 
 export interface PlayerStep {
@@ -38,20 +41,32 @@ export interface PlayerStep {
   moved: number;
   running: boolean;
   backstepStarted: boolean;
+  /** 경직 끝남·기상 등 (피격 자체는 playerHurt.hurtPlayer가 돌려줌) */
+  hurt: HurtEvent[];
+  potion: PotionKind | null;
 }
 
-/** 백스텝 앞 invuln초 동안 무적 */
-export const isInvulnerable = (p: PlayerState): boolean => !!p.backstep && p.backstep.t < PLAYER.backstep.invuln;
-
-export const skillReady = (p: PlayerState, skill: ActionDef): boolean => (p.cooldowns[skill.id] ?? 0) <= 0;
+/** 쿨타임이 끝났고 MP가 충분한가 (MP = skills.json mp) */
+export const skillReady = (p: PlayerState, skill: ActionDef): boolean =>
+  (p.cooldowns[skill.id] ?? 0) <= 0 && p.mp >= (skill.mp ?? 0);
 
 const clampX = (x: number, b: Bounds) => Math.min(b.maxX, Math.max(b.minX, x));
 
-export function stepPlayerState(p: PlayerState, weapon: WeaponDef, input: PlayerInput, dt: number, bounds: Bounds): PlayerStep {
+/** speedMul: 장판 감속 등 이동 속도 배율 */
+export function stepPlayerState(
+  p: PlayerState, weapon: WeaponDef, input: PlayerInput, dt: number, bounds: Bounds, speedMul = 1,
+): PlayerStep {
   const bs = PLAYER.backstep;
   for (const id of Object.keys(p.cooldowns)) p.cooldowns[id] = Math.max(0, p.cooldowns[id]! - dt);
   p.backstepCd = Math.max(0, p.backstepCd - dt);
-  const out: PlayerStep = { events: [], moved: 0, running: false, backstepStarted: false };
+  const out: PlayerStep = { events: [], moved: 0, running: false, backstepStarted: false, hurt: stepVitals(p, dt), potion: null };
+  // 쓰러짐·경직·다운 중에는 조작 불가 (물약도 다운 중 불가, playerHurt.usePotion)
+  if (p.downed) return out;
+  if (input.potion && usePotion(p, input.potion)) out.potion = input.potion;
+  if (p.hurt) {
+    stepRun(p.run, 0, dt);
+    return out;
+  }
 
   // 백스텝: 공격 중(어느 구간이든) 불가, 쿨 2초. 바라보는 반대쪽으로 고르게 이동하고 그동안 다른 입력은 무시
   if (!p.backstep && input.backstep && !p.fighter.run && p.backstepCd <= 0) {
@@ -74,8 +89,9 @@ export function stepPlayerState(p: PlayerState, weapon: WeaponDef, input: Player
   out.events = stepFighter(p.fighter, weapon, { attack: input.attack, skill, dashing: running }, dt);
   for (const e of out.events) {
     // 쿨타임은 windup 진입 시점부터 (balance.md 2장)
-    if (e.type === 'start' && e.run.kind === 'skill' && e.run.def.cooldown) {
-      p.cooldowns[e.run.def.id] = e.run.def.cooldown * COMBAT.cooldownScale;
+    if (e.type === 'start' && e.run.kind === 'skill') {
+      if (e.run.def.cooldown) p.cooldowns[e.run.def.id] = e.run.def.cooldown * COMBAT.cooldownScale;
+      p.mp -= e.run.def.mp ?? 0;
     }
   }
   if (input.x && canTurn(p.fighter)) p.facing = Math.sign(input.x);
@@ -83,7 +99,7 @@ export function stepPlayerState(p: PlayerState, weapon: WeaponDef, input: Player
   const act = actionMoved(before, started);
   if (act) p.pos.x = clampX(p.pos.x + act * p.facing, bounds);
   if (!p.fighter.run) {
-    const next = stepMove(p.pos, input, dt, moveSpeed(running, weapon.moveMul), bounds);
+    const next = stepMove(p.pos, input, dt, moveSpeed(running, weapon.moveMul * speedMul), bounds);
     out.moved = Math.hypot(next.x - p.pos.x, next.y - p.pos.y);
     p.pos = next;
   }
