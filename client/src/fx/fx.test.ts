@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { textLeft } from './damageNumber';
 import { smearPixels, smearShape } from './smear';
+import { thrustPixels } from './thrust';
 import { HitStop, Shake } from './timing';
 
 describe('HitStop', () => {
@@ -57,5 +58,16 @@ describe('textLeft', () => {
   it('가운데 정렬 (글자 3 + 간격 1)', () => {
     expect(textLeft('42', 100, 1)).toBe(97);
     expect(textLeft('42', 100, 2)).toBe(93);
+  });
+});
+
+describe('thrustPixels (찌르기 스미어)', () => {
+  const s = { y: -6, x0: -2, x1: 19 };
+  it('한 줄 직선: 앞쪽만 위아래로 두꺼움, 꼬리부터 사라짐', () => {
+    const px = thrustPixels(s, 1);
+    expect(new Set(px.map((p) => p.dy))).toEqual(new Set([-7, -6, -5]));
+    expect(px.filter((p) => p.dx === s.x0).length).toBe(1);
+    expect(thrustPixels(s, 0.3).length).toBeLessThan(px.length);
+    expect(thrustPixels(s, 0).length).toBe(0);
   });
 });

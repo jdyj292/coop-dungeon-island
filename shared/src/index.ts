@@ -7,6 +7,7 @@ export * from './hit';
 export * from './shapes';
 export * from './tick';
 export * from './body';
+export * from './player';
 export * from './data/load';
 export * from './data/crossCheck';
 export type * from './data/schema';

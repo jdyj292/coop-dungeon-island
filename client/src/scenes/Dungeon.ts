@@ -1,4 +1,4 @@
-// 던전 테스트 씬 (roadmap 0-5·0-6): 1층 1번 방, 걷기, 대검 3연타(J)·올려베기(U), 타격 패키지. 서버 없이 로컬
+// 던전 테스트 씬: 1층 1번 방. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 (combat.md 1장). 서버 없이 로컬
 import Phaser from 'phaser';
 import { ROOMS, skillDef, TILE, type Vec2 } from '@game/shared';
 import { color, colorInt } from '../palette';
@@ -11,9 +11,10 @@ const FLOOR = 1;
 const DEADZONE = 2 * TILE;
 /** 배경을 화면 아래까지 채울 여유 (창이 세로로 길 때) */
 const BG_EXTRA = 200;
-const LAUNCH = skillDef('gs_launch');
+/** 스킬 슬롯 (임시 고정 장착, 슬롯 UI는 M4) */
+const SKILLS = { skill1: skillDef('gs_launch'), skill2: skillDef('gs_earthsplit') };
 
-type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'skill1';
+type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2';
 
 export class Dungeon extends Phaser.Scene {
   private room = ROOMS.floor1!.rooms[0]!;
@@ -52,7 +53,7 @@ export class Dungeon extends Phaser.Scene {
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({
       up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D,
-      attack: K.J, skill1: K.U,
+      attack: K.J, backstep: K.K, skill1: K.U, skill2: K.I,
     }) as typeof this.keys;
   }
 
@@ -67,7 +68,9 @@ export class Dungeon extends Phaser.Scene {
       x: (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0),
       y: (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0),
       attack: Phaser.Input.Keyboard.JustDown(k.attack),
-      skill: Phaser.Input.Keyboard.JustDown(k.skill1) ? LAUNCH : null,
+      skill: Phaser.Input.Keyboard.JustDown(k.skill1) ? SKILLS.skill1
+        : Phaser.Input.Keyboard.JustDown(k.skill2) ? SKILLS.skill2 : null,
+      backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
     });
 
     const cam = followCamera(this.camCenter, this.stage.player.pos.x, DEADZONE, this.scale.gameSize.width, this.roomW);

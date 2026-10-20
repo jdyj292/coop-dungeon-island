@@ -4,5 +4,6 @@
     "walk": { "x": 60, "y": 40 },
     "run": { "x": 120, "y": 75 }
   },
-  "runDoubleTap": 0.25
+  "runDoubleTap": 0.25,
+  "backstep": { "distance": 40, "sec": 0.25, "invuln": 0.2, "cooldown": 2 }
 }

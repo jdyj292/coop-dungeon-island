@@ -172,6 +172,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 |---|---|
 | move.walk / move.run | 기본 이동 속도 px/s (x 좌우, y 깊이). 의미는 combat.md 1장, 무기별 배율은 weapons.json moveMul |
 | runDoubleTap | 달리기: 같은 방향 좌우를 두 번 누르는 사이 최대 시간 (초) |
+| backstep | `{ distance, sec, invuln, cooldown }` 백스텝 거리(px)·시간·앞쪽 무적 시간·쿨 (combat.md 1장) |
 
 - 이동 계산은 shared/src/movement.ts (클라이언트·서버 공용): 축마다 따로 움직이고 대각선도 정규화하지 않는다. 행동 중 이동(move)은 actions.ts actionMoveDelta, 판정 모양은 shapes.ts
 - 모든 진행은 1/60초 고정 틱 (shared/src/tick.ts, docs/network.md 12장)
@@ -189,6 +190,8 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | downSec, downSlide, getupSec, wallStunSec | 다운 시간·다운 미끄러짐(px)·기상 무적·벽꿍 추가 경직 |
 | pushRate | 밀림이 남은 거리를 줄이는 속도 (초당 비율, 클수록 짧고 세게 밀림) |
 | turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 |
+| cooldownScale | 전역 쿨타임 배율 (balance.md 2장). 실제 쿨 = 기준 쿨 × 이 값 |
+| stunExitSec | 기절(체력 0) 뒤 퇴장까지 시간 |
 | stun.{light,medium,heavy} | `{ time, push }` 경직 시간·밀림 거리 |
 | weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |
 | grades.{light,medium,heavy,ultimate} | `{ hitstop, shake }` 히트스톱 초, 흔들림 px (0 = 없음) |

@@ -34,8 +34,9 @@ export function phaseAt(def: ActionDef, t: number): Phase | null {
 
 export interface ActionRun {
   def: ActionDef;
-  kind: 'basic' | 'skill';
-  /** 평타 단계 (0부터). 스킬은 0 */
+  /** dash = 달리는 중 평타 (skills.md 1장 대시 공격) */
+  kind: 'basic' | 'dash' | 'skill';
+  /** 평타 단계 (0부터). 대시·스킬은 0 */
   step: number;
   t: number;
 }
@@ -58,6 +59,8 @@ export interface FighterInput {
   attack: boolean;
   /** 이번 틱에 누른 스킬 */
   skill?: ActionDef | null;
+  /** 달리는 중: 평타 대신 대시 공격 */
+  dashing?: boolean;
 }
 
 export type FighterEvent =
@@ -76,10 +79,12 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
   };
   const phase = f.run && phaseAt(f.run.def, f.run.t);
 
-  if (input.skill && (!f.run || (f.run.kind === 'basic' && phase === 'recovery'))) {
+  // 캔슬: 평타·대시 recovery → 스킬만 가능, 스킬 → 스킬 불가 (combat.md 2장)
+  if (input.skill && (!f.run || (f.run.kind !== 'skill' && phase === 'recovery'))) {
     start(input.skill, 'skill', 0);
   } else if (input.attack) {
-    if (!f.run) start(weapon.basic[f.nextStep]!, 'basic', f.nextStep);
+    if (!f.run && input.dashing) start(weapon.dash, 'dash', 0);
+    else if (!f.run) start(weapon.basic[f.nextStep]!, 'basic', f.nextStep);
     else if (f.run.kind === 'basic' && phase !== 'windup' && f.run.step < weapon.basic.length - 1) f.queued = true;
   }
 

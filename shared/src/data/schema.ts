@@ -165,13 +165,14 @@ export const monster = z.object({
 const speed = z.object({ x: pos, y: pos }).strict();
 export const player = z.object({
   _note: z.string().optional(), move: z.object({ walk: speed, run: speed }).strict(), runDoubleTap: pos,
+  backstep: z.object({ distance: pos, sec: pos, invuln: sec, cooldown: sec }).strict(),
 }).strict();
 
 const stun = z.object({ time: sec, push: sec }).strict();
 export const combat = z.object({
   _note: z.string().optional(),
   baseAtk: pos, gravity: pos, launchVz: pos, airHitVz: sec, airGravityMul: pos, maxAirHits: z.number().int().positive(),
-  bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec, wallStunSec: sec, pushRate: pos, turnWindow: sec,
+  bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec, wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
   stun: z.object({ light: stun, medium: stun, heavy: stun }).strict(),
   weightMul: z.object({ light: sec, medium: sec, heavy: sec, fixed: sec, boss: sec }).strict(),
   grades: z.object(Object.fromEntries(GRADES.map((g) => [g, z.object({ hitstop: sec, shake: sec }).strict()])) as

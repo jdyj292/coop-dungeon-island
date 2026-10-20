@@ -3,7 +3,8 @@ import { COMBAT } from './data/load';
 import type { Strength } from './actions';
 
 export type Weight = 'light' | 'medium' | 'heavy' | 'fixed' | 'boss';
-export type BodyState = 'idle' | 'hitstun' | 'air' | 'down' | 'getup';
+/** stunned = 체력 0 기절 (combat.md 3장). 착지한 뒤 들어가고, stunExitSec 뒤 퇴장 */
+export type BodyState = 'idle' | 'hitstun' | 'air' | 'down' | 'getup' | 'stunned';
 
 export interface Body {
   x: number;
@@ -23,11 +24,15 @@ export interface Body {
   airHits: number;
   gravityMul: number;
   weight: Weight;
+  /** 체력 0: 더는 맞지 않고, 땅에 있으면 기절로 */
+  ko: boolean;
+  /** 기절이 끝나 퇴장함 */
+  gone: boolean;
 }
 
 export const newBody = (x: number, y: number, weight: Weight): Body => ({
   x, y, z: 0, vz: 0, state: 'idle', timer: 0, push: 0, hitDir: 1, knockback: false,
-  bounced: false, forceDown: false, airHits: 0, gravityMul: 1, weight,
+  bounced: false, forceDown: false, airHits: 0, gravityMul: 1, weight, ko: false, gone: false,
 });
 
 export interface HitInfo {
@@ -38,11 +43,11 @@ export interface HitInfo {
   launchVz?: number;
 }
 
-export type BodyEvent = 'bounce' | 'down' | 'getup' | 'wall';
+export type BodyEvent = 'bounce' | 'down' | 'getup' | 'wall' | 'stunned' | 'exit';
 
-/** 다운 중에는 downhit만, 기상 중에는 무적 */
+/** 다운 중에는 downhit만, 기상 중·체력 0 이후에는 무적 */
 export function canBeHit(b: Body, flags: string[] = []): boolean {
-  if (b.state === 'getup') return false;
+  if (b.ko || b.state === 'getup') return false;
   if (b.state === 'down') return flags.includes('downhit');
   return true;
 }
@@ -119,6 +124,18 @@ export function stepBody(b: Body, dt: number, minX: number, maxX: number): BodyE
       b.timer -= dt;
       if (b.timer <= 0) b.state = 'idle';
       break;
+    case 'stunned':
+      b.timer -= dt;
+      if (b.timer <= 0 && !b.gone) {
+        b.gone = true;
+        events.push('exit');
+      }
+      break;
+  }
+  // 체력 0: 공중이면 떨어져 다운된 뒤, 땅에 있으면 바로 기절
+  if (b.ko && b.state !== 'air' && b.state !== 'stunned') {
+    Object.assign(b, { state: 'stunned', timer: COMBAT.stunExitSec });
+    events.push('stunned');
   }
   return events;
 }

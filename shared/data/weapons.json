@@ -112,7 +112,7 @@
         "during": "active"
       },
       "poses": {
-        "windup": "ready",
+        "windup": "idle",
         "active": "slash",
         "recovery": "slash"
       },

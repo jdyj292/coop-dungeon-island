@@ -1,14 +1,14 @@
-// 로컬 전투 (roadmap 0-6, 서버 없음). M2에서 서버로 옮길 때 shared 함수를 그대로 쓴다
+// 로컬 전투 (서버 없음). 플레이어 행동은 shared/player.ts, 몬스터 쪽은 M1 1-4에서 shared로 옮긴다
 import {
-  actionHits, actionMoveDelta, applyHit, canBeHit, canTurn, damageOf, MONSTERS, moveSpeed, newBody, newFighter,
-  newRunState, stepBody, stepFighter, stepMove, stepRun,
-  type ActionDef, type ActionRun, type Body, type BodyEvent, type Bounds, type Fighter, type RunState, type Vec2,
-  type WeaponDef,
+  actionHits, applyHit, canBeHit, damageOf, fighterPhase, MONSTERS, newBody, newPlayerState, stepBody, stepPlayerState,
+  type ActionDef, type ActionRun, type Body, type BodyEvent, type Bounds, type PlayerInput, type PlayerState, type PlayerStep,
+  type Vec2, type WeaponDef,
 } from '@game/shared';
 
 export interface LocalMonster {
   kind: string;
   body: Body;
+  hp: number;
   facing: number;
   hurtbox: { width: number; depth: number };
   /** 연출 타이머 (게임 시간) */
@@ -17,19 +17,8 @@ export interface LocalMonster {
   airT: number;
 }
 
-export interface LocalPlayer {
-  pos: Vec2;
-  facing: number;
-  fighter: Fighter;
-  run: RunState;
-}
-
-export interface PlayerInput {
-  x: number;
-  y: number;
-  attack: boolean;
-  skill: ActionDef | null;
-}
+export type LocalPlayer = PlayerState;
+export type { PlayerInput };
 
 export interface HitResult {
   monster: LocalMonster;
@@ -40,43 +29,37 @@ export interface HitResult {
 export function spawnMonster(kind: string, x: number, y: number): LocalMonster {
   const def = MONSTERS[kind];
   if (!def) throw new Error(`몬스터 '${kind}' 없음`);
-  return { kind, body: newBody(x, y, def.weight), facing: -1, hurtbox: def.hurtbox, flash: 0, hurt: 0, airT: 0 };
+  return { kind, body: newBody(x, y, def.weight), hp: def.hp, facing: -1, hurtbox: def.hurtbox, flash: 0, hurt: 0, airT: 0 };
 }
 
-/** 플레이어 한 틱 (1/60초): 행동 → 행동 중 이동 또는 걷기·달리기 → active 진입 시 판정 */
+/** 행동마다 이미 맞은 대상 (같은 행동에 한 대상은 한 번, combat.md 2장) */
+const struck = new WeakMap<ActionRun, Set<LocalMonster>>();
+
+/**
+ * 플레이어 한 틱 (1/60초) + 판정. active 구간 동안 매 틱 판정한다
+ * (행동 중 이동하는 대시·돌진은 지나가며 닿은 대상도 맞음). active가 한 틱보다 짧아도 진입한 틱에 한 번은 판정
+ */
 export function stepPlayer(
   p: LocalPlayer, weapon: WeaponDef, input: PlayerInput, dt: number, bounds: Bounds, monsters: LocalMonster[],
-) {
-  const before = p.fighter.run && { run: p.fighter.run, t: p.fighter.run.t };
-  const events = stepFighter(p.fighter, weapon, input, dt);
-  if (input.x && canTurn(p.fighter)) p.facing = Math.sign(input.x);
-  const running = stepRun(p.run, input.x, dt) && !p.fighter.run;
-  const actMove = actionMoved(before, events.flatMap((e) => (e.type === 'start' ? [e.run] : [])));
-  if (actMove) p.pos.x = Math.min(bounds.maxX, Math.max(bounds.minX, p.pos.x + actMove * p.facing));
-  const moved = p.fighter.run ? 0 : stepAndMeasure(p, input, dt, moveSpeed(running, weapon.moveMul), bounds);
+): PlayerStep & { hits: HitResult[] } {
+  const res = stepPlayerState(p, weapon, input, dt, bounds);
+  const runs = new Set<ActionRun>();
+  for (const e of res.events) if (e.type === 'active') runs.add(e.run);
+  if (p.fighter.run && fighterPhase(p.fighter) === 'active') runs.add(p.fighter.run);
   const hits: HitResult[] = [];
-  for (const e of events) {
-    if (e.type !== 'active') continue;
-    hits.push(...strike(p, e.run.def, monsters));
+  for (const run of runs) {
+    let done = struck.get(run);
+    if (!done) struck.set(run, (done = new Set()));
+    const fresh = monsters.filter((m) => !done.has(m));
+    for (const h of strike(p, run.def, fresh)) {
+      done.add(h.monster);
+      hits.push(h);
+    }
   }
-  return { events, hits, moved, running };
+  return { ...res, hits };
 }
 
-/** 이번 틱의 행동 중 이동 거리: 진행 중이던 행동(끝났으면 끝까지) + 이번 틱에 시작한 행동 */
-function actionMoved(before: { run: ActionRun; t: number } | null, started: ActionRun[]): number {
-  let d = before ? actionMoveDelta(before.run.def, before.t, before.run.t) : 0;
-  for (const r of started) if (r !== before?.run) d += actionMoveDelta(r.def, 0, r.t);
-  return d;
-}
-
-function stepAndMeasure(p: LocalPlayer, input: PlayerInput, dt: number, speed: { x: number; y: number }, bounds: Bounds): number {
-  const next = stepMove(p.pos, input, dt, speed, bounds);
-  const d = Math.hypot(next.x - p.pos.x, next.y - p.pos.y);
-  p.pos = next;
-  return d;
-}
-
-/** 판정에 든 몬스터 모두에게 적중 */
+/** 판정에 든 몬스터 모두에게 적중. 체력이 0이 되면 기절 (combat.md 3장) */
 export function strike(p: LocalPlayer, def: ActionDef, monsters: LocalMonster[]): HitResult[] {
   const out: HitResult[] = [];
   const a = { x: p.pos.x, y: p.pos.y, facing: p.facing };
@@ -86,12 +69,15 @@ export function strike(p: LocalPlayer, def: ActionDef, monsters: LocalMonster[])
     const wasAir = m.body.state === 'air';
     applyHit(m.body, { dir: p.facing, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });
     if (m.body.state === 'air' && !wasAir) m.airT = 0;
-    out.push({ monster: m, def, damage: damageOf(def.coef ?? 0) });
+    const damage = damageOf(def.coef);
+    m.hp = Math.max(0, m.hp - damage);
+    if (m.hp === 0) m.body.ko = true;
+    out.push({ monster: m, def, damage });
   }
   return out;
 }
 
-/** 몬스터 한 틱 (AI는 M1. 지금은 피격 반응과 플레이어 쪽 바라보기만) */
+/** 몬스터 한 틱 (AI는 1-4. 지금은 피격 반응과 플레이어 쪽 바라보기만) */
 export function stepMonster(m: LocalMonster, dt: number, playerX: number, minX: number, maxX: number): BodyEvent[] {
   m.flash = Math.max(0, m.flash - dt);
   m.hurt = Math.max(0, m.hurt - dt);
@@ -100,4 +86,4 @@ export function stepMonster(m: LocalMonster, dt: number, playerX: number, minX: 
   return stepBody(m.body, dt, minX, maxX);
 }
 
-export const newPlayer = (pos: Vec2): LocalPlayer => ({ pos, facing: 1, fighter: newFighter(), run: newRunState() });
+export const newPlayer = (pos: Vec2): LocalPlayer => newPlayerState(pos);

@@ -66,7 +66,7 @@ function hurtFrame(data: SpriteData, kind: string, name: 'hurt' | 'hurtAir'): st
 }
 
 /** 몬스터 상태 → 프레임·회전 */
-export function monsterPose(data: SpriteData, m: LocalMonster, idleFrame: string): { frame: string; angle: number } {
+export function monsterPose(data: SpriteData, m: LocalMonster, idleFrame: string): { frame: string; angle: number; hidden?: boolean } {
   const b = m.body, r = fx.reaction;
   const turn = 90 * b.hitDir;
   switch (b.state) {
@@ -75,6 +75,9 @@ export function monsterPose(data: SpriteData, m: LocalMonster, idleFrame: string
       return { frame: hurtFrame(data, m.kind, 'hurtAir'), angle: (Math.floor(m.airT / r.airSpinSec) % 4) * turn };
     case 'down':
       return { frame: hurtFrame(data, m.kind, 'hurt'), angle: turn };
+    case 'stunned':
+      // 기절: 누운 채 깜빡이다 퇴장 (motion.md 4장)
+      return { frame: hurtFrame(data, m.kind, 'hurt'), angle: turn, hidden: Math.floor(b.timer / r.stunBlink) % 2 === 1 };
     case 'getup':
       return COMBAT.getupSec - b.timer < r.getupSquashSec
         ? { frame: hurtFrame(data, m.kind, 'hurt'), angle: 0 }
@@ -85,7 +88,8 @@ export function monsterPose(data: SpriteData, m: LocalMonster, idleFrame: string
 }
 
 export function placeMonster(scene: Phaser.Scene, v: ActorView, data: SpriteData, m: LocalMonster, idleFrame: string): void {
-  const { frame, angle } = monsterPose(data, m, idleFrame);
+  const { frame, angle, hidden } = monsterPose(data, m, idleFrame);
+  v.img.setVisible(!hidden);
   const sprite = MONSTERS[m.kind]!.sprite;
   place(v, monsterTexture(scene, sprite, frame), {
     x: m.body.x, y: m.body.y, z: m.body.z, facing: m.facing, angle, flash: m.flash > 0,

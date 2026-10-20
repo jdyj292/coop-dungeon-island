@@ -26,8 +26,11 @@
       "slash": { "a0": -1.7, "a1": 0.35, "r1": 8, "r2": 13 },
       "upslash": { "a0": -1.5, "a1": 0.9, "r1": 9, "r2": 15, "rev": true }
     },
-    "grow": { "light": 0, "medium": 1, "heavy": 2, "ultimate": 3 }
+    "grow": { "light": 0, "medium": 1, "heavy": 2, "ultimate": 3 },
+    "thrust": { "actions": ["gs_dash"], "y": -6, "x0": -2, "x1": 19 }
   },
+  "afterimage": { "every": 0.04, "sec": 0.18, "alpha": 0.35 },
+  "backstepHop": 3,
   "rhythm": { "back": 1, "forward": { "light": 2, "medium": 3, "heavy": 3 }, "returnSec": 0.12 },
-  "reaction": { "hurtSec": 0.1, "airSpinSec": 0.08, "getupSquashSec": 0.1, "airShadowZ": 30, "airShadowMin": 0.4 }
+  "reaction": { "hurtSec": 0.1, "airSpinSec": 0.08, "getupSquashSec": 0.1, "airShadowZ": 30, "airShadowMin": 0.4, "stunBlink": 0.08 }
 }

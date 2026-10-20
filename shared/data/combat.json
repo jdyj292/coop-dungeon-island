@@ -13,6 +13,8 @@
   "wallStunSec": 0.3,
   "pushRate": 20,
   "turnWindow": 0.1,
+  "cooldownScale": 1.5,
+  "stunExitSec": 1.0,
   "stun": {
     "light": { "time": 0.3, "push": 6 },
     "medium": { "time": 0.45, "push": 12 },
