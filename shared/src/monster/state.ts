@@ -41,6 +41,9 @@ export interface Monster {
   hopT: number;
   /** 보스 loop 위치 */
   loop: { phase: number; index: number };
+  /** 졸음 중 플레이어별 적중 수·연장 횟수 (groggy.ts) */
+  groggyHits?: Record<string, number>;
+  groggyExtended?: number;
 }
 
 /** hpMul = 인원 체력 보정 (combat.json partyHpMul) */

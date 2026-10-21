@@ -6,6 +6,7 @@ import type { Bounds } from '../movement';
 import { actionHits, type HitTarget, type PlayerTarget } from '../shapes';
 import { attackPhase, monsterBounds, monsterHalf, type Monster } from './state';
 import { moveBox } from '../map/collision';
+import { enterGroggy } from './groggy';
 import type { AttackTokens } from './tokens';
 
 export interface AiContext {
@@ -77,7 +78,7 @@ export function stepAttack(m: Monster, dt: number, ctx: AiContext): MonsterEvent
       afterBossAttack(m, ctx);
       endAttack(m, ctx);
       // 멧돼지: 어지러움 selfStun초, 이끼곰: 그로기 (슈퍼아머 해제)
-      if (groggy) Object.assign(m, { mode: 'groggy', timer: m.def.groggy?.duration ?? 0 });
+      if (groggy) enterGroggy(m, m.def.groggy?.duration ?? 0);
       else if (hit && 'selfStun' in hit) Object.assign(m, { mode: 'selfStun', timer: hit.selfStun });
       ev.push({ type: 'wallHit', groggy });
       return ev;

@@ -15,7 +15,9 @@ import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
 import { HudBottom } from '../ui/hudBottom';
 import { HudOverlay } from '../ui/hudOverlay';
 import { HudParty } from '../ui/hudParty';
+import { HudBoss } from '../ui/hudBoss';
 import { HudRoom } from '../ui/hudRoom';
+import { BossIntro } from '../view/bossIntro';
 import { ResultPanel } from '../ui/resultPanel';
 import { PropLayer } from '../view/props';
 import { drawRoomBg } from '../view/roomBg';
@@ -56,6 +58,9 @@ export class Dungeon extends Phaser.Scene {
   private overlay!: HudOverlay;
   private party!: HudParty;
   private roomHud!: HudRoom;
+  private bossHud!: HudBoss;
+  /** 보스 등장 연출 (보스 방에 들어갈 때 한 번) */
+  private intro: BossIntro | null = null;
   /** 정산 화면 (한 판 끝) */
   private result: ResultPanel | null = null;
   /** 부활 E 요청을 마지막으로 보낸 시각 (누르는 동안 REVIVE_SEND_MS마다) */
@@ -81,6 +86,8 @@ export class Dungeon extends Phaser.Scene {
     this.overlay = new HudOverlay(this, HUD_DEPTH - 1);
     this.party = new HudParty(this, HUD_DEPTH);
     this.roomHud = new HudRoom(this, HUD_DEPTH);
+    this.bossHud = new HudBoss(this, HUD_DEPTH);
+    this.intro = null;
     sfx.unlockOnFirstInput();
     this.events.once('shutdown', () => { if (!this.keepConn) this.conn?.leave(); });
     if (!this.onlineMode) {
@@ -129,6 +136,9 @@ export class Dungeon extends Phaser.Scene {
     };
     // 들어오자마자 이미 클리어된 방 (재접속 등)
     if (conn.progress.doorOpen) this.props.setCleared(true);
+    // 보스 방: 카메라가 보스 쪽으로 갔다가 돌아옴 (hud.md 5장)
+    const boss = mapOf(this.room).spawns.find((p) => p.role === 'boss');
+    if (boss && !conn.progress.doorOpen) this.intro = new BossIntro(this.camCenter, boss.x);
   }
 
   /** ?party=1~4 (기본 2). 개발용 네트워크 흉내 초기값: ?lag=왕복ms&jitter=±ms&loss=% (` 키 패널에서 조정) */
@@ -176,6 +186,12 @@ export class Dungeon extends Phaser.Scene {
     });
   }
 
+  /** 로컬 전투 테스트의 보스 체력 (보스 HP 바) */
+  private localBoss(): { ratio: number; groggy: boolean } | null {
+    const b = this.stage?.monsters.find((m) => m.def.rank === 'boss');
+    return b ? { ratio: b.hp / b.maxHp, groggy: b.mode === 'groggy' } : null;
+  }
+
   /** 몬스터를 모두 기절시키면 다음 웨이브, 마지막이면 방 클리어 (shared WaveRunner) */
   private checkWave(stage: CombatStage): void {
     const r = this.waves.check(stage.monsters.length);
@@ -212,8 +228,8 @@ export class Dungeon extends Phaser.Scene {
         this.scene.restart();
         return;
       }
-      // 정산 중에는 조작 없이 세계만 그린다
-      this.online.update(dt, this.result ? NO_KEYS : input);
+      // 정산·보스 등장 연출 중에는 조작 없이 세계만 그린다
+      this.online.update(dt, this.result || this.intro ? NO_KEYS : input);
       this.props.setExit(live.exitAt, live.exitNeed);
       this.props.setChestOpen(live.chestOpen);
       this.props.setReturn(live.returnLeft);
@@ -240,7 +256,16 @@ export class Dungeon extends Phaser.Scene {
     const count = live ? live.roomCount : floorRooms().length;
     this.roomHud.draw(roomIndex, count, width, (live ? live.doorOpen : this.waves.cleared) && roomIndex < count - 1);
 
-    const cam = followCamera(this.camCenter, view.player?.pos.x ?? this.camCenter, DEADZONE, width, this.roomW);
+    const boss = this.online ? this.online.boss() : this.localBoss();
+    this.bossHud.draw(boss?.ratio ?? null, boss?.groggy ?? false, width);
+    let target = view.player?.pos.x ?? this.camCenter;
+    if (this.intro) {
+      const shot = this.intro.update(dt, target);
+      this.overlay.bossBand = shot.band;
+      target = shot.camX;
+      if (this.intro.done) this.intro = null;
+    }
+    const cam = followCamera(this.intro ? target : this.camCenter, target, this.intro ? 0 : DEADZONE, width, this.roomW);
     this.camCenter = cam.center;
     const shake = view.shake.offset();
     this.cameras.main.setScroll(cam.scrollX - shake.x, -shake.y);

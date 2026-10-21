@@ -6,6 +6,7 @@ import type { MonsterAttack } from '../data/schema';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
 import { spawnProjectile, zoneSpeedMul, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
 import { newMonster, stepBodyIn, type Monster } from '../monster/state';
+import { recordGroggyHit } from '../monster/groggy';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
 import { mergePresses, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
@@ -232,6 +233,8 @@ export class RoomSim {
       for (const h of strike(p, run, this.alive, done, posOf)) {
         events.push({ type: 'hit', pid, m: h.m, def: run.def, damage: h.damage });
         if (h.ko) events.push({ type: 'ko', pid, m: h.m });
+        // 보스 졸음 연장 (파티: 서로 다른 2명, 솔로: 15히트)
+        recordGroggyHit(h.m, pid, (this.opts.partySize ?? 1) >= 2);
         hits++;
         if (this.opts.hitstop === 'entity') {
           const sec = gradeTiming(run.def.fx?.grade ?? 'light').hitstop;

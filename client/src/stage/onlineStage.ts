@@ -89,6 +89,14 @@ export class OnlineStage {
     return out;
   }
 
+  /** 보스 체력 비율·그로기 (보스가 없으면 null, 위쪽 보스 HP 바) */
+  boss(): { ratio: number; groggy: boolean } | null {
+    for (const m of this.conn.monsters.latest?.items.values() ?? []) {
+      if (MONSTERS[m.type]?.rank === 'boss') return { ratio: m.hpRatio / 255, groggy: m.state === 'groggy' };
+    }
+    return null;
+  }
+
   /** 내 플레이어 색 번호 (아래 HUD 얼굴) */
   get myColor(): number {
     return this.players.get(this.conn.myId)?.colorIndex ?? 0;

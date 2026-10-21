@@ -81,7 +81,7 @@
       "mp": "#6FC3E8",
       "mpDark": "#4fa3c8",
       "bossHp": "#FF9A3C",
-      "bossHpDark": "#E8823A",
+      "bossHpDark": "#E8823A", "bossHpLight": "#E8C35A", "bossIcon": "#8E5BA8",
       "keyLabel": "#b9b0dc",
       "textDim": "#cfc8e8",
       "coin": "#F5C542",

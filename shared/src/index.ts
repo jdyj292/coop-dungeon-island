@@ -25,3 +25,4 @@ export * from './map/collision';
 export * from './map/tiled';
 export * from './map/maps';
 export * from './map/check';
+export * from './monster/groggy';

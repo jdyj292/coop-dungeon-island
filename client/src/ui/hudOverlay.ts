@@ -27,6 +27,9 @@ export class HudOverlay {
     this.bonus = { text: `+${Math.round(rate * 100)}%`, left: fx.hud.bonusSec };
   }
 
+  /** 보스 이름 띠 (등장 연출 동안, 한글 이름은 글꼴 추가 뒤: 지금은 아이콘 + BOSS) */
+  bossBand = false;
+
   /** 방 클리어 띠를 clearSec 동안 */
   showClear(): void {
     this.clearLeft = fx.hud.clearSec;
@@ -43,12 +46,27 @@ export class HudOverlay {
     }
     this.bonus.left = Math.max(0, this.bonus.left - dt);
     if (this.bonus.left > 0) drawText(g, this.bonus.text, COMBO_CX + right + 1, BONUS_Y, { color: 'global.allyFx.gold', align: 'center' });
+    if (this.bossBand) {
+      this.band(width, 'global.ui.bossHp');
+      const tx = width / 2 + 6;
+      dot(g, tx - 30, BANNER.textY + 2, colorInt('global.ui.bossIcon'), 10, 10);
+      dot(g, tx - 29, BANNER.textY + 3, colorInt('floors.1.env.moss'), 8, 4);
+      dot(g, tx - 27, BANNER.textY + 8, colorInt('global.outline'), 1, 1);
+      dot(g, tx - 24, BANNER.textY + 8, colorInt('global.outline'), 1, 1);
+      drawText(g, 'BOSS', tx, BANNER.textY, { color: 'global.ui.bossHp', scale: 3, align: 'center' });
+    }
     this.clearLeft = Math.max(0, this.clearLeft - dt);
     if (this.clearLeft > 0) {
-      dot(g, 0, BANNER.y, colorInt('global.ui.panel'), width, BANNER.h, fx.hud.bannerAlpha);
-      dot(g, 0, BANNER.y, colorInt('global.allyFx.gold'), width, 1);
-      dot(g, 0, BANNER.y + BANNER.h - 1, colorInt('global.allyFx.gold'), width, 1);
+      this.band(width, 'global.allyFx.gold');
       drawText(g, 'CLEAR!', width / 2, BANNER.textY, { color: 'global.allyFx.gold', scale: 3, align: 'center' });
     }
+  }
+
+  /** 가운데 가로 띠 (승인 데모 CLEAR 화면 모양): 반투명 패널 + 위아래 1px 선 */
+  private band(width: number, line: string): void {
+    const g = this.g;
+    dot(g, 0, BANNER.y, colorInt('global.ui.panel'), width, BANNER.h, fx.hud.bannerAlpha);
+    dot(g, 0, BANNER.y, colorInt(line), width, 1);
+    dot(g, 0, BANNER.y + BANNER.h - 1, colorInt(line), width, 1);
   }
 }
