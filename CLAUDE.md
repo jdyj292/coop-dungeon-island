@@ -107,6 +107,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0·M1 완료 (조작감·방 클리어 시간 튜닝은 플레이 후). M2 2-1~2-3 완료: RoomSim 여러 명, 서버 DungeonRoom, 클라이언트 접속(?online=1&party=2)·시계·100ms 보간 (내 캐릭터도 아직 서버 결과만)
+- M0·M1 완료 (조작감·방 클리어 시간 튜닝은 플레이 후). M2 2-1~2-4 완료: 서버 DungeonRoom, 클라이언트 접속(?online=1&party=2&lag=100)·100ms 보간, 내 캐릭터 예측·보정·거절 처리
 - 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: 2-4 내 캐릭터 예측·보정, 행동 예측·거절 처리
+- 다음: 2-5 지연 보정 (되감기 판정, 백스텝 소급 무적, 히트스톱 동기화)

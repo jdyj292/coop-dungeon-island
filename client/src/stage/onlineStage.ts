@@ -1,7 +1,10 @@
 // 온라인 무대 (?online=1): 서버 상태를 100ms 과거로 보간해 그리고, 이벤트·상태 변화로 연출·소리를 붙인다 (docs/network.md 8장)
-// 내 캐릭터도 아직 서버 결과만 그린다 (예측·보정은 roadmap 2-4). 히트스톱 동기화는 2-5
+// 내 캐릭터는 예측 상태로 바로 그리고 서버 패치마다 보정 (network.md 7장, net/predict.ts). 히트스톱 동기화는 2-5
 import type Phaser from 'phaser';
-import { COMBAT, MONSTERS, NET, type ActionDef, type Monster, type MonsterAttack, type PlayerState, type Projectile, type S2C, type ZoneArea } from '@game/shared';
+import {
+  COMBAT, FixedStep, inZone, MONSTERS, NET, PLAYER, playerStateName, TICK, weaponDef,
+  type ActionDef, type Bounds, type Monster, type MonsterAttack, type PlayerState, type Projectile, type S2C, type ZoneArea,
+} from '@game/shared';
 import fx from '../../data/fx.json';
 import { sfx } from '../audio/player';
 import { actionSmear } from '../fx/actionSmear';
@@ -15,6 +18,7 @@ import { HitStop, Shake } from '../fx/timing';
 import type { Connection } from '../net/connection';
 import { InputSender, type KeyInput } from '../net/inputSender';
 import { mirrorMonster, mirrorPlayer } from '../net/mirror';
+import { Predictor, type Correction } from '../net/predict';
 import { Transitions, type Cue } from '../net/transitions';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
@@ -47,12 +51,56 @@ export class OnlineStage {
   private projectiles = new Map<number, { p: Projectile; t0: number; x0: number; endAt: number }>();
   private hits: S2C['hit'][] = [];
   private clock = 0;
+  /** 내 캐릭터 예측 (내 첫 상태가 오면 만든다) */
+  private predictor: Predictor | null = null;
+  private ticks = new FixedStep();
+  /** 틱이 돌기 전에 보낸 누름을 다음 틱까지 보관 */
+  private press: { input: Pick<KeyInput, 'attack' | 'skill' | 'backstep' | 'potion'>; seq: number | null } | null = null;
+  private zones: ZoneArea[] = [];
+  /** 마지막 보정 (개발 확인용) */
+  lastCorrection: { mode: Correction; error: number } = { mode: 'none', error: 0 };
 
-  constructor(private scene: Phaser.Scene, readonly conn: Connection) {
+  constructor(private scene: Phaser.Scene, readonly conn: Connection, private bounds: Bounds) {
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.sender = new InputSender(conn);
     this.hazards = new HazardLayer(scene);
     conn.onEvent = (type, msg) => this.onEvent(type, msg);
+    conn.onSnapshot = () => this.reconcile();
+  }
+
+  /** 서버 패치: 내 서버 상태로 예측 보정 */
+  private reconcile(): void {
+    const c = this.conn, snap = c.players.latest, s = snap?.items.get(c.myId);
+    if (!snap || !s) return;
+    if (!this.predictor) this.predictor = new Predictor(weaponDef(WEAPON), this.bounds, { x: s.x, y: s.y });
+    const server = mirrorPlayer(s, snap.t, WEAPON, c.mine, snap.t);
+    this.lastCorrection = this.predictor.reconcile(server, s.lastInputSeq, TICK);
+  }
+
+  /** 감속 장판 안이면 이동 배율 (RoomSim과 같은 규칙) */
+  private speedMul(p: PlayerState): number {
+    const t = { x: p.pos.x, y: p.pos.y, airborne: false, hurtbox: PLAYER.hurtbox };
+    let mul = 1;
+    for (const z of this.zones) if (z.def.effect.type === 'slow' && inZone(z, t)) mul = Math.min(mul, 1 - (z.def.effect.amount ?? 0));
+    return mul;
+  }
+
+  /** 내 입력 보내기 + 예측 틱. 반환 = 이번 프레임에 걸은 거리 (틱이 안 돌았으면 null) */
+  private stepMe(realDt: number, keys: KeyInput): number | null {
+    const pr = this.predictor;
+    const sent = this.sender.update(keys, realDt, pr?.state ?? null);
+    const pressed = sent.press.attack || sent.press.skill || sent.press.backstep || sent.press.potion;
+    if (pressed) this.press = { input: sent.press, seq: sent.actionSeq };
+    const n = this.ticks.advance(realDt);
+    if (!pr) return null;
+    let moved = 0;
+    for (let i = 0; i < n; i++) {
+      const press = this.press;
+      this.press = null;
+      const input = { x: sent.x, y: sent.y, run: sent.run, attack: false, skill: null, backstep: false, potion: null, ...press?.input };
+      moved += pr.tick(input, TICK, sent.seq, press?.seq ?? null, this.speedMul(pr.state)).moved;
+    }
+    return n > 0 ? moved : null;
   }
 
   /** realDt = 실제 경과 초 */
@@ -60,8 +108,8 @@ export class OnlineStage {
     const c = this.conn, now = c.clock.serverNow(), t = now - NET.interpDelayMs;
     this.clock += realDt;
     this.fx.shake.update(realDt);
-    const myLatest = c.players.latest?.items.get(c.myId);
-    this.sender.update(keys, realDt, myLatest && { x: myLatest.x, y: myLatest.y, facing: myLatest.facing });
+    this.zones = this.zonesAt(t);
+    const myMoved = this.stepMe(realDt, keys);
     this.combo.left = Math.max(0, this.combo.left - realDt);
     if (!this.combo.left) this.combo.count = 0;
 
@@ -88,12 +136,16 @@ export class OnlineStage {
       let r = this.players.get(id);
       if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1, index), ghosts: new Afterimages(this.scene), last: null }));
       index++;
-      const mine = id === c.myId;
-      const p = mirrorPlayer(s, t, WEAPON, mine ? c.mine : undefined, now);
-      if (mine) this.me = p;
+      // 나 = 예측 상태 (화면 위치는 보정 오프셋 포함), 다른 사람 = 보간
+      const mine = id === c.myId && !!this.predictor;
+      const p = mine ? { ...this.predictor!.state, pos: this.predictor!.display } : mirrorPlayer(s, t, WEAPON, undefined, now);
+      if (mine) this.me = this.predictor!.state;
       if (r.view.update(p, realDt)) this.dustAt(p.pos.x, p.pos.y, fx.dust.bounce);
-      this.cues.player(id, p, s.state, s.actionStart).forEach((q) => this.playerCue(r!, p, q, mine));
-      const moved = r.last ? Math.hypot(p.pos.x - r.last.x, p.pos.y - r.last.y) : 0;
+      const cues = mine
+        ? this.cues.player(id, p, playerStateName(p, myMoved ?? 0), this.predictor!.runStamp)
+        : this.cues.player(id, p, s.state, s.actionStart);
+      cues.forEach((q) => this.playerCue(r!, p, q, mine));
+      const moved = mine ? myMoved : r.last ? Math.hypot(p.pos.x - r.last.x, p.pos.y - r.last.y) : 0;
       r.last = { x: p.pos.x, y: p.pos.y };
       r.view.draw(p, moved, 0, this.clock);
       r.ghosts.update(realDt, !!p.backstep, r.view.actor.img);
@@ -135,7 +187,7 @@ export class OnlineStage {
       const pr = this.projectiles.get((msg as S2C['projEnd']).id);
       if (pr) pr.endAt = now;
     } else if (type === 'rejected') {
-      console.debug('[online] 거절', msg);
+      this.predictor?.reject((msg as S2C['rejected']).seq);
     }
   }
 
@@ -192,6 +244,16 @@ export class OnlineStage {
     dust(sx, sy, kind).forEach((d) => this.fx.layer.add(d));
   }
 
+  /** 시각 t의 장판 (상태 → 그리기·감속 판정용) */
+  private zonesAt(t: number): ZoneArea[] {
+    const zones: ZoneArea[] = [];
+    this.conn.live.zones?.forEach((z) => {
+      const def = ATTACKS.get(z.attackId)?.zone;
+      if (def) zones.push({ id: Number(z.id), attackId: z.attackId, def, x: z.x, y: z.y, left: Math.max(0, (z.endsAt - t) / 1000) });
+    });
+    return zones;
+  }
+
   /** 몬스터·투사체·장판·이펙트 그리기. t = 그리는 서버 시각 */
   private drawWorld(t: number, dt: number): void {
     const data = spriteData(), alive = [...this.monsters.values()];
@@ -200,12 +262,7 @@ export class OnlineStage {
       if (t >= pr.endAt) this.projectiles.delete(id);
       else pr.p.x = pr.x0 + pr.p.dir * pr.p.def.projectile!.speed * Math.max(0, (t - pr.t0) / 1000);
     }
-    const zones: ZoneArea[] = [];
-    this.conn.live.zones?.forEach((z) => {
-      const def = ATTACKS.get(z.attackId)?.zone;
-      if (def) zones.push({ id: Number(z.id), attackId: z.attackId, def, x: z.x, y: z.y, left: Math.max(0, (z.endsAt - t) / 1000) });
-    });
-    this.hazards.draw({ zones, alive: alive.map((e) => e.m), projectiles: [...this.projectiles.values()].map((p) => p.p) });
+    this.hazards.draw({ zones: this.zones, alive: alive.map((e) => e.m), projectiles: [...this.projectiles.values()].map((p) => p.p) });
     this.fx.layer.update(dt);
     this.fx.layer.draw();
   }

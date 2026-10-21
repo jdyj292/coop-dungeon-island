@@ -1,5 +1,5 @@
 // 시뮬레이션 → 상태 스키마 (docs/network.md 5장). 매 틱 반영하고 전송은 20Hz 패치가 변경분만 보낸다
-import { hasArmor, type Monster, type RoomSim, type SimPlayer, type ZoneArea } from '@game/shared';
+import { hasArmor, playerStateName, type Monster, type RoomSim, type SimPlayer, type ZoneArea } from '@game/shared';
 import { MonsterState, ZoneState, type DungeonState, type PlayerState } from '../schema/DungeonState';
 
 const int = (n: number) => Math.round(n);
@@ -12,8 +12,7 @@ export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: nu
   s.x = int(p.pos.x);
   s.y = int(p.pos.y);
   s.facing = p.facing;
-  s.state = p.downed ? 'knocked' : p.hurt?.kind === 'down' ? 'down' : p.hurt ? 'hitstun' : p.backstep ? 'backstep'
-    : run ? 'action' : moved > 0 ? (p.run.running ? 'run' : 'walk') : 'idle';
+  s.state = playerStateName(p, moved);
   const actionId = run ? run.def.id : '';
   // 같은 행동이 이어지면 시작 시각을 다시 쓰지 않는다 (평타 연속은 id가 바뀜)
   if (actionId !== s.actionId || (run && Math.abs(now - run.t * 1000 - s.actionStart) > TIME_EPS_MS)) {

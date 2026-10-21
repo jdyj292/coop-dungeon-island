@@ -115,3 +115,13 @@ function actionMoved(before: { run: ActionRun; t: number } | null, started: Acti
   for (const r of started) if (r !== before?.run) d += actionMoveDelta(r.def, 0, r.t);
   return d;
 }
+
+/** 상태 이름 (서버 상태 스키마·클라이언트 예측 공용, network.md 5장). moved = 이번 틱에 걸은 거리 */
+export function playerStateName(p: PlayerState, moved: number): string {
+  if (p.downed) return 'knocked';
+  if (p.hurt) return p.hurt.kind === 'down' ? 'down' : 'hitstun';
+  if (p.backstep) return 'backstep';
+  if (p.fighter.run) return 'action';
+  if (moved > 0) return p.run.running ? 'run' : 'walk';
+  return 'idle';
+}

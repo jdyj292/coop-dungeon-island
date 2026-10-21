@@ -1,7 +1,7 @@
 // 던전 테스트 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 (combat.md 1장)
 // 기본은 서버 없이 로컬. ?online=1&party=2면 서버 던전 방에 접속 (roadmap 2-3, 같은 방 번호·인원의 빈자리에 들어감)
 import Phaser from 'phaser';
-import { entryPos, floorRoom, roomBounds, skillDef, TILE, WaveRunner, type PlayerState } from '@game/shared';
+import { entryPos, floorRoom, roomBounds, skillDef, TILE, WaveRunner, type Bounds, type PlayerState } from '@game/shared';
 import type { Shake } from '../fx/timing';
 import { sfx } from '../audio/player';
 import { color } from '../palette';
@@ -59,7 +59,7 @@ export class Dungeon extends Phaser.Scene {
     this.overlay = new HudOverlay(this, HUD_DEPTH - 1);
     sfx.unlockOnFirstInput();
     this.camCenter = entryPos(0, 1, depth).x;
-    if (this.onlineMode) this.connect();
+    if (this.onlineMode) this.connect(bounds);
     else {
       const stage = (this.stage = new CombatStage(this, bounds, entryPos(0, 1, depth), this.waves.next()));
       stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
@@ -72,11 +72,13 @@ export class Dungeon extends Phaser.Scene {
     }) as typeof this.keys;
   }
 
-  private connect(): void {
+  /** ?party=1~4 (기본 2), ?lag=왕복 지연 ms (개발용) */
+  private connect(bounds: Bounds): void {
     const party = Math.min(4, Math.max(1, Number(this.params.get('party') ?? 2)));
-    Connection.join({ room: Number(this.params.get('room') ?? 1), partySize: party }).then((conn) => {
+    const lag = Number(this.params.get('lag') ?? 0);
+    Connection.join({ room: Number(this.params.get('room') ?? 1), partySize: party }, lag).then((conn) => {
       if (!this.scene.isActive()) return conn.leave();
-      this.online = new OnlineStage(this, conn);
+      this.online = new OnlineStage(this, conn, bounds);
       this.online.onClear = () => this.overlay.showClear();
       this.events.once('shutdown', () => conn.leave());
     }, (e: unknown) => console.error('[online] 접속 실패 (서버가 떠 있나요? pnpm dev)', e));

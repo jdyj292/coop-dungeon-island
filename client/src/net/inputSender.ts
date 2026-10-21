@@ -1,6 +1,7 @@
-// 키 입력 → 서버 메시지 (docs/network.md 2·4장): 이동은 바뀌면 즉시 + 움직이는 동안 20Hz, 누름은 바로 action·item
+// 키 입력 → 서버 메시지 (docs/network.md 2·4·7장): 이동은 바뀌면 즉시 + 움직이는 동안 20Hz, 누름은 바로 action·item
 // 달리기는 클라이언트가 두 번 누르기로 판정해 run으로 보낸다 (서버는 간격을 다시 재지 않음)
-import { NET, newRunState, stepRun, type ActionDef, type PotionKind } from '@game/shared';
+// 안 될 행동(쿨타임·MP·피격 중)은 보내지 않는다 (예측 상태로 미리 검사)
+import { NET, newRunState, skillReady, stepRun, type ActionDef, type PlayerState, type PotionKind } from '@game/shared';
 import type { Connection } from './connection';
 
 export interface KeyInput {
@@ -12,30 +13,58 @@ export interface KeyInput {
   potion: PotionKind | null;
 }
 
+/** 이번 프레임에 보낸 결과: 예측에 넣을 입력과 seq */
+export interface Sent {
+  x: number;
+  y: number;
+  run: boolean;
+  press: Pick<KeyInput, 'attack' | 'skill' | 'backstep' | 'potion'>;
+  /** 지금까지 보낸 마지막 seq */
+  seq: number;
+  /** 이번 프레임에 보낸 행동·아이템 메시지 seq (없으면 null) */
+  actionSeq: number | null;
+}
+
 export class InputSender {
   private run = newRunState();
   private last = { mx: 0, my: 0, run: false };
   private sinceSend = 0;
+  private lastSeq = 0;
 
   constructor(private conn: Connection) {}
 
-  /** 프레임마다. dt = 실제 경과 초, me = 지금 보이는 내 위치·방향 (action에 담는다) */
-  update(k: KeyInput, dt: number, me: { x: number; y: number; facing: number } | undefined): void {
+  /** 프레임마다. dt = 실제 경과 초, me = 내 예측 상태 (없으면 검사 없이 보냄) */
+  update(k: KeyInput, dt: number, me: PlayerState | null): Sent {
     const c = this.conn, t = c.clock.serverNow();
     const mx = Math.sign(k.x) as -1 | 0 | 1, my = Math.sign(k.y) as -1 | 0 | 1;
     const running = stepRun(this.run, mx, dt);
     const changed = mx !== this.last.mx || my !== this.last.my || running !== this.last.run;
     this.sinceSend += dt * 1000;
-    const moving = mx !== 0 || my !== 0;
-    if (changed || (moving && this.sinceSend >= 1000 / NET.inputRate)) {
-      c.send('input', { seq: c.nextSeq(), t, mx, my, run: running });
+    if (changed || ((mx || my) && this.sinceSend >= 1000 / NET.inputRate)) {
+      c.send('input', { seq: (this.lastSeq = c.nextSeq()), t, mx, my, run: running });
       this.last = { mx, my, run: running };
       this.sinceSend = 0;
     }
-    const at = { x: me?.x ?? 0, y: me?.y ?? 0, facing: (me?.facing ?? 1) < 0 ? (-1 as const) : (1 as const) };
-    if (k.attack) c.send('action', { seq: c.nextSeq(), t, kind: running ? 'dash' : 'basic', ...at });
-    if (k.skill) c.send('action', { seq: c.nextSeq(), t, kind: 'skill', skillId: k.skill.id, ...at });
-    if (k.backstep) c.send('action', { seq: c.nextSeq(), t, kind: 'backstep', ...at });
-    if (k.potion) c.send('item', { seq: c.nextSeq(), t, slot: k.potion });
+    const free = !me || (!me.hurt && !me.downed);
+    const press = {
+      attack: k.attack && free,
+      skill: k.skill && free && (!me || skillReady(me, k.skill)) ? k.skill : null,
+      backstep: k.backstep && free && (!me || me.backstepCd <= 0),
+      potion: k.potion && (!me || (me.potions[k.potion] > 0 && me.potionCd[k.potion] <= 0)) ? k.potion : null,
+    };
+    const at = { x: Math.round(me?.pos.x ?? 0), y: Math.round(me?.pos.y ?? 0), facing: (me?.facing ?? 1) < 0 ? (-1 as const) : (1 as const) };
+    let actionSeq: number | null = null;
+    const action = (kind: 'basic' | 'dash' | 'skill' | 'backstep', skillId?: string) => {
+      actionSeq = this.lastSeq = c.nextSeq();
+      c.send('action', { seq: actionSeq, t, kind, ...(skillId ? { skillId } : {}), ...at });
+    };
+    if (press.attack) action(running ? 'dash' : 'basic');
+    if (press.skill) action('skill', press.skill.id);
+    if (press.backstep) action('backstep');
+    if (press.potion) {
+      actionSeq = this.lastSeq = c.nextSeq();
+      c.send('item', { seq: actionSeq, t, slot: press.potion });
+    }
+    return { x: mx, y: my, run: running, press, seq: this.lastSeq, actionSeq };
   }
 }
