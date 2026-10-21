@@ -241,7 +241,7 @@
 - 방 깊이 7~9타일 (화면에 깊이 전체가 들어옴), 가로는 화면(18타일)보다 넓어도 됨
 - 레이어
   - ground: 바닥 (편집 화면용, 게임은 읽지 않음) / walls: 장애물 칸 (타일 속성 `kind`: rock·stump …, 그림 종류) / deco: 충돌 없는 장식 (아직 없음)
-  - objects (오브젝트 레이어, 점): player_start(속성 index 0~3, 0 = 혼자일 때 자리), door_in, door_out(보스 방 제외), spawn, return_point, chest, env_<종류>
+  - objects (오브젝트 레이어, 점): player_start(속성 index 0~3, 0 = 혼자일 때 자리), door_in, door_out(보스 방 제외, 문은 뒤쪽 벽 아치라 오브젝트는 문 바로 앞 바닥 깊이 4px — art.md 6장), spawn, return_point, chest, env_<종류>
 - spawn 속성: `wave`(1, 2…), `role`(front / back / boss). 고정형(포자꽃 등)은 back, 보스는 boss, 나머지는 front 지점에 우선 배치 (shared/src/sim/roomSetup.ts mapSpawns)
 - **몬스터 종류·수·웨이브는 맵이 아니라 shared/data/rooms.json**에서 정한다. 맵은 위치만
 - 장애물은 방마다 0~3개, 낮게 (깊이 이동을 막지 않되 돌진·투사체에 쓰이게)

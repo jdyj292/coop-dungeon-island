@@ -108,6 +108,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0·M1·M2 완료. M3 3-1 완료: Tiled JSON 맵 6개(maps/floor1), 맵 로더·장애물 충돌, 맵 위치로 출현·입장, data-validate 맵 검사
-- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1&party=2&lag=100) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: 3-2 그림 (낮은 바위·그루터기·출구 문·귀환 고리·보물상자 초안 → sprite-preview 승인)
+- M0·M1·M2 완료. M3 3-1 완료 (Tiled JSON 맵·장애물 충돌). 3-2 소품 그림 승인·반영 (props.json: 바위·그루터기·문·귀환 고리·상자)
+- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
+- 다음: 3-3 방 진행 (출구에 전원 모이면 다음 방, 방 진행 HUD)

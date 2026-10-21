@@ -2,7 +2,7 @@
 import type Phaser from 'phaser';
 import type { CharacterLook } from './compose';
 import { spriteData } from './data';
-import { renderMonsterFrame } from './monster';
+import { renderMonsterFrame, renderPropFrame } from './monster';
 import { renderCharacter, type CharacterColors, type RenderedSprite } from './render';
 import { SLOTS } from './schema';
 
@@ -42,6 +42,16 @@ export function monsterTexture(scene: Phaser.Scene, id: string, frame: string, s
   const key = ['mon', id, frame, superArmor ? 'sa' : '-'].join('|');
   if (!scene.textures.exists(key)) {
     const sprite = renderMonsterFrame(spriteData(), id, frame, { superArmor });
+    scene.textures.addCanvas(key, paintCanvas(sprite));
+    feet.set(key, sprite.foot);
+  }
+  return { key, foot: feet.get(key)! };
+}
+
+export function propTexture(scene: Phaser.Scene, id: string, frame: string): CharacterTexture {
+  const key = ['prop', id, frame].join('|');
+  if (!scene.textures.exists(key)) {
+    const sprite = renderPropFrame(spriteData(), id, frame);
     scene.textures.addCanvas(key, paintCanvas(sprite));
     feet.set(key, sprite.foot);
   }

@@ -1,0 +1,278 @@
+{
+  "_note": "환경 소품 (장애물·문·귀환 고리·보물상자). 형식은 monsters.json과 같음 (docs/sprites.md 6장·11장). 승인 전 그림은 drafts/props.json",
+  "rock": {
+    "materials": {
+      "r": "floors.1.bg.wall",
+      "d": "floors.1.bg.wallDark",
+      "v": "floors.1.env.moss"
+    },
+    "idleSec": 1,
+    "frames": {
+      "idle": {
+        "rows": [
+          "....vvvvvvvv....",
+          "..rvrrrrrrrrrr..",
+          ".rrrrrrrrrrrrrr.",
+          "rrrrrdrrrrrrrrrr",
+          "rrrrrrdrrrrrdrrr",
+          "rrrrrrrrrrrdrrrr",
+          "rrrrrrrrrrrrrrrr",
+          "rrrrrrrrrrrrrrrr"
+        ],
+        "foot": [
+          8,
+          7
+        ]
+      }
+    },
+    "states": {
+      "idle": "idle"
+    }
+  },
+  "stump": {
+    "materials": {
+      "c": "floors.1.monster.capUnder",
+      "n": "floors.1.env.trunk",
+      "b": "floors.1.env.trunk",
+      "D": "floors.1.env.trunkDark"
+    },
+    "idleSec": 1,
+    "frames": {
+      "idle": {
+        "rows": [
+          "...cccccccccc...",
+          "..ccnnnnnnnncc..",
+          "..ccnccnnccncc..",
+          "..cccnnnnnnccc..",
+          "..bbccccccccbb..",
+          "..bbbbbbbbbbbb..",
+          "..bbbDbbbbbDbb..",
+          "..bbbDbbbDbDbb..",
+          ".bbbbbbbbDbbbbb.",
+          "bbbbbbbbbbbbbbbb",
+          "bb..bbbbbbbb..bb"
+        ],
+        "foot": [
+          8,
+          10
+        ]
+      }
+    },
+    "states": {
+      "idle": "idle"
+    }
+  },
+  "door": {
+    "materials": {
+      "w": "global.materials.wood",
+      "W": "global.materials.wood",
+      "l": "floors.1.env.leaf"
+    },
+    "fixedExtra": {
+      "x": "floors.1.env.void",
+      "L": "floors.1.env.glow"
+    },
+    "idleSec": 1,
+    "frames": {
+      "closed": {
+        "rows": [
+          "....wwwwwwwwwwww....",
+          "..wwwwwwwwwwwwwwww..",
+          ".wwWWWWWWWWWWWWWWww.",
+          ".ww.xxxxllxxxxxl.ww.",
+          ".wwxxxxxllxxxxlxlww.",
+          ".wwlxxxlxxlxxlxxxww.",
+          ".wwxlxlxxxxllxxxxww.",
+          ".wwxxlxxxxxllxxxxww.",
+          ".wwxlxlxxxlxxlxxlww.",
+          ".wwlxxxlxlxxxxllxww.",
+          ".wwxxxxxlxxxxxllxww.",
+          ".wwxxxxlxlxxxlxxlww.",
+          ".wwlxxlxxxlxlxxxxww.",
+          ".wwxllxxxxxlxxxxxww.",
+          ".wwxllxxxxlxlxxxlww.",
+          ".wwlxxlxxlxxxlxlxww.",
+          ".wwxxxxllxxxxxlxxww.",
+          ".wwxxxxllxxxxlxlxww.",
+          ".wwxxxlxxlxxlxxxlww.",
+          ".wwlxlxxxxllxxxxxww.",
+          ".wwxlxxxxxllxxxxlww.",
+          ".wwlxlxxxlxxlxxlxww.",
+          ".wwxxxlxlxxxxllxxww.",
+          ".wwxxxxlxxxxxllxxww."
+        ],
+        "foot": [
+          10,
+          23
+        ]
+      },
+      "open": {
+        "rows": [
+          "....wwwwwwwwwwww....",
+          "..wwwwwwwwwwwwwwww..",
+          ".wwwwwwwwwwwwwwwwww.",
+          ".ww.LLLLLLLLLLLL.ww.",
+          ".wwLLxxxxxxxxxxLLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxLxxxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxxxxLxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxLxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLxxxxxxxxxxxxLww.",
+          ".wwLLxLxLxLxLxLxLww.",
+          ".wwLxLxLxLxLxLxLLww.",
+          ".wwLLxLxLxLxLxLxLww.",
+          ".wwLxLxLxLxLxLxLLww."
+        ],
+        "foot": [
+          10,
+          23
+        ]
+      }
+    },
+    "states": {
+      "idle": "closed",
+      "closed": "closed",
+      "open": "open"
+    }
+  },
+  "returnRing": {
+    "materials": {
+      "m": "floors.1.monster.mushroomCap",
+      "s": "floors.1.monster.mushroomStem"
+    },
+    "fixedExtra": {
+      "L": "floors.1.env.glow"
+    },
+    "idleSec": 0.4,
+    "frames": {
+      "off": {
+        "rows": [
+          "............................",
+          "........mmm......mmm........",
+          ".........s........s.........",
+          "..mmm..................mmm..",
+          "...s....................s...",
+          "..mmm..................mmm..",
+          "...s....................s...",
+          "........mmm......mmm........",
+          ".........s........s.........",
+          "............................"
+        ],
+        "foot": [
+          14,
+          9
+        ]
+      },
+      "lit1": {
+        "rows": [
+          "..................L.........",
+          "........mmm......mmm........",
+          "...L.....s...L....s.........",
+          "..mmm..................mmm..",
+          "...s....................s...",
+          "..mmm..................mmm..",
+          "...s.....L..............s...",
+          "........mmm......mmm........",
+          ".........s........s.........",
+          "..............L............."
+        ],
+        "foot": [
+          14,
+          9
+        ]
+      },
+      "lit2": {
+        "rows": [
+          ".........L..................",
+          "........mmm......mmm........",
+          ".........s........s.....L...",
+          "..mmm.L..............L.mmm..",
+          "...s....................s...",
+          "..mmm..................mmm..",
+          "...s..............L.....s...",
+          "......L.mmm......mmm.L......",
+          ".........s........s.........",
+          "............................"
+        ],
+        "foot": [
+          14,
+          9
+        ]
+      }
+    },
+    "states": {
+      "idle": "off",
+      "off": "off",
+      "lit": [
+        "lit1",
+        "lit2"
+      ]
+    }
+  },
+  "chest": {
+    "materials": {
+      "w": "global.materials.wood",
+      "W": "global.materials.wood",
+      "y": "global.materials.gold"
+    },
+    "fixedExtra": {
+      "L": "floors.1.env.glow"
+    },
+    "idleSec": 1,
+    "frames": {
+      "closed": {
+        "rows": [
+          "..WWWWWWWWWW..",
+          ".WWWWWWWWWWWW.",
+          ".WWWWWWWWWWWW.",
+          ".yyyyyyyyyyyy.",
+          ".wwwwwyywwwww.",
+          ".wwwwwyywwwww.",
+          ".wwwwwwwwwwww.",
+          ".wwwwwwwwwwww.",
+          ".yyyyyyyyyyyy.",
+          ".wwwwwwwwwwww.",
+          ".wwwwwwwwwwww."
+        ],
+        "foot": [
+          7,
+          10
+        ]
+      },
+      "open": {
+        "rows": [
+          "...L.....L....",
+          ".WWWWWWWWWWWW.",
+          ".WWWWWWWWWWWW.",
+          ".yyyyyyyyyyyy.",
+          ".wyyLyyyyLyyw.",
+          ".wwwwwyywwwww.",
+          ".wwwwwwwwwwww.",
+          ".wwwwwwwwwwww.",
+          ".yyyyyyyyyyyy.",
+          ".wwwwwwwwwwww.",
+          ".wwwwwwwwwwww."
+        ],
+        "foot": [
+          7,
+          10
+        ]
+      }
+    },
+    "states": {
+      "idle": "closed",
+      "closed": "closed",
+      "open": "open"
+    }
+  }
+}

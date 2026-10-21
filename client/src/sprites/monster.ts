@@ -18,10 +18,18 @@ export function renderMonsterFrame(
   frameName: string,
   options: MonsterFrameOptions = {},
 ): RenderedSprite {
-  const monster = data.monsters[id];
-  if (!monster) throw new Error(`몬스터 '${id}' 없음`);
+  return renderFrame(data, data.monsters[id], `몬스터 '${id}'`, frameName, options);
+}
+
+/** 소품 프레임 (props.json, 몬스터와 같은 음영 규칙) */
+export function renderPropFrame(data: SpriteData, id: string, frameName: string): RenderedSprite {
+  return renderFrame(data, data.props[id], `소품 '${id}'`, frameName, {});
+}
+
+function renderFrame(data: SpriteData, monster: SpriteData['monsters'][string] | undefined, what: string, frameName: string, options: MonsterFrameOptions): RenderedSprite {
+  if (!monster) throw new Error(`${what} 없음`);
   const frame = monster.frames[frameName];
-  if (!frame) throw new Error(`몬스터 프레임 '${id}.${frameName}' 없음`);
+  if (!frame) throw new Error(`${what} 프레임 '${frameName}' 없음`);
   const mats = resolveMaterials(data, undefined, { shaded: monster.materials, fixed: monster.fixedExtra });
   const width = frame.rows[0]!.length;
   const shaded = shade({

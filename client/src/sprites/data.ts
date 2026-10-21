@@ -4,8 +4,10 @@ import outfitsJson from '../../data/sprites/character/outfits.json';
 import materialsJson from '../../data/sprites/materials.json';
 import draftMonstersJson from '../../data/sprites/drafts/monsters.json';
 import draftPosesJson from '../../data/sprites/drafts/poses.json';
+import draftPropsJson from '../../data/sprites/drafts/props.json';
 import monstersJson from '../../data/sprites/monsters.json';
 import posesJson from '../../data/sprites/poses.json';
+import propsJson from '../../data/sprites/props.json';
 import weaponsJson from '../../data/sprites/weapons_visual.json';
 import {
   baseSchema, materialsSchema, monstersSchema, outfitsSchema, posesSchema, weaponsSchema,
@@ -19,6 +21,8 @@ export interface SpriteData {
   weapons: Weapons;
   materials: Materials;
   monsters: Record<string, Monster>;
+  /** 환경 소품 (장애물·문·귀환 고리·상자, sprites.md 11장). 형식은 몬스터와 같음 */
+  props: Record<string, Monster>;
 }
 
 /** "_"로 시작하는 설명 키를 뺀 객체 */
@@ -41,7 +45,7 @@ function checkPart(part: Part, allowed: Set<string>, where: string): void {
 }
 
 export function parseSpriteData(raw: {
-  base: unknown; outfits: unknown; poses: unknown; weapons: unknown; materials: unknown; monsters: unknown;
+  base: unknown; outfits: unknown; poses: unknown; weapons: unknown; materials: unknown; monsters: unknown; props?: unknown;
 }): SpriteData {
   const materials = materialsSchema.parse(raw.materials);
   const base = baseSchema.parse(raw.base);
@@ -75,24 +79,26 @@ export function parseSpriteData(raw: {
   }
   const monsters = monstersSchema.parse(withoutNotes(raw.monsters as Record<string, unknown>));
   for (const [id, monster] of Object.entries(monsters)) checkMonster(id, monster, materials);
-  return { base, outfits, poses, weapons, materials, monsters };
+  const props = monstersSchema.parse(withoutNotes((raw.props ?? {}) as Record<string, unknown>));
+  for (const [id, prop] of Object.entries(props)) checkMonster(id, prop, materials, 'props');
+  return { base, outfits, poses, weapons, materials, monsters, props };
 }
 
 /** 몬스터: 정의된 글자(공용 + 몬스터 재질), 발밑이 격자 안, states가 있는 프레임을 가리킴 */
-function checkMonster(id: string, monster: Monster, materials: Materials): void {
+function checkMonster(id: string, monster: Monster, materials: Materials, file = 'monsters'): void {
   const allowed = new Set([
     '.', ...Object.keys(materials.shaded), ...Object.keys(materials.fixed),
     ...Object.keys(monster.materials), ...Object.keys(monster.fixedExtra ?? {}),
   ]);
   for (const [name, frame] of Object.entries(monster.frames)) {
-    checkMask(frame.rows, allowed, `monsters.${id}.${name}`);
+    checkMask(frame.rows, allowed, `${file}.${id}.${name}`);
     const [fx, fy] = frame.foot;
     if (fx < 0 || fy < 0 || fx >= frame.rows[0]!.length || fy >= frame.rows.length)
-      throw new Error(`monsters.${id}.${name}: 발밑 (${fx},${fy})가 격자 밖`);
+      throw new Error(`${file}.${id}.${name}: 발밑 (${fx},${fy})가 격자 밖`);
   }
   for (const [state, ref] of Object.entries(monster.states))
     for (const name of [ref].flat())
-      if (!monster.frames[name]) throw new Error(`monsters.${id}.states.${state}: 없는 프레임 ${name}`);
+      if (!monster.frames[name]) throw new Error(`${file}.${id}.states.${state}: 없는 프레임 ${name}`);
 }
 
 let cached: SpriteData | undefined;
@@ -128,6 +134,16 @@ export function withPoseDrafts(base: Record<string, unknown>, drafts: Record<str
   return out;
 }
 
+/** 초안 소품: 새 소품은 통째로, 있는 소품은 프레임·상태만 겹친다 */
+export function withPropDrafts(base: Record<string, unknown>, drafts: Record<string, unknown>): Record<string, unknown> {
+  const out = withMonsterDrafts(base, drafts);
+  for (const [id, d] of Object.entries(withoutNotes(drafts))) if (!(id in base)) out[id] = d;
+  return out;
+}
+
+/** 초안 소품 이름 (sprite-preview 표시용) */
+export const draftPropNames = (): string[] => Object.keys(withoutNotes(draftPropsJson as Record<string, unknown>));
+
 /** 초안 포즈 이름 (sprite-preview 표시용) */
 export const draftPoseNames = (type: string): string[] =>
   Object.keys((draftPosesJson as unknown as Record<string, Record<string, unknown>>)[type] ?? {});
@@ -143,6 +159,7 @@ export function spriteData(): SpriteData {
     base: baseJson, outfits: outfitsJson, weapons: weaponsJson, materials: materialsJson,
     poses: useDrafts ? withPoseDrafts(posesJson, draftPosesJson) : posesJson,
     monsters: useDrafts ? withMonsterDrafts(monstersJson, draftMonstersJson) : monstersJson,
+    props: useDrafts ? withPropDrafts(propsJson, draftPropsJson) : propsJson,
   });
   return cached;
 }

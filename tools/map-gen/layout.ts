@@ -10,6 +10,9 @@ export interface MapObject {
   props?: Record<string, string | number>;
 }
 
+/** 문 앞 바닥 깊이 (px) */
+const DOOR_Y = 4;
+
 /** 입장 순서별 깊이 비율 (1명이면 가운데) */
 const START_Y = [0.5, 0.3, 0.7, 0.15];
 
@@ -18,8 +21,9 @@ export function roomObjects(room: RoomDef, isBoss: boolean, monsters: Record<str
   const W = tw * TILE, D = td * TILE, out: MapObject[] = [];
   const r = Math.round;
   START_Y.forEach((k, i) => out.push({ name: 'player_start', x: 3 * TILE, y: r(D * k), props: { index: i } }));
-  out.push({ name: 'door_in', x: TILE / 2, y: r(D / 2) });
-  if (!isBoss) out.push({ name: 'door_out', x: W - TILE / 2, y: r(D / 2) });
+  // 문은 뒤쪽 벽에 붙은 아치 (art.md 6장). 오브젝트는 문 바로 앞 바닥 (깊이 4px)
+  out.push({ name: 'door_in', x: 2 * TILE, y: DOOR_Y });
+  if (!isBoss) out.push({ name: 'door_out', x: W - 2 * TILE, y: DOOR_Y });
   room.waves.forEach((w, wi) => {
     const kinds = Object.entries(w.monsters).flatMap(([k, n]) => Array<string>(n).fill(k));
     const back = kinds.filter((k) => monsters[k]!.move === null).length;

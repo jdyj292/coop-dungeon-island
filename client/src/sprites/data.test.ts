@@ -51,4 +51,9 @@ describe('parseSpriteData', () => {
     (r.base.parts[0] as { layer: string }).layer = 'body';
     expect(() => parseSpriteData(r)).toThrow();
   });
+  it('소품: 검사를 통과하고 맵 장애물 종류(rock·stump)와 문·귀환 고리·상자가 있음', () => {
+    const { props } = spriteData();
+    expect(Object.keys(props).sort()).toEqual(['chest', 'door', 'returnRing', 'rock', 'stump']);
+    expect(props.door!.states.open).toBe('open');
+  });
 });

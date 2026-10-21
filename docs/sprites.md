@@ -15,6 +15,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 | weapons_visual.json | 무기 외형 프로필 | 확정 |
 | poses.json | 무기 종류별 포즈(손 위치, 무기 방향, 이펙트), 걷기 순환 | 확정 |
 | monsters.json | 몬스터 스프라이트 (1층 다섯 종) | 확정 |
+| props.json | 환경 소품 (장애물·문·귀환 고리·보물상자, 11장) | 확정 (3-2 승인) |
 
 - "확정" 데이터는 검토를 거친 디자인. 수정하면 docs/refs/approved/ 캡처와 비교 검토
 - 확정 데이터는 이 문서의 합성 절차로 승인 디자인과 픽셀 단위로 일치함을 검증함
@@ -189,5 +190,20 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 - 승인 데이터는 바로 고치지 않는다. 새 그림은 client/data/sprites/drafts/에 먼저 그린다
   - drafts/monsters.json: 몬스터 프레임 초안 (monsters.json과 같은 형식, frames·states만)
   - drafts/poses.json: 포즈 초안 (무기 종류 → 포즈 이름 → 포즈), 모션 초안 (motions → 모션 이름 → 모션)
-- 보기: sprite-preview 몬스터·캐릭터 탭 "초안 보기" (초안은 이름 옆에 "(초안)", 캐릭터 탭 "포즈 모아 보기"·"모션 모아 보기"로 나란히), 게임은 개발 모드에서 `?drafts=1`
+  - drafts/props.json: 소품 초안 (새 소품은 통째로, 있는 소품은 frames·states만)
+- 보기: sprite-preview 몬스터·캐릭터·소품 탭 "초안 보기" (초안은 이름 옆에 "(초안)", 캐릭터 탭 "포즈 모아 보기"·"모션 모아 보기"로 나란히), 게임은 개발 모드에서 `?drafts=1`
 - 승인되면 초안을 승인 파일로 옮기고 초안 파일에서 지운다. 코드: client/src/sprites/data.ts setUseDrafts·withMonsterDrafts
+
+## 11. 환경 소품 (props.json)
+
+- 형식은 monsters.json과 같다 (materials, fixedExtra, idleSec, frames, states). 레이어 합성 없이 프레임 격자를 자동 음영·외곽선 (art.md 5장)
+- 소품 id·상태
+  | id | 프레임·상태 | 놓는 곳 (맵) |
+  |---|---|---|
+  | rock, stump | idle | walls 레이어 장애물 칸 (타일 속성 kind = 소품 id). 칸 가운데 아래(가장 앞 줄)에 발밑 |
+  | door | closed / open | door_in(항상 닫힘)·door_out(방 클리어 시 open). 뒤쪽 벽에 붙는 아치: 발밑을 문 x의 바닥 맨 위 줄(깊이 0)에 |
+  | returnRing | off / lit(순환) | return_point. 바닥에 깔림 (캐릭터보다 뒤), 방 클리어 시 lit |
+  | chest | closed / open | chest. 여는 것은 3-4 보상 |
+- 깊이 정렬: 장애물·상자는 캐릭터와 같이 y, 귀환 고리는 바닥 높이, 문은 벽 높이 (항상 캐릭터 뒤)
+- 그리기 client/src/view/props.ts (PropLayer), 텍스처 sprites/textures.ts propTexture. props.json에 없는 장애물 종류는 임시 판으로 표시
+- 보기: sprite-preview "소품" 탭 (모든 프레임 나란히, 순환 상태 재생)

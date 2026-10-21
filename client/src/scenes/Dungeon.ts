@@ -1,7 +1,7 @@
 // 던전 테스트 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 (combat.md 1장)
 // 기본은 서버 없이 로컬. ?online=1&party=2면 서버 던전 방에 접속 (roadmap 2-3, 같은 방 번호·인원의 빈자리에 들어감)
 import Phaser from 'phaser';
-import { entryPos, floorRoom, roomBounds, skillDef, TILE, WaveRunner, type Bounds, type PlayerState } from '@game/shared';
+import { entryPos, floorRoom, mapOf, roomBounds, skillDef, TILE, WaveRunner, type Bounds, type PlayerState } from '@game/shared';
 import type { Shake } from '../fx/timing';
 import { sfx } from '../audio/player';
 import { color } from '../palette';
@@ -14,7 +14,7 @@ import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
 import { HudBottom } from '../ui/hudBottom';
 import { HudOverlay } from '../ui/hudOverlay';
 import { HudParty } from '../ui/hudParty';
-import { drawObstacles } from '../view/obstacles';
+import { PropLayer } from '../view/props';
 import { drawRoomBg } from '../view/roomBg';
 
 const FLOOR = 1;
@@ -42,6 +42,7 @@ export class Dungeon extends Phaser.Scene {
   private hud!: HudBottom;
   private overlay!: HudOverlay;
   private party!: HudParty;
+  private props!: PropLayer;
   private keys!: Record<KeyName, Phaser.Input.Keyboard.Key>;
 
   constructor() {
@@ -57,7 +58,7 @@ export class Dungeon extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(color(`floors.${FLOOR}.env.void`));
     if (!this.textures.exists('room-bg')) this.textures.addCanvas('room-bg', drawRoomBg(FLOOR, this.roomW, td, FIELD_BOTTOM + BG_EXTRA));
     this.add.image(0, 0, 'room-bg').setOrigin(0, 0).setDepth(-1000);
-    drawObstacles(this, bounds.blocks ?? []);
+    this.props = new PropLayer(this, mapOf(this.room));
 
     // HUD는 카메라 흔들림과 무관하게 화면에 고정 (hud.md 1·3장)
     this.hud = new HudBottom(this, HUD_DEPTH);
@@ -90,7 +91,10 @@ export class Dungeon extends Phaser.Scene {
         const panel = new LagPanel(conn, online);
         this.events.once('shutdown', () => panel.destroy());
       }
-      this.online.onClear = () => this.overlay.showClear();
+      this.online.onClear = () => {
+        this.overlay.showClear();
+        this.props.setCleared(true);
+      };
       this.events.once('shutdown', () => conn.leave());
     }, (e: unknown) => console.error('[online] 접속 실패 (서버가 떠 있나요? pnpm dev)', e));
   }
@@ -102,6 +106,7 @@ export class Dungeon extends Phaser.Scene {
     else if (r === 'clear') {
       sfx.play('roomClear');
       this.overlay.showClear();
+      this.props.setCleared(true);
       console.info(`방 클리어: ${this.room.name}`);
     }
   }
@@ -127,6 +132,7 @@ export class Dungeon extends Phaser.Scene {
       view = { player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake, color: this.online.myColor };
       this.party.draw(this.online.party());
     } else return; // 접속 중
+    this.props.update(dt);
     const { width, height } = this.scale.gameSize;
     if (view.player) {
       this.hud.draw({
