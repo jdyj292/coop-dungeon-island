@@ -25,3 +25,11 @@ export function stepCombo(c: Combo, dt: number): void {
   c.left = Math.max(0, c.left - dt);
   if (c.left === 0) c.count = 0;
 }
+
+/** 팀 콤보 (2인 이상, combat.md 7장): 누구의 적중이든 windowSec 안에 이어지면 하나의 카운터. 이번에 넘은 단계 (없으면 null) */
+export function teamComboHit(c: Combo, hits: number): number | null {
+  const before = c.count;
+  comboHit(c, hits);
+  const crossed = COMBAT.combo.teamMilestones.filter((m) => before < m && c.count >= m);
+  return crossed.at(-1) ?? null;
+}

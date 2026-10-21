@@ -6,6 +6,7 @@ import type { Shake } from '../fx/timing';
 import { sfx } from '../audio/player';
 import { color } from '../palette';
 import { Connection } from '../net/connection';
+import { LagPanel } from '../net/lagPanel';
 import type { KeyInput } from '../net/inputSender';
 import { CombatStage } from '../stage/combatStage';
 import { OnlineStage } from '../stage/onlineStage';
@@ -72,13 +73,18 @@ export class Dungeon extends Phaser.Scene {
     }) as typeof this.keys;
   }
 
-  /** ?party=1~4 (기본 2), ?lag=왕복 지연 ms (개발용) */
+  /** ?party=1~4 (기본 2). 개발용 네트워크 흉내 초기값: ?lag=왕복ms&jitter=±ms&loss=% (` 키 패널에서 조정) */
   private connect(bounds: Bounds): void {
     const party = Math.min(4, Math.max(1, Number(this.params.get('party') ?? 2)));
-    const lag = Number(this.params.get('lag') ?? 0);
-    Connection.join({ room: Number(this.params.get('room') ?? 1), partySize: party }, lag).then((conn) => {
+    const num = (k: string) => Math.max(0, Number(this.params.get(k) ?? 0) || 0);
+    const sim = { lagMs: num('lag'), jitterMs: num('jitter'), loss: num('loss') / 100 };
+    Connection.join({ room: Number(this.params.get('room') ?? 1), partySize: party }, sim).then((conn) => {
       if (!this.scene.isActive()) return conn.leave();
-      this.online = new OnlineStage(this, conn, bounds);
+      const online = (this.online = new OnlineStage(this, conn, bounds));
+      if (import.meta.env.DEV) {
+        const panel = new LagPanel(conn, online);
+        this.events.once('shutdown', () => panel.destroy());
+      }
       this.online.onClear = () => this.overlay.showClear();
       this.events.once('shutdown', () => conn.leave());
     }, (e: unknown) => console.error('[online] 접속 실패 (서버가 떠 있나요? pnpm dev)', e));
@@ -113,7 +119,7 @@ export class Dungeon extends Phaser.Scene {
       view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake };
     } else if (this.online) {
       this.online.update(dt, input);
-      view = { player: this.online.me, combo: this.online.combo.count, shake: this.online.fx.shake };
+      view = { player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake };
     } else return; // 접속 중
     const { width, height } = this.scale.gameSize;
     if (view.player) {

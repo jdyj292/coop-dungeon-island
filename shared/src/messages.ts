@@ -46,4 +46,6 @@ export interface S2C {
   projEnd: { id: number; reason: 'hit' | 'range'; x: number; y: number };
   /** 방의 몬스터를 모두 기절시킴 (마지막 웨이브) */
   roomClear: { roomIndex: number };
+  /** 팀 콤보 단계 달성 (20·40·60, 2인 이상) */
+  teamMilestone: { count: number };
 }

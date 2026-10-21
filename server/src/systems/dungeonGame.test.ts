@@ -128,6 +128,17 @@ describe('DungeonGame (서버 진행)', () => {
     g.onMessage('a', 'action', { seq: 9, t: hitAt - 50, x: 0, y: 0, facing: 1, kind: 'backstep' });
     expect(sp.state.hp).toBe(sp.state.maxHp);
   });
+  it('2인 방은 팀 콤보를 상태로, 20 달성은 teamMilestone 이벤트', () => {
+    const { g, sent } = setup();
+    g.sim.team.count = 19;
+    g.sim.team.left = 1;
+    const m = g.sim.alive[0]!;
+    g.sim.players.get('a')!.state.pos = { x: m.body.x - 14, y: m.body.y };
+    g.onMessage('a', 'action', { seq: 1, t: 0, kind: 'basic', x: 0, y: 0, facing: 1 });
+    run(g, 30);
+    expect(g.state.teamCombo).toBe(20);
+    expect(sent.find((s) => s.type === 'teamMilestone')?.msg).toEqual({ count: 20 });
+  });
   it('퇴장하면 상태에서 빠짐', () => {
     const { g } = setup();
     g.leave('b');

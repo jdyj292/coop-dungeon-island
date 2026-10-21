@@ -2,6 +2,7 @@
 import { Client, type Room } from 'colyseus.js';
 import { NET, type C2SMessage, type C2SType, type S2C } from '@game/shared';
 import { ServerClock } from './clock';
+import { DelayLine, type NetSim } from './delayLine';
 import { SnapshotBuffer, type Pos } from './interp';
 
 /** 보간용 플레이어 값 (상태에서 복사) */
@@ -45,6 +46,8 @@ export interface PrivateView {
 /** 서버 상태 모양 (colyseus.js가 디코드한 객체) */
 type Live = {
   serverTime: number;
+  partySize: number;
+  teamCombo: number;
   wave: number;
   doorOpen: boolean;
   players: Map<string, Omit<PlayerSnap, 'z' | 'since' | 'ult'> & { ultGauge: number; priv?: PrivateView }>;
@@ -54,7 +57,7 @@ type Live = {
 
 export type EventHandler = <K extends keyof S2C>(type: K, msg: S2C[K]) => void;
 
-const EVENTS: (keyof S2C)[] = ['hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'roomClear'];
+const EVENTS: (keyof S2C)[] = ['hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'roomClear', 'teamMilestone'];
 
 export function serverUrl(): string {
   return (import.meta.env.VITE_SERVER_URL as string | undefined) ?? `ws://${location.hostname}:2567`;
@@ -70,8 +73,15 @@ export class Connection {
   private seq = 0;
   private pingTimer = 0;
 
-  /** lagMs = 개발용 왕복 지연 (보낼 때·받을 때 절반씩, roadmap 2-4. 조정 패널은 2-6) */
-  private constructor(readonly room: Room, private lagMs = 0) {
+  /** 개발용 네트워크 흉내 (지연 시뮬레이터 패널에서 바꾼다, net/lagPanel.ts) */
+  readonly netSim: NetSim;
+  private outLine: DelayLine;
+  private inLine: DelayLine;
+
+  private constructor(readonly room: Room, sim: NetSim) {
+    this.netSim = sim;
+    this.outLine = new DelayLine(() => this.netSim);
+    this.inLine = new DelayLine(() => this.netSim);
     room.onStateChange((s) => this.snapshot(s as unknown as Live));
     for (const type of EVENTS) room.onMessage(type, (msg) => this.later(() => this.onEvent(type, msg)));
     room.onMessage('pong', (m: S2C['pong']) => this.later(() => this.clock.onPong(m.t, m.server)));
@@ -80,15 +90,14 @@ export class Connection {
     room.onLeave(() => window.clearInterval(this.pingTimer));
   }
 
-  static async join(opts: { room: number; partySize: number; name?: string }, lagMs = 0): Promise<Connection> {
+  static async join(opts: { room: number; partySize: number; name?: string }, sim: NetSim): Promise<Connection> {
     const room = await new Client(serverUrl()).joinOrCreate('dungeon', opts);
-    return new Connection(room, Math.max(0, lagMs));
+    return new Connection(room, sim);
   }
 
-  /** 지연 흉내: 한 방향 = 왕복의 절반 */
+  /** 받은 것: 흉내 지연 뒤 처리 (순서 유지) */
   private later(fn: () => void): void {
-    if (this.lagMs > 0) window.setTimeout(fn, this.lagMs / 2);
-    else fn();
+    this.inLine.push(fn);
   }
 
   get myId(): string {
@@ -110,7 +119,7 @@ export class Connection {
   }
 
   send<K extends C2SType>(type: K, msg: C2SMessage<K>): void {
-    this.later(() => this.room.send(type, msg));
+    this.outLine.push(() => this.room.send(type, msg));
   }
 
   leave(): void {

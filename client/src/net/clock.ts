@@ -5,6 +5,8 @@ const SAMPLES = 8;
 export class ServerClock {
   private samples: number[] = [];
   private offset: number | null = null;
+  /** 최근 왕복 시간 ms (패널 표시용) */
+  rtt = 0;
 
   /** now = 내 시각 (performance.now 기준 ms) */
   constructor(private now: () => number = () => performance.now()) {}
@@ -16,6 +18,7 @@ export class ServerClock {
   /** pong: sentAt = 보낸 내 시각, server = 서버가 받은 시각. 왕복의 절반을 더한다 */
   onPong(sentAt: number, server: number): void {
     const now = this.now(), rtt = Math.max(0, now - sentAt);
+    this.rtt = rtt;
     this.samples.push(server + rtt / 2 - now);
     if (this.samples.length > SAMPLES) this.samples.shift();
     this.offset = this.samples.reduce((s, v) => s + v, 0) / this.samples.length;

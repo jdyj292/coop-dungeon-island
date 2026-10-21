@@ -172,6 +172,7 @@ export class DungeonGame {
       s.lastInputSeq = seqs.get(sp.pid) ?? s.lastInputSeq;
     }
     syncWorld(this.state, this.sim, this.now);
+    this.state.teamCombo = this.sim.team.count;
     this.state.serverTime = this.now;
     for (const o of out) this.out.broadcast(o.type, o.msg as never);
   }

@@ -190,6 +190,7 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 - 서로 다른 플레이어의 적중이 1.5초 안에 이어지면 카운터 유지
 - 20 / 40 / 60 달성 시 이번 판 코인 +5% / +10% / +15% (게이지 보너스는 balance.md)
 - 솔로는 개인 콤보로 대체 (dungeon.md)
+- 구현: shared RoomSim.team (partySize 2 이상), 단계 combat.json combo.teamMilestones, 서버 상태 teamCombo·이벤트 teamMilestone. 화면 콤보 숫자는 2인 이상이면 팀 콤보. 코인 보너스는 M3
 
 ### 합동 필살기
 - 2명 이상이 2초 안에 필살기 발동 시 연출 강화 + 데미지 +20% (피해 증가 합에 포함)

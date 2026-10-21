@@ -17,6 +17,8 @@ export function eventsFor(events: SimEvent[], now: number, combos: Map<string, n
         hitstop: gradeTiming(grade).hitstop, x: int(b.x), y: int(b.y), z: int(b.z), t: now,
       } });
       comboPids.add(e.pid);
+    } else if (e.type === 'teamMilestone') {
+      out.push({ type: 'teamMilestone', msg: { count: e.count } });
     } else if (e.type === 'playerHit') {
       out.push({ type: 'playerHit', msg: { pid: e.pid, damage: e.damage, strength: e.def.strength ?? 'light', from: e.from?.id ?? null } });
     }

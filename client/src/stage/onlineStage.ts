@@ -2,7 +2,7 @@
 // 내 캐릭터는 예측 상태로 바로 그리고 서버 패치마다 보정 (network.md 7장, net/predict.ts). 히트스톱 동기화는 2-5
 import type Phaser from 'phaser';
 import {
-  COMBAT, FixedStep, inZone, MONSTERS, NET, PLAYER, playerStateName, TICK, weaponDef,
+  COMBAT, FixedStep, MONSTERS, NET, PLAYER, playerStateName, TICK, weaponDef, zoneSpeedMul,
   type ActionDef, type Bounds, type Monster, type MonsterAttack, type PlayerState, type Projectile, type S2C, type ZoneArea,
 } from '@game/shared';
 import fx from '../../data/fx.json';
@@ -41,6 +41,7 @@ export class OnlineStage {
   readonly fx: FxContext;
   /** 내 캐릭터 (HUD·카메라용, 아직 상태가 없으면 null) */
   me: PlayerState | null = null;
+  /** 개인 콤보 (솔로 방) */
   combo = { count: 0, left: 0 };
   onClear: (() => void) | null = null;
   private sender: InputSender;
@@ -57,8 +58,9 @@ export class OnlineStage {
   /** 틱이 돌기 전에 보낸 누름을 다음 틱까지 보관 */
   private press: { input: Pick<KeyInput, 'attack' | 'skill' | 'backstep' | 'potion'>; seq: number | null } | null = null;
   private zones: ZoneArea[] = [];
-  /** 마지막 보정 (개발 확인용) */
+  /** 마지막 보정과 누적 (개발 확인용, 지연 시뮬레이터 패널) */
   lastCorrection: { mode: Correction; error: number } = { mode: 'none', error: 0 };
+  corrections = { ignore: 0, smooth: 0, snap: 0, maxError: 0 };
 
   constructor(private scene: Phaser.Scene, readonly conn: Connection, private bounds: Bounds) {
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
@@ -68,21 +70,22 @@ export class OnlineStage {
     conn.onSnapshot = () => this.reconcile();
   }
 
+  /** 화면에 보일 콤보: 2인 이상이면 팀 콤보(서버 상태), 아니면 개인 콤보 (combat.md 7장) */
+  get comboCount(): number {
+    const live = this.conn.live;
+    return (live.partySize ?? 1) >= 2 ? live.teamCombo ?? 0 : this.combo.count;
+  }
+
   /** 서버 패치: 내 서버 상태로 예측 보정 */
   private reconcile(): void {
     const c = this.conn, snap = c.players.latest, s = snap?.items.get(c.myId);
     if (!snap || !s) return;
     if (!this.predictor) this.predictor = new Predictor(weaponDef(WEAPON), this.bounds, { x: s.x, y: s.y });
     const server = mirrorPlayer(s, snap.t, WEAPON, c.mine, snap.t);
-    this.lastCorrection = this.predictor.reconcile(server, s.lastInputSeq, TICK);
-  }
-
-  /** 감속 장판 안이면 이동 배율 (RoomSim과 같은 규칙) */
-  private speedMul(p: PlayerState): number {
-    const t = { x: p.pos.x, y: p.pos.y, airborne: false, hurtbox: PLAYER.hurtbox };
-    let mul = 1;
-    for (const z of this.zones) if (z.def.effect.type === 'slow' && inZone(z, t)) mul = Math.min(mul, 1 - (z.def.effect.amount ?? 0));
-    return mul;
+    const r = (this.lastCorrection = this.predictor.reconcile(server, s.lastInputSeq, TICK));
+    const st = this.corrections;
+    if (r.mode !== 'none') st[r.mode]++;
+    st.maxError = Math.max(st.maxError, r.error);
   }
 
   /** 내 입력 보내기 + 예측 틱. 반환 = 이번 프레임에 걸은 거리 (틱이 안 돌았으면 null) */
@@ -98,7 +101,7 @@ export class OnlineStage {
       const press = this.press;
       this.press = null;
       const input = { x: sent.x, y: sent.y, run: sent.run, attack: false, skill: null, backstep: false, potion: null, ...press?.input };
-      moved += pr.tick(input, TICK, sent.seq, press?.seq ?? null, this.speedMul(pr.state)).moved;
+      moved += pr.tick(input, TICK, sent.seq, press?.seq ?? null, zoneSpeedMul(this.zones, pr.state.pos, PLAYER.hurtbox)).moved;
     }
     return n > 0 ? moved : null;
   }

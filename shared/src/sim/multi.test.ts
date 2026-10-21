@@ -86,3 +86,26 @@ describe('플레이어가 없는 방 (서버 생성 직후)', () => {
     expect(m!.body.x).toBe(200);
   });
 });
+
+describe('팀 콤보 (combat.md 7장)', () => {
+  it('서로 다른 플레이어 적중이 이어지면 하나의 카운터, 20 달성 시 전원 필살기 +10, 1.5초 끊기면 0', () => {
+    const sim = duo(false);
+    sim.team.count = 18;
+    sim.team.left = 1;
+    sim.spawn([{ kind: 'capknight', x: 114, y: 56 }, { kind: 'capknight', x: 314, y: 56 }]);
+    const ev = run(sim, 0.7, { p1: { ...none, attack: true }, p2: { ...none, attack: true } });
+    expect(sim.team.count).toBeGreaterThanOrEqual(20);
+    expect(ev.filter((e) => e.type === 'teamMilestone')).toEqual([{ type: 'teamMilestone', count: 20 }]);
+    // 적중 +1씩 + 단계 +10
+    expect(ps(sim, 'p2').ult).toBe(sim.players.get('p2')!.combo.count + 10);
+    run(sim, 1.6);
+    expect(sim.team.count).toBe(0);
+  });
+  it('솔로는 팀 콤보를 세지 않음', () => {
+    const sim = new RoomSim(gs, bounds, { x: 100, y: 56 }, { ai: false });
+    sim.spawn([{ kind: 'mushroom', x: 114, y: 56 }]);
+    run(sim, 0.7, { p1: { ...none, attack: true } });
+    expect(sim.combo.count).toBeGreaterThan(0);
+    expect(sim.team.count).toBe(0);
+  });
+});

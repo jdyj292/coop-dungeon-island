@@ -5,13 +5,13 @@ import { stepBody } from '../body';
 import { PLAYER } from '../data/load';
 import type { MonsterAttack } from '../data/schema';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
-import { inZone, spawnProjectile, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
+import { spawnProjectile, zoneSpeedMul, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
 import { monsterBounds, newMonster, type Monster } from '../monster/state';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
 import { mergePresses, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
 import { gainUlt, hurtPlayer, isInvulnerable, type HurtEvent, type PotionKind } from '../playerHurt';
-import { comboHit, newCombo, stepCombo, type Combo } from '../combo';
+import { comboHit, newCombo, stepCombo, teamComboHit, type Combo } from '../combo';
 import type { PlayerTarget } from '../shapes';
 import { gradeTiming } from '../hit';
 import { chooseTarget } from './aim';
@@ -53,7 +53,9 @@ export type SimEvent =
   /** 몬스터 공격·투사체 → 플레이어 적중 (HP 감소·경직·다운은 playerHurt) */
   | { type: 'playerHit'; pid: string; from: Monster | undefined; def: MonsterAttack; damage: number }
   | { type: 'playerHurt'; pid: string; e: HurtEvent }
-  | { type: 'potion'; pid: string; kind: PotionKind };
+  | { type: 'potion'; pid: string; kind: PotionKind }
+  /** 팀 콤보 단계 달성 (2인 이상): 전원 필살기 게이지 +onTeamMilestone */
+  | { type: 'teamMilestone'; count: number };
 
 export interface SimOptions {
   /** false면 몬스터가 움직이거나 공격하지 않음 (tools/motion-preview) */
@@ -88,6 +90,8 @@ export class RoomSim {
   readonly history = new PositionHistory();
   /** 몬스터 id → 히트스톱 남은 시간 */
   private monsterStop = new Map<number, number>();
+  /** 팀 콤보 (partySize 2 이상일 때만 센다, 솔로는 개인 콤보) */
+  readonly team: Combo = newCombo();
 
   /** playerPos가 있으면 솔로 플레이어(SOLO_PID)를 바로 넣는다 */
   constructor(readonly weapon: WeaponDef, readonly bounds: Bounds, playerPos: Vec2 | null, readonly opts: SimOptions = {}) {
@@ -152,6 +156,7 @@ export class RoomSim {
     this.time += dt;
     const b = this.bounds, targets = this.playerTargets();
     for (const sp of this.players.values()) stepCombo(sp.combo, dt);
+    stepCombo(this.team, dt);
     // 1. 몬스터 먼저: 이번 틱에 맞은 번쩍임·경직이 같은 틱에 깎이지 않게
     for (const m of this.alive) {
       // 히트스톱 중인 몬스터는 그대로 멈춤
@@ -195,6 +200,7 @@ export class RoomSim {
     // 3. 플레이어 행동과 판정 (active 동안 매 틱)
     const moved = new Map<string, number>();
     for (const sp of this.players.values()) moved.set(sp.pid, this.stepPlayer(sp, inputs.get(sp.pid) ?? IDLE, dt, events));
+    this.stepTeamCombo(events);
     // 4. 몬스터끼리 겹침 풀기 (지상·공격 중 아닐 때)
     separateMonsters(this.alive, this.bounds);
     this.recordHistory();
@@ -206,6 +212,15 @@ export class RoomSim {
     const pid = chooseTarget(m, [...this.players.values()], this.aim.get(m.id));
     if (pid) this.aim.set(m.id, pid);
     return pid ? this.players.get(pid) : undefined;
+  }
+
+  private stepTeamCombo(events: SimEvent[]): void {
+    if ((this.opts.partySize ?? 1) < 2) return;
+    const hits = events.filter((e) => e.type === 'hit').length;
+    const milestone = teamComboHit(this.team, hits);
+    if (milestone === null) return;
+    for (const sp of this.players.values()) gainUlt(sp.state, PLAYER.ultimate.onTeamMilestone);
+    events.push({ type: 'teamMilestone', count: milestone });
   }
 
   /** 백스텝 소급 무적: 입력 시각(초) 뒤 짧은 시간 안의 피격 취소 (쿨타임 중이면 안 함). 취소한 피격 수 */
@@ -230,7 +245,7 @@ export class RoomSim {
     }
     const input = sp.held ? { ...mergePresses(sp.held, raw)!, x: raw.x, y: raw.y, run: raw.run } : raw;
     sp.held = null;
-    const res = stepPlayerState(p, sp.weapon, input, dt, this.bounds, this.zoneSpeedMul(p));
+    const res = stepPlayerState(p, sp.weapon, input, dt, this.bounds, zoneSpeedMul(this.zones, p.pos, PLAYER.hurtbox));
     if (res.backstepStarted) events.push({ type: 'backstep', pid });
     res.hurt.forEach((e) => events.push({ type: 'playerHurt', pid, e }));
     if (res.potion) events.push({ type: 'potion', pid, kind: res.potion });
@@ -271,15 +286,5 @@ export class RoomSim {
     events.push({ type: 'playerHit', pid, from, def, damage });
     gainUlt(p, PLAYER.ultimate.onHurt);
     hurt.forEach((e) => events.push({ type: 'playerHurt', pid, e }));
-  }
-
-  /** 감속 장판(졸음 구름) 안이면 이동 속도 × (1 - amount) */
-  private zoneSpeedMul(p: PlayerState): number {
-    const t = { x: p.pos.x, y: p.pos.y, airborne: false, hurtbox: PLAYER.hurtbox };
-    let mul = 1;
-    for (const z of this.zones) {
-      if (z.def.effect.type === 'slow' && inZone(z, t)) mul = Math.min(mul, 1 - (z.def.effect.amount ?? 0));
-    }
-    return mul;
   }
 }

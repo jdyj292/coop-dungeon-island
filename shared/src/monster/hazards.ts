@@ -66,3 +66,11 @@ export function stepZone(z: ZoneArea, dt: number): void {
 /** 장판 안에 있는지 (발 위치 기준) */
 export const inZone = (z: ZoneArea, t: HitTarget): boolean =>
   z.left > 0 && zoneContains({ x: z.x, y: z.y, facing: 1 }, { ...z.def, at: [0, 0] }, t);
+
+/** 감속 장판(졸음 구름) 안이면 이동 속도 × (1 - amount), 여러 개면 가장 느린 것 (RoomSim·클라이언트 예측 공용) */
+export function zoneSpeedMul(zones: ZoneArea[], pos: { x: number; y: number }, hurtbox: HitTarget['hurtbox']): number {
+  const t = { x: pos.x, y: pos.y, airborne: false, hurtbox };
+  let mul = 1;
+  for (const z of zones) if (z.def.effect.type === 'slow' && inZone(z, t)) mul = Math.min(mul, 1 - (z.def.effect.amount ?? 0));
+  return mul;
+}

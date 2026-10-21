@@ -179,7 +179,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | mp | `{ max, regen, onHit }` 최대 MP·초당 회복·적중 1회당 회복 (balance.md 6장) |
 | hurt | `{ stunSec, downSec, getupInvuln }` 약·중 공격 경직, 강 공격 다운, 기상 무적 (combat.md 4장) |
 | potions | `hp { heal(최대 HP 비율), cooldown, carry }`, `mp { amount, cooldown, carry }` (balance.md 6장, carry = 반입 한도) |
-| ultimate | `{ max, onHit, onHurt }` 필살기 게이지 최대·적중 1회·피격 1회 증가량 (balance.md 8장) |
+| ultimate | `{ max, onHit, onHurt, onTeamMilestone }` 필살기 게이지 최대·적중 1회·피격 1회·팀 콤보 단계 달성 시 전원 증가량 (balance.md 8장) |
 | revive | `{ feathers, hpRatio, invuln }` 솔로 부활의 깃털 (dungeon.md 3장) |
 | hurtbox | 플레이어 피격 판정 크기 `{ width, height, depth }` (몬스터 공격·투사체) |
 | backstep | `{ distance, sec, invuln, cooldown }` 백스텝 거리(px)·시간·앞쪽 무적 시간·쿨 (combat.md 1장) |
@@ -207,7 +207,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |
 | grades.{light,medium,heavy,ultimate} | `{ hitstop, shake }` 히트스톱 초, 흔들림 px (0 = 없음) |
 | shakeAfterHitstop | 흔들림 길이 = 히트스톱 + 이 값 |
-| combo | `{ windowSec }` 콤보가 이어지는 시간 (dungeon.md 3장) |
+| combo | `{ windowSec, teamMilestones }` 콤보가 이어지는 시간 (dungeon.md 3장), 팀 콤보 단계 (combat.md 7장) |
 | tokens | 공격 토큰 수 (인원 1~4 순서, balance.md·dungeon.md 3장) |
 | ai | 몬스터 AI 공통: hopSec·hopMove(튀기 박자·이동 비율), orbitDistance·orbitDepth(토큰 없을 때 맴도는 거리), chargerDistance(돌진형이 거리 두는 위치), separation(겹침 풀기 여유 px) |
 
