@@ -1,13 +1,14 @@
-// 던전 한 방의 진행 (Colyseus 없이 테스트 가능): RoomSim + 웨이브 + 입력 대기열 + 상태 반영 + 이벤트
+// 던전 한 판의 진행 (Colyseus 없이 테스트 가능): 방마다 RoomSim + 웨이브 + 방 진행 + 입력 대기열 + 상태 반영 + 이벤트
 // DungeonRoom(rooms/)은 연결·전송만 맡는다. 흐름은 docs/network.md 3~6장
 import {
-  entryPos, floorRoom, NET, parseC2S, roomBounds, RoomSim, TICK, WaveRunner, weaponDef,
-  type C2SMessage, type C2SType, type RoomDef, type PlayerInput, type Projectile, type S2C, type SimPlayer,
+  entryPos, NET, parseC2S, RoomSim, TICK, WaveRunner, weaponDef,
+  type C2SMessage, type C2SType, type RoomDef, type PlayerInput, type Projectile, type S2C, type SimOptions, type SimPlayer,
 } from '@game/shared';
 import { DungeonState, PlayerState } from '../schema/DungeonState';
 import { eventsFor, projectileEvents, type Outgoing } from './events';
 import { InputQueue } from './inputs';
 import { dungeonRules, RateLimit } from './rateLimit';
+import { buildRoom, exitCount, floorRooms } from './roomFlow';
 import { syncPlayer, syncWorld } from './sync';
 
 export interface Outbox {
@@ -16,15 +17,16 @@ export interface Outbox {
 }
 
 export interface DungeonOptions {
-  /** 1층 방 번호 1~6 */
+  /** 시작할 1층 방 번호 1~6 (개발용, 기본 1). 한 판은 여기서 보스 방까지 */
   room?: number;
   /** 던전 인원 1~4 (공격 토큰) */
   partySize?: number;
   /** 테스트용 난수 */
   rng?: () => number;
+  /** 개발 명령 허용 (서버 개발 모드, 배포에서는 false) */
+  dev?: boolean;
 }
 
-const FLOOR = 'floor1';
 const NAME_MAX = 12;
 
 interface Member {
@@ -36,25 +38,47 @@ interface Member {
 
 export class DungeonGame {
   readonly state = new DungeonState();
-  readonly sim: RoomSim;
-  readonly waves: WaveRunner;
+  sim: RoomSim;
+  waves: WaveRunner;
   /** 서버 시각 (ms, 방 생성부터) */
   now = 0;
   private members = new Map<string, Member>();
   private joined = 0;
-  private readonly room: RoomDef;
+  private room: RoomDef;
+  private readonly simOpts: SimOptions;
+  private readonly dev: boolean;
 
   constructor(opts: DungeonOptions, private out: Outbox) {
-    const n = Math.min(6, Math.max(1, Math.floor(opts.room ?? 1)));
+    const rooms = floorRooms();
+    const n = Math.min(rooms.length, Math.max(1, Math.floor(opts.room ?? 1)));
     const party = Math.min(4, Math.max(1, Math.floor(opts.partySize ?? 1)));
-    const room = floorRoom(FLOOR, n);
-    const { bounds } = roomBounds(room);
-    this.room = room;
-    this.sim = new RoomSim(weaponDef('greatsword'), bounds, null, { partySize: party, rng: opts.rng, hitstop: 'entity' });
-    this.waves = new WaveRunner(room);
+    this.simOpts = { partySize: party, rng: opts.rng, hitstop: 'entity' };
+    this.dev = !!opts.dev;
+    this.state.assign({ partySize: party, roomCount: rooms.length });
+    this.room = rooms[n - 1]!;
+    this.sim = buildRoom(this.room, weaponDef('greatsword'), this.simOpts, null, () => 0);
+    this.waves = new WaveRunner(this.room);
+    this.enter(n - 1);
+  }
+
+  /** 방 들어가기: 첫 웨이브, 출구 닫힘 (생성자·다음 방 공용) */
+  private enter(index: number): void {
+    // 몬스터 번호는 방마다 1부터라 이전 방 상태를 비운다
+    this.state.monsters.clear();
+    this.state.zones.clear();
     this.sim.spawn(this.waves.next());
-    this.state.assign({ roomIndex: n - 1, partySize: party, wave: this.waves.wave });
+    this.state.assign({ roomIndex: index, wave: this.waves.wave, doorOpen: false, exitAt: 0, exitNeed: 0 });
     syncWorld(this.state, this.sim, this.now);
+  }
+
+  /** 다음 방: 플레이어를 데려와 새 시뮬레이션 (dungeon.md 2장) */
+  private nextRoom(): Outgoing {
+    const index = this.state.roomIndex + 1;
+    this.room = floorRooms()[index]!;
+    this.sim = buildRoom(this.room, this.sim.weapon, this.simOpts, this.sim, (pid) => this.members.get(pid)?.index ?? 0);
+    this.waves = new WaveRunner(this.room);
+    this.enter(index);
+    return { type: 'roomEnter', msg: { roomIndex: index } };
   }
 
   join(pid: string, name: unknown): void {
@@ -118,6 +142,13 @@ export class DungeonGame {
         this.out.broadcast('chat', { player: pid, text: msg.text, t: this.now });
         return 'ok';
       }
+      case 'dev': {
+        const msg = parseC2S('dev', raw);
+        if (!msg || !this.dev) return 'ignored';
+        // 기절 처리 (보상·웨이브 진행은 평소와 같은 길로)
+        for (const mon of this.sim.alive) Object.assign(mon, { hp: 0 }).body.ko = true;
+        return 'ok';
+      }
       default:
         // interact(부활·줍기·레버)는 M3
         return 'ignored';
@@ -164,6 +195,12 @@ export class DungeonGame {
     } else if (w === 'clear') {
       this.state.doorOpen = true;
       out.push({ type: 'roomClear', msg: { roomIndex: this.state.roomIndex } });
+    }
+    // 출구: 살아 있는 전원이 모이면 다음 방 (보스 방은 출구 없음)
+    if (this.state.doorOpen) {
+      const { at, need } = exitCount(this.sim, this.room);
+      this.state.assign({ exitAt: at, exitNeed: need });
+      if (need > 0 && at === need && this.state.roomIndex + 1 < floorRooms().length) out.push(this.nextRoom());
     }
     for (const sp of this.sim.players.values()) {
       const s = this.state.players.get(sp.pid);

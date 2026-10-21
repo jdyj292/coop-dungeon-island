@@ -21,6 +21,8 @@ export const C2S = {
   // 앞뒤 공백을 뺀 1~60자 (표시는 텍스트로만)
   chat: z.object({ text: z.string().trim().min(1).max(NET.chatMaxLen) }).strict(),
   ping: z.object({ t: z.number().nonnegative() }).strict(),
+  /** 개발 명령 (서버가 개발 모드일 때만): clear = 지금 방 몬스터를 모두 기절 */
+  dev: z.object({ cmd: z.enum(['clear']) }).strict(),
 } as const;
 
 export type C2SType = keyof typeof C2S;
@@ -44,6 +46,8 @@ export interface S2C {
   /** 투사체는 상태에 넣지 않고 이벤트로 (network.md 5장). kind = 공격 id */
   projSpawn: { id: number; kind: string; owner: number; x: number; y: number; z: number; dir: number; t0: number };
   projEnd: { id: number; reason: 'hit' | 'range'; x: number; y: number };
+  /** 다음 방에 들어감 (출구에 전원 모임). 클라이언트는 방 화면을 다시 만든다 */
+  roomEnter: { roomIndex: number };
   /** 방의 몬스터를 모두 기절시킴 (마지막 웨이브) */
   roomClear: { roomIndex: number };
   /** 팀 콤보 단계 달성 (20·40·60, 2인 이상) */

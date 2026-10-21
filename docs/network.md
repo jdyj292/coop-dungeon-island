@@ -81,7 +81,7 @@
 ```
 DungeonState
   serverTime                이 상태의 서버 시각 ms (패치마다 바뀜, 보간 기준)
-  floor, roomIndex (0~5), wave, doorOpen, phase ("play" | "result")
+  floor, roomIndex (0~5), roomCount, wave, doorOpen, exitAt·exitNeed (출구 앞 인원/필요 인원), phase ("play" | "result")
   partySize, teamCombo
   players: Map<id, PlayerState>
   monsters: Map<id, MonsterState>
@@ -111,6 +111,8 @@ MonsterState
 ZoneState
   id, attackId, x, y, endsAt (사라지는 서버 시각 ms)
 ```
+- 스키마 기본값과 같은 값은 전송되지 않아 클라이언트에서 비어 있을 수 있다 → Connection.progress가 기본값으로 채움
+- 개발 명령 `dev { cmd: "clear" }`: 지금 방 몬스터를 모두 기절 (NODE_ENV=production이면 무시). 지연 시뮬레이터 패널 버튼
 - 수치는 정수로 양자화 (위치 int16, hp uint16, 비율 uint8). 시각은 방 생성부터의 서버 ms (float64)
 - actionStart = 서버 시각 − 행동 경과. 같은 행동이 이어지면 다시 쓰지 않는다
 - 입장 위치: 왼쪽 3타일, 깊이를 인원 수로 나눔 (shared/src/sim/roomSetup.ts entryPos)
@@ -144,6 +146,7 @@ IslandState
 | reward | `{ coins, material?, exp }` | 획득 표시 |
 | combo | `{ count, milestone? }` | 콤보 표시, 단계 달성 연출 |
 | roomClear / doorOpen | 방 클리어 | 문 열림 연출 |
+| roomEnter | `{ roomIndex }` 다음 방 | 클라이언트는 상태 roomIndex가 바뀌면 같은 접속으로 Dungeon 씬을 다시 시작 (배경·소품·예측 범위 교체, 보간 버퍼 비움, 0.3초 페이드인) |
 | result | 정산 내용 | 정산 화면 |
 | rejected | `{ seq, reason }` | 예측했던 행동 취소 |
 | emote | `{ player, id }` | 머리 위 표시 |

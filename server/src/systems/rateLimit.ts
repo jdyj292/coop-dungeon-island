@@ -33,6 +33,6 @@ export const dungeonRules = (): Record<string, readonly [number, number]> => {
   const l = NET.limits;
   return {
     input: [1000, l.input], action: [1000, l.action], item: [1000, l.action], interact: [1000, l.action],
-    emote: [1000, l.island], chat: [l.chatWindowMs, l.chatMax],
+    emote: [1000, l.island], chat: [l.chatWindowMs, l.chatMax], dev: [1000, l.island],
   };
 };

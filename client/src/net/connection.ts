@@ -46,10 +46,14 @@ export interface PrivateView {
 /** 서버 상태 모양 (colyseus.js가 디코드한 객체) */
 type Live = {
   serverTime: number;
+  roomIndex: number;
+  roomCount: number;
+  doorOpen: boolean;
+  exitAt: number;
+  exitNeed: number;
   partySize: number;
   teamCombo: number;
   wave: number;
-  doorOpen: boolean;
   players: Map<string, Omit<PlayerSnap, 'z' | 'since' | 'ult'> & { ultGauge: number; priv?: PrivateView }>;
   monsters: Map<string, Omit<MonsterSnap, 'since'>>;
   zones: Map<string, { id: string; attackId: string; x: number; y: number; endsAt: number }>;
@@ -71,6 +75,8 @@ export class Connection {
   /** 새 스냅샷이 버퍼에 들어간 직후 (예측 보정) */
   onSnapshot: () => void = () => {};
   private seq = 0;
+  /** 버퍼에 쌓인 스냅샷의 방 번호 (바뀌면 비운다: 다른 방 위치끼리 보간하지 않게) */
+  private bufferedRoom = -1;
   private pingTimer = 0;
 
   /** 개발용 네트워크 흉내 (지연 시뮬레이터 패널에서 바꾼다, net/lagPanel.ts) */
@@ -90,9 +96,12 @@ export class Connection {
     room.onLeave(() => window.clearInterval(this.pingTimer));
   }
 
+  /** 첫 상태까지 받은 뒤 돌려준다 (방 번호를 알아야 화면을 만든다) */
   static async join(opts: { room: number; partySize: number; name?: string }, sim: NetSim): Promise<Connection> {
     const room = await new Client(serverUrl()).joinOrCreate('dungeon', opts);
-    return new Connection(room, sim);
+    const conn = new Connection(room, sim);
+    await new Promise<void>((res) => (conn.live.players ? res() : room.onStateChange.once(() => res())));
+    return conn;
   }
 
   /** 받은 것: 흉내 지연 뒤 처리 (순서 유지) */
@@ -106,6 +115,14 @@ export class Connection {
 
   get live(): Live {
     return this.room.state as unknown as Live;
+  }
+
+  /**
+   * 방 진행 값 (서버 기본값과 같으면 전송되지 않아 비어 있을 수 있다 → 서버 스키마 기본값으로 채움)
+   */
+  get progress(): { roomIndex: number; roomCount: number; doorOpen: boolean; exitAt: number; exitNeed: number } {
+    const l = this.live;
+    return { roomIndex: l.roomIndex ?? 0, roomCount: l.roomCount ?? 6, doorOpen: l.doorOpen ?? false, exitAt: l.exitAt ?? 0, exitNeed: l.exitNeed ?? 0 };
   }
 
   /** 본인 전용 값 (아직 안 왔으면 undefined) */
@@ -148,7 +165,13 @@ export class Connection {
       actionId: m.actionId, actionStart: m.actionStart, hpRatio: m.hpRatio, superArmor: m.superArmor,
     }));
     // 상태 객체는 계속 바뀌므로 값은 지금 복사하고, 버퍼에 넣는 것만 지연
+    const roomIndex = s.roomIndex ?? 0;
     this.later(() => {
+      if (roomIndex !== this.bufferedRoom) {
+        this.players.clear();
+        this.monsters.clear();
+        this.bufferedRoom = roomIndex;
+      }
       this.clock.hint(t);
       this.players.push({ t, items: players });
       this.monsters.push({ t, items: monsters });

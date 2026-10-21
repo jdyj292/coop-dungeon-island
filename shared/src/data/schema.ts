@@ -190,6 +190,7 @@ export const combat = z.object({
   shakeAfterHitstop: sec,
   tokens: z.array(z.number().int().positive()).min(1),
   combo: z.object({ windowSec: pos, teamMilestones: z.array(z.number().int().positive()) }).strict(),
+  exit: z.object({ halfWidth: pos, depth: pos }).strict(),
   ai: z.object({
     hopSec: pos, hopMove: z.number().min(0).max(1), orbitDistance: pos, orbitDepth: sec, chargerDistance: pos, separation: sec,
   }).strict(),

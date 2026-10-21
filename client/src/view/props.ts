@@ -5,6 +5,7 @@ import type { Block, RoomMap } from '@game/shared';
 import { colorInt } from '../palette';
 import { spriteData } from '../sprites/data';
 import { propTexture } from '../sprites/textures';
+import { drawText } from '../ui/pixelFont';
 import { project } from './layout';
 
 /** 바닥에 깔린 것(귀환 고리)은 그림자 높이, 문은 벽 높이 — 캐릭터보다 항상 뒤 */
@@ -15,6 +16,8 @@ const TEMP: Record<string, { body: string; top: string }> = {
   stump: { body: 'floors.1.env.trunkDark', top: 'floors.1.env.trunk' },
 };
 const TEMP_RISE = 6;
+/** 출구 인원 글자: 문(24px) 위 */
+const EXIT_TEXT_ABOVE = 31;
 
 export class PropLayer {
   private doorOut: Phaser.GameObjects.Image | null = null;
@@ -22,6 +25,10 @@ export class PropLayer {
   private chest: Phaser.GameObjects.Image | null = null;
   private cleared = false;
   private clock = 0;
+  /** 출구 앞에 모인 인원 "1/2" (문 위, 파티일 때) */
+  private exitText: Phaser.GameObjects.Graphics;
+  private doorOutAt: { x: number } | null;
+  private lastExit = '';
 
   constructor(private scene: Phaser.Scene, map: RoomMap) {
     for (const b of map.blocks) this.block(b);
@@ -29,6 +36,19 @@ export class PropLayer {
     if (map.doorOut) this.doorOut = this.put('door', 'closed', map.doorOut.x, 0, DEPTH_WALL);
     if (map.returnPoint) this.ring = this.put('returnRing', 'off', map.returnPoint.x, map.returnPoint.y, DEPTH_FLOOR);
     if (map.chest) this.chest = this.put('chest', 'closed', map.chest.x, map.chest.y, map.chest.y);
+    this.doorOutAt = map.doorOut;
+    this.exitText = scene.add.graphics().setDepth(DEPTH_WALL + 1);
+  }
+
+  /** 출구 앞 인원 (need 2 이상일 때만 보임) */
+  setExit(at: number, need: number): void {
+    const s = this.cleared && need >= 2 && this.doorOutAt ? `${at}/${need}` : '';
+    if (s === this.lastExit) return;
+    this.lastExit = s;
+    this.exitText.clear();
+    if (!s) return;
+    const { sx, sy } = project(this.doorOutAt!.x, 0);
+    drawText(this.exitText, s, sx, sy - EXIT_TEXT_ABOVE, { color: at === need ? 'global.allyFx.gold' : 'global.allyFx.white', align: 'center' });
   }
 
   /** 방 클리어: 출구 문 열림, 귀환 고리 켜짐 (상자 열기는 3-4 보상) */

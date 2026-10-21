@@ -13,7 +13,11 @@ export class DungeonRoom extends Room<DungeonState> {
   private ticks = new FixedStep();
 
   onCreate(options: DungeonOptions): void {
-    this.game = new DungeonGame({ room: Number(options?.room) || 1, partySize: Number(options?.partySize) || 1 }, {
+    this.game = new DungeonGame({
+      room: Number(options?.room) || 1, partySize: Number(options?.partySize) || 1,
+      // 개발 명령은 배포(NODE_ENV=production)에서 받지 않는다
+      dev: process.env.NODE_ENV !== 'production',
+    }, {
       broadcast: (type, msg) => this.broadcast(type, msg),
       send: (pid, type, msg) => this.clients.find((c) => c.sessionId === pid)?.send(type, msg),
     });

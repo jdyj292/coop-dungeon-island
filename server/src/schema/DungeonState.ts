@@ -72,8 +72,13 @@ export class DungeonState extends Schema {
   @type('uint8') floor = 1;
   /** 0부터 (1층 방 6개: 0~5) */
   @type('uint8') roomIndex = 0;
+  /** 이 층 방 수 (방 진행 HUD) */
+  @type('uint8') roomCount = 6;
   @type('uint8') wave = 0;
   @type('boolean') doorOpen = false;
+  /** 출구 앞에 선 인원 / 필요한 인원 (쓰러진 사람 제외, 출구가 열린 뒤) */
+  @type('uint8') exitAt = 0;
+  @type('uint8') exitNeed = 0;
   /** play | result */
   @type('string') phase = 'play';
   @type('uint8') partySize = 1;

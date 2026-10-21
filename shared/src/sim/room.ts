@@ -104,6 +104,19 @@ export class RoomSim {
     return sp;
   }
 
+  /**
+   * 다른 방에서 온 플레이어 (방 진행, dungeon.md 2장): HP·MP·물약·쿨타임·필살기·깃털은 그대로,
+   * 위치는 새 방 시작 지점, 행동·백스텝·경직과 지연 보정 기록은 비운다
+   */
+  adoptPlayer(from: SimPlayer, pos: Vec2): SimPlayer {
+    const fresh = newPlayerState({ ...pos });
+    const p = from.state;
+    const state: PlayerState = { ...p, pos: fresh.pos, fighter: fresh.fighter, run: fresh.run, backstep: null, hurt: null };
+    const sp: SimPlayer = { pid: from.pid, state, weapon: from.weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null };
+    this.players.set(sp.pid, sp);
+    return sp;
+  }
+
   removePlayer(pid: string): void {
     this.players.delete(pid);
   }

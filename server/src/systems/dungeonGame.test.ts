@@ -152,3 +152,52 @@ describe('DungeonGame (서버 진행)', () => {
     expect(new DungeonState().encodeAll(false).length).toBeGreaterThan(0);
   });
 });
+
+describe('방 진행 (dungeon.md 2장)', () => {
+  const clear = (g: DungeonGame) => { for (let i = 0; i < 3; i++) { g.sim.monsters.forEach((m) => (m.body.gone = true)); run(g, 1); } };
+  const toExit = (g: DungeonGame, pid: string) => { g.sim.players.get(pid)!.state.pos = { x: g.sim.bounds.maxX - 24, y: 6 }; };
+  it('출구가 열려도 전원이 모여야 다음 방, 자원은 이어지고 위치는 시작 지점', () => {
+    const { g, sent } = setup(1);
+    const a = g.sim.players.get('a')!.state;
+    a.hp = 700;
+    a.potions.hp = 3;
+    clear(g);
+    expect(g.state.doorOpen).toBe(true);
+    toExit(g, 'a');
+    run(g, 1);
+    expect([g.state.exitAt, g.state.exitNeed, g.state.roomIndex]).toEqual([1, 2, 0]);
+    toExit(g, 'b');
+    run(g, 1);
+    expect(g.state.roomIndex).toBe(1);
+    expect(sent.some((m) => m.type === 'roomEnter')).toBe(true);
+    const a2 = g.sim.players.get('a')!.state;
+    expect([a2.hp, a2.potions.hp, a2.pos.x]).toEqual([700, 3, 48]);
+    expect(g.state.doorOpen).toBe(false);
+    expect([...g.state.monsters.values()].map((m) => m.type).sort()).toEqual(['boar', 'boar', 'mushroom', 'mushroom']);
+  });
+  it('쓰러진 사람은 빼고 센다', () => {
+    const { g } = setup(1);
+    clear(g);
+    g.sim.players.get('b')!.state.downed = true;
+    toExit(g, 'a');
+    run(g, 1);
+    expect(g.state.roomIndex).toBe(1);
+  });
+  it('보스 방에는 출구가 없다', () => {
+    const { g } = setup(6);
+    clear(g);
+    toExit(g, 'a');
+    toExit(g, 'b');
+    run(g, 2);
+    expect([g.state.roomIndex, g.state.exitNeed]).toEqual([5, 0]);
+  });
+  it('개발 명령 clear: 개발 모드에서만 방 몬스터 모두 기절', () => {
+    const { g } = setup(1);
+    expect(g.onMessage('a', 'dev', { cmd: 'clear' })).toBe('ignored');
+    const sent: unknown[] = [];
+    const d = new DungeonGame({ room: 1, dev: true }, { broadcast: (t) => sent.push(t), send: () => {} });
+    d.join('a', 'A');
+    expect(d.onMessage('a', 'dev', { cmd: 'clear' })).toBe('ok');
+    expect(d.sim.alive.every((m) => m.body.ko)).toBe(true);
+  });
+});

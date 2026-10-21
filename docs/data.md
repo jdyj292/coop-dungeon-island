@@ -208,6 +208,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |
 | grades.{light,medium,heavy,ultimate} | `{ hitstop, shake }` 히트스톱 초, 흔들림 px (0 = 없음) |
 | shakeAfterHitstop | 흔들림 길이 = 히트스톱 + 이 값 |
+| exit | `{ halfWidth, depth }` 출구 앞 구역: 문 앞 바닥에서 좌우 ±halfWidth, 깊이 depth px까지 (dungeon.md 2장 방 진행) |
 | combo | `{ windowSec, teamMilestones }` 콤보가 이어지는 시간 (dungeon.md 3장), 팀 콤보 단계 (combat.md 7장) |
 | tokens | 공격 토큰 수 (인원 1~4 순서, balance.md·dungeon.md 3장) |
 | ai | 몬스터 AI 공통: hopSec·hopMove(튀기 박자·이동 비율), orbitDistance·orbitDepth(토큰 없을 때 맴도는 거리), chargerDistance(돌진형이 거리 두는 위치), separation(겹침 풀기 여유 px) |
