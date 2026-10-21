@@ -105,6 +105,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 완료. M1 1-1~1-7 완료, 1-8a 몬스터 hurt·hurtAir 반영. 1-8b MVP 스킬 포즈 초안 (drafts/poses.json: 대검 overhead·slam, 스태프 plant, 승인 대기)
+- M0 완료. M1 1-1~1-7 완료, 1-8a 몬스터 hurt·hurtAir, 1-8b MVP 스킬 포즈(대검 overhead·slam, 스태프 plant → 대지가르기·얼음 장판) 반영
 - 명령: `pnpm dev`(?room=1~6) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: 1-8b 승인 → poses.json·skills.json 반영 → 1-8c 이동·상태 모션. 대검 평타 경고는 1-9
+- 다음: 1-8c 이동·상태 모션 (초안 → 승인). 대검 평타 경고는 1-9

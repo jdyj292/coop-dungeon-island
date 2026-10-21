@@ -71,9 +71,9 @@
       "downhit"
     ],
     "poses": {
-      "windup": "ready",
-      "active": "slash",
-      "recovery": "slash"
+      "windup": "overhead",
+      "active": "slam",
+      "recovery": "slam"
     },
     "fx": {
       "grade": "heavy",
@@ -189,8 +189,8 @@
     },
     "poses": {
       "windup": "ready",
-      "active": "area",
-      "recovery": "area"
+      "active": "plant",
+      "recovery": "plant"
     },
     "fx": {
       "grade": "medium"

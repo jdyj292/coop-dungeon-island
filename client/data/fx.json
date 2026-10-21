@@ -24,6 +24,7 @@
     "center": [3, -11],
     "shapes": {
       "slash": { "a0": -1.7, "a1": 0.35, "r1": 8, "r2": 13 },
+      "slam": { "a0": -1.7, "a1": 0.35, "r1": 8, "r2": 13 },
       "upslash": { "a0": -1.5, "a1": 0.9, "r1": 9, "r2": 15, "rev": true }
     },
     "grow": { "light": 0, "medium": 1, "heavy": 2, "ultimate": 3 },
