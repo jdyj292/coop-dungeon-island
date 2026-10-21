@@ -47,9 +47,10 @@ export function parseSpriteData(raw: {
   const base = baseSchema.parse(raw.base);
   const outfits = outfitsSchema.parse(raw.outfits);
   const posesRaw = withoutNotes(raw.poses as Record<string, unknown>);
-  const { walk, ...weaponPoses } = posesRaw;
+  const { walk, motions, ...weaponPoses } = posesRaw;
   const poses = posesSchema.parse({
     walk,
+    motions: motions && withoutNotes(motions as Record<string, unknown>),
     weapons: Object.fromEntries(
       Object.entries(weaponPoses).map(([k, v]) => [k, withoutNotes(v as Record<string, unknown>)]),
     ),

@@ -108,7 +108,10 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 - fx: 공격 순간 이펙트. smear(pivot, 반지름 r, 각도 arc, reverse), spark, bolt, circle, lines, throw. 모양은 art.md 7장
 - 행동과 포즈 연결은 행동 데이터에 적는다: `"poses": {"windup":"ready","active":"slash","recovery":"slash"}` (weapons.json, skills.json)
 - 걷기: bottom 프레임을 poses.json walk.cycle 순서로 순환. walk.bob = 박자별로 bottom 층을 뺀 나머지(몸·팔·무기)를 내리는 px. walk.pxPerBeat = 이동 거리 몇 px마다 한 박자 넘기는지(시간이 아니라 거리 기준이라 발이 미끄러져 보이지 않음). 박자 → 프레임·내림은 compose.ts walkStep
-- 이동·상태 모션(art.md 4장)이 추가되면 몸 프레임은 bottom의 frames 키(run1~4, backstep1~2, hurt, down, getup1~2, knocked)로, 상체 변화는 base.json에 몸 포즈로 추가. 형식 확정은 그릴 때
+- 이동·상태 모션 (art.md 4장, 1-8c 확정): poses.json `motions` = 무기와 상관없는 몸 변화 `{ legs?, bob?, lean?, face?, weaponPose?, lie? }`
+  - legs = 다리(bottom) 프레임, bob = 다리를 뺀 몸 내림 px, lean = 다리를 뺀 몸을 앞(+)·뒤(-)로 px, face = 표정, weaponPose = 그동안의 무기 포즈
+  - lie = 누움 (back 뒤로 / front 엎드림): 합성한 재질 격자를 90° 돌린 뒤 음영을 입힌다 (빛이 다시 왼쪽 위 → 회전한 그림과 달리 음영이 맞음). 누우면 무기는 그리지 않음. 발밑 = 누운 몸 아래 가운데 (compose.ts lieDown)
+  - 새 다리 그림 없이 기존 프레임(stand·walkA·walkB)과 내림·기울이기로 표현한다. 모션 고르기는 client/src/view/playerView.ts, 시간 값은 fx.json playerMotion
 
 ---
 
@@ -185,6 +188,6 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 ## 10. 초안 검토 (그림 추가·수정)
 - 승인 데이터는 바로 고치지 않는다. 새 그림은 client/data/sprites/drafts/에 먼저 그린다
   - drafts/monsters.json: 몬스터 프레임 초안 (monsters.json과 같은 형식, frames·states만)
-  - drafts/poses.json: 포즈 초안 (무기 종류 → 포즈 이름 → 포즈)
-- 보기: sprite-preview 몬스터·캐릭터 탭 "초안 보기" (초안은 이름 옆에 "(초안)", 캐릭터 탭 "포즈 모아 보기"로 무기의 모든 포즈를 나란히), 게임은 개발 모드에서 `?drafts=1`
+  - drafts/poses.json: 포즈 초안 (무기 종류 → 포즈 이름 → 포즈), 모션 초안 (motions → 모션 이름 → 모션)
+- 보기: sprite-preview 몬스터·캐릭터 탭 "초안 보기" (초안은 이름 옆에 "(초안)", 캐릭터 탭 "포즈 모아 보기"·"모션 모아 보기"로 나란히), 게임은 개발 모드에서 `?drafts=1`
 - 승인되면 초안을 승인 파일로 옮기고 초안 파일에서 지운다. 코드: client/src/sprites/data.ts setUseDrafts·withMonsterDrafts

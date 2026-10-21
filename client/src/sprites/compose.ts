@@ -1,6 +1,6 @@
 // 캐릭터 파츠 → 재질 격자 (docs/sprites.md 7장 1~3단계)
 import type { SpriteData } from './data';
-import type { Layer, Part, Point, Pose } from './schema';
+import type { Layer, Motion, Part, Point, Pose } from './schema';
 import { weaponPixels, type Pixel } from './weapon';
 
 export interface CharacterLook {
@@ -16,6 +16,8 @@ export interface CharacterLook {
   frame?: string;
   /** 걷기 몸 흔들림: 다리(bottom 층)를 뺀 나머지를 아래로 옮기는 px (walkStep이 정함) */
   bob?: number;
+  /** 이동·상태 모션 (poses.json motions, art.md 4장). 없는 이름이면 무시 */
+  motion?: string;
 }
 
 /** 걷기 박자 → 다리 프레임과 몸 내림 (poses.json walk) */
@@ -70,6 +72,11 @@ function armPixels(shoulder: Point, hand: Point, sleeve: string, gauntlet: strin
 
 export function composeCharacter(data: SpriteData, look: CharacterLook): Composed {
   const { base, outfits, poses, weapons } = data;
+  const motion: Motion = (look.motion && poses.motions[look.motion]) || {};
+  // 누우면 무기는 그리지 않는다 (art.md 4장: 다운·쓰러짐은 무기 없이 누운 자세)
+  if (motion.lie) look = { ...look, weapon: undefined, pose: undefined };
+  else if (motion.weaponPose && look.weapon) look = { ...look, pose: motion.weaponPose };
+  if (motion.face) look = { ...look, face: motion.face };
   // 포즈 (몸 전체 변화가 다리 프레임·몸 내림을 정할 수 있어서 먼저 찾는다)
   let pose: Pose = {};
   const profile = look.weapon ? weapons.profiles[look.weapon] : undefined;
@@ -79,8 +86,9 @@ export function composeCharacter(data: SpriteData, look: CharacterLook): Compose
     if (!p) throw new Error(`포즈 '${profile.type}.${look.pose}' 없음`);
     pose = p;
   }
-  const frame = pose.body?.legs ?? look.frame ?? 'stand';
-  const bob = (look.bob ?? 0) + (pose.body?.bob ?? 0);
+  const frame = motion.legs ?? pose.body?.legs ?? look.frame ?? 'stand';
+  const bob = (look.bob ?? 0) + (pose.body?.bob ?? 0) + (motion.bob ?? 0);
+  const lean = motion.lean ?? 0;
   const ops: Op[] = [];
   const addPart = (part: Part) => ops.push({ layer: part.layer, pixels: partPixels(part, frame) });
 
@@ -135,14 +143,35 @@ export function composeCharacter(data: SpriteData, look: CharacterLook): Compose
   for (const { op } of sorted) {
     // 걷기 몸 흔들림·웅크림: 다리를 뺀 나머지가 함께 내려간다
     const dy = op.layer === 'bottom' ? 0 : bob;
+    const dx = op.layer === 'bottom' ? 0 : lean;
     for (const [x, y, ch] of op.pixels) {
-      const gx = x + MARGIN;
+      const gx = x + dx + MARGIN;
       const gy = y + dy + MARGIN;
       if (gx < 0 || gy < 0 || gx >= W || gy >= H) throw new Error(`상자 밖 픽셀 (${x},${y})`);
       grid[gy]![gx] = ch === '_' ? '.' : ch;
     }
   }
-  return crop(grid, [base.foot[0] + MARGIN, base.foot[1] + MARGIN]);
+  const foot: Point = [base.foot[0] + MARGIN, base.foot[1] + MARGIN];
+  if (motion.lie) return lieDown(crop(grid, foot), motion.lie);
+  return crop(grid, foot);
+}
+
+/**
+ * 누운 자세: 재질 격자를 90° 돌린다 (음영은 그 뒤에 입혀 빛 방향이 맞다).
+ * back = 뒤로 누움(머리가 뒤쪽 = 왼쪽, 반시계), front = 엎드림(머리가 앞쪽, 시계). 발밑 = 누운 몸 아래 가운데
+ */
+export function lieDown(c: Composed, side: 'back' | 'front'): Composed {
+  const h = c.rows.length, w = c.rows[0]?.length ?? 0;
+  const rows: string[] = [];
+  for (let y = 0; y < w; y++) {
+    let row = '';
+    for (let x = 0; x < h; x++) {
+      // back(반시계): 새 (x,y) = 옛 (w-1-y, x) / front(시계): 새 (x,y) = 옛 (y, h-1-x)
+      row += side === 'back' ? c.rows[x]![w - 1 - y]! : c.rows[h - 1 - x]![y]!;
+    }
+    rows.push(row);
+  }
+  return { rows, foot: [Math.floor(h / 2), w - 1] };
 }
 
 /** 빈칸 테두리를 잘라내고 기준점을 옮긴다 */

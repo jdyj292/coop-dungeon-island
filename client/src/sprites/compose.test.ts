@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { composeCharacter, walkStep } from './compose';
+import { composeCharacter, lieDown, walkStep } from './compose';
 import { spriteData } from './data';
 
 const data = spriteData();
@@ -74,5 +74,18 @@ describe('composeCharacter', () => {
         }
       }
     }
+  });
+});
+
+describe('이동·상태 모션 (poses.json motions)', () => {
+  it('lieDown: back은 반시계(머리가 왼쪽), front는 시계(머리가 오른쪽), 발밑은 아래 가운데', () => {
+    const c = { rows: ['ab', 'cd', 'ef'], foot: [1, 2] as [number, number] };
+    expect(lieDown(c, 'back')).toEqual({ rows: ['bdf', 'ace'], foot: [1, 1] });
+    expect(lieDown(c, 'front')).toEqual({ rows: ['eca', 'fdb'], foot: [1, 1] });
+  });
+  it('없는 모션 이름은 무시 (승인 데이터만 있을 때 초안 이름을 넘겨도 그대로)', () => {
+    const data = spriteData();
+    const look = { hair: 'short', face: 'normal', outfit: data.outfits.sets.beginner!, weapon: 'greatsword_basic', pose: 'idle' };
+    expect(composeCharacter(data, { ...look, motion: '없는모션' })).toEqual(composeCharacter(data, look));
   });
 });

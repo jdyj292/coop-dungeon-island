@@ -73,6 +73,20 @@ export const poseSchema = z.object({
   fx: z.record(z.unknown()).optional(),
 });
 
+/**
+ * 이동·상태 모션 (art.md 4장, 무기와 상관없음). legs = 다리 프레임, bob = 다리를 뺀 몸 내림 px,
+ * lean = 다리를 뺀 몸을 앞(+)·뒤(-)로 옮기는 px, face = 표정, weaponPose = 무기 포즈(없으면 지금 포즈),
+ * lie = 누움: 재질 격자를 90° 돌린 뒤 음영 (back = 뒤로 누움, front = 엎드림). 누우면 무기는 그리지 않음
+ */
+export const motionSchema = z.object({
+  legs: z.string().optional(),
+  bob: z.number().int().min(0).max(4).optional(),
+  lean: z.number().int().min(-3).max(3).optional(),
+  face: z.string().optional(),
+  weaponPose: z.string().optional(),
+  lie: z.enum(['back', 'front']).optional(),
+}).strict();
+
 export const posesSchema = z.object({
   walk: z
     .object({
@@ -82,6 +96,7 @@ export const posesSchema = z.object({
     })
     .refine((w) => !w.bob || w.bob.length === w.cycle.length, 'walk.bob 길이는 cycle과 같아야 함'),
   weapons: z.record(z.record(poseSchema)),
+  motions: z.record(motionSchema).default({}),
 });
 
 const weaponPart = z
@@ -142,6 +157,7 @@ export type Part = z.infer<typeof partSchema>;
 export type Base = z.infer<typeof baseSchema>;
 export type Outfits = z.infer<typeof outfitsSchema>;
 export type Pose = z.infer<typeof poseSchema>;
+export type Motion = z.infer<typeof motionSchema>;
 export type Poses = z.infer<typeof posesSchema>;
 export type Weapons = z.infer<typeof weaponsSchema>;
 export type WeaponProfile = Weapons['profiles'][string];

@@ -18,7 +18,7 @@ export function characterTab(): HTMLElement {
     hair: 'short', hairColor: 0, playerColor: 0, face: 'normal',
     outfit: { hat: '-', top: 'top_tunic', bottom: 'bottom_shorts', cape: '-' } as Record<string, string>,
     weapon: 'greatsword_basic', pose: 'idle', frame: 'stand',
-    walking: false, gallery: false, beatMs: 150, flip: false, scale: 8, bg: 'dungeon' as Background, shadow: true, foot: false,
+    walking: false, gallery: false, motion: '-', motionGallery: false, beatMs: 150, flip: false, scale: 8, bg: 'dungeon' as Background, shadow: true, foot: false,
   };
 
   const canvas = el('canvas', { className: 'stage' });
@@ -37,7 +37,9 @@ export function characterTab(): HTMLElement {
   const draw = (now = performance.now()) => {
     const step = s.walking ? walkStep(data(), Math.floor(now / s.beatMs)) : undefined;
     const frame = step?.frame ?? s.frame;
-    const look = (pose: string) => ({
+    const motionNames = () => Object.keys(data().poses.motions);
+    const look = (pose: string, motion = s.motion) => ({
+      motion: motion === '-' ? undefined : motion,
       hair: s.hair, face: s.face, frame,
       bob: step?.bob ?? 0,
       outfit: Object.values(s.outfit).filter((id) => id !== '-'),
@@ -47,14 +49,17 @@ export function characterTab(): HTMLElement {
     const colors = { hairColor: `global.hairColors.${s.hairColor}`, playerColor: `global.playerColors.${s.playerColor}` };
     try {
       // 모아 보기: 무기의 모든 포즈를 한 칸(48px)씩
-      const shown = s.gallery && s.weapon !== '-' ? posesOf() : [s.pose];
-      const cell = s.gallery ? 48 : STAGE.width;
-      const items = shown.map((p, i) => ({ sprite: renderCharacter(data(), look(p), colors), x: i * cell + cell / 2, y: STAGE.footY, flip: s.flip }));
+      // 모션 모아 보기: 서기 + 모든 모션 / 포즈 모아 보기: 무기의 모든 포즈
+      const shown = s.motionGallery ? ['-', ...motionNames()] : s.gallery && s.weapon !== '-' ? posesOf() : [s.pose];
+      const cell = s.gallery || s.motionGallery ? 48 : STAGE.width;
+      const items = shown.map((n, i) => ({
+        sprite: renderCharacter(data(), s.motionGallery ? look(s.pose, n) : look(n), colors), x: i * cell + cell / 2, y: STAGE.footY, flip: s.flip,
+      }));
       drawStage(canvas, items, {
         width: cell * shown.length, height: STAGE.height, scale: s.scale, bg: s.bg, shadow: s.shadow, showFoot: s.foot,
       });
       const sprite = items[0]!.sprite;
-      info.textContent = s.gallery ? shown.join(' · ') : `${sprite.width}×${sprite.height}px (외곽선 포함) · 발밑 ${sprite.foot.join(',')} · 프레임 ${frame}`;
+      info.textContent = s.gallery || s.motionGallery ? shown.map((n) => (n === '-' ? 'stand' : n)).join(' · ') : `${sprite.width}×${sprite.height}px (외곽선 포함) · 발밑 ${sprite.foot.join(',')} · 프레임 ${frame}`;
     } catch (e) {
       info.textContent = `오류: ${(e as Error).message}`;
     }
@@ -87,6 +92,8 @@ export function characterTab(): HTMLElement {
   };
 
   const poseSelect = select('포즈', poseOpts(), s.pose, (v) => { s.pose = v; redraw(); });
+  const motionOpts = (): [string, string][] => [['-', '없음'], ...Object.keys(data().poses.motions).map((n): [string, string] => [n, n])];
+  const motionSelect = select('모션', motionOpts(), s.motion, (v) => { s.motion = v; redraw(); });
   const panel = el('div', { className: 'panel' },
     el('h3', { text: '몸' }),
     select('머리 모양', opts(Object.keys(data0.base.hairStyles)), s.hair, (v) => { s.hair = v; redraw(); }).node,
@@ -107,12 +114,16 @@ export function characterTab(): HTMLElement {
     poseSelect.node,
     checkbox('초안 보기 (drafts/poses.json)', draftsOn(), (v) => {
       setUseDrafts(v);
+      motionSelect.set(motionOpts(), s.motion = Object.keys(data().poses.motions).includes(s.motion) ? s.motion : '-');
       const poses = posesOf();
       s.pose = poses.includes(s.pose) ? s.pose : (poses[0] ?? '');
       poseSelect.set(poseOpts(), s.pose);
       redraw();
     }),
     checkbox('포즈 모아 보기', s.gallery, (v) => { s.gallery = v; redraw(); }),
+    el('h3', { text: '이동·상태 모션 (poses.json motions)' }),
+    motionSelect.node,
+    checkbox('모션 모아 보기', s.motionGallery, (v) => { s.motionGallery = v; redraw(); }),
     el('h3', { text: '걷기' }),
     select('프레임', opts(['stand', 'walkA', 'walkB']), s.frame, (v) => { s.frame = v; redraw(); }).node,
     checkbox('걷기 재생', s.walking, (v) => { s.walking = v; redraw(); }),

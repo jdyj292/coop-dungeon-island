@@ -523,5 +523,58 @@
       0
     ],
     "pxPerBeat": 8
+  },
+  "motions": {
+    "_note": "이동·상태 모션 (art.md 4장, 형식 docs/sprites.md 5장). 무기와 상관없는 몸 변화. 상태: 확정(1-8c)",
+    "breathe": {
+      "bob": 1
+    },
+    "run1": {
+      "legs": "walkA",
+      "bob": 1,
+      "lean": 1
+    },
+    "run2": {
+      "legs": "walkB",
+      "lean": 1
+    },
+    "run3": {
+      "legs": "walkA",
+      "bob": 1,
+      "lean": 1
+    },
+    "run4": {
+      "legs": "walkB",
+      "lean": 1
+    },
+    "turn": {
+      "bob": 1
+    },
+    "backstepAir": {
+      "legs": "walkB",
+      "lean": -1
+    },
+    "backstepLand": {
+      "legs": "walkA",
+      "bob": 2
+    },
+    "hurt": {
+      "lean": -1,
+      "face": "hurt",
+      "weaponPose": "idle"
+    },
+    "getup": {
+      "legs": "walkA",
+      "bob": 2,
+      "face": "hurt"
+    },
+    "down": {
+      "lie": "back",
+      "face": "hurt"
+    },
+    "knocked": {
+      "lie": "front",
+      "face": "hurt"
+    }
   }
 }

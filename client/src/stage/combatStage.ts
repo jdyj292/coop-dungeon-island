@@ -1,7 +1,7 @@
 // 로컬 전투 무대: RoomSim(shared)을 1/60초 틱으로 돌리고, 이벤트로 연출을 붙이고, 그린다. 던전 씬과 tools/motion-preview가 같이 쓴다
 import type Phaser from 'phaser';
 import {
-  FixedStep, fighterPose, PLAYER, RoomSim, TICK, weaponDef,
+  FixedStep, RoomSim, TICK, weaponDef,
   type ActionDef, type Bounds, type Monster, type PlayerState, type PotionKind, type SimEvent, type SimOptions, type Spawn,
   type Vec2,
 } from '@game/shared';
@@ -18,10 +18,8 @@ import { Rhythm } from '../fx/rhythm';
 import { smear, smearShape } from '../fx/smear';
 import { isThrust, thrust } from '../fx/thrust';
 import { HitStop, Shake } from '../fx/timing';
-import { walkStep, type CharacterLook } from '../sprites/compose';
 import { spriteData } from '../sprites/data';
-import { characterTexture } from '../sprites/textures';
-import { newActorView, place, type ActorView } from '../view/actors';
+import { PlayerView } from '../view/playerView';
 import { project } from '../view/layout';
 import { MonsterView, placeMonster } from '../view/monsterView';
 
@@ -46,13 +44,10 @@ export class CombatStage {
   sim: RoomSim;
   readonly fx: FxContext;
   readonly rhythm = new Rhythm();
-  private playerView: ActorView;
-  private playerFlash = 0;
+  private playerView: PlayerView;
   private views = new Map<number, MonsterView>();
   private hazards: HazardLayer;
   private ghosts: Afterimages;
-  private beat = 0;
-  private walking = false;
   /** 게임 시간 누적 (대기 순환·떨림용, 히트스톱·슬로우를 따른다) */
   private clock = 0;
   /** 1/60초 고정 틱 (docs/network.md 12장) */
@@ -71,7 +66,7 @@ export class CombatStage {
   constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, spawns: Spawn[], readonly opts: SimOptions = {}) {
     this.sim = new RoomSim(this.weapon, bounds, player, opts);
     this.sim.spawn(spawns);
-    this.playerView = newActorView(scene);
+    this.playerView = new PlayerView(scene, FX_DEPTH - 1);
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.hazards = new HazardLayer(scene);
     this.ghosts = new Afterimages(scene);
@@ -126,9 +121,13 @@ export class CombatStage {
     this.fx.shake.update(TICK);
     this.clock += dt;
     this.drawDt += dt;
-    this.playerFlash = Math.max(0, this.playerFlash - dt);
     for (const m of this.sim.alive) this.view(m).update(m, dt);
     const { events, moved } = this.sim.tick(dt, input);
+    // 방향 전환: 발밑 먼지 (motion.md 6장)
+    if (this.playerView.update(this.player, dt)) {
+      const { sx, sy } = project(this.player.pos.x, this.player.pos.y);
+      dust(sx, sy, fx.dust.bounce).forEach((d) => this.fx.layer.add(d));
+    }
     events.forEach((e) => this.onEvent(e));
     // 효과음은 이벤트 순간 바로 (히트스톱과 무관, audio.md 4장)
     events.forEach((e) => soundsFor(e).forEach((n) => this.sound(n)));
@@ -162,7 +161,7 @@ export class CombatStage {
     } else if (e.type === 'playerHit') {
       // 플레이어 피격: 번쩍임 + 위험색 숫자 (경직·다운은 playerHurt 이벤트)
       const p = this.player, { sx, sy } = project(p.pos.x, p.pos.y);
-      this.playerFlash = fx.flashFrames.light * fx.frame;
+      this.playerView.flash = fx.flashFrames.light * fx.frame;
       this.fx.layer.add(damageNumber(e.damage, sx, sy - fx.number.above, 'light', 'global.semantic.danger'));
     } else if (e.type === 'playerHurt') {
       const p = this.player, { sx, sy } = project(p.pos.x, p.pos.y);
@@ -170,6 +169,7 @@ export class CombatStage {
         add(dust(sx, sy, fx.dust.down));
         this.fx.shake.start(fx.downShake.sec, fx.downShake.px);
       }
+      if (e.e === 'getup') this.playerView.onGetup();
       if (e.e === 'wipe') this.onWipe?.();
     } else if (e.type === 'monster') {
       const { sx, sy } = project(e.m.body.x, e.m.body.y), ev = e.e;
@@ -211,29 +211,8 @@ export class CombatStage {
   /** moved = 이번 프레임에 걸은 거리 (틱이 안 돌았으면 null: 걷기 박자 유지) */
   private draw(moved: number | null): void {
     const data = spriteData(), p = this.player;
-    const acting = !!p.fighter.run;
-    // 걷기 박자는 이동 거리로 넘긴다 (발이 미끄러져 보이지 않게)
-    if (moved !== null) {
-      this.walking = moved > 0;
-      this.beat = this.walking ? this.beat + moved / data.poses.walk.pxPerBeat : 0;
-    }
-    const step = this.walking && !acting ? walkStep(data, Math.floor(this.beat)) : { frame: 'stand', bob: 0 };
-    // 다운·쓰러짐: 뒤로 눕힘. 무기를 몸 옆에 둔 전용 그림(art.md 4장)은 M1 1-8, 그때까지 무기는 그리지 않음
-    const lying = p.hurt?.kind === 'down' || p.downed;
-    const look: CharacterLook = {
-      hair: 'short', face: p.hurt || p.downed ? 'hurt' : 'normal', outfit: data.outfits.sets.beginner!,
-      weapon: lying ? undefined : 'greatsword_basic', pose: lying ? undefined : fighterPose(p.fighter) ?? 'idle', frame: step.frame, bob: step.bob,
-    };
-    const tex = characterTexture(this.scene, look, { hairColor: 'global.hairColors.0', playerColor: 'global.playerColors.0' });
-    // 백스텝: 뛰어 물러나는 높이는 위치 오프셋으로만 (판정은 지상, motion.md 6장)
-    const hop = p.backstep ? Math.round(Math.sin((p.backstep.t / PLAYER.backstep.sec) * Math.PI) * fx.backstepHop) : 0;
-    // 기상·부활 무적: 깜빡임 (motion.md 4장)
-    place(this.playerView, tex, {
-      x: p.pos.x + this.rhythm.px * p.facing, y: p.pos.y, z: hop, facing: p.facing, flash: this.playerFlash > 0,
-      angle: lying ? -90 * p.facing : 0,
-    });
-    this.playerView.img.setVisible(!(p.invuln > 0 && Math.floor(this.clock / fx.reaction.stunBlink) % 2 === 1));
-    this.ghosts.update(this.drawDt, !!p.backstep, this.playerView.img);
+    this.playerView.draw(p, moved, this.rhythm.px, this.clock);
+    this.ghosts.update(this.drawDt, !!p.backstep, this.playerView.actor.img);
     this.drawDt = 0;
 
     this.sim.alive.forEach((m, i) => placeMonster(this.scene, this.view(m), data, m, this.clock, i));
