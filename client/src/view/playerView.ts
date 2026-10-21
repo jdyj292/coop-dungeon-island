@@ -22,9 +22,16 @@ export class PlayerView {
   private turnLeft = 0;
   private getupLeft = 0;
 
-  constructor(private scene: Phaser.Scene, depth: number) {
+  /** colorIndex = 플레이어 색 번호 (palette global.playerColors, 여럿일 때 구분) */
+  constructor(private scene: Phaser.Scene, depth: number, private colorIndex = 0) {
     this.actor = newActorView(scene);
     this.stars = scene.add.graphics().setDepth(depth);
+  }
+
+  destroy(): void {
+    this.actor.img.destroy();
+    this.actor.shadow.destroy();
+    this.stars.destroy();
   }
 
   /** 기상 순간 (playerHurt 'getup') */
@@ -76,7 +83,7 @@ export class PlayerView {
       weapon: lying ? undefined : 'greatsword_basic', pose: lying ? undefined : fighterPose(p.fighter) ?? 'idle',
       frame: step.frame, bob: step.bob, motion: known ? motion : undefined,
     };
-    const tex = characterTexture(this.scene, look, { hairColor: 'global.hairColors.0', playerColor: 'global.playerColors.0' });
+    const tex = characterTexture(this.scene, look, { hairColor: 'global.hairColors.0', playerColor: `global.playerColors.${this.colorIndex}` });
     // 백스텝: 뛰어 물러나는 높이는 위치 오프셋으로만 (판정은 지상, motion.md 6장)
     const hop = p.backstep ? Math.round(Math.sin((p.backstep.t / PLAYER.backstep.sec) * Math.PI) * fx.backstepHop) : 0;
     place(this.actor, tex, {

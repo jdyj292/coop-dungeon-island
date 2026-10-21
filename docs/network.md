@@ -80,6 +80,7 @@
 ### DungeonState
 ```
 DungeonState
+  serverTime                이 상태의 서버 시각 ms (패치마다 바뀜, 보간 기준)
   floor, roomIndex (0~5), wave, doorOpen, phase ("play" | "result")
   partySize, teamCombo
   players: Map<id, PlayerState>
@@ -180,6 +181,10 @@ IslandState
 - 높이(z)도 보간. 띄우기 포물선은 20Hz 스냅샷으로도 충분히 부드럽다 (0.7초 체공에 14개 이상)
 - 몬스터 행동은 actionId + actionStart로 포즈·예고를 클라이언트가 직접 재생 (보간 대상 아님)
 - 버퍼가 비면(지연 급증) 마지막 속도로 최대 200ms 외삽 후 멈춤
+- 적중 연출(hit 이벤트)은 그리는 시점이 이벤트의 t에 닿을 때 재생해 보간된 화면과 맞춘다. 투사체는 projSpawn 데이터로 직접 날리고 projEnd 시각에 지운다
+- 행동 시작·active 진입·백스텝·다운 등의 소리와 연출은 그리는 시점의 상태 변화로 낸다 (로컬의 SimEvent 대신)
+- 구현: client/src/net/ (connection = 접속·스냅샷, clock, interp, mirror = 스냅샷 → 그리기 객체, inputSender, transitions), client/src/stage/onlineStage.ts
+- 개발용 접속: `?online=1&room=1&party=2` → 같은 방 번호·인원 조건의 빈자리에 들어가고 없으면 새로 (서버 filterBy). 다른 플레이어는 플레이어 색 번호로 구분
 
 ---
 

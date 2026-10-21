@@ -27,7 +27,7 @@ export class HazardLayer {
     this.air = scene.add.graphics().setDepth(4000);
   }
 
-  draw(sim: RoomSim): void {
+  draw(sim: Pick<RoomSim, 'zones' | 'alive' | 'projectiles'>): void {
     const g = this.ground, a = this.air;
     g.clear();
     a.clear();

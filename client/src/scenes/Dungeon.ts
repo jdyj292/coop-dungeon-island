@@ -1,9 +1,14 @@
-// 던전 테스트 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 (combat.md 1장). 서버 없이 로컬
+// 던전 테스트 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 (combat.md 1장)
+// 기본은 서버 없이 로컬. ?online=1&party=2면 서버 던전 방에 접속 (roadmap 2-3, 같은 방 번호·인원의 빈자리에 들어감)
 import Phaser from 'phaser';
-import { entryPos, floorRoom, roomBounds, skillDef, TILE, WaveRunner } from '@game/shared';
+import { entryPos, floorRoom, roomBounds, skillDef, TILE, WaveRunner, type PlayerState } from '@game/shared';
+import type { Shake } from '../fx/timing';
 import { sfx } from '../audio/player';
 import { color } from '../palette';
+import { Connection } from '../net/connection';
+import type { KeyInput } from '../net/inputSender';
 import { CombatStage } from '../stage/combatStage';
+import { OnlineStage } from '../stage/onlineStage';
 import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
 import { HudBottom } from '../ui/hudBottom';
 import { HudOverlay } from '../ui/hudOverlay';
@@ -23,10 +28,13 @@ const SKILLS = { skill1: skillDef('gs_launch'), skill2: skillDef('gs_earthsplit'
 type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2' | 'potionHp' | 'potionMp';
 
 export class Dungeon extends Phaser.Scene {
-  private room = floorRoom('floor1', Number(new URLSearchParams(location.search).get('room') ?? 1));
+  private params = new URLSearchParams(location.search);
+  private room = floorRoom('floor1', Number(this.params.get('room') ?? 1));
+  private onlineMode = this.params.get('online') === '1';
   private roomW = 0;
   private waves!: WaveRunner;
-  private stage!: CombatStage;
+  private stage: CombatStage | null = null;
+  private online: OnlineStage | null = null;
   private camCenter = 0;
   private hud!: HudBottom;
   private overlay!: HudOverlay;
@@ -46,14 +54,16 @@ export class Dungeon extends Phaser.Scene {
     if (!this.textures.exists('room-bg')) this.textures.addCanvas('room-bg', drawRoomBg(FLOOR, this.roomW, td, FIELD_BOTTOM + BG_EXTRA));
     this.add.image(0, 0, 'room-bg').setOrigin(0, 0).setDepth(-1000);
 
-    this.stage = new CombatStage(this, bounds, entryPos(0, 1, depth), this.waves.next());
-    this.camCenter = this.stage.player.pos.x;
-    sfx.unlockOnFirstInput();
-    this.stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
-
     // HUD는 카메라 흔들림과 무관하게 화면에 고정 (hud.md 1·3장)
     this.hud = new HudBottom(this, HUD_DEPTH);
     this.overlay = new HudOverlay(this, HUD_DEPTH - 1);
+    sfx.unlockOnFirstInput();
+    this.camCenter = entryPos(0, 1, depth).x;
+    if (this.onlineMode) this.connect();
+    else {
+      const stage = (this.stage = new CombatStage(this, bounds, entryPos(0, 1, depth), this.waves.next()));
+      stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
+    }
 
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({
@@ -62,10 +72,20 @@ export class Dungeon extends Phaser.Scene {
     }) as typeof this.keys;
   }
 
+  private connect(): void {
+    const party = Math.min(4, Math.max(1, Number(this.params.get('party') ?? 2)));
+    Connection.join({ room: Number(this.params.get('room') ?? 1), partySize: party }).then((conn) => {
+      if (!this.scene.isActive()) return conn.leave();
+      this.online = new OnlineStage(this, conn);
+      this.online.onClear = () => this.overlay.showClear();
+      this.events.once('shutdown', () => conn.leave());
+    }, (e: unknown) => console.error('[online] 접속 실패 (서버가 떠 있나요? pnpm dev)', e));
+  }
+
   /** 몬스터를 모두 기절시키면 다음 웨이브, 마지막이면 방 클리어 (shared WaveRunner) */
-  private checkWave(): void {
-    const r = this.waves.check(this.stage.monsters.length);
-    if (Array.isArray(r)) this.stage.spawn(r);
+  private checkWave(stage: CombatStage): void {
+    const r = this.waves.check(stage.monsters.length);
+    if (Array.isArray(r)) stage.spawn(r);
     else if (r === 'clear') {
       sfx.play('roomClear');
       this.overlay.showClear();
@@ -74,9 +94,8 @@ export class Dungeon extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    const k = this.keys;
-    this.checkWave();
-    this.stage.update(delta / 1000, {
+    const k = this.keys, dt = delta / 1000;
+    const input: KeyInput = {
       x: (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0),
       y: (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0),
       attack: Phaser.Input.Keyboard.JustDown(k.attack),
@@ -84,17 +103,28 @@ export class Dungeon extends Phaser.Scene {
         : Phaser.Input.Keyboard.JustDown(k.skill2) ? SKILLS.skill2 : null,
       backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
       potion: Phaser.Input.Keyboard.JustDown(k.potionHp) ? 'hp' : Phaser.Input.Keyboard.JustDown(k.potionMp) ? 'mp' : null,
-    });
-    const { width, height } = this.scale.gameSize, dt = delta / 1000;
-    this.hud.draw({
-      player: this.stage.player, weapon: 'greatsword', skills: [SKILLS.skill1, SKILLS.skill2, null, null],
-      level: 1, coins: 0, materials: 0,
-    }, dt, width, height - HUD_HEIGHT);
-    this.overlay.draw(this.stage.sim.combo.count, dt, width);
+    };
+    let view: { player: PlayerState | null; combo: number; shake: Shake };
+    if (this.stage) {
+      this.checkWave(this.stage);
+      this.stage.update(dt, input);
+      view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake };
+    } else if (this.online) {
+      this.online.update(dt, input);
+      view = { player: this.online.me, combo: this.online.combo.count, shake: this.online.fx.shake };
+    } else return; // 접속 중
+    const { width, height } = this.scale.gameSize;
+    if (view.player) {
+      this.hud.draw({
+        player: view.player, weapon: 'greatsword', skills: [SKILLS.skill1, SKILLS.skill2, null, null],
+        level: 1, coins: 0, materials: 0,
+      }, dt, width, height - HUD_HEIGHT);
+    }
+    this.overlay.draw(view.combo, dt, width);
 
-    const cam = followCamera(this.camCenter, this.stage.player.pos.x, DEADZONE, this.scale.gameSize.width, this.roomW);
+    const cam = followCamera(this.camCenter, view.player?.pos.x ?? this.camCenter, DEADZONE, width, this.roomW);
     this.camCenter = cam.center;
-    const shake = this.stage.fx.shake.offset();
+    const shake = view.shake.offset();
     this.cameras.main.setScroll(cam.scrollX - shake.x, -shake.y);
   }
 }

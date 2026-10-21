@@ -8,6 +8,7 @@ import {
 import fx from '../../data/fx.json';
 import { sfx } from '../audio/player';
 import { soundsFor } from '../audio/sfxEvents';
+import { actionSmear } from '../fx/actionSmear';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { HazardLayer } from '../fx/hazards';
@@ -15,8 +16,6 @@ import { hitPackage, type FxContext } from '../fx/hitPackage';
 import { FxLayer } from '../fx/layer';
 import { dust, ring } from '../fx/particles';
 import { Rhythm } from '../fx/rhythm';
-import { smear, smearShape } from '../fx/smear';
-import { isThrust, thrust } from '../fx/thrust';
 import { HitStop, Shake } from '../fx/timing';
 import { spriteData } from '../sprites/data';
 import { PlayerView } from '../view/playerView';
@@ -196,16 +195,7 @@ export class CombatStage {
 
   private smearFor(def: ActionDef): void {
     const p = this.player;
-    const foot = () => ({ ...project(p.pos.x + this.rhythm.px * p.facing, p.pos.y), facing: p.facing });
-    if (isThrust(def.id)) {
-      this.fx.layer.add(thrust(foot, def.fx?.grade ?? 'light'));
-      return;
-    }
-    const shape = smearShape(def.poses?.active ?? '');
-    if (!shape) return;
-    const { sx, sy } = foot();
-    const [cx, cy] = fx.smear.center as [number, number];
-    this.fx.layer.add(smear(sx + cx * p.facing, sy + cy, p.facing, shape, def.fx?.grade ?? 'light'));
+    actionSmear(this.fx.layer, def, () => ({ ...project(p.pos.x + this.rhythm.px * p.facing, p.pos.y), facing: p.facing }));
   }
 
   /** moved = 이번 프레임에 걸은 거리 (틱이 안 돌았으면 null: 걷기 박자 유지) */

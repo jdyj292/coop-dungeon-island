@@ -67,6 +67,8 @@ export class ZoneState extends Schema {
 }
 
 export class DungeonState extends Schema {
+  /** 이 상태의 서버 시각(ms, 방 생성부터). 패치마다 바뀌어 클라이언트 보간 기준이 된다 (network.md 8장) */
+  @type('float64') serverTime = 0;
   @type('uint8') floor = 1;
   /** 0부터 (1층 방 6개: 0~5) */
   @type('uint8') roomIndex = 0;
