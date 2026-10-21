@@ -30,7 +30,9 @@
   },
   "shakeAfterHitstop": 0.12,
   "tokens": [2, 3, 4, 5],
-  "combo": { "windowSec": 1.5, "teamMilestones": [20, 40, 60] },
+  "combo": { "windowSec": 1.5, "teamMilestones": [20, 40, 60], "soloMilestones": [30, 60, 90], "coinBonus": [0.05, 0.1, 0.15] },
+  "partyHpMul": [1, 1.5, 2, 2.5],
   "exit": { "halfWidth": 24, "depth": 20 },
+  "interactRange": 20,
   "ai": { "hopSec": 0.6, "hopMove": 0.5, "orbitDistance": 48, "orbitDepth": 14, "chargerDistance": 64, "separation": 2 }
 }

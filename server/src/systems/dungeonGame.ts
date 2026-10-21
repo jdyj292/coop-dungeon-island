@@ -1,14 +1,15 @@
 // 던전 한 판의 진행 (Colyseus 없이 테스트 가능): 방마다 RoomSim + 웨이브 + 방 진행 + 입력 대기열 + 상태 반영 + 이벤트
 // DungeonRoom(rooms/)은 연결·전송만 맡는다. 흐름은 docs/network.md 3~6장
 import {
-  entryPos, NET, parseC2S, RoomSim, TICK, WaveRunner, weaponDef,
+  COMBAT, entryPos, mapOf, NET, parseC2S, ROOMS, RoomSim, TICK, WaveRunner, weaponDef,
   type C2SMessage, type C2SType, type RoomDef, type PlayerInput, type Projectile, type S2C, type SimOptions, type SimPlayer,
 } from '@game/shared';
 import { DungeonState, PlayerState } from '../schema/DungeonState';
 import { eventsFor, projectileEvents, type Outgoing } from './events';
 import { InputQueue } from './inputs';
 import { dungeonRules, RateLimit } from './rateLimit';
-import { buildRoom, exitCount, floorRooms } from './roomFlow';
+import { LootBook, type LootMessage } from './reward';
+import { buildRoom, exitCount, floorRooms, FLOOR } from './roomFlow';
 import { syncPlayer, syncWorld } from './sync';
 
 export interface Outbox {
@@ -47,6 +48,7 @@ export class DungeonGame {
   private room: RoomDef;
   private readonly simOpts: SimOptions;
   private readonly dev: boolean;
+  private readonly loot: LootBook;
 
   constructor(opts: DungeonOptions, private out: Outbox) {
     const rooms = floorRooms();
@@ -54,6 +56,7 @@ export class DungeonGame {
     const party = Math.min(4, Math.max(1, Math.floor(opts.partySize ?? 1)));
     this.simOpts = { partySize: party, rng: opts.rng, hitstop: 'entity' };
     this.dev = !!opts.dev;
+    this.loot = new LootBook(opts.rng ?? Math.random);
     this.state.assign({ partySize: party, roomCount: rooms.length });
     this.room = rooms[n - 1]!;
     this.sim = buildRoom(this.room, weaponDef('greatsword'), this.simOpts, null, () => 0);
@@ -67,7 +70,7 @@ export class DungeonGame {
     this.state.monsters.clear();
     this.state.zones.clear();
     this.sim.spawn(this.waves.next());
-    this.state.assign({ roomIndex: index, wave: this.waves.wave, doorOpen: false, exitAt: 0, exitNeed: 0 });
+    this.state.assign({ roomIndex: index, wave: this.waves.wave, doorOpen: false, exitAt: 0, exitNeed: 0, chestOpen: false });
     syncWorld(this.state, this.sim, this.now);
   }
 
@@ -145,12 +148,20 @@ export class DungeonGame {
       case 'dev': {
         const msg = parseC2S('dev', raw);
         if (!msg || !this.dev) return 'ignored';
-        // 기절 처리 (보상·웨이브 진행은 평소와 같은 길로)
-        for (const mon of this.sim.alive) Object.assign(mon, { hp: 0 }).body.ko = true;
+        // 기절 처리: 보상은 처치와 같게, 웨이브 진행은 다음 틱
+        for (const mon of this.sim.alive.filter((x) => !x.body.ko)) {
+          Object.assign(mon, { hp: 0 }).body.ko = true;
+          this.deliver(this.loot.kill(mon.def, this.pids()));
+        }
+        return 'ok';
+      }
+      case 'interact': {
+        const msg = parseC2S('interact', raw);
+        if (!msg) return 'ignored';
+        if (msg.targetId === 'chest') this.openChest(sp);
         return 'ok';
       }
       default:
-        // interact(부활·줍기·레버)는 M3
         return 'ignored';
     }
   }
@@ -173,6 +184,26 @@ export class DungeonGame {
     }
   }
 
+  private pids(): string[] {
+    return [...this.sim.players.keys()];
+  }
+
+  private deliver(list: LootMessage[]): void {
+    for (const m of list) {
+      if (m.to) this.out.send(m.to, m.type, m.msg as never);
+      else this.out.broadcast(m.type, m.msg as never);
+    }
+  }
+
+  /** 보물상자: 방 클리어 뒤, 가까이 (combat.json interactRange), 방마다 한 번 (rooms.json chest) */
+  private openChest(sp: SimPlayer): void {
+    const at = mapOf(this.room).chest, c = ROOMS[FLOOR]!.chest;
+    if (!at || !c || !this.state.doorOpen || this.state.chestOpen) return;
+    if (Math.hypot(sp.state.pos.x - at.x, sp.state.pos.y - at.y) > COMBAT.interactRange) return;
+    this.state.chestOpen = true;
+    this.deliver(this.loot.chest(c, this.pids()));
+  }
+
   /** 1/60초 한 틱 */
   tick(): void {
     this.now += TICK * 1000;
@@ -187,6 +218,12 @@ export class DungeonGame {
     const { events, moved } = this.sim.step(TICK, inputs);
     const combos = new Map([...this.sim.players.values()].map((sp) => [sp.pid, sp.combo.count]));
     const out: Outgoing[] = [...eventsFor(events, this.now, combos), ...projectileEvents(before, this.sim.projectiles, this.now)];
+    // 보상: 기절 → 전원, 콤보 단계 → 보너스 (솔로 개인 / 파티 팀)
+    for (const e of events) {
+      if (e.type === 'ko') this.deliver(this.loot.kill(e.m.def, this.pids()));
+      else if (e.type === 'comboMilestone') this.deliver(this.loot.milestone(e.count, [e.pid], true));
+      else if (e.type === 'teamMilestone') this.deliver(this.loot.milestone(e.count, this.pids(), false));
+    }
     // 웨이브: 모두 기절 → 다음 웨이브, 마지막이면 방 클리어
     const w = this.waves.check(this.sim.alive.length);
     if (Array.isArray(w)) {
@@ -206,6 +243,8 @@ export class DungeonGame {
       const s = this.state.players.get(sp.pid);
       if (!s) continue;
       syncPlayer(s, sp, moved.get(sp.pid) ?? 0, this.now);
+      const l = this.loot.of(sp.pid);
+      s.priv.assign({ coins: l.coins, materials: l.materials, exp: l.exp, bonusPct: Math.round(l.bonus * 100) });
       s.lastInputSeq = seqs.get(sp.pid) ?? s.lastInputSeq;
     }
     syncWorld(this.state, this.sim, this.now);

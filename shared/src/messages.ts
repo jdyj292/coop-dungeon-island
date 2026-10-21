@@ -46,6 +46,10 @@ export interface S2C {
   /** 투사체는 상태에 넣지 않고 이벤트로 (network.md 5장). kind = 공격 id */
   projSpawn: { id: number; kind: string; owner: number; x: number; y: number; z: number; dir: number; t0: number };
   projEnd: { id: number; reason: 'hit' | 'range'; x: number; y: number };
+  /** 받은 보상 (본인에게, 몬스터 기절·보물상자) */
+  reward: { coins: number; material: number; exp: number };
+  /** 콤보 코인 보너스 단계 달성 (본인에게, 비율은 정산 때 더함) */
+  comboBonus: { count: number; rate: number };
   /** 다음 방에 들어감 (출구에 전원 모임). 클라이언트는 방 화면을 다시 만든다 */
   roomEnter: { roomIndex: number };
   /** 방의 몬스터를 모두 기절시킴 (마지막 웨이브) */

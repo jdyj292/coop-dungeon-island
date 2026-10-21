@@ -26,10 +26,18 @@ export function stepCombo(c: Combo, dt: number): void {
   if (c.left === 0) c.count = 0;
 }
 
-/** 팀 콤보 (2인 이상, combat.md 7장): 누구의 적중이든 windowSec 안에 이어지면 하나의 카운터. 이번에 넘은 단계 (없으면 null) */
-export function teamComboHit(c: Combo, hits: number): number | null {
+/** 적중을 더하고 이번에 넘은 단계 (없으면 null). 팀 콤보(2인 이상, combat.md 7장)·개인 콤보(솔로, dungeon.md 3장) 공용 */
+export function milestoneHit(c: Combo, hits: number, milestones: readonly number[]): number | null {
   const before = c.count;
   comboHit(c, hits);
-  const crossed = COMBAT.combo.teamMilestones.filter((m) => before < m && c.count >= m);
+  const crossed = milestones.filter((m) => before < m && c.count >= m);
   return crossed.at(-1) ?? null;
+}
+
+/** 팀 콤보: 누구의 적중이든 windowSec 안에 이어지면 하나의 카운터 */
+export const teamComboHit = (c: Combo, hits: number): number | null => milestoneHit(c, hits, COMBAT.combo.teamMilestones);
+
+/** 콤보 단계 → 코인 보너스 비율 (단계 순서대로 combat.json combo.coinBonus) */
+export function comboCoinBonus(milestone: number, milestones: readonly number[]): number {
+  return COMBAT.combo.coinBonus[milestones.indexOf(milestone)] ?? 0;
 }

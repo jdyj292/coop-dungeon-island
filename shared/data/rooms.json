@@ -2,6 +2,10 @@
   "_note": "층별 방 구성. 위치는 Tiled 맵(maps/<map>.json, 방마다 map 키)의 출현 지점, 종류·수·웨이브는 여기서. 형식은 docs/dungeon.md 맵 작성 규칙",
   "floor1": {
     "returnAfterRoom": 3,
+    "chest": {
+      "coins": 15,
+      "material": 1
+    },
     "rooms": [
       {
         "id": "f1_r1",

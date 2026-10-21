@@ -54,7 +54,7 @@
 ### 콤보 보상
 - 파티: 팀 콤보 (combat.md)
 - 솔로: 개인 콤보 30 / 60 / 90 달성 시 같은 코인 보너스 (+5% / +10% / +15%)
-- 개인 콤보: 적중이 combat.json combo.windowSec(1.5초, 팀 콤보와 같음) 안에 이어지면 유지. 계산 shared/src/combo.ts, 코인 보너스는 M3
+- 개인 콤보: 적중이 combat.json combo.windowSec(1.5초, 팀 콤보와 같음) 안에 이어지면 유지. 계산 shared/src/combo.ts, 코인 보너스 balance.md 7장
 
 ### 버프·지원 스킬
 - "팀 전체", "동료" 대상 효과는 **자기 자신도 포함** (표식, 무중력, 중력장 등)

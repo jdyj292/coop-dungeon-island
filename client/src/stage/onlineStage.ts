@@ -47,6 +47,8 @@ export class OnlineStage {
   /** 개인 콤보 (솔로 방) */
   combo = { count: 0, left: 0 };
   onClear: (() => void) | null = null;
+  /** 콤보 코인 보너스 달성 (비율) */
+  onBonus: ((rate: number) => void) | null = null;
   private sender: InputSender;
   private players = new Map<string, Remote>();
   private monsters = new Map<string, { m: Monster; view: MonsterView }>();
@@ -209,6 +211,10 @@ export class OnlineStage {
     } else if (type === 'projEnd') {
       const pr = this.projectiles.get((msg as S2C['projEnd']).id);
       if (pr) pr.endAt = now;
+    } else if (type === 'reward') {
+      sfx.play('coin');
+    } else if (type === 'comboBonus') {
+      this.onBonus?.((msg as S2C['comboBonus']).rate);
     } else if (type === 'rejected') {
       this.predictor?.reject((msg as S2C['rejected']).seq);
     }

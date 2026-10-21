@@ -10,6 +10,12 @@ export class PlayerPrivate extends Schema {
   @type('uint8') potionHp = 0;
   @type('uint8') potionMp = 0;
   @type('uint8') feathers = 0;
+  /** 이번 판 보상 (정산 전, balance.md 7장) */
+  @type('uint16') coins = 0;
+  @type('uint16') materials = 0;
+  @type('uint16') exp = 0;
+  /** 콤보 코인 보너스 % (정산 때 더함) */
+  @type('uint8') bonusPct = 0;
 }
 
 export class PlayerState extends Schema {
@@ -79,6 +85,8 @@ export class DungeonState extends Schema {
   /** 출구 앞에 선 인원 / 필요한 인원 (쓰러진 사람 제외, 출구가 열린 뒤) */
   @type('uint8') exitAt = 0;
   @type('uint8') exitNeed = 0;
+  /** 이 방 보물상자를 열었나 */
+  @type('boolean') chestOpen = false;
   /** play | result */
   @type('string') phase = 'play';
   @type('uint8') partySize = 1;

@@ -1,8 +1,8 @@
-// 던전 테스트 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 (combat.md 1장)
+// 던전 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 · E 상호작용 (combat.md 1장)
 // 기본은 서버 없이 로컬 (방 하나 전투 테스트). ?online=1&party=2면 서버 던전 방에 접속해 ?room부터 보스 방까지 한 판 (roadmap 3-3)
 // 서버 방 번호가 바뀌면 같은 접속으로 씬을 다시 시작해 방 화면(배경·소품·장애물)을 새로 만든다
 import Phaser from 'phaser';
-import { entryPos, floorRoom, mapOf, roomBounds, ROOMS, skillDef, TILE, WaveRunner, type Bounds, type PlayerState, type RoomDef } from '@game/shared';
+import { COMBAT, entryPos, floorRoom, mapOf, roomBounds, ROOMS, skillDef, TILE, WaveRunner, type Bounds, type PlayerState, type RoomDef } from '@game/shared';
 import type { Shake } from '../fx/timing';
 import { sfx } from '../audio/player';
 import { color } from '../palette';
@@ -33,7 +33,7 @@ const ROOM_FADE_MS = 300;
 /** 스킬 슬롯 (임시 고정 장착, 슬롯 UI는 M4) */
 const SKILLS = { skill1: skillDef('gs_launch'), skill2: skillDef('gs_earthsplit') };
 
-type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2' | 'potionHp' | 'potionMp';
+type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2' | 'potionHp' | 'potionMp' | 'interact';
 
 export class Dungeon extends Phaser.Scene {
   private params = new URLSearchParams(location.search);
@@ -82,7 +82,7 @@ export class Dungeon extends Phaser.Scene {
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({
       up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D,
-      attack: K.J, backstep: K.K, skill1: K.U, skill2: K.I, potionHp: K.Z, potionMp: K.X,
+      attack: K.J, backstep: K.K, skill1: K.U, skill2: K.I, potionHp: K.Z, potionMp: K.X, interact: K.E,
     }) as typeof this.keys;
   }
 
@@ -110,6 +110,7 @@ export class Dungeon extends Phaser.Scene {
       const panel = new LagPanel(conn, online);
       this.events.once('shutdown', () => panel.destroy());
     }
+    online.onBonus = (rate) => this.overlay.showBonus(rate);
     online.onClear = () => {
       this.overlay.showClear();
       this.props.setCleared(true);
@@ -127,6 +128,14 @@ export class Dungeon extends Phaser.Scene {
       if (!this.scene.isActive()) return conn.leave();
       this.setupOnline(conn);
     }, (e: unknown) => console.error('[online] 접속 실패 (서버가 떠 있나요? pnpm dev)', e));
+  }
+
+  /** 보물상자: 클리어 뒤 가까이 가면 [E] (나에게만), E로 열기 요청 (판정은 서버, combat.json interactRange) */
+  private interact(live: { doorOpen: boolean; chestOpen: boolean }, pressed: boolean): void {
+    const me = this.online?.me, chest = mapOf(this.room).chest;
+    const near = !!me && !!chest && live.doorOpen && !live.chestOpen && Math.hypot(me.pos.x - chest.x, me.pos.y - chest.y) <= COMBAT.interactRange;
+    this.props.setPrompt(near);
+    if (near && pressed) this.online!.conn.send('interact', { targetId: 'chest' });
   }
 
   /** 몬스터를 모두 기절시키면 다음 웨이브, 마지막이면 방 클리어 (shared WaveRunner) */
@@ -152,11 +161,11 @@ export class Dungeon extends Phaser.Scene {
       backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
       potion: Phaser.Input.Keyboard.JustDown(k.potionHp) ? 'hp' : Phaser.Input.Keyboard.JustDown(k.potionMp) ? 'mp' : null,
     };
-    let view: { player: PlayerState | null; combo: number; shake: Shake; color: number };
+    let view: { player: PlayerState | null; combo: number; shake: Shake; color: number; coins: number; materials: number };
     if (this.stage) {
       this.checkWave(this.stage);
       this.stage.update(dt, input);
-      view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake, color: 0 };
+      view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake, color: 0, coins: 0, materials: 0 };
     } else if (this.online) {
       const live = this.online.conn.progress;
       // 다음 방 (출구에 전원 모임): 같은 접속으로 방 화면을 다시 만든다
@@ -167,7 +176,13 @@ export class Dungeon extends Phaser.Scene {
       }
       this.online.update(dt, input);
       this.props.setExit(live.exitAt, live.exitNeed);
-      view = { player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake, color: this.online.myColor };
+      this.props.setChestOpen(live.chestOpen);
+      this.interact(live, Phaser.Input.Keyboard.JustDown(k.interact));
+      const mine = this.online.conn.mine;
+      view = {
+        player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake, color: this.online.myColor,
+        coins: mine?.coins ?? 0, materials: mine?.materials ?? 0,
+      };
       this.party.draw(this.online.party());
     } else return; // 접속 중
     this.props.update(dt);
@@ -175,7 +190,7 @@ export class Dungeon extends Phaser.Scene {
     if (view.player) {
       this.hud.draw({
         player: view.player, weapon: 'greatsword', skills: [SKILLS.skill1, SKILLS.skill2, null, null],
-        level: 1, coins: 0, materials: 0, colorIndex: view.color,
+        level: 1, coins: view.coins, materials: view.materials, colorIndex: view.color,
       }, dt, width, height - HUD_HEIGHT);
     }
     this.overlay.draw(view.combo, dt, width);

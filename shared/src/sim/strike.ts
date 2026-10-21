@@ -11,6 +11,8 @@ import { actionHits } from '../shapes';
 export interface StrikeHit {
   m: Monster;
   damage: number;
+  /** 이 적중으로 체력 0 → 기절 (보상 시점) */
+  ko: boolean;
 }
 
 /** 판정에 쓸 몬스터 위치 (지연 보정이면 되감은 위치, network.md 9장) */
@@ -28,11 +30,12 @@ export function strike(p: PlayerState, run: ActionRun, monsters: Monster[], done
     done.add(m.id);
     applyHit(m.body, { dir: p.facing, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });
     const damage = damageOf(def.coef);
+    const ko = m.hp > 0 && m.hp - damage <= 0;
     m.hp = Math.max(0, m.hp - damage);
     if (m.hp === 0) m.body.ko = true;
     gainMpOnHit(p);
     gainUlt(p, PLAYER.ultimate.onHit);
-    out.push({ m, damage });
+    out.push({ m, damage, ko });
   }
   return out;
 }

@@ -1,7 +1,7 @@
 // 방 시뮬레이션 한 틱 (클라이언트 로컬·서버 공용): 몬스터 AI → 투사체·장판 → 플레이어 행동·판정 → 몬스터끼리 겹침 풀기
 // 플레이어는 여러 명 (pid로 구분). 솔로는 첫 플레이어만 쓰는 tick(dt, input)
-import type { ActionDef, ActionRun, FighterEvent, WeaponDef } from '../actions';
-import { PLAYER } from '../data/load';
+import type { ActionRun, WeaponDef } from '../actions';
+import { COMBAT, PLAYER } from '../data/load';
 import type { MonsterAttack } from '../data/schema';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
 import { spawnProjectile, zoneSpeedMul, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
@@ -9,8 +9,8 @@ import { newMonster, stepBodyIn, type Monster } from '../monster/state';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
 import { mergePresses, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
-import { gainUlt, hurtPlayer, isInvulnerable, type HurtEvent, type PotionKind } from '../playerHurt';
-import { comboHit, newCombo, stepCombo, teamComboHit, type Combo } from '../combo';
+import { gainUlt, hurtPlayer, isInvulnerable } from '../playerHurt';
+import { comboHit, milestoneHit, newCombo, stepCombo, teamComboHit, type Combo } from '../combo';
 import type { PlayerTarget } from '../shapes';
 import { gradeTiming } from '../hit';
 import { chooseTarget } from './aim';
@@ -19,54 +19,8 @@ import { PositionHistory, type PastPos } from './history';
 import { HitLog } from './hitLog';
 import { phaseIsActive, strike, type PosOf } from './strike';
 
-export interface Spawn {
-  kind: string;
-  x: number;
-  y: number;
-}
-
-/** 방 안 플레이어 한 명 */
-export interface SimPlayer {
-  pid: string;
-  state: PlayerState;
-  weapon: WeaponDef;
-  /** 개인 콤보 (팀 콤보는 2-6) */
-  combo: Combo;
-  /** 지연 보정 되감기 (초): 이 플레이어의 공격은 그만큼 과거의 몬스터 위치로 판정 (network.md 9장) */
-  rewind: number;
-  /** 히트스톱 남은 시간 (hitstop: 'entity'일 때) */
-  stop: number;
-  /** 피격 직전 상태 기록 (백스텝 소급 무적) */
-  hits: HitLog;
-  /** 히트스톱 동안 들어온 누름 (멈춤이 끝난 틱에 적용) */
-  held: PlayerInput | null;
-}
-
-/** pid = 그 사건의 플레이어 (hit은 공격자, playerHit·playerHurt는 맞은 사람) */
-export type SimEvent =
-  | { type: 'fighter'; pid: string; e: FighterEvent }
-  | { type: 'backstep'; pid: string }
-  /** 플레이어 → 몬스터 적중 */
-  | { type: 'hit'; pid: string; m: Monster; def: ActionDef; damage: number }
-  | { type: 'monster'; m: Monster; e: MonsterEvent }
-  /** 몬스터 공격·투사체 → 플레이어 적중 (HP 감소·경직·다운은 playerHurt) */
-  | { type: 'playerHit'; pid: string; from: Monster | undefined; def: MonsterAttack; damage: number }
-  | { type: 'playerHurt'; pid: string; e: HurtEvent }
-  | { type: 'potion'; pid: string; kind: PotionKind }
-  /** 팀 콤보 단계 달성 (2인 이상): 전원 필살기 게이지 +onTeamMilestone */
-  | { type: 'teamMilestone'; count: number };
-
-export interface SimOptions {
-  /** false면 몬스터가 움직이거나 공격하지 않음 (tools/motion-preview) */
-  ai?: boolean;
-  partySize?: number;
-  rng?: () => number;
-  /**
-   * 히트스톱: 'none' = 시뮬레이션은 멈추지 않음 (솔로 로컬은 화면 전체를 멈춘다, motion.md 3장),
-   * 'entity' = 공격자와 대상만 멈추고 세계는 계속 (서버, network.md 9장)
-   */
-  hitstop?: 'none' | 'entity';
-}
+export type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
+import type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
 
 /** 솔로·로컬 플레이어 id */
 export const SOLO_PID = 'p1';
@@ -137,7 +91,8 @@ export class RoomSim {
   }
 
   spawn(list: Spawn[]): Monster[] {
-    const made = list.map((s) => newMonster(this.ids++, s.kind, s.x, s.y));
+    const mul = COMBAT.partyHpMul[Math.min(4, Math.max(1, this.opts.partySize ?? 1)) - 1]!;
+    const made = list.map((s) => newMonster(this.ids++, s.kind, s.x, s.y, mul));
     this.monsters.push(...made);
     return made;
   }
@@ -276,6 +231,7 @@ export class RoomSim {
       if (!done) this.struck.set(run, (done = new Set()));
       for (const h of strike(p, run, this.alive, done, posOf)) {
         events.push({ type: 'hit', pid, m: h.m, def: run.def, damage: h.damage });
+        if (h.ko) events.push({ type: 'ko', pid, m: h.m });
         hits++;
         if (this.opts.hitstop === 'entity') {
           const sec = gradeTiming(run.def.fx?.grade ?? 'light').hitstop;
@@ -284,7 +240,11 @@ export class RoomSim {
         }
       }
     }
-    comboHit(sp.combo, hits);
+    // 솔로는 개인 콤보 단계가 코인 보너스 (파티는 팀 콤보, stepTeamCombo)
+    if ((this.opts.partySize ?? 1) < 2) {
+      const ms = milestoneHit(sp.combo, hits, COMBAT.combo.soloMilestones);
+      if (ms !== null) events.push({ type: 'comboMilestone', pid, count: ms });
+    } else comboHit(sp.combo, hits);
     return res.moved;
   }
 

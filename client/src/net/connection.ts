@@ -37,6 +37,10 @@ export interface MonsterSnap extends Pos {
 /** 본인 전용 값 (보간 없이 최신) */
 export interface PrivateView {
   mp: number;
+  coins?: number;
+  materials?: number;
+  exp?: number;
+  bonusPct?: number;
   cooldowns: Map<string, number>;
   potionHp: number;
   potionMp: number;
@@ -51,6 +55,7 @@ type Live = {
   doorOpen: boolean;
   exitAt: number;
   exitNeed: number;
+  chestOpen: boolean;
   partySize: number;
   teamCombo: number;
   wave: number;
@@ -61,7 +66,9 @@ type Live = {
 
 export type EventHandler = <K extends keyof S2C>(type: K, msg: S2C[K]) => void;
 
-const EVENTS: (keyof S2C)[] = ['hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'roomClear', 'teamMilestone'];
+const EVENTS: (keyof S2C)[] = [
+  'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter',
+];
 
 export function serverUrl(): string {
   return (import.meta.env.VITE_SERVER_URL as string | undefined) ?? `ws://${location.hostname}:2567`;
@@ -120,9 +127,12 @@ export class Connection {
   /**
    * 방 진행 값 (서버 기본값과 같으면 전송되지 않아 비어 있을 수 있다 → 서버 스키마 기본값으로 채움)
    */
-  get progress(): { roomIndex: number; roomCount: number; doorOpen: boolean; exitAt: number; exitNeed: number } {
+  get progress(): { roomIndex: number; roomCount: number; doorOpen: boolean; exitAt: number; exitNeed: number; chestOpen: boolean } {
     const l = this.live;
-    return { roomIndex: l.roomIndex ?? 0, roomCount: l.roomCount ?? 6, doorOpen: l.doorOpen ?? false, exitAt: l.exitAt ?? 0, exitNeed: l.exitNeed ?? 0 };
+    return {
+      roomIndex: l.roomIndex ?? 0, roomCount: l.roomCount ?? 6, doorOpen: l.doorOpen ?? false, exitAt: l.exitAt ?? 0, exitNeed: l.exitNeed ?? 0,
+      chestOpen: l.chestOpen ?? false,
+    };
   }
 
   /** 본인 전용 값 (아직 안 왔으면 undefined) */

@@ -189,8 +189,13 @@ export const combat = z.object({
     Record<(typeof GRADES)[number], z.ZodObject<{ hitstop: typeof sec; shake: typeof sec }>>).strict(),
   shakeAfterHitstop: sec,
   tokens: z.array(z.number().int().positive()).min(1),
-  combo: z.object({ windowSec: pos, teamMilestones: z.array(z.number().int().positive()) }).strict(),
+  combo: z.object({
+    windowSec: pos, teamMilestones: z.array(z.number().int().positive()), soloMilestones: z.array(z.number().int().positive()),
+    coinBonus: z.array(pos),
+  }).strict(),
+  partyHpMul: z.array(pos).length(4),
   exit: z.object({ halfWidth: pos, depth: pos }).strict(),
+  interactRange: pos,
   ai: z.object({
     hopSec: pos, hopMove: z.number().min(0).max(1), orbitDistance: pos, orbitDepth: sec, chargerDistance: pos, separation: sec,
   }).strict(),
@@ -198,6 +203,8 @@ export const combat = z.object({
 
 export const rooms = z.record(z.object({
   returnAfterRoom: z.number().int().positive(),
+  /** 보물상자 (onClear chest): 파티원 모두에게 */
+  chest: z.object({ coins: z.number().int().nonnegative(), material: z.number().int().nonnegative() }).strict().optional(),
   rooms: z.array(z.object({
     id: z.string(), name: z.string(), size: z.tuple([z.number().int().positive(), z.number().int().positive()]),
     /** Tiled 맵 경로 (maps/ 아래, 확장자 없이) */

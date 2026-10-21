@@ -16,6 +16,10 @@ const TEMP: Record<string, { body: string; top: string }> = {
   stump: { body: 'floors.1.env.trunkDark', top: 'floors.1.env.trunk' },
 };
 const TEMP_RISE = 6;
+/** 상호작용 표시 칸 (7×7, 글자 3×5) · 상자 위 높이 · 캐릭터·이펙트보다 위 */
+const PROMPT = 7;
+const PROMPT_ABOVE = 22;
+const PROMPT_DEPTH = 6000;
 /** 출구 인원 글자: 문(24px) 위 */
 const EXIT_TEXT_ABOVE = 31;
 
@@ -29,6 +33,8 @@ export class PropLayer {
   private exitText: Phaser.GameObjects.Graphics;
   private doorOutAt: { x: number } | null;
   private lastExit = '';
+  private prompt: Phaser.GameObjects.Graphics;
+  private promptOn = false;
 
   constructor(private scene: Phaser.Scene, map: RoomMap) {
     for (const b of map.blocks) this.block(b);
@@ -38,6 +44,25 @@ export class PropLayer {
     if (map.chest) this.chest = this.put('chest', 'closed', map.chest.x, map.chest.y, map.chest.y);
     this.doorOutAt = map.doorOut;
     this.exitText = scene.add.graphics().setDepth(DEPTH_WALL + 1);
+    this.prompt = scene.add.graphics().setDepth(PROMPT_DEPTH);
+  }
+
+  /** 보물상자 열림 (서버 상태) */
+  setChestOpen(open: boolean): void {
+    if (this.chest) this.frame(this.chest, 'chest', open ? 'open' : 'closed');
+  }
+
+  /** 상호작용 [E] 표시 (나에게만, hud.md 3장): 상자 위 */
+  setPrompt(on: boolean): void {
+    if (on === this.promptOn) return;
+    this.promptOn = on;
+    this.prompt.clear();
+    if (!on || !this.chest) return;
+    const at = this.chest.getData('at') as { x: number; y: number }, { sx, sy } = project(at.x, at.y);
+    const x = sx - PROMPT / 2, y = sy - PROMPT_ABOVE;
+    this.prompt.fillStyle(colorInt('global.outline'), 1).fillRect(x, y, PROMPT, PROMPT);
+    this.prompt.fillStyle(colorInt('global.ui.panel'), 1).fillRect(x + 1, y + 1, PROMPT - 2, PROMPT - 2);
+    drawText(this.prompt, 'E', sx, y + 1, { color: 'global.allyFx.white', align: 'center', outline: 'none' });
   }
 
   /** 출구 앞 인원 (need 2 이상일 때만 보임) */

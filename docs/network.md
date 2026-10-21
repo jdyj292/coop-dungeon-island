@@ -48,7 +48,7 @@
 | input | `{ seq, t, mx, my, run }` | mx·my ∈ {−1,0,1}. seq는 1씩 증가. run = 클라이언트가 두 번 누르기로 판정한 달리기 (서버는 간격을 다시 재지 않음) |
 | action | `{ seq, t, kind, skillId?, x, y, facing }` | kind: basic / dash / skill / ultimate / backstep / chargeStart / chargeRelease. x·y는 클라이언트가 본 내 위치 |
 | item | `{ seq, t, slot }` | 물약 Z / X |
-| interact | `{ targetId }` | 부활, 줍기, 레버 |
+| interact | `{ targetId }` | 부활, 줍기, 레버. 지금은 "chest" (클리어 뒤, interactRange 안, 방마다 한 번) |
 
 ### 공통 (섬·던전)
 | 메시지 | 내용 | 비고 |
@@ -81,7 +81,7 @@
 ```
 DungeonState
   serverTime                이 상태의 서버 시각 ms (패치마다 바뀜, 보간 기준)
-  floor, roomIndex (0~5), roomCount, wave, doorOpen, exitAt·exitNeed (출구 앞 인원/필요 인원), phase ("play" | "result")
+  floor, roomIndex (0~5), roomCount, wave, doorOpen, exitAt·exitNeed (출구 앞 인원/필요 인원), chestOpen, phase ("play" | "result")
   partySize, teamCombo
   players: Map<id, PlayerState>
   monsters: Map<id, MonsterState>
@@ -99,7 +99,7 @@ PlayerState
   priv: PlayerPrivate       @filter로 본인에게만
 
 PlayerPrivate (본인에게만 필터링해서 전송)
-  mp, cooldowns (skillId → 끝나는 서버 시각 ms, 20ms 이상 바뀔 때만 갱신), potionHp, potionMp, feathers
+  mp, cooldowns (skillId → 끝나는 서버 시각 ms, 20ms 이상 바뀔 때만 갱신), potionHp, potionMp, feathers, coins, materials, exp, bonusPct (이번 판 보상)
 
 MonsterState
   id, type, x, y, z, facing
@@ -143,7 +143,8 @@ IslandState
 | hit | `{ attacker, target, damage, strength, flags, hitstop, x, y, z, t }` | 데미지 숫자, 섬광, 흰색 번쩍임, 히트스톱, 흔들림 |
 | projSpawn / projEnd | 위 참고 | 투사체 그리기 |
 | playerHit | 내가 맞음 `{ damage, strength, from }` | 피격 표정, 화면 붉은 테두리 없이 흔들림 |
-| reward | `{ coins, material?, exp }` | 획득 표시 |
+| reward | `{ coins, material, exp }` 본인에게 (몬스터 기절·보물상자) | coin 효과음, HUD 숫자 튐 |
+| comboBonus | `{ count, rate }` 본인에게 | "+5%" 표시 |
 | combo | `{ count, milestone? }` | 콤보 표시, 단계 달성 연출 |
 | roomClear / doorOpen | 방 클리어 | 문 열림 연출 |
 | roomEnter | `{ roomIndex }` 다음 방 | 클라이언트는 상태 roomIndex가 바뀌면 같은 접속으로 Dungeon 씬을 다시 시작 (배경·소품·예측 범위 교체, 보간 버퍼 비움, 0.3초 페이드인) |

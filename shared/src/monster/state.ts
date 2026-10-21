@@ -23,6 +23,8 @@ export interface Monster {
   def: MonsterDef;
   body: Body;
   hp: number;
+  /** 최대 체력 (인원 보정 반영, balance.md 5장) */
+  maxHp: number;
   facing: number;
   mode: AiMode;
   /** selfStun·groggy 남은 시간, 또는 보스 공격 사이 쉬는 시간 */
@@ -41,11 +43,12 @@ export interface Monster {
   loop: { phase: number; index: number };
 }
 
-export function newMonster(id: number, kind: string, x: number, y: number): Monster {
+/** hpMul = 인원 체력 보정 (combat.json partyHpMul) */
+export function newMonster(id: number, kind: string, x: number, y: number, hpMul = 1): Monster {
   const def = MONSTERS[kind];
   if (!def) throw new Error(`몬스터 '${kind}' 없음`);
   return {
-    id, kind, def, body: newBody(x, y, def.weight), hp: def.hp, facing: -1, mode: 'idle', timer: 0,
+    id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0,
     attack: null, hasToken: false, cooldowns: {}, aware: false, moving: false, hopT: 0, loop: { phase: 0, index: 0 },
   };
 }

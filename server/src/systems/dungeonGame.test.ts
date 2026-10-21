@@ -55,7 +55,8 @@ describe('DungeonGame (서버 진행)', () => {
     const hit = sent.find((s) => s.type === 'hit')?.msg as S2C['hit'];
     expect(hit).toMatchObject({ attacker: 'a', target: m.id, damage: 20 });
     expect(sent.some((s) => s.type === 'combo')).toBe(true);
-    expect(g.state.monsters.get(String(m.id))!.hpRatio).toBe(Math.ceil((255 * 40) / 60));
+    // 2인 방: 체력 ×1.5 (60 → 90), 20 피해 → 70
+    expect(g.state.monsters.get(String(m.id))!.hpRatio).toBe(Math.ceil((255 * 70) / 90));
   });
   it('안 되는 행동은 본인에게 rejected (장착 안 한 스킬, 쿨타임)', () => {
     const { g, sent } = setup();

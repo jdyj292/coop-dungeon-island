@@ -58,6 +58,6 @@ export function mirrorMonster(s: MonsterSnap, t: number, prev?: Monster): Monste
   m.attack = def ? { def, t: sec(t - s.actionStart), dir: s.facing, struck: [] } : null;
   m.moving = s.state === 'chase';
   m.hopT = m.moving ? el : 0;
-  m.hp = Math.round((s.hpRatio / 255) * m.def.hp);
+  m.hp = Math.round((s.hpRatio / 255) * m.maxHp);
   return m;
 }

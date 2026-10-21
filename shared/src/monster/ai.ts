@@ -32,7 +32,7 @@ function decide(m: Monster, ctx: AiContext): { def?: MonsterAttack; goal?: { x: 
     // 체력 조건을 넘으면 다음 단계 (예: "hp<0.5")
     const cur = pat.phases[m.loop.phase]!;
     const lim = /^hp<([\d.]+)$/.exec(cur.until ?? '');
-    if (lim && m.hp / m.def.hp < Number(lim[1]) && m.loop.phase < pat.phases.length - 1) m.loop = { phase: m.loop.phase + 1, index: 0 };
+    if (lim && m.hp / m.maxHp < Number(lim[1]) && m.loop.phase < pat.phases.length - 1) m.loop = { phase: m.loop.phase + 1, index: 0 };
     if (m.timer > 0) return {};
     const def = attacks.get(pat.phases[m.loop.phase]!.sequence[m.loop.index]!)!;
     if (canReach(m, def, ctx)) return { def };
