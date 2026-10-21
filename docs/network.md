@@ -45,7 +45,7 @@
 ### 던전
 | 메시지 | 내용 | 비고 |
 |---|---|---|
-| input | `{ seq, t, mx, my, run }` | mx·my ∈ {−1,0,1}. seq는 1씩 증가 |
+| input | `{ seq, t, mx, my, run }` | mx·my ∈ {−1,0,1}. seq는 1씩 증가. run = 클라이언트가 두 번 누르기로 판정한 달리기 (서버는 간격을 다시 재지 않음) |
 | action | `{ seq, t, kind, skillId?, x, y, facing }` | kind: basic / dash / skill / ultimate / backstep / chargeStart / chargeRelease. x·y는 클라이언트가 본 내 위치 |
 | item | `{ seq, t, slot }` | 물약 Z / X |
 | interact | `{ targetId }` | 부활, 줍기, 레버 |
@@ -69,7 +69,9 @@
 ### 검증과 제한
 - 모든 메시지는 서버에서 형식 검사 (shared/src/messages.ts의 zod 스키마)
 - 횟수 제한: input 초당 30, action 초당 10, 섬 메시지 초당 5, chat 3초에 3회. 넘으면 무시, 계속되면 연결 종료
-- 서버가 거절한 행동은 `rejected { seq, reason }`으로 알린다 (쿨타임, MP 부족, 상태 불가)
+- 서버가 거절한 행동은 `rejected { seq, reason }`으로 알린다 (쿨타임, MP 부족, 상태 불가). 받을 때 검사: 장착하지 않은 스킬·필살기·충전(MVP 이후)은 state
+- 형식이 틀린 메시지도 횟수에 든다. 5초 안에 30개를 버리면 연결 종료 (NET.limits)
+- 구현: server/src/systems/ (dungeonGame = 진행, inputs = 입력 대기열·거절, rateLimit, sync = 상태 반영, events = 이벤트). rooms/DungeonRoom은 연결·전송만
 
 ---
 
@@ -78,7 +80,7 @@
 ### DungeonState
 ```
 DungeonState
-  floor, roomIndex (0~5), doorOpen, phase ("play" | "result")
+  floor, roomIndex (0~5), wave, doorOpen, phase ("play" | "result")
   partySize, teamCombo
   players: Map<id, PlayerState>
   monsters: Map<id, MonsterState>
@@ -88,23 +90,29 @@ DungeonState
 PlayerState
   id, name, look            look = 외형 키 (머리·머리색·의상·플레이어 색 번호, 스프라이트 캐시 키)
   weapon, x, y, facing      x·y는 정수 px
-  state                     idle / walk / run / action / hitstun / down / getup / knocked / disconnected
+  state                     idle / walk / run / action / backstep / hitstun / down / knocked / disconnected (기상 무적은 연출만)
   actionId, actionStart     진행 중 행동과 시작 서버 시각 (구간은 데이터로 계산)
   hp, maxHp, ultGauge
-  reviveProgress            쓰러진 동안 동료 부활 진행도 (0~1)
-  lastInputSeq              ★ 본인 전용: 서버가 처리한 마지막 입력 번호
+  reviveProgress            쓰러진 동안 동료 부활 진행도 (0~255)
+  lastInputSeq              서버가 처리한 마지막 입력 번호 (본인 보정용, 작아서 전원에게 보냄)
+  priv: PlayerPrivate       @filter로 본인에게만
 
 PlayerPrivate (본인에게만 필터링해서 전송)
-  mp, cooldowns (skillId → 끝나는 서버 시각), potions {hp, mp}, feather
+  mp, cooldowns (skillId → 끝나는 서버 시각 ms, 20ms 이상 바뀔 때만 갱신), potionHp, potionMp, feathers
 
 MonsterState
   id, type, x, y, z, facing
-  state                     idle / chase / action / hitstun / airborne / bounce / down / getup / groggy / stunned
+  state                     idle / chase / action / hitstun / airborne / down / getup / dizzy(멧돼지 어지러움) / groggy / stunned (바운드는 airborne 안에서 z로)
   actionId, actionStart     예고·공격 표시를 클라이언트가 데이터로 그린다
   hpRatio                   체력 비율 (0~1, uint8로 양자화)
   superArmor
+
+ZoneState
+  id, attackId, x, y, endsAt (사라지는 서버 시각 ms)
 ```
-- 수치는 정수로 양자화 (위치 int16, hp uint16, 비율 uint8)
+- 수치는 정수로 양자화 (위치 int16, hp uint16, 비율 uint8). 시각은 방 생성부터의 서버 ms (float64)
+- actionStart = 서버 시각 − 행동 경과. 같은 행동이 이어지면 다시 쓰지 않는다
+- 입장 위치: 왼쪽 3타일, 깊이를 인원 수로 나눔 (shared/src/sim/roomSetup.ts entryPos)
 - 쿨타임·MP·물약은 본인만 필요하므로 필터로 본인에게만 전송
 - 예고 범위, 포즈, 이펙트는 상태로 보내지 않는다: actionId + actionStart만 받으면 클라이언트가 data로 그린다
 
@@ -240,6 +248,7 @@ IslandState
 | monster/ | 몬스터 상태·AI·공격·토큰·투사체·장판 |
 | sim/room.ts | 방 한 틱 (RoomSim): 몬스터 → 투사체·장판 → 플레이어 → 겹침 풀기. 플레이어 여럿(pid), `step(dt, 입력 Map)`. 솔로는 `tick(dt, 입력)`. 서버 DungeonRoom이 그대로 돌린다 |
 | sim/aim.ts · sim/strike.ts | 몬스터 대상 선택 (dungeon.md 3장) · 플레이어 행동 적중 |
+| sim/roomSetup.ts | 방 고르기·크기, 입장 위치, 웨이브 출현 위치(Tiled 전 임시), WaveRunner (웨이브 → 클리어) |
 | constants.ts | 틱 속도, `NET` (보간 지연, 보정 임계값, 되감기, 횟수 제한 등 이 문서의 숫자) |
 
 - 클라이언트·서버가 같은 결과를 내도록 이동 계산은 고정 시간 간격(1/60초) 단위로
@@ -250,4 +259,5 @@ IslandState
 
 - 예상: 4인 + 몬스터 12마리 기준 변경분 전송으로 1인당 초당 수 KB 수준
 - 개발 모드에 지연 시뮬레이터: 지연 0~300ms, 흔들림 ±50ms, 패킷 손실 0~5%를 조정 패널에서 설정
+- `pnpm net-smoke` (서버가 떠 있을 때): 봇 2개가 접속해 이동·평타·핑·채팅·거절을 보내고 적중·본인 전용 필터·lastInputSeq를 확인
 - M2 확인 기준: 지연 100ms·흔들림 ±20ms에서 내 이동이 끊기지 않고, 13px 라인 판정이 체감상 공정한가

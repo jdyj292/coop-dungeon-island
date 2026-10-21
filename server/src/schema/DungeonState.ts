@@ -1,0 +1,82 @@
+// 던전 방 상태 (docs/network.md 5장). 위치 int16, HP uint16, 비율 uint8로 양자화. 순간 사건은 이벤트 메시지(systems/events.ts)
+import { filter, MapSchema, Schema, type } from '@colyseus/schema';
+import type { Client } from 'colyseus';
+
+/** 본인에게만 보내는 값 (쿨타임·MP·물약·깃털) */
+export class PlayerPrivate extends Schema {
+  @type('uint16') mp = 0;
+  /** 스킬 id → 쿨타임이 끝나는 서버 시각(ms) */
+  @type({ map: 'float64' }) cooldowns = new MapSchema<number>();
+  @type('uint8') potionHp = 0;
+  @type('uint8') potionMp = 0;
+  @type('uint8') feathers = 0;
+}
+
+export class PlayerState extends Schema {
+  @type('string') id = '';
+  @type('string') name = '';
+  /** 외형 키 (머리·머리색·의상·플레이어 색 번호) */
+  @type('string') look = '';
+  @type('string') weapon = '';
+  @type('int16') x = 0;
+  @type('int16') y = 0;
+  /** 백스텝 높이 등은 클라이언트 연출. 지상 판정만 */
+  @type('int8') facing = 1;
+  /** idle / walk / run / action / backstep / hitstun / down / knocked */
+  @type('string') state = 'idle';
+  /** 진행 중 행동 id와 시작 서버 시각 (구간은 클라이언트가 데이터로 계산) */
+  @type('string') actionId = '';
+  @type('float64') actionStart = 0;
+  @type('uint16') hp = 0;
+  @type('uint16') maxHp = 0;
+  @type('uint8') ultGauge = 0;
+  /** 쓰러진 동안 동료 부활 진행도 0~255 (M3) */
+  @type('uint8') reviveProgress = 0;
+  /** 서버가 처리한 마지막 입력 번호 (예측 보정용, network.md 7장) */
+  @type('uint32') lastInputSeq = 0;
+  @filter(function (this: PlayerState, client: Client) {
+    return client.sessionId === this.id;
+  })
+  @type(PlayerPrivate) priv = new PlayerPrivate();
+}
+
+export class MonsterState extends Schema {
+  @type('string') id = '';
+  @type('string') type = '';
+  @type('int16') x = 0;
+  @type('int16') y = 0;
+  @type('int16') z = 0;
+  @type('int8') facing = 1;
+  /** idle / chase / action / hitstun / airborne / down / getup / dizzy / groggy / stunned */
+  @type('string') state = 'idle';
+  @type('string') actionId = '';
+  @type('float64') actionStart = 0;
+  /** 체력 비율 0~255 */
+  @type('uint8') hpRatio = 255;
+  @type('boolean') superArmor = false;
+}
+
+export class ZoneState extends Schema {
+  @type('string') id = '';
+  /** 만든 공격 id (모양·색은 데이터로) */
+  @type('string') attackId = '';
+  @type('int16') x = 0;
+  @type('int16') y = 0;
+  /** 사라지는 서버 시각(ms) */
+  @type('float64') endsAt = 0;
+}
+
+export class DungeonState extends Schema {
+  @type('uint8') floor = 1;
+  /** 0부터 (1층 방 6개: 0~5) */
+  @type('uint8') roomIndex = 0;
+  @type('uint8') wave = 0;
+  @type('boolean') doorOpen = false;
+  /** play | result */
+  @type('string') phase = 'play';
+  @type('uint8') partySize = 1;
+  @type('uint16') teamCombo = 0;
+  @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
+  @type({ map: MonsterState }) monsters = new MapSchema<MonsterState>();
+  @type({ map: ZoneState }) zones = new MapSchema<ZoneState>();
+}

@@ -41,4 +41,9 @@ export interface S2C {
   emote: { player: string; id: number };
   chat: { player: string; text: string; t: number };
   pong: { t: number; server: number };
+  /** 투사체는 상태에 넣지 않고 이벤트로 (network.md 5장). kind = 공격 id */
+  projSpawn: { id: number; kind: string; owner: number; x: number; y: number; z: number; dir: number; t0: number };
+  projEnd: { id: number; reason: 'hit' | 'range'; x: number; y: number };
+  /** 방의 몬스터를 모두 기절시킴 (마지막 웨이브) */
+  roomClear: { roomIndex: number };
 }

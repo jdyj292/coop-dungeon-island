@@ -33,6 +33,8 @@ export interface PlayerInput {
   backstep: boolean;
   /** Z = hp, X = mp */
   potion?: PotionKind | null;
+  /** 있으면 두 번 누르기 판정 대신 이 값으로 달리기 (네트워크 입력) */
+  run?: boolean;
 }
 
 export interface PlayerStep {
@@ -83,7 +85,7 @@ export function stepPlayerState(
     return out;
   }
 
-  const running = stepRun(p.run, input.x, dt) && !p.fighter.run;
+  const running = stepRun(p.run, input.x, dt, input.run) && !p.fighter.run;
   const skill = input.skill && skillReady(p, input.skill) ? input.skill : null;
   const before = p.fighter.run && { run: p.fighter.run, t: p.fighter.run.t };
   out.events = stepFighter(p.fighter, weapon, { attack: input.attack, skill, dashing: running }, dt);

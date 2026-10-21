@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@game/shared": "workspace:*",
+    "colyseus.js": "^0.15.28",
     "phaser": "^3.88.0",
     "zod": "^3.25.76"
   },

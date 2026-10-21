@@ -132,6 +132,11 @@ export class RoomSim {
     // 1. 몬스터 먼저: 이번 틱에 맞은 번쩍임·경직이 같은 틱에 깎이지 않게
     for (const m of this.alive) {
       const aimed = this.aimFor(m);
+      // 플레이어가 아직 없으면(서버 방 생성 직후) 몸 물리만
+      if (!aimed) {
+        stepBody(m.body, dt, monsterBounds(m, b).minX, monsterBounds(m, b).maxX);
+        continue;
+      }
       const ctx: AiContext = {
         player: { x: aimed.state.pos.x, y: aimed.state.pos.y }, target: targets.find((t) => t.pid === aimed.pid) ?? null,
         targets, tokens: this.tokens, bounds: b,
@@ -166,12 +171,11 @@ export class RoomSim {
     return { events, moved };
   }
 
-  /** 이 몬스터가 노리는 플레이어 */
-  private aimFor(m: Monster): SimPlayer {
-    const list = [...this.players.values()];
-    const pid = chooseTarget(m, list, this.aim.get(m.id));
+  /** 이 몬스터가 노리는 플레이어 (아무도 없으면 undefined) */
+  private aimFor(m: Monster): SimPlayer | undefined {
+    const pid = chooseTarget(m, [...this.players.values()], this.aim.get(m.id));
     if (pid) this.aim.set(m.id, pid);
-    return (pid && this.players.get(pid)) || this.first;
+    return pid ? this.players.get(pid) : undefined;
   }
 
   private stepPlayer(sp: SimPlayer, input: PlayerInput, dt: number, events: SimEvent[]): number {

@@ -77,3 +77,12 @@ describe('대상 선택 chooseTarget (dungeon.md 3장)', () => {
     expect(chooseTarget(m, [a, b], 'b')).toBe('a');
   });
 });
+
+describe('플레이어가 없는 방 (서버 생성 직후)', () => {
+  it('틱이 돌아도 오류 없이 몬스터는 제자리', () => {
+    const sim = new RoomSim(gs, bounds, null);
+    const [m] = sim.spawn([{ kind: 'mushroom', x: 200, y: 56 }]);
+    expect(() => run(sim, 1)).not.toThrow();
+    expect(m!.body.x).toBe(200);
+  });
+});

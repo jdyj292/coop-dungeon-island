@@ -6,6 +6,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@colyseus/schema": "2.0.37",
     "@game/shared": "workspace:*",
     "colyseus": "^0.15.0"
   },

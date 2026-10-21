@@ -58,9 +58,16 @@ export const newRunState = (): RunState => ({ running: false, dir: 0, prevX: 0, 
  * 좌우를 같은 방향으로 runDoubleTap초 안에 두 번 누르면(떼었다 다시) 달리기.
  * 좌우를 떼거나 반대로 누르면 해제 (combat.md 1장 조작)
  */
-export function stepRun(s: RunState, inputX: number, dt: number): boolean {
+export function stepRun(s: RunState, inputX: number, dt: number, forced?: boolean): boolean {
   s.time += dt;
   const x = Math.sign(inputX);
+  // 네트워크 입력: 클라이언트가 두 번 누르기를 판정해 run으로 보낸다 (지연 때문에 서버에서 간격을 재지 않음, network.md 4장)
+  if (forced !== undefined) {
+    s.running = forced && x !== 0;
+    s.dir = s.running ? x : 0;
+    s.prevX = x;
+    return s.running;
+  }
   if (x !== 0 && x !== s.prevX) {
     if (x === s.lastTapDir && s.time - s.lastTapAt <= PLAYER.runDoubleTap) {
       s.running = true;

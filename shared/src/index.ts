@@ -20,3 +20,4 @@ export * from './data/crossCheck';
 export type * from './data/schema';
 export * from './messages';
 export * from './sim/aim';
+export * from './sim/roomSetup';

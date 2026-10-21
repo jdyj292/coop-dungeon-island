@@ -1,10 +1,9 @@
 // 던전 테스트 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 (combat.md 1장). 서버 없이 로컬
 import Phaser from 'phaser';
-import { skillDef, TILE } from '@game/shared';
+import { entryPos, floorRoom, roomBounds, skillDef, TILE, WaveRunner } from '@game/shared';
 import { sfx } from '../audio/player';
 import { color } from '../palette';
 import { CombatStage } from '../stage/combatStage';
-import { floorRoom, waveSpawns } from '../stage/roomSetup';
 import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
 import { HudBottom } from '../ui/hudBottom';
 import { HudOverlay } from '../ui/hudOverlay';
@@ -26,10 +25,7 @@ type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attac
 export class Dungeon extends Phaser.Scene {
   private room = floorRoom('floor1', Number(new URLSearchParams(location.search).get('room') ?? 1));
   private roomW = 0;
-  private roomD = 0;
-  /** 다음에 나올 웨이브 (모두 끝나면 waves.length) */
-  private wave = 0;
-  cleared = false;
+  private waves!: WaveRunner;
   private stage!: CombatStage;
   private camCenter = 0;
   private hud!: HudBottom;
@@ -42,17 +38,15 @@ export class Dungeon extends Phaser.Scene {
 
   create(): void {
     // scene.restart()로 다시 불려도 처음 상태가 되게
-    this.wave = 0;
-    this.cleared = false;
-    const [tw, td] = this.room.size as [number, number];
-    this.roomW = tw * TILE;
-    const roomD = (this.roomD = td * TILE);
+    this.waves = new WaveRunner(this.room);
+    const { width, depth, bounds } = roomBounds(this.room);
+    const td = this.room.size[1]!;
+    this.roomW = width;
     this.cameras.main.setBackgroundColor(color(`floors.${FLOOR}.env.void`));
     if (!this.textures.exists('room-bg')) this.textures.addCanvas('room-bg', drawRoomBg(FLOOR, this.roomW, td, FIELD_BOTTOM + BG_EXTRA));
     this.add.image(0, 0, 'room-bg').setOrigin(0, 0).setDepth(-1000);
 
-    const bounds = { minX: TILE / 2, maxX: this.roomW - TILE / 2, minY: 0, maxY: roomD };
-    this.stage = new CombatStage(this, bounds, { x: 3 * TILE, y: roomD / 2 }, this.nextWave());
+    this.stage = new CombatStage(this, bounds, entryPos(0, 1, depth), this.waves.next());
     this.camCenter = this.stage.player.pos.x;
     sfx.unlockOnFirstInput();
     this.stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
@@ -68,21 +62,11 @@ export class Dungeon extends Phaser.Scene {
     }) as typeof this.keys;
   }
 
-  /** 다음 웨이브 출현 목록 (없으면 빈 목록) */
-  private nextWave() {
-    const w = this.room.waves[this.wave];
-    if (!w) return [];
-    this.wave++;
-    return waveSpawns(w.monsters, this.roomW, this.roomD);
-  }
-
-  /** 몬스터를 모두 기절시키면 다음 웨이브, 마지막이면 방 클리어 (CLAUDE.md 핵심 게임 규칙) */
+  /** 몬스터를 모두 기절시키면 다음 웨이브, 마지막이면 방 클리어 (shared WaveRunner) */
   private checkWave(): void {
-    if (this.cleared || this.stage.monsters.length) return;
-    const next = this.nextWave();
-    if (next.length) this.stage.spawn(next);
-    else {
-      this.cleared = true;
+    const r = this.waves.check(this.stage.monsters.length);
+    if (Array.isArray(r)) this.stage.spawn(r);
+    else if (r === 'clear') {
       sfx.play('roomClear');
       this.overlay.showClear();
       console.info(`방 클리어: ${this.room.name}`);

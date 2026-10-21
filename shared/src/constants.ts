@@ -40,8 +40,8 @@ export const NET = {
   attackerTrustPx: 12,
   /** 백스텝 소급 무적: 입력 시각 뒤 이 시간 안의 피격 취소 */
   backstepGraceMs: 100,
-  /** 초당 횟수 제한 (넘으면 무시), chat은 chatWindowMs 안에 chatMax회 */
-  limits: { input: 30, action: 10, island: 5, chatMax: 3, chatWindowMs: 3000 },
+  /** 초당 횟수 제한 (넘으면 무시), chat은 chatWindowMs 안에 chatMax회. kickWindowMs 안에 kickDrops개를 버리면 연결 종료 */
+  limits: { input: 30, action: 10, island: 5, chatMax: 3, chatWindowMs: 3000, kickDrops: 30, kickWindowMs: 5000 },
   /** 채팅 길이 (hud.md 4장) */
   chatMaxLen: 60,
 } as const;

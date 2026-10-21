@@ -50,6 +50,7 @@ tools/                   개발 도구 (아래 표)
 | sfx-preview | 완성 | 효과음 재생·조정 → JSON 복사, 승인 원본 나란히 듣기·자동 비교. `pnpm sfx-preview` |
 | palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
 | data-validate | 완성 | shared/data 형식·교차 참조 검사 (data.md 5장). `pnpm data-validate`, 기준 rules.json |
+| net-smoke | 완성 | 봇 2개로 서버 던전 방 접속 확인 (network.md 13장). `pnpm net-smoke` |
 | balance-check | 완성 | 스킬 예산 자동 계산·±25% 경고 (balance.md 3장). `pnpm balance-check`, 기준 rules.json |
 | ttk-sim | 완성 | 예상 처치 시간·목표 비교 (balance.md 5장). `pnpm ttk-sim --weapon greatsword --level 1` |
 
@@ -106,6 +107,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0·M1 완료 (조작감·방 클리어 시간 튜닝은 플레이 후, balance.md 9장). M2 2-1 완료: RoomSim 여러 명(pid)·몬스터 대상 선택·messages.ts·NET 상수
-- 명령: `pnpm dev`(?room=1~6) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: 2-2 서버 DungeonRoom (RoomSim 60Hz, 상태 스키마, 메시지 검사, 20Hz 전송)
+- M0·M1 완료 (조작감·방 클리어 시간 튜닝은 플레이 후, balance.md 9장). M2 2-1~2-2 완료: RoomSim 여러 명, 서버 DungeonRoom(60Hz 진행·20Hz 상태·메시지 검사·횟수 제한)
+- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
+- 다음: 2-3 클라이언트 접속(?online=1)·시계 맞추기·100ms 보간
