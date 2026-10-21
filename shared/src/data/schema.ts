@@ -181,7 +181,7 @@ export const player = z.object({
 const stun = z.object({ time: sec, push: sec }).strict();
 export const combat = z.object({
   _note: z.string().optional(),
-  baseAtk: pos, gravity: pos, launchVz: pos, airHitVz: sec, airGravityMul: pos, maxAirHits: z.number().int().positive(),
+  baseAtk: pos, atkPerLevel: sec, gravity: pos, launchVz: pos, airHitVz: sec, airGravityMul: pos, maxAirHits: z.number().int().positive(),
   bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec, wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
   stun: z.object({ light: stun, medium: stun, heavy: stun }).strict(),
   weightMul: z.object({ light: sec, medium: sec, heavy: sec, fixed: sec, boss: sec }).strict(),

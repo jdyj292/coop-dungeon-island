@@ -1,6 +1,7 @@
 {
   "_note": "전투 공통 수치. 의미는 docs/combat.md 3·5장, 형식은 docs/data.md 7장. 단위: px, 초, px/s",
   "baseAtk": 10,
+  "atkPerLevel": 0.05,
   "gravity": 600,
   "launchVz": 220,
   "airHitVz": 60,

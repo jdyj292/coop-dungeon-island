@@ -11,7 +11,9 @@
     "sprite-preview": "vite tools/sprite-preview",
     "motion-preview": "vite tools/motion-preview",
     "data-validate": "tsx tools/data-validate/index.ts",
-    "sfx-preview": "vite tools/sfx-preview"
+    "sfx-preview": "vite tools/sfx-preview",
+    "balance-check": "tsx tools/balance-check/index.ts",
+    "ttk-sim": "tsx tools/ttk-sim/index.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -50,7 +50,8 @@ tools/                   개발 도구 (아래 표)
 | sfx-preview | 완성 | 효과음 재생·조정 → JSON 복사, 승인 원본 나란히 듣기·자동 비교. `pnpm sfx-preview` |
 | palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
 | data-validate | 완성 | shared/data 형식·교차 참조 검사 (data.md 5장). `pnpm data-validate`, 기준 rules.json |
-| balance-check, ttk-sim | M1 | 스킬 예산·처치 시간 (balance.md 10장) |
+| balance-check | 완성 | 스킬 예산 자동 계산·±25% 경고 (balance.md 3장). `pnpm balance-check`, 기준 rules.json |
+| ttk-sim | 완성 | 예상 처치 시간·목표 비교 (balance.md 5장). `pnpm ttk-sim --weapon greatsword --level 1` |
 
 ## 문서 지도 — 작업에 필요한 문서만 읽는다
 | 작업 | 문서 |
@@ -105,6 +106,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 완료. M1 1-1~1-8 완료 (데이터·틱·플레이어·몬스터 AI·피격·효과음·HUD·그림: 몬스터 피격 프레임, MVP 스킬 포즈, 이동·상태 모션)
-- 명령: `pnpm dev`(?room=1~6) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: M1 1-9 — tools/balance-check·ttk-sim (대검 평타 초당 계수 경고 처리)
+- M0 완료. M1 1-1~1-9 완료 (1-9: balance-check 경고 0건, 대검 평타 후딜 +0.1초 → 초당 375%. ttk-sim 방 클리어가 목표보다 짧음 → 9장 튜닝 때 확인)
+- 명령: `pnpm dev`(?room=1~6) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
+- 다음: roadmap M1 완료 조건 확인 → M2

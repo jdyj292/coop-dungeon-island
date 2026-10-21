@@ -1,0 +1,10 @@
+{
+  "_note": "ttk-sim 가정. uptime = 실제로 때리는 시간 비율 (이동·회피·예고 대기 제외). 목표는 docs/balance.md 5장",
+  "uptime": { "normal": 0.6, "boss": 0.35 },
+  "targets": {
+    "monster": [1, 3],
+    "room": [60, 120],
+    "roomOneWave": [40, 80],
+    "boss": [120, 180]
+  }
+}

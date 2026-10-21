@@ -12,7 +12,7 @@
 ```
 
 ### 공격력 (ATK)
-- 무기 숙련도 1레벨 ATK = 10, 레벨당 +5% (선형)
+- 무기 숙련도 1레벨 ATK = 10, 레벨당 +5% (선형). 데이터 combat.json baseAtk·atkPerLevel
 - ATK = 10 × (1 + 0.05 × (숙련도 - 1)) × (1 + 섬 연마 보너스) → Lv10 = 14.5, Lv20 = 19.5 (연마 제외)
 - 섬 연마 보너스 상한 +10% (단계별 수치는 island.md). 섬이 전투력에 주는 영향은 이것이 전부
 - 무기 종류에 따른 ATK 차이는 없음. 차이는 계수와 속도로만 낸다
@@ -100,6 +100,15 @@
 | 주먹 포효 | 12초 | 도발·방어 | 1200 × 0.40 = 480 | 200 |
 
 - 실제 계수가 예산의 **±25%** 안이면 통과. 벗어나면 이유를 skills.json의 note에 기록
+
+### 자동 판정 (tools/balance-check, shared/src/balance/budget.ts)
+보정은 skills.json에서 읽는다. 배율·기준은 tools/balance-check/rules.json (이 표와 같게 유지)
+- launch·hold·pull: flags
+- 제어: status가 freeze·stun (slow는 제외)
+- 넓은 범위: 판정이 area·zone이면 붙인다 (검산 예시의 화염 폭발과 맞춤. 넓은 hitbox는 범위로 보지 않음)
+- 원거리: hitbox forward, area 중심 x, projectile range 중 하나가 64px(4타일) 이상
+- 이동기: move가 있으면. 선딜·후딜: phases.windup·recovery가 0.5초 이상
+- 도발·팀 버프·슈퍼아머·조건부는 아직 데이터 필드가 없어 자동으로 붙지 않음 (해당 스킬이 생길 때 추가)
 - 유틸이 강한 스킬(hold, 도발)은 예산보다 낮게 잡아도 됨. 딜이 예산을 넘는 건 신중하게
 
 ---
@@ -139,6 +148,12 @@
 | 포자꽃 | 40 |
 | 정예: 갓버섯 기사 | 300 |
 | 보스: 졸린 이끼곰 | 3000 |
+
+### 예상 처치 시간 계산 (tools/ttk-sim, shared/src/balance/ttk.ts)
+- 초당 딜 = ATK × (평타 초당 계수 + Σ 스킬 계수 ÷ (기준 쿨 × 1.5)) ÷ 100. 스킬은 쿨마다 바로 쓴다고 본다
+- 처치 시간 = 체력 ÷ (초당 딜 × 때리는 시간 비율). 비율 가정: 일반 60%, 보스 35% (tools/ttk-sim/rules.json)
+- 한 대상씩 친다고 본다 (범위 다수 적중 무시). 방 = 모든 웨이브 체력 합. 이동·예고 대기·토큰 대기 시간은 들어가지 않음
+- 대검 Lv1 기준 (2026-10): 일반 1.4~2.7초, 보스 약 177초로 목표 안. 방은 8~26초(전투 시간만)로 목표보다 짧음 → M1 플레이 후 방 목표의 의미(전체 시간인지 전투 시간인지)와 몬스터 수를 다시 본다 (9장)
 
 - 층마다 몬스터 체력 ×1.8. 층 권장 숙련도: 1층 Lv1 / 2층 Lv5 / 3층 Lv10 / 4층 Lv15 / 5층 Lv20
 
@@ -225,7 +240,8 @@
 
 ---
 
-## 10. 검증 도구 (권장)
-- tools/balance-check: skills.json을 읽어 각 스킬의 예산 계수를 자동 계산하고 ±25% 벗어나면 경고
-- tools/ttk-sim: 무기·숙련도·스킬 장착을 넣으면 몬스터별 예상 처치 시간 출력
+## 10. 검증 도구
+- tools/balance-check (`pnpm balance-check`): skills.json을 읽어 각 스킬의 예산 계수를 자동 계산(3장 자동 판정)하고 ±25% 벗어나면 경고. note가 있으면 "기록됨"으로 통과. 경고가 있으면 종료 코드 1
+- tools/ttk-sim (`pnpm ttk-sim --weapon greatsword --level 1 --skills gs_launch,gs_earthsplit`): 몬스터별·방별 예상 처치 시간과 목표(5장) 비교. 스킬 기본값 = 무기 baseSkills
+- 평타 초당 계수 목표(4장)는 `pnpm data-validate`가 검사
 - 수치를 바꿀 때마다 두 도구를 돌려서 확인

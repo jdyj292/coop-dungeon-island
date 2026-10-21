@@ -1,0 +1,10 @@
+{
+  "_note": "balance-check 기준. 값은 docs/balance.md 3장 '예산 보정' 표·통과 기준과 같게 유지한다",
+  "tolerance": 0.25,
+  "factors": {
+    "launch": 0.9, "hold": 0.75, "pull": 0.85, "control": 0.75, "area": 0.85, "ranged": 0.9,
+    "movement": 0.9, "superArmor": 0.9, "longWindup": 1.15, "longRecovery": 1.1
+  },
+  "rangedPx": 64,
+  "longPhaseSec": 0.5
+}

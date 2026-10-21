@@ -20,7 +20,12 @@ function heard(script: [Partial<PlayerInput>, number][], spawn = true): string[]
 
 describe('전투 이벤트 → 효과음 (audio.md 3장)', () => {
   it('3연타: swing·hitLight ×2, swingHeavy·hitHeavy', () => {
-    const s = heard([[{ attack: true }, 18], [{ attack: true }, 23], [{ attack: true }, 60]]);
+    // 다음 타는 앞 타의 active~recovery 중에 선입력 (구간 길이는 데이터에서)
+    const [b1, b2] = weaponDef('greatsword').basic.map((b) => b.phases);
+    const ticks = (sec: number) => Math.ceil(sec / TICK);
+    const t2 = ticks(b1!.windup + b1!.active) + 1;
+    const t3 = ticks(b1!.windup + b1!.active + b1!.recovery) + ticks(b2!.windup) + 1;
+    const s = heard([[{ attack: true }, t2], [{ attack: true }, t3 - t2], [{ attack: true }, 80]]);
     expect(s).toEqual(['swing', 'hitLight', 'swing', 'hitLight', 'swingHeavy', 'hitHeavy']);
   });
   it('올려베기: launch·hitLight → 바운드·다운', () => {

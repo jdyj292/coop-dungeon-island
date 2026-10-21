@@ -13,7 +13,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 ```json
 {
   "id": "gs_b3",
-  "phases": { "windup": 0.24, "active": 0.10, "recovery": 0.40 },
+  "phases": { "windup": 0.24, "active": 0.10, "recovery": 0.50 },
   "coef": 350,
   "hitbox": { "forward": 2, "width": 20, "depth": 13, "z": "both" },
   "strength": "heavy",
@@ -196,6 +196,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | 필드 | 설명 |
 |---|---|
 | baseAtk | 숙련도 1레벨 ATK (balance.md 1장). 데미지 = ATK × coef / 100 |
+| atkPerLevel | 숙련도 레벨당 ATK 증가율 0.05 (balance.md 1장, 코드 atkFor) |
 | gravity, launchVz, airHitVz, airGravityMul, maxAirHits, bounceVz | 높이(z)·공중 콤보 보정 |
 | downSec, downSlide, getupSec, wallStunSec | 다운 시간·다운 미끄러짐(px)·기상 무적·벽꿍 추가 경직 |
 | pushRate | 밀림이 남은 거리를 줄이는 속도 (초당 비율, 클수록 짧고 세게 밀림) |
