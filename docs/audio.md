@@ -118,6 +118,10 @@
 - 정산 화면: 0.5초에 걸쳐 줄이고 정지 (정산 효과음이 주인공)
 - 음악 볼륨 기본 70% (4장 볼륨 설정). 첫 입력 전에는 재생 불가 (4장)
 - 구현: client/src/audio/bgm/ (engine.js를 TypeScript로 옮김. 악기 코드는 reference.html과 같게)
+  - instruments.ts (Rig: 곡 하나의 버스·잔향·딜레이·잡음 버퍼) · voices.ts (악기 21개) · engine.ts (bgm.json 해석, 25ms마다 0.2초 앞까지 예약) · music.ts (재생 규칙)
+  - 원본은 전역 하나로 한 곡만 돌렸지만, 크로스페이드를 위해 곡마다 인스턴스 (노드·값·연결은 같음). 곡 출력 → 크로스페이드 게인 → 효과음 플레이어의 음악 버스(전체 × 음악 볼륨)
+  - 원본과 같은지: bgm.test.ts가 engine.js와 이식본을 같은 난수·기록용 가짜 AudioContext로 돌려 노드·값·연결 기록 전체를 비교 (섬·1층 2마디, 보스 9마디). `pnpm test`
+- 층별 곡: shared/data/rooms.json 층.bgm { room, boss }. 섬 곡은 M4
 
 ### 수정 절차
 1. tools/bgm-preview/index.html로 현재 곡 확인

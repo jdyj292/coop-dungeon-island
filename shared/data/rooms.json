@@ -6,6 +6,10 @@
       "coins": 15,
       "material": 1
     },
+    "bgm": {
+      "room": "floor1",
+      "boss": "boss1"
+    },
     "rooms": [
       {
         "id": "f1_r1",

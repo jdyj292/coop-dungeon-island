@@ -41,6 +41,10 @@ export class SfxPlayer {
   private synths: Partial<Record<BusName, Synth>> = {};
   private master: GainNode | null = null;
   private sfxGain: GainNode | null = null;
+  /** 음악 버스 (전체 × 음악 볼륨, BGM이 여기로) */
+  private musicGain: GainNode | null = null;
+  /** 오디오가 시작되면 (BGM이 기다리던 곡을 튼다) */
+  private started: (() => void)[] = [];
   private recent = new Map<string, number[]>();
   volumes: Volumes = loadVolumes();
   /** false면 음높이 무작위 끔 (원본 비교용) */
@@ -56,9 +60,12 @@ export class SfxPlayer {
       this.master = c.createGain();
       this.sfxGain = c.createGain();
       this.sfxGain.connect(this.master);
+      this.musicGain = c.createGain();
+      this.musicGain.connect(this.master);
       this.master.connect(c.destination);
       this.applyVolumes();
       for (const name of ['action', 'clear'] as const) this.synths[name] = new Synth(c, createBus(c, name, this.sfxGain));
+      this.started.forEach((fn) => fn());
     }
     if ('resume' in this.ctx && (this.ctx as AudioContext).state === 'suspended') void (this.ctx as AudioContext).resume();
     return this.ctx;
@@ -73,6 +80,17 @@ export class SfxPlayer {
     };
     target.addEventListener('keydown', go);
     target.addEventListener('pointerdown', go);
+  }
+
+  /** 오디오가 시작되면 한 번 (이미 시작했으면 바로) */
+  whenStarted(fn: () => void): void {
+    if (this.ctx) fn();
+    else this.started.push(fn);
+  }
+
+  /** 음악 출력 (시작 전이면 null) */
+  get music(): { ctx: BaseAudioContext; out: GainNode } | null {
+    return this.ctx && this.musicGain ? { ctx: this.ctx, out: this.musicGain } : null;
   }
 
   bus(name: BusName): Bus | undefined {
@@ -92,6 +110,7 @@ export class SfxPlayer {
   private applyVolumes(): void {
     if (this.master) this.master.gain.value = this.volumes.master / 100;
     if (this.sfxGain) this.sfxGain.gain.value = this.volumes.sfx / 100;
+    if (this.musicGain) this.musicGain.gain.value = this.volumes.music / 100;
   }
 
   /** 미리 듣기 (sfx-preview): 규칙·무작위 없이 delay초 뒤에 재생. 조합(sfx.json combos)을 데모와 같은 타이밍으로 */

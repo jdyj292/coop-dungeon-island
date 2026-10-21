@@ -212,6 +212,8 @@ export const rooms = z.record(z.object({
   returnAfterRoom: z.number().int().positive(),
   /** 보물상자 (onClear chest): 파티원 모두에게 */
   chest: z.object({ coins: z.number().int().nonnegative(), material: z.number().int().nonnegative() }).strict().optional(),
+  /** 층 BGM (client/data/bgm.json 곡 id): 방 1~5 / 보스 방 (audio.md 5장) */
+  bgm: z.object({ room: z.string(), boss: z.string() }).strict(),
   rooms: z.array(z.object({
     id: z.string(), name: z.string(), size: z.tuple([z.number().int().positive(), z.number().int().positive()]),
     /** Tiled 맵 경로 (maps/ 아래, 확장자 없이) */

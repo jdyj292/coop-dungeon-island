@@ -250,6 +250,7 @@
   - objects (오브젝트 레이어, 점): player_start(속성 index 0~3, 0 = 혼자일 때 자리), door_in, door_out(보스 방 제외, 문은 뒤쪽 벽 아치라 오브젝트는 문 바로 앞 바닥 깊이 4px — art.md 6장), spawn, return_point, chest, env_<종류>
 - spawn 속성: `wave`(1, 2…), `role`(front / back / boss). 고정형(포자꽃 등)은 back, 보스는 boss, 나머지는 front 지점에 우선 배치 (shared/src/sim/roomSetup.ts mapSpawns)
 - **몬스터 종류·수·웨이브는 맵이 아니라 shared/data/rooms.json**에서 정한다. 맵은 위치만
+- rooms.json 층 키: returnAfterRoom (귀환 지점 방), chest (보물상자 보상, balance.md 7장), bgm { room, boss } (층 곡, audio.md 5장), rooms[] (id·name·size·map·waves·onClear)
 - 장애물은 방마다 0~3개, 낮게 (깊이 이동을 막지 않되 돌진·투사체에 쓰이게)
   - 충돌 (shared/src/map/collision.ts): 플레이어·몬스터는 돌아서 지나간다 (막힌 축만 멈춤). 돌진이 막히면 벽 충돌과 같음 (멧돼지 어지러움), 투사체는 사라짐, 넉백은 그 자리에서 멈춤
   - 1층: 1번 방 낮은 바위 2, 2번 방 그루터기 2 (멧돼지 돌진 줄). 그림은 roadmap 3-2 전까지 임시 판

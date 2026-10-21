@@ -4,6 +4,7 @@
 import Phaser from 'phaser';
 import { COMBAT, entryPos, floorRoom, mapOf, roomBounds, ROOMS, skillDef, TILE, WaveRunner, type Bounds, type PlayerState, type RoomDef } from '@game/shared';
 import type { Shake } from '../fx/timing';
+import { music } from '../audio/bgm/music';
 import { sfx } from '../audio/player';
 import { color } from '../palette';
 import { Connection } from '../net/connection';
@@ -114,6 +115,9 @@ export class Dungeon extends Phaser.Scene {
     if (!this.textures.exists(key)) this.textures.addCanvas(key, drawRoomBg(FLOOR, width, room.size[1]!, FIELD_BOTTOM + BG_EXTRA));
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(-1000);
     this.props = new PropLayer(this, mapOf(room));
+    // BGM: 방 1~5 = 층 곡 (방을 옮겨도 이어서), 보스 방 = 보스 곡 첫 마디부터 (audio.md 5장)
+    const bgm = ROOMS.floor1!.bgm;
+    music.play(floorRooms().indexOf(room) === floorRooms().length - 1 ? bgm.boss : bgm.room);
     this.camCenter = entryPos(room, 0).x;
     return { bounds };
   }
@@ -129,7 +133,11 @@ export class Dungeon extends Phaser.Scene {
       this.events.once('shutdown', () => panel.destroy());
     }
     online.onBonus = (rate) => this.overlay.showBonus(rate);
-    online.onResult = (r) => { this.result = new ResultPanel(this, HUD_DEPTH + 10, r, conn.myId, (pid) => online.colorOf(pid)); };
+    online.onResult = (r) => {
+      this.result = new ResultPanel(this, HUD_DEPTH + 10, r, conn.myId, (pid) => online.colorOf(pid));
+      // 정산 화면: 음악은 0.5초에 걸쳐 줄이고 정지 (정산 효과음이 주인공)
+      music.stop();
+    };
     online.onClear = () => {
       this.overlay.showClear();
       this.props.setCleared(true);
