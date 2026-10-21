@@ -3,14 +3,17 @@ import { actionMoveDelta } from '../actions';
 import type { BodyEvent } from '../body';
 import type { MonsterAttack } from '../data/schema';
 import type { Bounds } from '../movement';
-import { actionHits, type HitTarget } from '../shapes';
+import { actionHits, type HitTarget, type PlayerTarget } from '../shapes';
 import { attackPhase, monsterBounds, type Monster } from './state';
 import type { AttackTokens } from './tokens';
 
 export interface AiContext {
+  /** 이 몬스터가 노리는 플레이어 위치 (dungeon.md 3장 대상 선택) */
   player: { x: number; y: number };
-  /** 맞을 수 있는 플레이어 (무적이면 null) */
+  /** 노리는 플레이어의 판정 (무적이면 null) — 닿을지 고를 때 */
   target: HitTarget | null;
+  /** 맞을 수 있는 모든 플레이어 — 실제 적중 판정 */
+  targets: PlayerTarget[];
   tokens: AttackTokens;
   bounds: Bounds;
   /** 다른 정예가 공격 중인가 (정예는 동시에 1마리만, dungeon.md 3장) */
@@ -22,7 +25,7 @@ export type MonsterEvent =
   | { type: 'attackStart'; def: MonsterAttack }
   | { type: 'active'; def: MonsterAttack }
   | { type: 'attackEnd'; def: MonsterAttack }
-  | { type: 'playerHit'; def: MonsterAttack; damage: number }
+  | { type: 'playerHit'; pid: string; def: MonsterAttack; damage: number }
   | { type: 'wallHit'; groggy: boolean }
   | { type: 'shoot'; def: MonsterAttack }
   | { type: 'zone'; def: MonsterAttack }
@@ -31,7 +34,7 @@ export type MonsterEvent =
 export function startAttack(m: Monster, def: MonsterAttack, ctx: AiContext): MonsterEvent {
   if (m.def.usesToken) ctx.tokens.tryTake(m.id);
   m.hasToken = m.def.usesToken;
-  m.attack = { def, t: 0, dir: m.facing, struck: false };
+  m.attack = { def, t: 0, dir: m.facing, struck: [] };
   m.mode = 'attack';
   return { type: 'attackStart', def };
 }
@@ -86,9 +89,12 @@ export function stepAttack(m: Monster, dt: number, ctx: AiContext): MonsterEvent
     if (def.zone) ev.push({ type: 'zone', def });
   }
   const activeNow = after === 'active' || (before === 'windup' && after !== 'windup');
-  if (activeNow && !a.struck && def.damage > 0 && ctx.target && actionHits({ x: m.body.x, y: m.body.y, facing: a.dir }, def, ctx.target)) {
-    a.struck = true;
-    ev.push({ type: 'playerHit', def, damage: def.damage });
+  if (activeNow && def.damage > 0) {
+    for (const t of ctx.targets) {
+      if (a.struck.includes(t.pid) || !actionHits({ x: m.body.x, y: m.body.y, facing: a.dir }, def, t)) continue;
+      a.struck.push(t.pid);
+      ev.push({ type: 'playerHit', pid: t.pid, def, damage: def.damage });
+    }
   }
   // 토큰은 windup~active 동안만 (recovery부터 반납)
   if (after !== 'windup' && after !== 'active' && m.hasToken) {

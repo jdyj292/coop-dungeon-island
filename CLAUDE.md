@@ -99,13 +99,13 @@ tools/                   개발 도구 (아래 표)
 
 ## 개발 순서 (상세: docs/roadmap.md)
 - [x] M0 스타일 테스트
-- [ ] M1 로컬 전투
+- [x] M1 로컬 전투
 - [ ] M2 멀티플레이
 - [ ] M3 던전 1층 완성
 - [ ] M4 섬·계정
 - [ ] M5 배포
 
 ## 현재 상태
-- M0 완료. M1 1-1~1-9 완료 (1-9: balance-check 경고 0건, 대검 평타 후딜 +0.1초 → 초당 375%. ttk-sim 방 클리어가 목표보다 짧음 → 9장 튜닝 때 확인)
+- M0·M1 완료 (조작감·방 클리어 시간 튜닝은 플레이 후, balance.md 9장). M2 2-1 완료: RoomSim 여러 명(pid)·몬스터 대상 선택·messages.ts·NET 상수
 - 명령: `pnpm dev`(?room=1~6) / `pnpm test` / `pnpm typecheck` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: roadmap M1 완료 조건 확인 → M2
+- 다음: 2-2 서버 DungeonRoom (RoomSim 60Hz, 상태 스키마, 메시지 검사, 20Hz 전송)

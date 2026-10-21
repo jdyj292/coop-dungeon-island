@@ -8,6 +8,9 @@ export interface Origin {
   facing: number;
 }
 
+/** 맞을 수 있는 플레이어 (pid = 방 안 플레이어 id) */
+export type PlayerTarget = HitTarget & { pid: string };
+
 export interface HitTarget {
   x: number;
   y: number;

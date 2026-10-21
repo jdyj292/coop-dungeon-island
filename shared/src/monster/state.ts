@@ -11,8 +11,8 @@ export interface AttackRun {
   t: number;
   /** 공격 방향 (시작할 때 고정) */
   dir: number;
-  /** 이번 공격에 플레이어를 이미 맞혔나 */
-  struck: boolean;
+  /** 이번 공격에 이미 맞은 플레이어 id (한 공격에 한 사람은 한 번) */
+  struck: string[];
 }
 
 export interface Monster {

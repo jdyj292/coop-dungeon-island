@@ -230,7 +230,7 @@ IslandState
 
 | 파일 | 내용 |
 |---|---|
-| messages.ts | 메시지·이벤트 타입과 zod 스키마 |
+| messages.ts | 클라이언트 → 서버 zod 스키마(`C2S`, `parseC2S`), 서버 → 클라이언트 이벤트 타입(`S2C`) |
 | movement.ts | 입력 → 이동 (속도, 걷기·달리기, 깊이 이동 배율) |
 | collision.ts | 맵 충돌 (Tiled walls) |
 | actions.ts | 행동 구간 계산, 행동 중 이동 |
@@ -238,8 +238,9 @@ IslandState
 | tick.ts | 고정 1/60초 틱 누적기 (FixedStep) |
 | player.ts | 플레이어 한 틱 (행동·대시·백스텝·쿨타임·이동) |
 | monster/ | 몬스터 상태·AI·공격·토큰·투사체·장판 |
-| sim/room.ts | 방 한 틱 (RoomSim): 몬스터 → 투사체·장판 → 플레이어 → 겹침 풀기. 서버 DungeonRoom이 그대로 돌린다 |
-| constants.ts | 틱 속도, 보간 지연, 보정 임계값 등 이 문서의 숫자 |
+| sim/room.ts | 방 한 틱 (RoomSim): 몬스터 → 투사체·장판 → 플레이어 → 겹침 풀기. 플레이어 여럿(pid), `step(dt, 입력 Map)`. 솔로는 `tick(dt, 입력)`. 서버 DungeonRoom이 그대로 돌린다 |
+| sim/aim.ts · sim/strike.ts | 몬스터 대상 선택 (dungeon.md 3장) · 플레이어 행동 적중 |
+| constants.ts | 틱 속도, `NET` (보간 지연, 보정 임계값, 되감기, 횟수 제한 등 이 문서의 숫자) |
 
 - 클라이언트·서버가 같은 결과를 내도록 이동 계산은 고정 시간 간격(1/60초) 단위로
 

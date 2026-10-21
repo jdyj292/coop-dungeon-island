@@ -1,6 +1,6 @@
 // 몬스터가 남기는 물체: 투사체(포자탄)와 장판(졸음 구름). 형식 docs/data.md 1장 projectile·zone
 import type { MonsterAttack, Zone as ZoneDef } from '../data/schema';
-import { areaCenter, projectileHits, zoneContains, type HitTarget } from '../shapes';
+import { areaCenter, projectileHits, zoneContains, type HitTarget, type PlayerTarget } from '../shapes';
 
 export interface Projectile {
   id: number;
@@ -11,6 +11,8 @@ export interface Projectile {
   dir: number;
   traveled: number;
   done: boolean;
+  /** 이미 맞힌 플레이어 (관통 투사체가 같은 사람을 매 틱 맞히지 않게) */
+  hitPids: string[];
 }
 
 export interface ZoneArea {
@@ -27,19 +29,29 @@ export interface ZoneArea {
 export const MUZZLE = 8;
 
 export function spawnProjectile(id: number, ownerId: number, def: MonsterAttack, x: number, y: number, dir: number): Projectile {
-  return { id, ownerId, def, x: x + dir * MUZZLE, y, dir, traveled: 0, done: false };
+  return { id, ownerId, def, x: x + dir * MUZZLE, y, dir, traveled: 0, done: false, hitPids: [] };
 }
 
 /** 한 틱: 날아가고, 사거리·벽에서 사라짐. 맞으면 true (맞은 뒤 사라짐, pierce면 계속) */
-export function stepProjectile(p: Projectile, dt: number, minX: number, maxX: number, target: HitTarget | null): boolean {
+/** 이번 틱에 맞은 플레이어 id (관통하지 않으면 첫 한 명) */
+export function stepProjectile(p: Projectile, dt: number, minX: number, maxX: number, targets: PlayerTarget[]): string[] {
   const pr = p.def.projectile!;
   const d = pr.speed * dt;
   p.x += p.dir * d;
   p.traveled += d;
   if (p.traveled >= pr.range || p.x < minX || p.x > maxX) p.done = true;
-  if (p.done || !target || !projectileHits(p.x, p.y, pr.radius, target)) return false;
-  if (!pr.pierce) p.done = true;
-  return true;
+  if (p.done) return [];
+  const hit: string[] = [];
+  for (const t of targets) {
+    if (p.hitPids.includes(t.pid) || !projectileHits(p.x, p.y, pr.radius, t)) continue;
+    hit.push(t.pid);
+    p.hitPids.push(t.pid);
+    if (!pr.pierce) {
+      p.done = true;
+      break;
+    }
+  }
+  return hit;
 }
 
 export function spawnZone(id: number, attack: MonsterAttack, origin: { x: number; y: number; facing: number }): ZoneArea {

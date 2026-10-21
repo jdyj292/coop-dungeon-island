@@ -18,3 +18,5 @@ export * from './sim/room';
 export * from './data/load';
 export * from './data/crossCheck';
 export type * from './data/schema';
+export * from './messages';
+export * from './sim/aim';
