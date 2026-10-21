@@ -3,6 +3,7 @@ import baseJson from '../../data/sprites/character/base.json';
 import outfitsJson from '../../data/sprites/character/outfits.json';
 import materialsJson from '../../data/sprites/materials.json';
 import draftMonstersJson from '../../data/sprites/drafts/monsters.json';
+import draftPosesJson from '../../data/sprites/drafts/poses.json';
 import monstersJson from '../../data/sprites/monsters.json';
 import posesJson from '../../data/sprites/poses.json';
 import weaponsJson from '../../data/sprites/weapons_visual.json';
@@ -117,6 +118,19 @@ export function withMonsterDrafts(base: Record<string, unknown>, drafts: Record<
   return out;
 }
 
+/** 초안 포즈를 승인 포즈 위에 겹친다 (무기 종류 → 포즈 이름) */
+export function withPoseDrafts(base: Record<string, unknown>, drafts: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...base };
+  for (const [type, poses] of Object.entries(withoutNotes(drafts))) {
+    out[type] = { ...(base[type] as Record<string, unknown> | undefined), ...(poses as Record<string, unknown>) };
+  }
+  return out;
+}
+
+/** 초안 포즈 이름 (sprite-preview 표시용) */
+export const draftPoseNames = (type: string): string[] =>
+  Object.keys((draftPosesJson as unknown as Record<string, Record<string, unknown>>)[type] ?? {});
+
 /** 초안 프레임 이름 (sprite-preview 표시용) */
 export function draftFrameNames(id: string): string[] {
   const d = (draftMonstersJson as Record<string, MonsterDraft>)[id];
@@ -125,7 +139,8 @@ export function draftFrameNames(id: string): string[] {
 
 export function spriteData(): SpriteData {
   cached ??= parseSpriteData({
-    base: baseJson, outfits: outfitsJson, poses: posesJson, weapons: weaponsJson, materials: materialsJson,
+    base: baseJson, outfits: outfitsJson, weapons: weaponsJson, materials: materialsJson,
+    poses: useDrafts ? withPoseDrafts(posesJson, draftPosesJson) : posesJson,
     monsters: useDrafts ? withMonsterDrafts(monstersJson, draftMonstersJson) : monstersJson,
   });
   return cached;

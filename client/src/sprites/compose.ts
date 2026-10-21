@@ -70,7 +70,17 @@ function armPixels(shoulder: Point, hand: Point, sleeve: string, gauntlet: strin
 
 export function composeCharacter(data: SpriteData, look: CharacterLook): Composed {
   const { base, outfits, poses, weapons } = data;
-  const frame = look.frame ?? 'stand';
+  // 포즈 (몸 전체 변화가 다리 프레임·몸 내림을 정할 수 있어서 먼저 찾는다)
+  let pose: Pose = {};
+  const profile = look.weapon ? weapons.profiles[look.weapon] : undefined;
+  if (look.weapon && !profile) throw new Error(`무기 외형 '${look.weapon}' 없음`);
+  if (profile && look.pose) {
+    const p = poses.weapons[profile.type]?.[look.pose];
+    if (!p) throw new Error(`포즈 '${profile.type}.${look.pose}' 없음`);
+    pose = p;
+  }
+  const frame = pose.body?.legs ?? look.frame ?? 'stand';
+  const bob = (look.bob ?? 0) + (pose.body?.bob ?? 0);
   const ops: Op[] = [];
   const addPart = (part: Part) => ops.push({ layer: part.layer, pixels: partPixels(part, frame) });
 
@@ -93,15 +103,6 @@ export function composeCharacter(data: SpriteData, look: CharacterLook): Compose
     item.parts.forEach(addPart);
   }
 
-  // 포즈
-  let pose: Pose = {};
-  const profile = look.weapon ? weapons.profiles[look.weapon] : undefined;
-  if (look.weapon && !profile) throw new Error(`무기 외형 '${look.weapon}' 없음`);
-  if (profile && look.pose) {
-    const p = poses.weapons[profile.type]?.[look.pose];
-    if (!p) throw new Error(`포즈 '${profile.type}.${look.pose}' 없음`);
-    pose = p;
-  }
   const gauntletMat = profile?.gauntlet?.mat ?? 'K';
   const hands: Record<'front' | 'back', Point> = { ...base.defaultHands };
   for (const side of ['front', 'back'] as const) {
@@ -132,8 +133,8 @@ export function composeCharacter(data: SpriteData, look: CharacterLook): Compose
   const order = (layer: Layer) => base.layerOrder.indexOf(layer);
   const sorted = ops.map((op, i) => ({ op, i })).sort((a, b) => order(a.op.layer) - order(b.op.layer) || a.i - b.i);
   for (const { op } of sorted) {
-    // 걷기 몸 흔들림: 다리를 뺀 나머지가 함께 내려간다
-    const dy = op.layer === 'bottom' ? 0 : (look.bob ?? 0);
+    // 걷기 몸 흔들림·웅크림: 다리를 뺀 나머지가 함께 내려간다
+    const dy = op.layer === 'bottom' ? 0 : bob;
     for (const [x, y, ch] of op.pixels) {
       const gx = x + MARGIN;
       const gy = y + dy + MARGIN;

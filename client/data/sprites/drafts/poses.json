@@ -1,0 +1,93 @@
+{
+ "_note": "검토 중인 포즈 초안 (docs/sprites.md 10장). 무기 종류 → 포즈 이름 → 포즈 (poses.json과 같은 형식). 승인되면 poses.json으로 옮기고 지운다",
+ "greatsword": {
+  "overhead": {
+   "front": {
+    "hand": [
+     10,
+     5
+    ]
+   },
+   "weapons": [
+    {
+     "hand": "front",
+     "dir": [
+      0,
+      -1
+     ]
+    }
+   ],
+   "back": {
+    "hand": [
+     10,
+     7
+    ],
+    "detached": true
+   }
+  },
+  "slam": {
+   "body": {
+    "bob": 2,
+    "legs": "walkA"
+   },
+   "front": {
+    "hand": [
+     10,
+     13
+    ]
+   },
+   "weapons": [
+    {
+     "hand": "front",
+     "dir": [
+      1,
+      0
+     ]
+    }
+   ],
+   "back": {
+    "hand": [
+     11,
+     13
+    ],
+    "detached": true
+   }
+  }
+ },
+ "staff": {
+  "plant": {
+   "body": {
+    "bob": 1
+   },
+   "front": {
+    "hand": [
+     12,
+     11
+    ]
+   },
+   "back": {
+    "hand": [
+     12,
+     13
+    ],
+    "detached": true
+   },
+   "weapons": [
+    {
+     "hand": "front",
+     "dir": [
+      0,
+      -1
+     ]
+    }
+   ],
+   "fx": {
+    "type": "circle",
+    "at": [
+     12,
+     17
+    ]
+   }
+  }
+ }
+}

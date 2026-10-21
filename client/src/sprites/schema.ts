@@ -56,6 +56,8 @@ const hand = z.object({
 });
 
 export const poseSchema = z.object({
+  /** 몸 전체 변화 (웅크림 등, art.md 4장): bob = 다리를 뺀 몸을 내리는 px, legs = 다리(bottom) 프레임 */
+  body: z.object({ bob: z.number().int().min(0).max(4).optional(), legs: z.string().optional() }).strict().optional(),
   front: hand.nullable().optional(),
   back: hand.nullable().optional(),
   weapons: z
