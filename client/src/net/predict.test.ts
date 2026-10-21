@@ -71,4 +71,16 @@ describe('Predictor (network.md 7장)', () => {
     pr.reconcile(s, 1, TICK);
     expect([pr.state.hp, pr.state.hurt?.kind, pr.state.fighter.run]).toEqual([940, 'stun', null]);
   });
+  it('히트스톱: 멈춘 동안 행동이 진행되지 않고, 그때 누른 평타는 멈춤 뒤 이어진다', () => {
+    const pr = new Predictor(gs, bounds, { x: 100, y: 50 });
+    pr.tick({ ...idle, attack: true }, TICK, 1, 1);
+    for (let i = 0; i < 8; i++) pr.tick(idle, TICK, 1);
+    const t = pr.state.fighter.run!.t;
+    pr.stop(0.05);
+    pr.tick({ ...idle, attack: true }, TICK, 2, 2);
+    pr.tick(idle, TICK, 2);
+    expect(pr.state.fighter.run!.t).toBe(t);
+    for (let i = 0; i < 3; i++) pr.tick(idle, TICK, 2);
+    expect(pr.state.fighter.queued).toBe(true);
+  });
 });

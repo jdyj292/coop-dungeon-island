@@ -13,13 +13,17 @@ export interface StrikeHit {
   damage: number;
 }
 
+/** 판정에 쓸 몬스터 위치 (지연 보정이면 되감은 위치, network.md 9장) */
+export type PosOf = (m: Monster) => { x: number; y: number; airborne: boolean };
+const current: PosOf = (m) => ({ x: m.body.x, y: m.body.y, airborne: m.body.state === 'air' });
+
 /** 판정에 든 몬스터 모두에게 적중. 체력 0이면 기절 (combat.md 3장). done = 이 행동에 이미 맞은 몬스터 id */
-export function strike(p: PlayerState, run: ActionRun, monsters: Monster[], done: Set<number>): StrikeHit[] {
+export function strike(p: PlayerState, run: ActionRun, monsters: Monster[], done: Set<number>, posOf: PosOf = current): StrikeHit[] {
   const def = run.def, out: StrikeHit[] = [];
   const a = { x: p.pos.x, y: p.pos.y, facing: p.facing };
   for (const m of monsters) {
     if (done.has(m.id) || !canBeHit(m.body, def.flags)) continue;
-    const t = { x: m.body.x, y: m.body.y, airborne: m.body.state === 'air', hurtbox: m.def.hurtbox };
+    const t = { ...posOf(m), hurtbox: m.def.hurtbox };
     if (!actionHits(a, def, t)) continue;
     done.add(m.id);
     applyHit(m.body, { dir: p.facing, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });

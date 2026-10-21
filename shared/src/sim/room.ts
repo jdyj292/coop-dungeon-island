@@ -2,20 +2,23 @@
 // 플레이어는 여러 명 (pid로 구분). 솔로는 첫 플레이어만 쓰는 tick(dt, input)
 import type { ActionDef, ActionRun, FighterEvent, WeaponDef } from '../actions';
 import { stepBody } from '../body';
-import { PLAYER, COMBAT } from '../data/load';
+import { PLAYER } from '../data/load';
 import type { MonsterAttack } from '../data/schema';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
 import { inZone, spawnProjectile, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
 import { monsterBounds, newMonster, type Monster } from '../monster/state';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
-import { newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
+import { mergePresses, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
 import { gainUlt, hurtPlayer, isInvulnerable, type HurtEvent, type PotionKind } from '../playerHurt';
 import { comboHit, newCombo, stepCombo, type Combo } from '../combo';
 import type { PlayerTarget } from '../shapes';
-import { attackPhase } from '../monster/state';
+import { gradeTiming } from '../hit';
 import { chooseTarget } from './aim';
-import { phaseIsActive, strike } from './strike';
+import { separateMonsters } from './separate';
+import { PositionHistory, type PastPos } from './history';
+import { HitLog } from './hitLog';
+import { phaseIsActive, strike, type PosOf } from './strike';
 
 export interface Spawn {
   kind: string;
@@ -30,6 +33,14 @@ export interface SimPlayer {
   weapon: WeaponDef;
   /** 개인 콤보 (팀 콤보는 2-6) */
   combo: Combo;
+  /** 지연 보정 되감기 (초): 이 플레이어의 공격은 그만큼 과거의 몬스터 위치로 판정 (network.md 9장) */
+  rewind: number;
+  /** 히트스톱 남은 시간 (hitstop: 'entity'일 때) */
+  stop: number;
+  /** 피격 직전 상태 기록 (백스텝 소급 무적) */
+  hits: HitLog;
+  /** 히트스톱 동안 들어온 누름 (멈춤이 끝난 틱에 적용) */
+  held: PlayerInput | null;
 }
 
 /** pid = 그 사건의 플레이어 (hit은 공격자, playerHit·playerHurt는 맞은 사람) */
@@ -49,6 +60,11 @@ export interface SimOptions {
   ai?: boolean;
   partySize?: number;
   rng?: () => number;
+  /**
+   * 히트스톱: 'none' = 시뮬레이션은 멈추지 않음 (솔로 로컬은 화면 전체를 멈춘다, motion.md 3장),
+   * 'entity' = 공격자와 대상만 멈추고 세계는 계속 (서버, network.md 9장)
+   */
+  hitstop?: 'none' | 'entity';
 }
 
 /** 솔로·로컬 플레이어 id */
@@ -66,6 +82,12 @@ export class RoomSim {
   private aim = new Map<number, string>();
   /** 행동마다 이미 맞은 몬스터 id (같은 행동에 한 대상은 한 번, combat.md 2장) */
   private struck = new WeakMap<ActionRun, Set<number>>();
+  /** 시뮬레이션 시각 (초) */
+  time = 0;
+  /** 몬스터 위치 기록 (되감기 판정) */
+  readonly history = new PositionHistory();
+  /** 몬스터 id → 히트스톱 남은 시간 */
+  private monsterStop = new Map<number, number>();
 
   /** playerPos가 있으면 솔로 플레이어(SOLO_PID)를 바로 넣는다 */
   constructor(readonly weapon: WeaponDef, readonly bounds: Bounds, playerPos: Vec2 | null, readonly opts: SimOptions = {}) {
@@ -74,7 +96,7 @@ export class RoomSim {
   }
 
   addPlayer(pid: string, pos: Vec2, weapon: WeaponDef = this.weapon): SimPlayer {
-    const sp: SimPlayer = { pid, state: newPlayerState({ ...pos }), weapon, combo: newCombo() };
+    const sp: SimPlayer = { pid, state: newPlayerState({ ...pos }), weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null };
     this.players.set(pid, sp);
     return sp;
   }
@@ -127,10 +149,17 @@ export class RoomSim {
   /** 한 틱. inputs에 없는 플레이어는 입력 없음. moved = 플레이어별 걸은 거리 */
   step(dt: number, inputs: ReadonlyMap<string, PlayerInput>): { events: SimEvent[]; moved: Map<string, number> } {
     const events: SimEvent[] = [];
+    this.time += dt;
     const b = this.bounds, targets = this.playerTargets();
     for (const sp of this.players.values()) stepCombo(sp.combo, dt);
     // 1. 몬스터 먼저: 이번 틱에 맞은 번쩍임·경직이 같은 틱에 깎이지 않게
     for (const m of this.alive) {
+      // 히트스톱 중인 몬스터는 그대로 멈춤
+      const stop = this.monsterStop.get(m.id) ?? 0;
+      if (stop > 0) {
+        this.monsterStop.set(m.id, Math.max(0, stop - dt));
+        continue;
+      }
       const aimed = this.aimFor(m);
       // 플레이어가 아직 없으면(서버 방 생성 직후) 몸 물리만
       if (!aimed) {
@@ -167,7 +196,8 @@ export class RoomSim {
     const moved = new Map<string, number>();
     for (const sp of this.players.values()) moved.set(sp.pid, this.stepPlayer(sp, inputs.get(sp.pid) ?? IDLE, dt, events));
     // 4. 몬스터끼리 겹침 풀기 (지상·공격 중 아닐 때)
-    this.separate();
+    separateMonsters(this.alive, this.bounds);
+    this.recordHistory();
     return { events, moved };
   }
 
@@ -178,8 +208,28 @@ export class RoomSim {
     return pid ? this.players.get(pid) : undefined;
   }
 
-  private stepPlayer(sp: SimPlayer, input: PlayerInput, dt: number, events: SimEvent[]): number {
+  /** 백스텝 소급 무적: 입력 시각(초) 뒤 짧은 시간 안의 피격 취소 (쿨타임 중이면 안 함). 취소한 피격 수 */
+  cancelHitsSince(pid: string, inputT: number): number {
+    const sp = this.players.get(pid);
+    if (!sp || sp.state.backstepCd > 0) return 0;
+    return sp.hits.cancelSince(sp.state, inputT);
+  }
+
+  private recordHistory(): void {
+    const items = new Map<number, PastPos>();
+    for (const m of this.alive) items.set(m.id, { x: m.body.x, y: m.body.y, z: m.body.z, airborne: m.body.state === 'air' });
+    this.history.record(this.time, items);
+  }
+
+  private stepPlayer(sp: SimPlayer, raw: PlayerInput, dt: number, events: SimEvent[]): number {
     const { pid, state: p } = sp;
+    if (sp.stop > 0) {
+      sp.stop = Math.max(0, sp.stop - dt);
+      sp.held = mergePresses(sp.held, raw);
+      return 0;
+    }
+    const input = sp.held ? { ...mergePresses(sp.held, raw)!, x: raw.x, y: raw.y, run: raw.run } : raw;
+    sp.held = null;
     const res = stepPlayerState(p, sp.weapon, input, dt, this.bounds, this.zoneSpeedMul(p));
     if (res.backstepStarted) events.push({ type: 'backstep', pid });
     res.hurt.forEach((e) => events.push({ type: 'playerHurt', pid, e }));
@@ -191,12 +241,20 @@ export class RoomSim {
     }
     if (p.fighter.run && phaseIsActive(p.fighter.run)) runs.add(p.fighter.run);
     let hits = 0;
+    const posOf: PosOf | undefined = sp.rewind > 0
+      ? (m) => this.history.at(m.id, this.time - sp.rewind) ?? { x: m.body.x, y: m.body.y, airborne: m.body.state === 'air' }
+      : undefined;
     for (const run of runs) {
       let done = this.struck.get(run);
       if (!done) this.struck.set(run, (done = new Set()));
-      for (const h of strike(p, run, this.alive, done)) {
+      for (const h of strike(p, run, this.alive, done, posOf)) {
         events.push({ type: 'hit', pid, m: h.m, def: run.def, damage: h.damage });
         hits++;
+        if (this.opts.hitstop === 'entity') {
+          const sec = gradeTiming(run.def.fx?.grade ?? 'light').hitstop;
+          sp.stop = Math.max(sp.stop, sec);
+          this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, sec));
+        }
       }
     }
     comboHit(sp.combo, hits);
@@ -205,8 +263,9 @@ export class RoomSim {
 
   /** 몬스터 공격 적중 → HP·경직·다운 (무적이면 무시) */
   private hitPlayer(events: SimEvent[], pid: string, from: Monster | undefined, def: MonsterAttack, damage: number): void {
-    const p = this.players.get(pid)?.state;
-    if (!p) return;
+    const sp = this.players.get(pid), p = sp?.state;
+    if (!sp || !p) return;
+    if (!isInvulnerable(p)) sp.hits.save(this.time, p);
     const hurt = hurtPlayer(p, damage, def.strength);
     if (!hurt.length) return;
     events.push({ type: 'playerHit', pid, from, def, damage });
@@ -222,24 +281,5 @@ export class RoomSim {
       if (z.def.effect.type === 'slow' && inZone(z, t)) mul = Math.min(mul, 1 - (z.def.effect.amount ?? 0));
     }
     return mul;
-  }
-
-  private separate(): void {
-    // 피격 상자가 겹치면 좌우로 벌린다 (+ separation 여유)
-    const margin = COMBAT.ai.separation;
-    const list = this.alive.filter((m) => m.body.state === 'idle' && attackPhase(m) === null && m.body.z === 0);
-    for (let i = 0; i < list.length; i++) {
-      for (let j = i + 1; j < list.length; j++) {
-        const ma = list[i]!, mc = list[j]!, a = ma.body, c = mc.body;
-        const gapX = (ma.def.hurtbox.width + mc.def.hurtbox.width) / 2 + margin;
-        const gapY = (ma.def.hurtbox.depth + mc.def.hurtbox.depth) / 2;
-        const dx = c.x - a.x;
-        if (Math.abs(dx) >= gapX || Math.abs(c.y - a.y) >= gapY) continue;
-        const push = (gapX - Math.abs(dx)) / 2, dir = dx >= 0 ? 1 : -1;
-        const ba = monsterBounds(ma, this.bounds), bc = monsterBounds(mc, this.bounds);
-        a.x = Math.min(ba.maxX, Math.max(ba.minX, a.x - dir * push));
-        c.x = Math.min(bc.maxX, Math.max(bc.minX, c.x + dir * push));
-      }
-    }
   }
 }

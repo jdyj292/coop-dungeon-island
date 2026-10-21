@@ -103,6 +103,31 @@ describe('DungeonGame (서버 진행)', () => {
     const g = new DungeonGame({}, { broadcast: () => {}, send: () => {} });
     expect(() => run(g, 10)).not.toThrow();
   });
+  it('지연 보정: 되감기 = 지금 − (t − 100ms), 최대 150ms. 공격자 위치는 12px 안이면 클라이언트 값', () => {
+    const { g } = setup();
+    run(g, 60); // 1000ms
+    const sp = g.sim.players.get('a')!;
+    g.onMessage('a', 'action', { seq: 1, t: 1000 - 20, x: 50, y: sp.state.pos.y, facing: 1, kind: 'basic' });
+    expect(sp.rewind).toBeCloseTo(0.12);
+    expect(sp.state.pos.x).toBe(50);
+    run(g, 60);
+    g.onMessage('a', 'action', { seq: 2, t: 0, x: 300, y: 0, facing: 1, kind: 'basic' });
+    expect(sp.rewind).toBeCloseTo(0.15);
+    expect(sp.state.pos.x).not.toBe(300);
+  });
+  it('백스텝 메시지: 입력 시각 뒤 100ms 안의 피격 취소', () => {
+    const { g } = setup();
+    const sp = g.sim.players.get('a')!;
+    let hitAt = -1;
+    for (let i = 0; i < 600 && hitAt < 0; i++) {
+      g.sim.monsters.forEach((m, j) => { if (j === 0) { m.body.x = sp.state.pos.x + 20; m.body.y = sp.state.pos.y; } });
+      g.tick();
+      if (sp.state.hp < sp.state.maxHp) hitAt = g.now;
+    }
+    expect(hitAt).toBeGreaterThan(0);
+    g.onMessage('a', 'action', { seq: 9, t: hitAt - 50, x: 0, y: 0, facing: 1, kind: 'backstep' });
+    expect(sp.state.hp).toBe(sp.state.maxHp);
+  });
   it('퇴장하면 상태에서 빠짐', () => {
     const { g } = setup();
     g.leave('b');

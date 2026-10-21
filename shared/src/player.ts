@@ -125,3 +125,14 @@ export function playerStateName(p: PlayerState, moved: number): string {
   if (moved > 0) return p.run.running ? 'run' : 'walk';
   return 'idle';
 }
+
+/** 누름(공격·스킬·백스텝·물약)만 합친다: 히트스톱으로 멈춘 동안 들어온 누름을 멈춤이 끝난 틱에 쓰기 위해 */
+export function mergePresses(held: PlayerInput | null, input: PlayerInput): PlayerInput | null {
+  const pressed = input.attack || input.skill || input.backstep || input.potion;
+  if (!pressed) return held;
+  return {
+    ...input,
+    attack: input.attack || !!held?.attack, skill: input.skill ?? held?.skill ?? null,
+    backstep: input.backstep || !!held?.backstep, potion: input.potion ?? held?.potion ?? null,
+  };
+}

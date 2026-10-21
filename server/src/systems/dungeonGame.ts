@@ -1,8 +1,8 @@
 // 던전 한 방의 진행 (Colyseus 없이 테스트 가능): RoomSim + 웨이브 + 입력 대기열 + 상태 반영 + 이벤트
 // DungeonRoom(rooms/)은 연결·전송만 맡는다. 흐름은 docs/network.md 3~6장
 import {
-  entryPos, floorRoom, parseC2S, roomBounds, RoomSim, TICK, WaveRunner, weaponDef,
-  type C2SType, type PlayerInput, type Projectile, type S2C,
+  entryPos, floorRoom, NET, parseC2S, roomBounds, RoomSim, TICK, WaveRunner, weaponDef,
+  type C2SMessage, type C2SType, type PlayerInput, type Projectile, type S2C, type SimPlayer,
 } from '@game/shared';
 import { DungeonState, PlayerState } from '../schema/DungeonState';
 import { eventsFor, projectileEvents, type Outgoing } from './events';
@@ -50,7 +50,7 @@ export class DungeonGame {
     const room = floorRoom(FLOOR, n);
     const { depth, bounds } = roomBounds(room);
     this.depth = depth;
-    this.sim = new RoomSim(weaponDef('greatsword'), bounds, null, { partySize: party, rng: opts.rng });
+    this.sim = new RoomSim(weaponDef('greatsword'), bounds, null, { partySize: party, rng: opts.rng, hitstop: 'entity' });
     this.waves = new WaveRunner(room);
     this.sim.spawn(this.waves.next());
     this.state.assign({ roomIndex: n - 1, partySize: party, wave: this.waves.wave });
@@ -88,6 +88,7 @@ export class DungeonGame {
       case 'action': {
         const msg = parseC2S('action', raw);
         if (!msg) return 'ignored';
+        this.lagCompensate(sp, msg);
         const reason = m.inputs.onAction(msg, sp.state, sp.weapon);
         if (reason) this.out.send(pid, 'rejected', { seq: msg.seq, reason });
         return 'ok';
@@ -120,6 +121,24 @@ export class DungeonGame {
       default:
         // interact(부활·줍기·레버)는 M3
         return 'ignored';
+    }
+  }
+
+  /**
+   * 지연 보정 (network.md 9장): 백스텝은 입력 시각 뒤 짧은 피격을 취소하고,
+   * 공격은 그 플레이어가 본 시점(action.t − 보간 지연, 최대 150ms 전)의 몬스터 위치로 판정. 공격자 위치는 12px 안이면 클라이언트 값
+   */
+  private lagCompensate(sp: SimPlayer, msg: C2SMessage<'action'>): void {
+    if (msg.kind === 'backstep') {
+      this.sim.cancelHitsSince(sp.pid, msg.t / 1000);
+      return;
+    }
+    const back = this.now - (msg.t - NET.interpDelayMs);
+    sp.rewind = Math.min(NET.rewindMaxMs, Math.max(0, back)) / 1000;
+    const p = sp.state;
+    if (!p.fighter.run && Math.hypot(msg.x - p.pos.x, msg.y - p.pos.y) <= NET.attackerTrustPx) {
+      const b = this.sim.bounds;
+      p.pos = { x: Math.min(b.maxX, Math.max(b.minX, msg.x)), y: Math.min(b.maxY, Math.max(b.minY, msg.y)) };
     }
   }
 
