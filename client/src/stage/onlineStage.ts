@@ -23,6 +23,7 @@ import { Transitions, type Cue } from '../net/transitions';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
 import { MonsterView, placeMonster } from '../view/monsterView';
+import type { PartyMember } from '../ui/hudParty';
 import { PlayerView } from '../view/playerView';
 
 const FX_DEPTH = 5000;
@@ -33,6 +34,8 @@ const ATTACKS = new Map<string, MonsterAttack>(Object.values(MONSTERS).flatMap((
 
 interface Remote {
   view: PlayerView;
+  /** 플레이어 색 번호 (입장 순서) */
+  colorIndex: number;
   ghosts: Afterimages;
   last: { x: number; y: number } | null;
 }
@@ -68,6 +71,23 @@ export class OnlineStage {
     this.hazards = new HazardLayer(scene);
     conn.onEvent = (type, msg) => this.onEvent(type, msg);
     conn.onSnapshot = () => this.reconcile();
+  }
+
+  /** 내 플레이어 색 번호 (아래 HUD 얼굴) */
+  get myColor(): number {
+    return this.players.get(this.conn.myId)?.colorIndex ?? 0;
+  }
+
+  /** 파티원 프레임 (나 제외, 입장 순서). 접속 끊김은 M3에서 서버가 state 'disconnected'로 보낸다 */
+  party(): PartyMember[] {
+    const latest = this.conn.players.latest?.items;
+    const out: PartyMember[] = [];
+    for (const [id, r] of this.players) {
+      const s = latest?.get(id);
+      if (id === this.conn.myId || !s) continue;
+      out.push({ id, colorIndex: r.colorIndex, hp: s.maxHp ? s.hp / s.maxHp : 0, down: s.state === 'knocked', disconnected: s.state === 'disconnected' });
+    }
+    return out;
   }
 
   /** 화면에 보일 콤보: 2인 이상이면 팀 콤보(서버 상태), 아니면 개인 콤보 (combat.md 7장) */
@@ -137,7 +157,7 @@ export class OnlineStage {
     let index = 0;
     for (const [id, s] of ps) {
       let r = this.players.get(id);
-      if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1, index), ghosts: new Afterimages(this.scene), last: null }));
+      if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1, index), colorIndex: index, ghosts: new Afterimages(this.scene), last: null }));
       index++;
       // 나 = 예측 상태 (화면 위치는 보정 오프셋 포함), 다른 사람 = 보간
       const mine = id === c.myId && !!this.predictor;

@@ -13,6 +13,7 @@ import { OnlineStage } from '../stage/onlineStage';
 import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
 import { HudBottom } from '../ui/hudBottom';
 import { HudOverlay } from '../ui/hudOverlay';
+import { HudParty } from '../ui/hudParty';
 import { drawRoomBg } from '../view/roomBg';
 
 const FLOOR = 1;
@@ -39,6 +40,7 @@ export class Dungeon extends Phaser.Scene {
   private camCenter = 0;
   private hud!: HudBottom;
   private overlay!: HudOverlay;
+  private party!: HudParty;
   private keys!: Record<KeyName, Phaser.Input.Keyboard.Key>;
 
   constructor() {
@@ -58,6 +60,7 @@ export class Dungeon extends Phaser.Scene {
     // HUD는 카메라 흔들림과 무관하게 화면에 고정 (hud.md 1·3장)
     this.hud = new HudBottom(this, HUD_DEPTH);
     this.overlay = new HudOverlay(this, HUD_DEPTH - 1);
+    this.party = new HudParty(this, HUD_DEPTH);
     sfx.unlockOnFirstInput();
     this.camCenter = entryPos(0, 1, depth).x;
     if (this.onlineMode) this.connect(bounds);
@@ -112,20 +115,21 @@ export class Dungeon extends Phaser.Scene {
       backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
       potion: Phaser.Input.Keyboard.JustDown(k.potionHp) ? 'hp' : Phaser.Input.Keyboard.JustDown(k.potionMp) ? 'mp' : null,
     };
-    let view: { player: PlayerState | null; combo: number; shake: Shake };
+    let view: { player: PlayerState | null; combo: number; shake: Shake; color: number };
     if (this.stage) {
       this.checkWave(this.stage);
       this.stage.update(dt, input);
-      view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake };
+      view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake, color: 0 };
     } else if (this.online) {
       this.online.update(dt, input);
-      view = { player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake };
+      view = { player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake, color: this.online.myColor };
+      this.party.draw(this.online.party());
     } else return; // 접속 중
     const { width, height } = this.scale.gameSize;
     if (view.player) {
       this.hud.draw({
         player: view.player, weapon: 'greatsword', skills: [SKILLS.skill1, SKILLS.skill2, null, null],
-        level: 1, coins: 0, materials: 0,
+        level: 1, coins: 0, materials: 0, colorIndex: view.color,
       }, dt, width, height - HUD_HEIGHT);
     }
     this.overlay.draw(view.combo, dt, width);

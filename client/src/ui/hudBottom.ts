@@ -6,8 +6,7 @@ import icons from '../../data/sprites/hud_icons.json';
 import fx from '../../data/fx.json';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
-import { spriteData } from '../sprites/data';
-import { characterTexture } from '../sprites/textures';
+import { setFace } from './hudFace';
 import { bar, icon, panel, slot } from './hudParts';
 import { drawText } from './pixelFont';
 
@@ -26,6 +25,8 @@ export interface HudInput {
   level: number;
   coins: number;
   materials: number;
+  /** 내 플레이어 색 번호 (온라인은 입장 순서, 솔로 0) */
+  colorIndex?: number;
 }
 
 /** 줄어든 부분을 trailSec 동안 흰색으로 남김 */
@@ -85,7 +86,7 @@ export class HudBottom {
     // 얼굴 (지금 표정) + 부활의 깃털
     dot(g, 3, Y(143), C('global.ui.panelBorder'), 16, 16);
     dot(g, 4, Y(144), C('global.ui.faceBg'), 14, 14);
-    this.drawFace(p, 5, Y(146));
+    setFace(this.scene, this.face, !!(p.hurt || p.downed), st.colorIndex ?? 0, 5, Y(146));
     if (p.feathers > 0) icon(g, 'feather', 15, Y(153));
 
     // HP·MP·LV
@@ -140,16 +141,5 @@ export class HudBottom {
     dot(g, 257, Y(153), C('floors.1.monster.mushroomCap'), 5, 3);
     dot(g, 258, Y(156), C('floors.1.monster.mushroomStem'), 3, 2);
     drawText(g, String(st.materials), 266, Y(153) + this.matPop.update(st.materials, dt), { color: 'global.fx.flash', outline: 'none' });
-  }
-
-  /** 캐릭터 그림에서 얼굴 12×11만 잘라 보인다 (데모 face(): 몸 상자 왼쪽 +1, 위 0) */
-  private drawFace(p: PlayerState, x: number, y: number): void {
-    const data = spriteData();
-    const tex = characterTexture(this.scene, {
-      hair: 'short', face: p.hurt || p.downed ? 'hurt' : 'normal', outfit: data.outfits.sets.beginner!,
-    }, { hairColor: 'global.hairColors.0', playerColor: 'global.playerColors.0' });
-    const [fx0, fy] = tex.foot, base = data.base;
-    const cx = fx0 - base.foot[0] + 1, cy = fy - base.foot[1];
-    this.face.setTexture(tex.key).setCrop(cx, cy, 12, 11).setPosition(x - cx, y - cy);
   }
 }
