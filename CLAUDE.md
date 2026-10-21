@@ -37,7 +37,7 @@ server/src/schema/       Colyseus 상태 스키마
 server/src/systems/      combat, ai, spawn, reward
 server/src/http/         인증 API (docs/security.md)
 server/src/db/           Drizzle 스키마·마이그레이션 (docs/db.md)
-maps/                    Tiled 원본 (docs/dungeon.md 10장)
+maps/                    Tiled 원본 JSON 맵 (게임이 직접 읽음, docs/dungeon.md 10장)
 tools/                   개발 도구 (아래 표)
 ```
 
@@ -50,6 +50,7 @@ tools/                   개발 도구 (아래 표)
 | sfx-preview | 완성 | 효과음 재생·조정 → JSON 복사, 승인 원본 나란히 듣기·자동 비교. `pnpm sfx-preview` |
 | palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
 | data-validate | 완성 | shared/data 형식·교차 참조 검사 (data.md 5장). `pnpm data-validate`, 기준 rules.json |
+| map-gen | 완성 | 1층 방 Tiled 맵 초기 생성 + 편집용 타일셋 (dungeon.md 10장). `pnpm map-gen [--force]` |
 | net-smoke | 완성 | 봇 2개로 서버 던전 방 접속 확인 (network.md 13장). `pnpm net-smoke` |
 | balance-check | 완성 | 스킬 예산 자동 계산·±25% 경고 (balance.md 3장). `pnpm balance-check`, 기준 rules.json |
 | ttk-sim | 완성 | 예상 처치 시간·목표 비교 (balance.md 5장). `pnpm ttk-sim --weapon greatsword --level 1` |
@@ -101,12 +102,12 @@ tools/                   개발 도구 (아래 표)
 ## 개발 순서 (상세: docs/roadmap.md)
 - [x] M0 스타일 테스트
 - [x] M1 로컬 전투
-- [ ] M2 멀티플레이
+- [x] M2 멀티플레이
 - [ ] M3 던전 1층 완성
 - [ ] M4 섬·계정
 - [ ] M5 배포
 
 ## 현재 상태
-- M0·M1 완료. M2 2-1~2-7 완료 (서버 방·보간·예측·지연 보정·지연 시뮬레이터 패널·팀 콤보·파티원 프레임). M2 체크는 "13px 라인 판정 체감" 직접 확인 후
-- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1&party=2&lag=100&jitter=20, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: M2 체감 확인 → M3 던전 1층 완성
+- M0·M1·M2 완료. M3 3-1 완료: Tiled JSON 맵 6개(maps/floor1), 맵 로더·장애물 충돌, 맵 위치로 출현·입장, data-validate 맵 검사
+- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1&party=2&lag=100) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
+- 다음: 3-2 그림 (낮은 바위·그루터기·출구 문·귀환 고리·보물상자 초안 → sprite-preview 승인)

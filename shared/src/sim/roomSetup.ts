@@ -1,7 +1,9 @@
-// 방·웨이브 → 출현 위치, 웨이브 진행. Tiled 맵(roadmap 3장, docs/dungeon.md 10장)이 생기기 전까지 쓰는 임시 자동 배치
+// 방·웨이브 → 출현 위치, 웨이브 진행. 위치는 Tiled 맵(maps/<map>.json), 종류·수·웨이브는 rooms.json (docs/dungeon.md 10장)
 // 클라이언트 로컬 던전과 서버 DungeonRoom이 같이 쓴다
-import { TILE } from '../constants';
 import { MONSTERS, ROOMS } from '../data/load';
+import { roomMap } from '../map/maps';
+import type { RoomMap, SpawnPoint } from '../map/tiled';
+import { TILE } from '../constants';
 import type { Bounds, Vec2 } from '../movement';
 import type { Spawn } from './room';
 
@@ -13,36 +15,40 @@ export function floorRoom(floor: string, n: number): RoomDef {
   return rooms[Math.min(rooms.length, Math.max(1, n)) - 1]!;
 }
 
-/** 방 크기(px)와 이동 범위 */
+export const mapOf = (room: RoomDef): RoomMap => roomMap(room.map);
+
+/** 방 크기(px)와 이동 범위 (장애물 포함) */
 export function roomBounds(room: RoomDef): { width: number; depth: number; bounds: Bounds } {
-  const [tw, td] = room.size as [number, number];
-  const width = tw * TILE, depth = td * TILE;
-  return { width, depth, bounds: { minX: TILE / 2, maxX: width - TILE / 2, minY: 0, maxY: depth } };
+  const m = mapOf(room);
+  return { width: m.width, depth: m.depth, bounds: { minX: TILE / 2, maxX: m.width - TILE / 2, minY: 0, maxY: m.depth, blocks: m.blocks } };
 }
 
-/** 입장 위치: 왼쪽 3타일, 깊이는 인원 수로 나눔 (1인 = 가운데) */
-export function entryPos(index: number, partySize: number, depth: number): Vec2 {
-  return { x: 3 * TILE, y: (depth * (index + 1)) / (partySize + 1) };
+/** 입장 위치: 맵 player_start (입장 순서). 모자라면 왼쪽 3타일 가운데 */
+export function entryPos(room: RoomDef, index: number): Vec2 {
+  const m = mapOf(room);
+  return { ...(m.starts[index] ?? m.starts[0] ?? { x: 3 * TILE, y: m.depth / 2 }) };
 }
 
 /**
- * 방 오른쪽 2/3에 고르게, 깊이는 앞뒤 번갈아. 고정형(포자꽃)은 뒤쪽 구석, 보스는 오른쪽 가운데
- * (dungeon.md 5장 "포자꽃 2(뒤쪽 구석)")
+ * 웨이브 출현: 그 웨이브의 spawn 지점에 배치. 고정형(포자꽃)은 back, 보스는 boss, 나머지는 front 지점을 먼저 쓰고
+ * 모자라면 남은 지점 아무 데나 (data-validate가 수를 검사)
  */
-export function waveSpawns(monsters: Record<string, number>, roomW: number, roomD: number): Spawn[] {
+export function mapSpawns(map: RoomMap, wave: number, monsters: Record<string, number>): Spawn[] {
+  const free = map.spawns.filter((s) => s.wave === wave);
+  const take = (role: SpawnPoint['role']): Vec2 => {
+    const i = Math.max(0, free.findIndex((s) => s.role === role));
+    const [p] = free.splice(i, 1);
+    if (!p) throw new Error(`맵에 웨이브 ${wave} 출현 지점이 모자람`);
+    return p;
+  };
   const kinds = Object.entries(monsters).flatMap(([kind, n]) => Array<string>(n).fill(kind));
-  const fixed = kinds.filter((k) => MONSTERS[k]!.move === null);
-  const boss = kinds.filter((k) => MONSTERS[k]!.rank === 'boss');
-  const rest = kinds.filter((k) => !fixed.includes(k) && !boss.includes(k));
-  const out: Spawn[] = [];
-  fixed.forEach((kind, i) => out.push({ kind, x: roomW - TILE * (1.5 + i * 3), y: roomD * (i % 2 ? 0.85 : 0.15) }));
-  boss.forEach((kind) => out.push({ kind, x: roomW * 0.7, y: roomD / 2 }));
-  rest.forEach((kind, i) => out.push({
-    kind,
-    x: roomW / 3 + ((i + 0.5) * (roomW * 2 / 3 - TILE * 2)) / rest.length,
-    y: roomD * (i % 2 ? 0.3 : 0.7),
-  }));
-  return out;
+  const roleOf = (k: string): SpawnPoint['role'] => (MONSTERS[k]!.rank === 'boss' ? 'boss' : MONSTERS[k]!.move === null ? 'back' : 'front');
+  // 역할이 정해진 것(보스·고정형) 먼저
+  const order = [...kinds].sort((a, b) => Number(roleOf(a) === 'front') - Number(roleOf(b) === 'front'));
+  return order.map((kind) => {
+    const p = take(roleOf(kind));
+    return { kind, x: p.x, y: p.y };
+  });
 }
 
 /** 웨이브 진행: 몬스터를 모두 기절시키면 다음 웨이브, 마지막이면 방 클리어 (CLAUDE.md 핵심 게임 규칙) */
@@ -58,8 +64,7 @@ export class WaveRunner {
     const w = this.room.waves[this.wave];
     if (!w) return [];
     this.wave++;
-    const { width, depth } = roomBounds(this.room);
-    return waveSpawns(w.monsters, width, depth);
+    return mapSpawns(mapOf(this.room), this.wave, w.monsters);
   }
 
   /** 남은 몬스터 수를 보고 진행. 새 웨이브면 출현 목록, 방금 클리어면 'clear' */

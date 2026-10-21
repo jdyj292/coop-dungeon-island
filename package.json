@@ -14,7 +14,8 @@
     "sfx-preview": "vite tools/sfx-preview",
     "balance-check": "tsx tools/balance-check/index.ts",
     "ttk-sim": "tsx tools/ttk-sim/index.ts",
-    "net-smoke": "tsx tools/net-smoke/index.ts"
+    "net-smoke": "tsx tools/net-smoke/index.ts",
+    "map-gen": "tsx tools/map-gen/index.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

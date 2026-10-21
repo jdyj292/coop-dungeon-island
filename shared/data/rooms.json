@@ -1,5 +1,5 @@
 {
-  "_note": "층별 방 구성. 위치는 Tiled(maps/floorN/roomM.tmx)의 출현 지점, 종류·수·웨이브는 여기서. 형식은 docs/dungeon.md 맵 작성 규칙",
+  "_note": "층별 방 구성. 위치는 Tiled 맵(maps/<map>.json, 방마다 map 키)의 출현 지점, 종류·수·웨이브는 여기서. 형식은 docs/dungeon.md 맵 작성 규칙",
   "floor1": {
     "returnAfterRoom": 3,
     "rooms": [
@@ -10,6 +10,7 @@
           20,
           7
         ],
+        "map": "floor1/room1",
         "waves": [
           {
             "monsters": {
@@ -25,6 +26,7 @@
           22,
           8
         ],
+        "map": "floor1/room2",
         "waves": [
           {
             "monsters": {
@@ -41,6 +43,7 @@
           24,
           9
         ],
+        "map": "floor1/room3",
         "waves": [
           {
             "monsters": {
@@ -62,6 +65,7 @@
           20,
           9
         ],
+        "map": "floor1/room4",
         "waves": [
           {
             "monsters": {
@@ -83,6 +87,7 @@
           26,
           9
         ],
+        "map": "floor1/room5",
         "waves": [
           {
             "monsters": {
@@ -106,6 +111,7 @@
           28,
           9
         ],
+        "map": "floor1/boss",
         "boss": "mossbear",
         "waves": [
           {

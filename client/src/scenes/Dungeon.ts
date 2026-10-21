@@ -14,6 +14,7 @@ import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
 import { HudBottom } from '../ui/hudBottom';
 import { HudOverlay } from '../ui/hudOverlay';
 import { HudParty } from '../ui/hudParty';
+import { drawObstacles } from '../view/obstacles';
 import { drawRoomBg } from '../view/roomBg';
 
 const FLOOR = 1;
@@ -50,22 +51,23 @@ export class Dungeon extends Phaser.Scene {
   create(): void {
     // scene.restart()로 다시 불려도 처음 상태가 되게
     this.waves = new WaveRunner(this.room);
-    const { width, depth, bounds } = roomBounds(this.room);
+    const { width, bounds } = roomBounds(this.room);
     const td = this.room.size[1]!;
     this.roomW = width;
     this.cameras.main.setBackgroundColor(color(`floors.${FLOOR}.env.void`));
     if (!this.textures.exists('room-bg')) this.textures.addCanvas('room-bg', drawRoomBg(FLOOR, this.roomW, td, FIELD_BOTTOM + BG_EXTRA));
     this.add.image(0, 0, 'room-bg').setOrigin(0, 0).setDepth(-1000);
+    drawObstacles(this, bounds.blocks ?? []);
 
     // HUD는 카메라 흔들림과 무관하게 화면에 고정 (hud.md 1·3장)
     this.hud = new HudBottom(this, HUD_DEPTH);
     this.overlay = new HudOverlay(this, HUD_DEPTH - 1);
     this.party = new HudParty(this, HUD_DEPTH);
     sfx.unlockOnFirstInput();
-    this.camCenter = entryPos(0, 1, depth).x;
+    this.camCenter = entryPos(this.room, 0).x;
     if (this.onlineMode) this.connect(bounds);
     else {
-      const stage = (this.stage = new CombatStage(this, bounds, entryPos(0, 1, depth), this.waves.next()));
+      const stage = (this.stage = new CombatStage(this, bounds, entryPos(this.room, 0), this.waves.next()));
       stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
     }
 

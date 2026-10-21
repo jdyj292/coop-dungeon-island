@@ -1,12 +1,11 @@
 // 방 시뮬레이션 한 틱 (클라이언트 로컬·서버 공용): 몬스터 AI → 투사체·장판 → 플레이어 행동·판정 → 몬스터끼리 겹침 풀기
 // 플레이어는 여러 명 (pid로 구분). 솔로는 첫 플레이어만 쓰는 tick(dt, input)
 import type { ActionDef, ActionRun, FighterEvent, WeaponDef } from '../actions';
-import { stepBody } from '../body';
 import { PLAYER } from '../data/load';
 import type { MonsterAttack } from '../data/schema';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
 import { spawnProjectile, zoneSpeedMul, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
-import { monsterBounds, newMonster, type Monster } from '../monster/state';
+import { newMonster, stepBodyIn, type Monster } from '../monster/state';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
 import { mergePresses, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
@@ -168,7 +167,7 @@ export class RoomSim {
       const aimed = this.aimFor(m);
       // 플레이어가 아직 없으면(서버 방 생성 직후) 몸 물리만
       if (!aimed) {
-        stepBody(m.body, dt, monsterBounds(m, b).minX, monsterBounds(m, b).maxX);
+        stepBodyIn(m, dt, b);
         continue;
       }
       const ctx: AiContext = {
@@ -178,7 +177,7 @@ export class RoomSim {
         rng: this.opts.rng ?? Math.random,
       };
       const evs: MonsterEvent[] = this.opts.ai === false
-        ? stepBody(m.body, dt, monsterBounds(m, b).minX, monsterBounds(m, b).maxX).map((e) => ({ type: 'body' as const, e }))
+        ? stepBodyIn(m, dt, b).map((e) => ({ type: 'body' as const, e }))
         : stepMonsterAi(m, dt, ctx);
       if (this.opts.ai === false && m.body.state === 'idle') m.facing = aimed.state.pos.x < m.body.x ? -1 : 1;
       for (const e of evs) {
@@ -190,7 +189,7 @@ export class RoomSim {
     }
     // 2. 투사체·장판
     for (const pr of this.projectiles) {
-      for (const pid of stepProjectile(pr, dt, b.minX, b.maxX, this.playerTargets())) {
+      for (const pid of stepProjectile(pr, dt, b, this.playerTargets())) {
         this.hitPlayer(events, pid, this.monsters.find((m) => m.id === pr.ownerId), pr.def, pr.def.damage);
       }
     }

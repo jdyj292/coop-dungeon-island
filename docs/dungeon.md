@@ -235,14 +235,18 @@
 
 ## 10. 맵 작성 규칙 (Tiled)
 
-- 방마다 파일 하나: `maps/floor1/room1.tmx` … `room5.tmx`, `boss.tmx`. export 결과는 client/public/maps/
+- 방마다 파일 하나: `maps/floor1/room1.json` … `room5.json`, `boss.json` — **Tiled가 그대로 열고 저장하는 JSON 맵**이 원본이고 게임·서버가 직접 읽는다 (export 없음). 방과 맵 연결은 rooms.json `map` 키
+- 처음 만들기: `pnpm map-gen` (tools/map-gen, 있는 맵은 덮어쓰지 않음, `--force`로 다시 생성). 편집용 타일셋 maps/tilesets/floor1.png는 palette.json 색으로 생성 (Tiled 화면 전용, 게임은 배경을 절차 생성 — art.md 6장)
+- 1칸 = 16px, Tiled 세로축 = 깊이(y). 읽기 shared/src/map/tiled.ts, 목록 shared/src/map/maps.ts (새 맵은 여기에 추가)
 - 방 깊이 7~9타일 (화면에 깊이 전체가 들어옴), 가로는 화면(18타일)보다 넓어도 됨
 - 레이어
-  - ground: 바닥 / walls: 충돌 + 벽 그림 / deco: 충돌 없는 장식
-  - objects (오브젝트 레이어): player_start, door_in, door_out, spawn, return_point, chest, env_<종류>
-- spawn 속성: `wave`(1, 2…), `role`(front / back). 원거리 몬스터(포자꽃 등)는 back 지점에 우선 배치
+  - ground: 바닥 (편집 화면용, 게임은 읽지 않음) / walls: 장애물 칸 (타일 속성 `kind`: rock·stump …, 그림 종류) / deco: 충돌 없는 장식 (아직 없음)
+  - objects (오브젝트 레이어, 점): player_start(속성 index 0~3, 0 = 혼자일 때 자리), door_in, door_out(보스 방 제외), spawn, return_point, chest, env_<종류>
+- spawn 속성: `wave`(1, 2…), `role`(front / back / boss). 고정형(포자꽃 등)은 back, 보스는 boss, 나머지는 front 지점에 우선 배치 (shared/src/sim/roomSetup.ts mapSpawns)
 - **몬스터 종류·수·웨이브는 맵이 아니라 shared/data/rooms.json**에서 정한다. 맵은 위치만
 - 장애물은 방마다 0~3개, 낮게 (깊이 이동을 막지 않되 돌진·투사체에 쓰이게)
+  - 충돌 (shared/src/map/collision.ts): 플레이어·몬스터는 돌아서 지나간다 (막힌 축만 멈춤). 돌진이 막히면 벽 충돌과 같음 (멧돼지 어지러움), 투사체는 사라짐, 넉백은 그 자리에서 멈춤
+  - 1층: 1번 방 낮은 바위 2, 2번 방 그루터기 2 (멧돼지 돌진 줄). 그림은 roadmap 3-2 전까지 임시 판
 - 방 진행: 입장 → door_in 닫힘 → 웨이브 순서대로 출현 → 전멸 시 다음 웨이브 → 마지막 웨이브 클리어 시 door_out 열림
 
 ## 11. 이후 확장

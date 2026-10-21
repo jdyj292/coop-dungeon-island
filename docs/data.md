@@ -161,6 +161,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
   - 스킬 mp = 기준 쿨 × 2 (반올림), 스킬의 weapon이 있는지, 변형을 적용한 결과도 스킬 형식인지
   - 몬스터 패턴이 참조하는 공격 id가 attacks에 있는지, sprite가 client/data/sprites/monsters.json에 있는지, 보스에 groggy가 있는지
   - rooms.json의 몬스터·보스 id가 있는지, 행동 id가 전체에서 고유한지
+  - 맵 (shared/src/map/check.ts, rooms.json `map` → maps/<map>.json): 방 크기가 rooms.json size와 같은지, player_start 4개·door_in·door_out(보스 방 제외)·onClear의 return_point·chest, 웨이브별 spawn 수 ≥ 몬스터 수, 출현·시작 지점이 장애물과 겹치지 않는지, 장애물이 세로줄 전체를 막지 않는지. 장애물 4칸 이상은 경고
 - 경고(오류 아님): baseSkills 중 skills.json에 아직 없는 스킬, 평타 초당 계수(계수 합 ÷ 구간 길이 합)가 balance.md 4장 목표와 ±15% 넘게 차이
 - 평타 목표값은 tools/data-validate/rules.json (balance.md 4장과 같은 값 유지)
 

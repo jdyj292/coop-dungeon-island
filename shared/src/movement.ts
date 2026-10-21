@@ -1,4 +1,5 @@
 // 이동 계산 (클라이언트·서버 공용). 속도는 shared/data/player.json, 의미는 docs/combat.md 1장
+import { moveBox, type Block, type Half } from './map/collision';
 import { PLAYER } from './data/load';
 
 export interface Vec2 {
@@ -19,6 +20,8 @@ export interface Bounds {
   maxX: number;
   minY: number;
   maxY: number;
+  /** 방 안 장애물 (맵 walls 레이어, shared/src/map/collision.ts) */
+  blocks?: readonly Block[];
 }
 
 export type MoveSpeed = { x: number; y: number };
@@ -31,13 +34,13 @@ export function moveSpeed(run: boolean, moveMul = 1): MoveSpeed {
   return { x: s.x * moveMul, y: s.y * moveMul };
 }
 
-/** 축마다 따로 움직인다 (대각선도 정규화하지 않음: 깊이 이동이 느린 것이 핵심) */
-export function stepMove(pos: Vec2, input: MoveInput, dt: number, speed: MoveSpeed, bounds: Bounds): Vec2 {
+/** 플레이어 충돌 반 크기 (피격 상자 너비·깊이의 절반) */
+export const playerHalf = (): Half => ({ x: PLAYER.hurtbox.width / 2, y: PLAYER.hurtbox.depth / 2 });
+
+/** 축마다 따로 움직인다 (대각선도 정규화하지 않음: 깊이 이동이 느린 것이 핵심). 장애물에 막힌 축은 제자리 */
+export function stepMove(pos: Vec2, input: MoveInput, dt: number, speed: MoveSpeed, bounds: Bounds, half: Half = playerHalf()): Vec2 {
   const sx = Math.sign(input.x), sy = Math.sign(input.y);
-  return {
-    x: Math.min(bounds.maxX, Math.max(bounds.minX, pos.x + sx * speed.x * dt)),
-    y: Math.min(bounds.maxY, Math.max(bounds.minY, pos.y + sy * speed.y * dt)),
-  };
+  return moveBox(pos, { x: pos.x + sx * speed.x * dt, y: pos.y + sy * speed.y * dt }, half, bounds);
 }
 
 /** 달리기 판정 상태 (틱마다 갱신) */

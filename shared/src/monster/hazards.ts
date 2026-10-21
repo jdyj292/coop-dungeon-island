@@ -1,4 +1,6 @@
 // 몬스터가 남기는 물체: 투사체(포자탄)와 장판(졸음 구름). 형식 docs/data.md 1장 projectile·zone
+import { pointBlocked } from '../map/collision';
+import type { Bounds } from '../movement';
 import type { MonsterAttack, Zone as ZoneDef } from '../data/schema';
 import { areaCenter, projectileHits, zoneContains, type HitTarget, type PlayerTarget } from '../shapes';
 
@@ -34,12 +36,13 @@ export function spawnProjectile(id: number, ownerId: number, def: MonsterAttack,
 
 /** 한 틱: 날아가고, 사거리·벽에서 사라짐. 맞으면 true (맞은 뒤 사라짐, pierce면 계속) */
 /** 이번 틱에 맞은 플레이어 id (관통하지 않으면 첫 한 명) */
-export function stepProjectile(p: Projectile, dt: number, minX: number, maxX: number, targets: PlayerTarget[]): string[] {
+export function stepProjectile(p: Projectile, dt: number, b: Bounds, targets: PlayerTarget[]): string[] {
   const pr = p.def.projectile!;
   const d = pr.speed * dt;
   p.x += p.dir * d;
   p.traveled += d;
-  if (p.traveled >= pr.range || p.x < minX || p.x > maxX) p.done = true;
+  // 사거리 끝, 방 벽, 장애물(바위)에 닿으면 사라짐
+  if (p.traveled >= pr.range || p.x < b.minX || p.x > b.maxX || pointBlocked(p, b)) p.done = true;
   if (p.done) return [];
   const hit: string[] = [];
   for (const t of targets) {

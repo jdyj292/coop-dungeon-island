@@ -199,6 +199,8 @@ export const rooms = z.record(z.object({
   returnAfterRoom: z.number().int().positive(),
   rooms: z.array(z.object({
     id: z.string(), name: z.string(), size: z.tuple([z.number().int().positive(), z.number().int().positive()]),
+    /** Tiled 맵 경로 (maps/ 아래, 확장자 없이) */
+    map: z.string(),
     boss: z.string().optional(),
     waves: z.array(z.object({ monsters: z.record(z.number().int().positive()) }).strict()).min(1),
     onClear: z.array(z.string()).optional(),

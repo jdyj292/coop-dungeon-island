@@ -1,5 +1,7 @@
 // 몬스터 상태 (docs/combat.md 3·6장). 피격 반응·높이는 body, 행동 선택은 ai.ts
-import { newBody, type Body } from '../body';
+import { hitsBlock, type Half } from '../map/collision';
+import type { Bounds } from '../movement';
+import { newBody, stepBody, type Body, type BodyEvent } from '../body';
 import { MONSTERS } from '../data/load';
 import type { MonsterAttack, MonsterDef } from '../data/schema';
 
@@ -69,6 +71,17 @@ export function hasArmor(m: Monster): boolean {
 }
 
 /** 몸이 벽을 넘지 않도록 피격 상자 폭의 절반만큼 좁힌 좌우 경계 */
+/** 충돌 반 크기 (피격 상자 너비·깊이의 절반) */
+export const monsterHalf = (m: Monster): Half => ({ x: m.def.hurtbox.width / 2, y: m.def.hurtbox.depth / 2 });
+
+/** 몸 물리 한 틱 (넉백·띄우기). 넉백으로 장애물에 들어가면 그 틱의 좌우 이동은 취소 */
+export function stepBodyIn(m: Monster, dt: number, bounds: Bounds): BodyEvent[] {
+  const bd = monsterBounds(m, bounds), x0 = m.body.x;
+  const ev = stepBody(m.body, dt, bd.minX, bd.maxX);
+  if (hitsBlock(m.body, monsterHalf(m), bounds)) m.body.x = x0;
+  return ev;
+}
+
 export function monsterBounds(m: Monster, b: { minX: number; maxX: number; minY: number; maxY: number }) {
   const half = m.def.hurtbox.width / 2;
   return { ...b, minX: b.minX + half, maxX: Math.max(b.minX + half, b.maxX - half) };

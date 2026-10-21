@@ -4,7 +4,8 @@ import {
   type ActionDef, type ActionRun, type Fighter, type FighterEvent, type WeaponDef,
 } from './actions';
 import { COMBAT, PLAYER } from './data/load';
-import { moveSpeed, newRunState, stepMove, stepRun, type Bounds, type RunState, type Vec2 } from './movement';
+import { moveSpeed, newRunState, stepMove, stepRun, type Bounds, type RunState, type Vec2, playerHalf } from './movement';
+import { moveBox } from './map/collision';
 import { newVitals, stepVitals, usePotion, type HurtEvent, type PotionKind, type Vitals } from './playerHurt';
 
 export interface PlayerState extends Vitals {
@@ -52,7 +53,8 @@ export interface PlayerStep {
 export const skillReady = (p: PlayerState, skill: ActionDef): boolean =>
   (p.cooldowns[skill.id] ?? 0) <= 0 && p.mp >= (skill.mp ?? 0);
 
-const clampX = (x: number, b: Bounds) => Math.min(b.maxX, Math.max(b.minX, x));
+/** 행동·백스텝의 좌우 이동 (방 경계·장애물에 막힘) */
+const moveX = (p: PlayerState, x: number, b: Bounds) => { p.pos = moveBox(p.pos, { x, y: p.pos.y }, playerHalf(), b); };
 
 /** speedMul: 장판 감속 등 이동 속도 배율 */
 export function stepPlayerState(
@@ -78,7 +80,7 @@ export function stepPlayerState(
   }
   if (p.backstep) {
     const t0 = p.backstep.t, t1 = Math.min(bs.sec, t0 + dt);
-    p.pos.x = clampX(p.pos.x - p.facing * (bs.distance * (t1 - t0)) / bs.sec, bounds);
+    moveX(p, p.pos.x - p.facing * (bs.distance * (t1 - t0)) / bs.sec, bounds);
     p.backstep.t = t0 + dt;
     if (p.backstep.t >= bs.sec) p.backstep = null;
     stepRun(p.run, 0, dt);
@@ -99,7 +101,7 @@ export function stepPlayerState(
   if (input.x && canTurn(p.fighter)) p.facing = Math.sign(input.x);
   const started = out.events.flatMap((e) => (e.type === 'start' ? [e.run] : []));
   const act = actionMoved(before, started);
-  if (act) p.pos.x = clampX(p.pos.x + act * p.facing, bounds);
+  if (act) moveX(p, p.pos.x + act * p.facing, bounds);
   if (!p.fighter.run) {
     const next = stepMove(p.pos, input, dt, moveSpeed(running, weapon.moveMul * speedMul), bounds);
     out.moved = Math.hypot(next.x - p.pos.x, next.y - p.pos.y);

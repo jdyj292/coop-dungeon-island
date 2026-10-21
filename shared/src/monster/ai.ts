@@ -4,7 +4,8 @@ import { COMBAT } from '../data/load';
 import type { MonsterAttack } from '../data/schema';
 import { actionHits } from '../shapes';
 import { endAttack, startAttack, stepAttack, type AiContext, type MonsterEvent } from './attack';
-import { hasArmor, monsterBounds, type Monster } from './state';
+import { hasArmor, monsterBounds, monsterHalf, stepBodyIn, type Monster } from './state';
+import { moveBox } from '../map/collision';
 
 export type { AiContext, MonsterEvent };
 
@@ -69,11 +70,10 @@ function moveToward(m: Monster, goal: { x: number; y: number }, dt: number, ctx:
   }
   const b = m.body, bd = monsterBounds(m, ctx.bounds);
   const step = (cur: number, to: number, v: number) => (Math.abs(to - cur) <= 1 ? cur : cur + Math.sign(to - cur) * Math.min(Math.abs(to - cur), v * dt));
-  const nx = Math.min(bd.maxX, Math.max(bd.minX, step(b.x, goal.x, sp.x)));
-  const ny = Math.min(bd.maxY, Math.max(bd.minY, step(b.y, goal.y, sp.y)));
-  m.moving = nx !== b.x || ny !== b.y || sp.style === 'hop';
-  b.x = nx;
-  b.y = ny;
+  const n = moveBox(b, { x: step(b.x, goal.x, sp.x), y: step(b.y, goal.y, sp.y) }, monsterHalf(m), bd);
+  m.moving = n.x !== b.x || n.y !== b.y || sp.style === 'hop';
+  b.x = n.x;
+  b.y = n.y;
 }
 
 export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEvent[] {
@@ -81,8 +81,7 @@ export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEv
   for (const id of Object.keys(m.cooldowns)) m.cooldowns[id] = Math.max(0, m.cooldowns[id]! - dt);
   m.moving = false;
   m.body.armor = hasArmor(m);
-  const bd = monsterBounds(m, ctx.bounds);
-  for (const e of stepBody(m.body, dt, bd.minX, bd.maxX)) ev.push({ type: 'body', e });
+  for (const e of stepBodyIn(m, dt, ctx.bounds)) ev.push({ type: 'body', e });
   if (m.body.ko || m.body.state !== 'idle') {
     // 맞아서 반응 중이면 공격은 끊긴다 (슈퍼아머면 body가 idle 그대로라 계속)
     if (m.attack) endAttack(m, ctx);

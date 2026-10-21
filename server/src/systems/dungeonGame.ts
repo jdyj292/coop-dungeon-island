@@ -2,7 +2,7 @@
 // DungeonRoom(rooms/)은 연결·전송만 맡는다. 흐름은 docs/network.md 3~6장
 import {
   entryPos, floorRoom, NET, parseC2S, roomBounds, RoomSim, TICK, WaveRunner, weaponDef,
-  type C2SMessage, type C2SType, type PlayerInput, type Projectile, type S2C, type SimPlayer,
+  type C2SMessage, type C2SType, type RoomDef, type PlayerInput, type Projectile, type S2C, type SimPlayer,
 } from '@game/shared';
 import { DungeonState, PlayerState } from '../schema/DungeonState';
 import { eventsFor, projectileEvents, type Outgoing } from './events';
@@ -42,14 +42,14 @@ export class DungeonGame {
   now = 0;
   private members = new Map<string, Member>();
   private joined = 0;
-  private readonly depth: number;
+  private readonly room: RoomDef;
 
   constructor(opts: DungeonOptions, private out: Outbox) {
     const n = Math.min(6, Math.max(1, Math.floor(opts.room ?? 1)));
     const party = Math.min(4, Math.max(1, Math.floor(opts.partySize ?? 1)));
     const room = floorRoom(FLOOR, n);
-    const { depth, bounds } = roomBounds(room);
-    this.depth = depth;
+    const { bounds } = roomBounds(room);
+    this.room = room;
     this.sim = new RoomSim(weaponDef('greatsword'), bounds, null, { partySize: party, rng: opts.rng, hitstop: 'entity' });
     this.waves = new WaveRunner(room);
     this.sim.spawn(this.waves.next());
@@ -59,7 +59,7 @@ export class DungeonGame {
 
   join(pid: string, name: unknown): void {
     const index = this.joined++;
-    const sp = this.sim.addPlayer(pid, entryPos(index % this.state.partySize, this.state.partySize, this.depth));
+    const sp = this.sim.addPlayer(pid, entryPos(this.room, index % 4));
     const nick = typeof name === 'string' && name.trim() ? name.trim().slice(0, NAME_MAX) : `모험가${index + 1}`;
     const s = new PlayerState().assign({ id: pid, name: nick, look: 'beginner:short:0:0', weapon: 'greatsword' });
     syncPlayer(s, sp, 0, this.now);

@@ -21,3 +21,7 @@ export type * from './data/schema';
 export * from './messages';
 export * from './sim/aim';
 export * from './sim/roomSetup';
+export * from './map/collision';
+export * from './map/tiled';
+export * from './map/maps';
+export * from './map/check';

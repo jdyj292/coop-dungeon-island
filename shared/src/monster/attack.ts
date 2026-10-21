@@ -4,7 +4,8 @@ import type { BodyEvent } from '../body';
 import type { MonsterAttack } from '../data/schema';
 import type { Bounds } from '../movement';
 import { actionHits, type HitTarget, type PlayerTarget } from '../shapes';
-import { attackPhase, monsterBounds, type Monster } from './state';
+import { attackPhase, monsterBounds, monsterHalf, type Monster } from './state';
+import { moveBox } from '../map/collision';
 import type { AttackTokens } from './tokens';
 
 export interface AiContext {
@@ -66,8 +67,8 @@ export function stepAttack(m: Monster, dt: number, ctx: AiContext): MonsterEvent
   const mv = actionMoveDelta(def, t0, a.t);
   if (mv) {
     const want = m.body.x + a.dir * mv;
-    const bd = monsterBounds(m, ctx.bounds);
-    m.body.x = Math.min(bd.maxX, Math.max(bd.minX, want));
+    m.body.x = moveBox(m.body, { x: want, y: m.body.y }, monsterHalf(m), monsterBounds(m, ctx.bounds)).x;
+    // 방 벽이나 장애물(그루터기)에 막힘 → onWallHit (dungeon.md 5장)
     const blocked = m.body.x !== want;
     if (blocked && def.move && 'speed' in def.move && def.move.stopOnWall) {
       const hit = def.onWallHit;

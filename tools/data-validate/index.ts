@@ -1,9 +1,11 @@
-// 실행: pnpm data-validate — shared/data 형식(zod) + 교차 참조 검사 (docs/data.md 5장)
+// 실행: pnpm data-validate — shared/data 형식(zod) + 교차 참조 + 맵 검사 (docs/data.md 5장)
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crossCheck, type GameData, type Issue, type Rules } from '../../shared/src/data/crossCheck';
-import { FILE_SCHEMAS, formatIssues, withoutNotes } from '../../shared/src/data/schema';
+import { FILE_SCHEMAS, formatIssues, withoutNotes, type MonsterDef, type Rooms } from '../../shared/src/data/schema';
+import { checkMaps } from '../../shared/src/map/check';
+import { roomMap } from '../../shared/src/map/maps';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '../..');
@@ -30,6 +32,8 @@ if (!issues.length) {
     sounds: ['action', 'clear'].flatMap((bus) => Object.keys(readJson('client/data/sfx.json')[bus])),
   };
   issues.push(...crossCheck(data as unknown as GameData, refs, readJson('tools/data-validate/rules.json') as Rules));
+  // 3. 맵 (maps/*.json, 위치·장애물)
+  issues.push(...checkMaps(data.rooms as Rooms, data.monsters as Record<string, MonsterDef>, roomMap));
 }
 
 const errors = issues.filter((i) => i.level === 'error');

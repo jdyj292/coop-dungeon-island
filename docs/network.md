@@ -256,7 +256,7 @@ IslandState
 |---|---|
 | messages.ts | 클라이언트 → 서버 zod 스키마(`C2S`, `parseC2S`), 서버 → 클라이언트 이벤트 타입(`S2C`) |
 | movement.ts | 입력 → 이동 (속도, 걷기·달리기, 깊이 이동 배율) |
-| collision.ts | 맵 충돌 (Tiled walls) |
+| map/collision.ts · map/tiled.ts · map/maps.ts | 장애물 충돌 (Bounds.blocks) · Tiled 맵 읽기 · 맵 목록 (dungeon.md 10장) |
 | actions.ts | 행동 구간 계산, 행동 중 이동 |
 | shapes.ts | 판정 모양 (hitbox · area circle/rect/fan · projectile · zone) |
 | tick.ts | 고정 1/60초 틱 누적기 (FixedStep) |
