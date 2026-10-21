@@ -48,7 +48,7 @@
 | input | `{ seq, t, mx, my, run }` | mx·my ∈ {−1,0,1}. seq는 1씩 증가. run = 클라이언트가 두 번 누르기로 판정한 달리기 (서버는 간격을 다시 재지 않음) |
 | action | `{ seq, t, kind, skillId?, x, y, facing }` | kind: basic / dash / skill / ultimate / backstep / chargeStart / chargeRelease. x·y는 클라이언트가 본 내 위치 |
 | item | `{ seq, t, slot }` | 물약 Z / X |
-| interact | `{ targetId }` | 부활, 줍기, 레버. 지금은 "chest" (클리어 뒤, interactRange 안, 방마다 한 번) |
+| interact | `{ targetId }` | 부활, 줍기, 레버. "chest" (클리어 뒤, interactRange 안, 방마다 한 번), "revive:<pid>" (E를 누르는 동안 150ms마다, 300ms 안에 안 오면 손 뗀 것) |
 
 ### 공통 (섬·던전)
 | 메시지 | 내용 | 비고 |
@@ -81,7 +81,7 @@
 ```
 DungeonState
   serverTime                이 상태의 서버 시각 ms (패치마다 바뀜, 보간 기준)
-  floor, roomIndex (0~5), roomCount, wave, doorOpen, exitAt·exitNeed (출구 앞 인원/필요 인원), chestOpen, phase ("play" | "result")
+  floor, roomIndex (0~5), roomCount, wave, doorOpen, exitAt·exitNeed (출구 앞 인원/필요 인원), chestOpen, returnLeft (귀환 카운트다운), phase ("play" | "result")
   partySize, teamCombo
   players: Map<id, PlayerState>
   monsters: Map<id, MonsterState>
@@ -112,7 +112,7 @@ ZoneState
   id, attackId, x, y, endsAt (사라지는 서버 시각 ms)
 ```
 - 스키마 기본값과 같은 값은 전송되지 않아 클라이언트에서 비어 있을 수 있다 → Connection.progress가 기본값으로 채움
-- 개발 명령 `dev { cmd: "clear" }`: 지금 방 몬스터를 모두 기절 (NODE_ENV=production이면 무시). 지연 시뮬레이터 패널 버튼
+- 개발 명령 `dev { cmd: "clear" | "down" }`: 지금 방 몬스터를 모두 기절 / 나를 쓰러뜨림 (NODE_ENV=production이면 무시). 지연 시뮬레이터 패널 버튼
 - 수치는 정수로 양자화 (위치 int16, hp uint16, 비율 uint8). 시각은 방 생성부터의 서버 ms (float64)
 - actionStart = 서버 시각 − 행동 경과. 같은 행동이 이어지면 다시 쓰지 않는다
 - 입장 위치: 왼쪽 3타일, 깊이를 인원 수로 나눔 (shared/src/sim/roomSetup.ts entryPos)
@@ -148,7 +148,7 @@ IslandState
 | combo | `{ count, milestone? }` | 콤보 표시, 단계 달성 연출 |
 | roomClear / doorOpen | 방 클리어 | 문 열림 연출 |
 | roomEnter | `{ roomIndex }` 다음 방 | 클라이언트는 상태 roomIndex가 바뀌면 같은 접속으로 Dungeon 씬을 다시 시작 (배경·소품·예측 범위 교체, 보간 버퍼 비움, 0.3초 페이드인) |
-| result | 정산 내용 | 정산 화면 |
+| result | `{ kind: clear·return·wipe, lines[pid·코인·보너스·잃은 코인·지갑·금고·재료·경험치·레벨 전후], treasury }` | 정산 화면. 서버는 phase "result"로 세계를 멈춤 |
 | rejected | `{ seq, reason }` | 예측했던 행동 취소 |
 | emote | `{ player, id }` | 머리 위 표시 |
 | chat | `{ player, text, t }` | 말풍선 + 대화 기록 (같은 방에만 전달, 저장 안 함) |

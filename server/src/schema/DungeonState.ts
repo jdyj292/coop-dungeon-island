@@ -85,6 +85,8 @@ export class DungeonState extends Schema {
   /** 출구 앞에 선 인원 / 필요한 인원 (쓰러진 사람 제외, 출구가 열린 뒤) */
   @type('uint8') exitAt = 0;
   @type('uint8') exitNeed = 0;
+  /** 귀환 지점 카운트다운 남은 초 (0 = 진행 안 함) */
+  @type('float32') returnLeft = 0;
   /** 이 방 보물상자를 열었나 */
   @type('boolean') chestOpen = false;
   /** play | result */

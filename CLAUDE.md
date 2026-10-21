@@ -108,6 +108,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0·M1·M2 완료. M3 3-1~3-4 완료: Tiled 맵·장애물, 소품 그림, 방 진행, 보상(처치 시 전원 코인·재료·경험치, 인원 체력 보정, 보물상자 E, 콤보 보너스 기록)
-- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널·개발 기절) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: 3-5 쓰러짐·동료 부활·전멸·귀환 지점·정산 + 정산 화면
+- M0·M1·M2 완료. M3 3-1~3-5 완료: 맵·소품, 방 진행, 보상, 쓰러짐·동료 부활(E 2초)·전멸·귀환 지점(3초)·보스 처치 → 정산 계산 + 정산 화면 (저장은 M4)
+- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널·개발 기절/쓰러지기) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
+- 다음: 정산 화면 모양 확인 → 3-6 보스 방 (등장 연출, 여러 줄 HP 바, 졸음 협동 규칙)

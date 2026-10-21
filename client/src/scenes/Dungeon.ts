@@ -16,11 +16,13 @@ import { HudBottom } from '../ui/hudBottom';
 import { HudOverlay } from '../ui/hudOverlay';
 import { HudParty } from '../ui/hudParty';
 import { HudRoom } from '../ui/hudRoom';
+import { ResultPanel } from '../ui/resultPanel';
 import { PropLayer } from '../view/props';
 import { drawRoomBg } from '../view/roomBg';
 
 const FLOOR = 1;
 const floorRooms = () => ROOMS.floor1!.rooms;
+const NO_KEYS: KeyInput = { x: 0, y: 0, attack: false, skill: null, backstep: false, potion: null };
 /** 카메라 데드존 ±2타일 (art.md 1장) */
 const DEADZONE = 2 * TILE;
 /** 배경을 화면 아래까지 채울 여유 (창이 세로로 길 때) */
@@ -30,6 +32,8 @@ const WIPE_RESTART_MS = 2000;
 const HUD_DEPTH = 10000;
 /** 방에 들어갈 때 화면이 밝아지는 시간 */
 const ROOM_FADE_MS = 300;
+/** 부활: E를 누르고 있는 동안 서버에 알리는 간격 (서버는 300ms 안에 다시 오면 계속 누른 것으로) */
+const REVIVE_SEND_MS = 150;
 /** 스킬 슬롯 (임시 고정 장착, 슬롯 UI는 M4) */
 const SKILLS = { skill1: skillDef('gs_launch'), skill2: skillDef('gs_earthsplit') };
 
@@ -52,6 +56,11 @@ export class Dungeon extends Phaser.Scene {
   private overlay!: HudOverlay;
   private party!: HudParty;
   private roomHud!: HudRoom;
+  /** 정산 화면 (한 판 끝) */
+  private result: ResultPanel | null = null;
+  /** 부활 E 요청을 마지막으로 보낸 시각 (누르는 동안 REVIVE_SEND_MS마다) */
+  private reviveSentAt = 0;
+  private awaitingKey = false;
   private props!: PropLayer;
   private keys!: Record<KeyName, Phaser.Input.Keyboard.Key>;
 
@@ -63,6 +72,8 @@ export class Dungeon extends Phaser.Scene {
     // scene.restart()로 다시 불려도 처음 상태가 되게
     this.stage = null;
     this.online = null;
+    this.result = null;
+    this.awaitingKey = false;
     this.keepConn = false;
     this.cameras.main.setBackgroundColor(color(`floors.${FLOOR}.env.void`));
     // HUD는 카메라 흔들림과 무관하게 화면에 고정 (hud.md 1·3장)
@@ -111,6 +122,7 @@ export class Dungeon extends Phaser.Scene {
       this.events.once('shutdown', () => panel.destroy());
     }
     online.onBonus = (rate) => this.overlay.showBonus(rate);
+    online.onResult = (r) => { this.result = new ResultPanel(this, HUD_DEPTH + 10, r, conn.myId, (pid) => online.colorOf(pid)); };
     online.onClear = () => {
       this.overlay.showClear();
       this.props.setCleared(true);
@@ -130,12 +142,38 @@ export class Dungeon extends Phaser.Scene {
     }, (e: unknown) => console.error('[online] 접속 실패 (서버가 떠 있나요? pnpm dev)', e));
   }
 
-  /** 보물상자: 클리어 뒤 가까이 가면 [E] (나에게만), E로 열기 요청 (판정은 서버, combat.json interactRange) */
-  private interact(live: { doorOpen: boolean; chestOpen: boolean }, pressed: boolean): void {
-    const me = this.online?.me, chest = mapOf(this.room).chest;
-    const near = !!me && !!chest && live.doorOpen && !live.chestOpen && Math.hypot(me.pos.x - chest.x, me.pos.y - chest.y) <= COMBAT.interactRange;
-    this.props.setPrompt(near);
-    if (near && pressed) this.online!.conn.send('interact', { targetId: 'chest' });
+  /**
+   * E 상호작용 (판정은 서버, combat.json interactRange): 가까운 대상 위에 [E] (나에게만)
+   * 보물상자 = 클리어 뒤 한 번 누르기, 쓰러진 동료 = 누르고 있는 동안 부활 (combat.md 4장)
+   */
+  private interact(live: { doorOpen: boolean; chestOpen: boolean }, down: boolean, pressed: boolean): void {
+    const online = this.online!, me = online.me, chest = mapOf(this.room).chest, range = COMBAT.interactRange;
+    const near = (x: number, y: number) => !!me && !me.downed && Math.hypot(me.pos.x - x, me.pos.y - y) <= range;
+    if (chest && live.doorOpen && !live.chestOpen && near(chest.x, chest.y)) {
+      this.props.setPrompt(chest);
+      if (pressed) online.conn.send('interact', { targetId: 'chest' });
+      return;
+    }
+    const ally = online.downedAllies().find((d) => near(d.x, d.y));
+    this.props.setPrompt(ally ?? null);
+    if (ally && down && this.time.now - this.reviveSentAt >= REVIVE_SEND_MS) {
+      this.reviveSentAt = this.time.now;
+      online.conn.send('interact', { targetId: `revive:${ally.pid}` });
+    }
+  }
+
+  /** 정산 화면이 다 보인 뒤 아무 키: 섬(M4) 대신 새 판으로 다시 접속 */
+  private showResult(dt: number): void {
+    const r = this.result!, { width, height } = this.scale.gameSize;
+    r.draw(dt, width, height);
+    if (!r.done || this.awaitingKey) return;
+    this.awaitingKey = true;
+    this.input.keyboard!.once('keydown', () => {
+      this.awaitingKey = false;
+      this.conn?.leave();
+      this.conn = null;
+      this.scene.restart();
+    });
   }
 
   /** 몬스터를 모두 기절시키면 다음 웨이브, 마지막이면 방 클리어 (shared WaveRunner) */
@@ -174,10 +212,13 @@ export class Dungeon extends Phaser.Scene {
         this.scene.restart();
         return;
       }
-      this.online.update(dt, input);
+      // 정산 중에는 조작 없이 세계만 그린다
+      this.online.update(dt, this.result ? NO_KEYS : input);
       this.props.setExit(live.exitAt, live.exitNeed);
       this.props.setChestOpen(live.chestOpen);
-      this.interact(live, Phaser.Input.Keyboard.JustDown(k.interact));
+      this.props.setReturn(live.returnLeft);
+      if (!this.result) this.interact(live, k.interact.isDown, Phaser.Input.Keyboard.JustDown(k.interact));
+      else this.showResult(dt);
       const mine = this.online.conn.mine;
       view = {
         player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake, color: this.online.myColor,

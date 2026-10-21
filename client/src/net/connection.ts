@@ -20,6 +20,8 @@ export interface PlayerSnap extends Pos {
   ult: number;
   /** 서버가 처리한 마지막 입력 (본인 예측 보정용) */
   lastInputSeq: number;
+  /** 쓰러진 동안 동료 부활 진행도 0~255 */
+  reviveProgress: number;
 }
 
 export interface MonsterSnap extends Pos {
@@ -56,6 +58,8 @@ type Live = {
   exitAt: number;
   exitNeed: number;
   chestOpen: boolean;
+  returnLeft: number;
+  phase: string;
   partySize: number;
   teamCombo: number;
   wave: number;
@@ -67,7 +71,7 @@ type Live = {
 export type EventHandler = <K extends keyof S2C>(type: K, msg: S2C[K]) => void;
 
 const EVENTS: (keyof S2C)[] = [
-  'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter',
+  'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter', 'result',
 ];
 
 export function serverUrl(): string {
@@ -127,11 +131,13 @@ export class Connection {
   /**
    * 방 진행 값 (서버 기본값과 같으면 전송되지 않아 비어 있을 수 있다 → 서버 스키마 기본값으로 채움)
    */
-  get progress(): { roomIndex: number; roomCount: number; doorOpen: boolean; exitAt: number; exitNeed: number; chestOpen: boolean } {
+  get progress(): {
+    roomIndex: number; roomCount: number; doorOpen: boolean; exitAt: number; exitNeed: number; chestOpen: boolean; returnLeft: number; phase: string;
+  } {
     const l = this.live;
     return {
       roomIndex: l.roomIndex ?? 0, roomCount: l.roomCount ?? 6, doorOpen: l.doorOpen ?? false, exitAt: l.exitAt ?? 0, exitNeed: l.exitNeed ?? 0,
-      chestOpen: l.chestOpen ?? false,
+      chestOpen: l.chestOpen ?? false, returnLeft: l.returnLeft ?? 0, phase: l.phase ?? 'play',
     };
   }
 
@@ -167,7 +173,7 @@ export class Connection {
     const players = new Map<string, PlayerSnap>();
     s.players.forEach((p, id) => players.set(id, {
       id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, state: p.state, since: since(prevP?.get(id), p.state),
-      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq,
+      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0,
     }));
     const monsters = new Map<string, MonsterSnap>();
     s.monsters.forEach((m, id) => monsters.set(id, {

@@ -92,6 +92,27 @@ export function usePotion(p: PlayerState, kind: PotionKind): boolean {
   return true;
 }
 
+/** 동료 부활 (combat.md 4장): 쓰러진 사람을 HP partyHpRatio로 일으키고 깃털 부활과 같은 무적 */
+export function revivePlayer(p: PlayerState): boolean {
+  if (!p.downed) return false;
+  p.downed = false;
+  p.hurt = null;
+  p.hp = Math.round(p.maxHp * PLAYER.revive.partyHpRatio);
+  p.invuln = PLAYER.revive.invuln;
+  return true;
+}
+
+/** 숙련도 레벨 n → n+1 필요 경험치 = expBase × n^expPow (반올림, balance.md 7장) */
+export const expToNext = (level: number): number => Math.round(PLAYER.level.expBase * level ** PLAYER.level.expPow);
+
+/** 레벨 level에서 경험치 exp를 얻은 뒤 레벨과 남은 경험치 */
+export function addExp(level: number, carry: number, exp: number): { level: number; exp: number } {
+  let lv = level, e = carry + exp;
+  while (lv < MAX_LEVEL && e >= expToNext(lv)) e -= expToNext(lv++);
+  return { level: lv, exp: e };
+}
+const MAX_LEVEL = 20;
+
 /** 필살기 게이지: 적중 1회 onHit, 피격 1회 onHurt (balance.md 8장) */
 export function gainUlt(p: PlayerState, amount: number): void {
   p.ult = Math.min(PLAYER.ultimate.max, p.ult + amount);

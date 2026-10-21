@@ -151,6 +151,7 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 - 다운 후 기상 시 1.0초 무적 (공용 패시브 "기상 회피"로 기상 즉시 백스텝 가능)
 - 경직 중 연속 피격 가능. 포위당하면 위험하다는 것이 의도
 - HP 0 → 쓰러짐. 동료가 E를 2초 누르면 HP 30%로 부활 (솔로는 부활의 깃털, dungeon.md)
+  - 가까이(combat.json interactRange 20px) 누르고 있는 동안만 진행, 떼거나 멀어지면 0부터. 부활 무적은 깃털과 같은 2초 (player.json revive partyHpRatio·holdSec, server/src/systems/runFlow.ts)
 - 전멸 처리는 CLAUDE.md 핵심 게임 규칙
 
 ---

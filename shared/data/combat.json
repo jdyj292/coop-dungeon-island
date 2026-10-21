@@ -34,5 +34,8 @@
   "partyHpMul": [1, 1.5, 2, 2.5],
   "exit": { "halfWidth": 24, "depth": 20 },
   "interactRange": 20,
+  "returnSec": 3,
+  "resultDelaySec": 2,
+  "settle": { "treasury": 0.3, "wipeCoinLoss": 0.5 },
   "ai": { "hopSec": 0.6, "hopMove": 0.5, "orbitDistance": 48, "orbitDepth": 14, "chargerDistance": 64, "separation": 2 }
 }

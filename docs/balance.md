@@ -213,7 +213,7 @@
 | 정예 | 40 |
 | 보스 | 100 |
 - 1층 한 판 예상 수익 약 350코인 (1인, 방 구성은 dungeon.md 5장). 층마다 ×1.4
-- 정산 분배(금고 30%)·전멸 페널티는 CLAUDE.md
+- 정산 분배(금고 30%)·전멸 페널티는 CLAUDE.md. 계산 server/src/systems/settle.ts (combat.json settle): 클리어·귀환 = 코인 × (1 + 콤보 보너스), 전멸 = 코인 × 0.5 (보너스 없음)·재료 유지, 그 코인의 30% 금고·70% 지갑. 저장은 M4
 - 지급: 몬스터가 기절하는 순간 방 안 파티원 모두에게 각자 (쓰러진 사람 포함, 코인은 각자 굴림). 바닥에 떨어뜨리지 않고 바로 들어옴 (server/src/systems/reward.ts)
 - 보물상자 (3번 방, 데이터 rooms.json chest): 클리어 뒤 E로 한 번, 파티원 모두 코인 15 + 버섯 1
 - 콤보 코인 보너스: 솔로 개인 콤보 30/60/90, 파티 팀 콤보 20/40/60 → 이번 판 코인 +5/10/15% (combat.json combo.soloMilestones·teamMilestones·coinBonus). 한 판에서 가장 높은 단계만, 더하는 것은 정산 때

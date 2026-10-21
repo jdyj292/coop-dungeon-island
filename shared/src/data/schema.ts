@@ -173,7 +173,11 @@ export const player = z.object({
     mp: z.object({ amount: pos, cooldown: sec, carry: z.number().int().nonnegative() }).strict(),
   }).strict(),
   ultimate: z.object({ max: pos, onHit: sec, onHurt: sec, onTeamMilestone: sec }).strict(),
-  revive: z.object({ feathers: z.number().int().nonnegative(), hpRatio: z.number().min(0).max(1), invuln: sec }).strict(),
+  revive: z.object({
+    feathers: z.number().int().nonnegative(), hpRatio: z.number().min(0).max(1), invuln: sec,
+    partyHpRatio: z.number().min(0).max(1), holdSec: pos,
+  }).strict(),
+  level: z.object({ expBase: pos, expPow: pos }).strict(),
   hurtbox: z.object({ width: pos, height: pos, depth: pos }).strict(),
   backstep: z.object({ distance: pos, sec: pos, invuln: sec, cooldown: sec }).strict(),
 }).strict();
@@ -196,6 +200,9 @@ export const combat = z.object({
   partyHpMul: z.array(pos).length(4),
   exit: z.object({ halfWidth: pos, depth: pos }).strict(),
   interactRange: pos,
+  returnSec: pos,
+  resultDelaySec: pos,
+  settle: z.object({ treasury: z.number().min(0).max(1), wipeCoinLoss: z.number().min(0).max(1) }).strict(),
   ai: z.object({
     hopSec: pos, hopMove: z.number().min(0).max(1), orbitDistance: pos, orbitDepth: sec, chargerDistance: pos, separation: sec,
   }).strict(),

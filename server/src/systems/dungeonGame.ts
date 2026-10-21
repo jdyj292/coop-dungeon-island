@@ -10,6 +10,8 @@ import { InputQueue } from './inputs';
 import { dungeonRules, RateLimit } from './rateLimit';
 import { LootBook, type LootMessage } from './reward';
 import { buildRoom, exitCount, floorRooms, FLOOR } from './roomFlow';
+import { RunFlow } from './runFlow';
+import { settle, type RunEnd } from './settle';
 import { syncPlayer, syncWorld } from './sync';
 
 export interface Outbox {
@@ -49,6 +51,7 @@ export class DungeonGame {
   private readonly simOpts: SimOptions;
   private readonly dev: boolean;
   private readonly loot: LootBook;
+  private readonly flow = new RunFlow();
 
   constructor(opts: DungeonOptions, private out: Outbox) {
     const rooms = floorRooms();
@@ -81,12 +84,15 @@ export class DungeonGame {
     this.sim = buildRoom(this.room, this.sim.weapon, this.simOpts, this.sim, (pid) => this.members.get(pid)?.index ?? 0);
     this.waves = new WaveRunner(this.room);
     this.enter(index);
+    this.flow.resetRoom();
     return { type: 'roomEnter', msg: { roomIndex: index } };
   }
 
   join(pid: string, name: unknown): void {
     const index = this.joined++;
     const sp = this.sim.addPlayer(pid, entryPos(this.room, index % 4));
+    // 부활의 깃털은 솔로만 (dungeon.md 3장). 파티는 동료 부활
+    if (this.state.partySize > 1) sp.state.feathers = 0;
     const nick = typeof name === 'string' && name.trim() ? name.trim().slice(0, NAME_MAX) : `모험가${index + 1}`;
     const s = new PlayerState().assign({ id: pid, name: nick, look: 'beginner:short:0:0', weapon: 'greatsword' });
     syncPlayer(s, sp, 0, this.now);
@@ -148,6 +154,10 @@ export class DungeonGame {
       case 'dev': {
         const msg = parseC2S('dev', raw);
         if (!msg || !this.dev) return 'ignored';
+        if (msg.cmd === 'down') {
+          Object.assign(sp.state, { hp: 0, downed: true, feathers: 0, hurt: null });
+          return 'ok';
+        }
         // 기절 처리: 보상은 처치와 같게, 웨이브 진행은 다음 틱
         for (const mon of this.sim.alive.filter((x) => !x.body.ko)) {
           Object.assign(mon, { hp: 0 }).body.ko = true;
@@ -159,6 +169,7 @@ export class DungeonGame {
         const msg = parseC2S('interact', raw);
         if (!msg) return 'ignored';
         if (msg.targetId === 'chest') this.openChest(sp);
+        else if (msg.targetId.startsWith('revive:')) this.flow.hold(this.sim, pid, msg.targetId.slice('revive:'.length), this.now);
         return 'ok';
       }
       default:
@@ -205,8 +216,20 @@ export class DungeonGame {
   }
 
   /** 1/60초 한 틱 */
+  /** 한 판 끝: 정산해서 전원에게 결과 (저장은 M4) */
+  private finish(kind: RunEnd): void {
+    this.state.assign({ phase: 'result', returnLeft: 0 });
+    const members = [...this.sim.players.keys()].map((pid) => ({ pid, name: this.state.players.get(pid)?.name ?? pid, level: 1, levelExp: 0 }));
+    this.out.broadcast('result', settle(kind, members, (pid) => this.loot.of(pid)));
+  }
+
   tick(): void {
     this.now += TICK * 1000;
+    // 결과가 나온 뒤에는 세계를 멈춘다 (정산 화면)
+    if (this.state.phase === 'result') {
+      this.state.serverTime = this.now;
+      return;
+    }
     const inputs = new Map<string, PlayerInput>();
     const seqs = new Map<string, number>();
     for (const [pid, m] of this.members) {
@@ -239,9 +262,13 @@ export class DungeonGame {
       this.state.assign({ exitAt: at, exitNeed: need });
       if (need > 0 && at === need && this.state.roomIndex + 1 < floorRooms().length) out.push(this.nextRoom());
     }
+    // 부활·귀환·전멸·보스 처치
+    const run = this.flow.tick(this.sim, this.room, this.state.doorOpen, this.state.roomIndex === floorRooms().length - 1, this.now);
+    this.state.returnLeft = run.returnLeft;
     for (const sp of this.sim.players.values()) {
       const s = this.state.players.get(sp.pid);
       if (!s) continue;
+      s.reviveProgress = Math.round((run.revive.get(sp.pid) ?? 0) * 255);
       syncPlayer(s, sp, moved.get(sp.pid) ?? 0, this.now);
       const l = this.loot.of(sp.pid);
       s.priv.assign({ coins: l.coins, materials: l.materials, exp: l.exp, bonusPct: Math.round(l.bonus * 100) });
@@ -251,5 +278,6 @@ export class DungeonGame {
     this.state.teamCombo = this.sim.team.count;
     this.state.serverTime = this.now;
     for (const o of out) this.out.broadcast(o.type, o.msg as never);
+    if (run.end) this.finish(run.end);
   }
 }

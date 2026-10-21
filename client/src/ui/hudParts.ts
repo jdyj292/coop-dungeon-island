@@ -16,6 +16,19 @@ export function panel(g: G, x: number, y: number, w: number, h: number): void {
   dot(g, x + 2, y + 2, C('global.ui.panel'), w - 4, h - 4);
 }
 
+/** 코인 아이콘 5×5 (승인 데모 아래 띠) */
+export function coinIcon(g: G, x: number, y: number): void {
+  dot(g, x, y, C('global.ui.coin'), 5, 5);
+  dot(g, x + 1, y + 1, C('global.allyFx.gold'), 2, 2);
+  dot(g, x + 4, y + 4, C('global.fx.smearEdge'), 1, 1);
+}
+
+/** 재료(버섯) 아이콘 5×5 (승인 데모 아래 띠) */
+export function materialIcon(g: G, x: number, y: number): void {
+  dot(g, x, y, C('floors.1.monster.mushroomCap'), 5, 3);
+  dot(g, x + 1, y + 3, C('floors.1.monster.mushroomStem'), 3, 2);
+}
+
 /** 막대: 위 절반 밝은색·아래 절반 어두운색. trail = 줄어든 부분을 흰색으로 남길 비율 (hud.md 1장) */
 export function bar(g: G, x: number, y: number, w: number, h: number, f: number, light: string, dark: string, trail = f): void {
   dot(g, x - 1, y - 1, C('global.ui.panelInner'), w + 2, h + 2);

@@ -30,13 +30,16 @@ export class LagPanel {
     for (const s of SLIDERS) this.root.append(this.slider(s));
     const reset = document.createElement('button');
     reset.textContent = '통계 초기화';
-    reset.onclick = () => Object.assign(this.stage.corrections, { ignore: 0, smooth: 0, snap: 0, maxError: 0 });
+    reset.onclick = () => Object.assign(this.stage.local.corrections, { ignore: 0, smooth: 0, snap: 0, maxError: 0 });
     // 개발 명령: 방 진행 확인용 (서버 개발 모드에서만 동작)
     const clear = document.createElement('button');
     clear.textContent = '방 몬스터 모두 기절 (개발)';
     clear.onclick = () => this.conn.send('dev', { cmd: 'clear' });
     this.info.style.margin = '6px 0';
-    this.root.append(this.info, reset, clear);
+    const down = document.createElement('button');
+    down.textContent = '나 쓰러지기 (개발)';
+    down.onclick = () => this.conn.send('dev', { cmd: 'down' });
+    this.root.append(this.info, reset, clear, down);
     document.body.append(this.root);
     window.addEventListener('keydown', this.onKey);
     this.timer = window.setInterval(() => this.refresh(), REFRESH_MS);
@@ -66,7 +69,7 @@ export class LagPanel {
   }
 
   private refresh(): void {
-    const c = this.stage.corrections, last = this.stage.lastCorrection;
+    const c = this.stage.local.corrections, last = this.stage.local.lastCorrection;
     this.info.textContent = [
       `RTT ${Math.round(this.conn.clock.rtt)}ms`,
       `보정 무시 ${c.ignore} · 부드럽게 ${c.smooth} · 즉시 ${c.snap}`,

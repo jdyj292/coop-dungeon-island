@@ -7,7 +7,7 @@ import fx from '../../data/fx.json';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { setFace } from './hudFace';
-import { bar, icon, panel, slot } from './hudParts';
+import { bar, coinIcon, icon, materialIcon, panel, slot } from './hudParts';
 import { drawText } from './pixelFont';
 
 const C = (p: string) => colorInt(p);
@@ -133,13 +133,10 @@ export class HudBottom {
       if (p.potionCd[kind] > 0 || p.potions[kind] === 0) dot(g, x + 1, Y(147), C('global.ui.panel'), 12, 12, fx.hud.dimAlpha);
     });
 
-    // 이번 판 코인·재료 (보상은 M3)
-    dot(g, 257, Y(145), C('global.ui.coin'), 5, 5);
-    dot(g, 258, Y(146), C('global.allyFx.gold'), 2, 2);
-    dot(g, 261, Y(149), C('global.fx.smearEdge'), 1, 1);
+    // 이번 판 코인·재료
+    coinIcon(g, 257, Y(145));
     drawText(g, String(st.coins), 266, Y(145) + this.coinPop.update(st.coins, dt), { color: 'global.allyFx.gold', outline: 'none' });
-    dot(g, 257, Y(153), C('floors.1.monster.mushroomCap'), 5, 3);
-    dot(g, 258, Y(156), C('floors.1.monster.mushroomStem'), 3, 2);
+    materialIcon(g, 257, Y(153));
     drawText(g, String(st.materials), 266, Y(153) + this.matPop.update(st.materials, dt), { color: 'global.fx.flash', outline: 'none' });
   }
 }

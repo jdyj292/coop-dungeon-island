@@ -178,10 +178,11 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | runDoubleTap | 달리기: 같은 방향 좌우를 두 번 누르는 사이 최대 시간 (초) |
 | hp | `{ base, perLevel }` 최대 HP = base × (1 + perLevel × (숙련도 − 1)) (balance.md 5장) |
 | mp | `{ max, regen, onHit }` 최대 MP·초당 회복·적중 1회당 회복 (balance.md 6장) |
+| revive | `{ feathers, hpRatio, invuln, partyHpRatio, holdSec }` 솔로 부활의 깃털 수·깃털 부활 HP 비율·부활 무적, 동료 부활 HP 비율·E 누르는 시간 (combat.md 4장) |
+| level | `{ expBase, expPow }` 숙련도 필요 경험치 = expBase × 레벨^expPow (balance.md 7장) |
 | hurt | `{ stunSec, downSec, getupInvuln }` 약·중 공격 경직, 강 공격 다운, 기상 무적 (combat.md 4장) |
 | potions | `hp { heal(최대 HP 비율), cooldown, carry }`, `mp { amount, cooldown, carry }` (balance.md 6장, carry = 반입 한도) |
 | ultimate | `{ max, onHit, onHurt, onTeamMilestone }` 필살기 게이지 최대·적중 1회·피격 1회·팀 콤보 단계 달성 시 전원 증가량 (balance.md 8장) |
-| revive | `{ feathers, hpRatio, invuln }` 솔로 부활의 깃털 (dungeon.md 3장) |
 | hurtbox | 플레이어 피격 판정 크기 `{ width, height, depth }` (몬스터 공격·투사체) |
 | backstep | `{ distance, sec, invuln, cooldown }` 백스텝 거리(px)·시간·앞쪽 무적 시간·쿨 (combat.md 1장) |
 
@@ -210,6 +211,9 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | shakeAfterHitstop | 흔들림 길이 = 히트스톱 + 이 값 |
 | partyHpMul | 인원 1~4명 몬스터 체력 배율 (balance.md 5장) |
 | interactRange | E 상호작용 거리 px (보물상자) |
+| returnSec | 귀환 지점: 살아 있는 전원이 고리 안에 이만큼 서 있으면 성공 귀환 |
+| resultDelaySec | 전멸·보스 처치 뒤 결과 화면까지 |
+| settle | `{ treasury, wipeCoinLoss }` 정산: 코인 중 공동 금고 비율, 전멸 시 코인 손실 비율 (CLAUDE.md 핵심 규칙) |
 | exit | `{ halfWidth, depth }` 출구 앞 구역: 문 앞 바닥에서 좌우 ±halfWidth, 깊이 depth px까지 (dungeon.md 2장 방 진행) |
 | combo | `{ windowSec, teamMilestones, soloMilestones, coinBonus }` 콤보가 이어지는 시간 (dungeon.md 3장), 팀·개인 콤보 단계와 단계별 코인 보너스 (balance.md 7장) |
 | tokens | 공격 토큰 수 (인원 1~4 순서, balance.md·dungeon.md 3장) |

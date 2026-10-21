@@ -20,6 +20,8 @@ const TEMP_RISE = 6;
 const PROMPT = 7;
 const PROMPT_ABOVE = 22;
 const PROMPT_DEPTH = 6000;
+/** 귀환 카운트다운 숫자: 고리 위 (캐릭터 머리 위쯤) */
+const RETURN_ABOVE = 34;
 /** 출구 인원 글자: 문(24px) 위 */
 const EXIT_TEXT_ABOVE = 31;
 
@@ -34,7 +36,10 @@ export class PropLayer {
   private doorOutAt: { x: number } | null;
   private lastExit = '';
   private prompt: Phaser.GameObjects.Graphics;
-  private promptOn = false;
+  private promptOn = '';
+  private returnText: Phaser.GameObjects.Graphics;
+  private ringAt: { x: number; y: number } | null;
+  private lastReturn = 0;
 
   constructor(private scene: Phaser.Scene, map: RoomMap) {
     for (const b of map.blocks) this.block(b);
@@ -45,6 +50,8 @@ export class PropLayer {
     this.doorOutAt = map.doorOut;
     this.exitText = scene.add.graphics().setDepth(DEPTH_WALL + 1);
     this.prompt = scene.add.graphics().setDepth(PROMPT_DEPTH);
+    this.returnText = scene.add.graphics().setDepth(PROMPT_DEPTH);
+    this.ringAt = map.returnPoint;
   }
 
   /** 보물상자 열림 (서버 상태) */
@@ -52,17 +59,29 @@ export class PropLayer {
     if (this.chest) this.frame(this.chest, 'chest', open ? 'open' : 'closed');
   }
 
-  /** 상호작용 [E] 표시 (나에게만, hud.md 3장): 상자 위 */
-  setPrompt(on: boolean): void {
-    if (on === this.promptOn) return;
-    this.promptOn = on;
+  /** 상호작용 [E] 표시 (나에게만, hud.md 3장): 대상(상자·쓰러진 동료) 위. null이면 숨김 */
+  setPrompt(at: { x: number; y: number } | null): void {
+    const key = at ? `${Math.round(at.x)},${Math.round(at.y)}` : '';
+    if (key === this.promptOn) return;
+    this.promptOn = key;
     this.prompt.clear();
-    if (!on || !this.chest) return;
-    const at = this.chest.getData('at') as { x: number; y: number }, { sx, sy } = project(at.x, at.y);
+    if (!at) return;
+    const { sx, sy } = project(at.x, at.y);
     const x = sx - PROMPT / 2, y = sy - PROMPT_ABOVE;
     this.prompt.fillStyle(colorInt('global.outline'), 1).fillRect(x, y, PROMPT, PROMPT);
     this.prompt.fillStyle(colorInt('global.ui.panel'), 1).fillRect(x + 1, y + 1, PROMPT - 2, PROMPT - 2);
     drawText(this.prompt, 'E', sx, y + 1, { color: 'global.allyFx.white', align: 'center', outline: 'none' });
+  }
+
+  /** 귀환 카운트다운: 고리 위 3·2·1 (0이면 숨김) */
+  setReturn(left: number): void {
+    const n = left > 0 ? Math.ceil(left) : 0;
+    if (n === this.lastReturn) return;
+    this.lastReturn = n;
+    this.returnText.clear();
+    if (!n || !this.ringAt) return;
+    const { sx, sy } = project(this.ringAt.x, this.ringAt.y);
+    drawText(this.returnText, String(n), sx, sy - RETURN_ABOVE, { color: 'global.ui.hp', scale: 2, align: 'center' });
   }
 
   /** 출구 앞 인원 (need 2 이상일 때만 보임) */

@@ -21,8 +21,8 @@ export const C2S = {
   // 앞뒤 공백을 뺀 1~60자 (표시는 텍스트로만)
   chat: z.object({ text: z.string().trim().min(1).max(NET.chatMaxLen) }).strict(),
   ping: z.object({ t: z.number().nonnegative() }).strict(),
-  /** 개발 명령 (서버가 개발 모드일 때만): clear = 지금 방 몬스터를 모두 기절 */
-  dev: z.object({ cmd: z.enum(['clear']) }).strict(),
+  /** 개발 명령 (서버가 개발 모드일 때만): clear = 지금 방 몬스터를 모두 기절, down = 나를 쓰러뜨림 (부활 확인) */
+  dev: z.object({ cmd: z.enum(['clear', 'down']) }).strict(),
 } as const;
 
 export type C2SType = keyof typeof C2S;
@@ -46,6 +46,16 @@ export interface S2C {
   /** 투사체는 상태에 넣지 않고 이벤트로 (network.md 5장). kind = 공격 id */
   projSpawn: { id: number; kind: string; owner: number; x: number; y: number; z: number; dir: number; t0: number };
   projEnd: { id: number; reason: 'hit' | 'range'; x: number; y: number };
+  /** 한 판 끝 (hud.md 6장 정산 화면). kind: clear = 보스 처치, return = 귀환 지점, wipe = 전멸. 저장은 M4 */
+  result: {
+    kind: 'clear' | 'return' | 'wipe';
+    lines: {
+      pid: string; name: string; coins: number; bonusPct: number; bonusCoins: number; lost: number;
+      wallet: number; treasury: number; materials: number; exp: number; levelBefore: number; levelAfter: number; levelExp: number;
+    }[];
+    /** 이번 판 공동 금고 적립 합 */
+    treasury: number;
+  };
   /** 받은 보상 (본인에게, 몬스터 기절·보물상자) */
   reward: { coins: number; material: number; exp: number };
   /** 콤보 코인 보너스 단계 달성 (본인에게, 비율은 정산 때 더함) */
