@@ -1,0 +1,27 @@
+{
+  "_note": "섬 공간 (docs/island.md 2장). 단위는 칸 (1칸 = 16px, 화면에선 16×10). 시설·배경 그림 id는 client/data/sprites/island.json",
+  "grid": { "w": 40, "h": 30 },
+  "shoreRows": 3,
+  "walk": { "x": 2, "y": 2, "w": 36, "h": 25 },
+  "place": { "x": 5, "y": 3, "w": 30, "h": 22 },
+  "facilities": [
+    { "id": "storage", "x": 19, "y": 6, "w": 2, "h": 2 },
+    { "id": "weaponRack", "x": 16, "y": 13, "w": 2, "h": 1 },
+    { "id": "well", "x": 19, "y": 11, "w": 3, "h": 3 },
+    { "id": "shop", "x": 23, "y": 12, "w": 3, "h": 2 },
+    { "id": "board", "x": 20, "y": 15, "w": 1, "h": 1 }
+  ],
+  "paths": [
+    { "x": 8, "y": 16, "w": 26, "h": 1 },
+    { "x": 20, "y": 17, "w": 1, "h": 10 }
+  ],
+  "scenery": [
+    { "id": "treeBig", "x": 1, "y": 1 }, { "id": "tree", "x": 4, "y": 1 }, { "id": "treeBig", "x": 8, "y": 0 },
+    { "id": "tree", "x": 13, "y": 1 }, { "id": "treeBig", "x": 26, "y": 0 }, { "id": "tree", "x": 31, "y": 1 },
+    { "id": "treeBig", "x": 35, "y": 1 }, { "id": "tree", "x": 38, "y": 1 },
+    { "id": "tree", "x": 0, "y": 8 }, { "id": "treeBig", "x": 0, "y": 15 }, { "id": "tree", "x": 0, "y": 22 },
+    { "id": "treeBig", "x": 39, "y": 7 }, { "id": "tree", "x": 39, "y": 14 }, { "id": "treeBig", "x": 39, "y": 21 }
+  ],
+  "spawn": { "x": 20, "y": 18 },
+  "interactRange": 20
+}

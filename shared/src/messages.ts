@@ -66,4 +66,6 @@ export interface S2C {
   roomClear: { roomIndex: number };
   /** 팀 콤보 단계 달성 (20·40·60, 2인 이상) */
   teamMilestone: { count: number };
+  /** 섬: 입장 때 본인에게 (지갑은 상태에 넣지 않음, network.md 5장) */
+  me: { wallet: number; level: number };
 }

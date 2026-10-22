@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crossCheck, type GameData, type Issue, type Rules } from '../../shared/src/data/crossCheck';
-import { FILE_SCHEMAS, formatIssues, withoutNotes, type MonsterDef, type Rooms } from '../../shared/src/data/schema';
+import { FILE_SCHEMAS, formatIssues, withoutNotes, type IslandDef, type MonsterDef, type Rooms } from '../../shared/src/data/schema';
 import { checkMaps } from '../../shared/src/map/check';
 import { roomMap } from '../../shared/src/map/maps';
 
@@ -34,6 +34,14 @@ if (!issues.length) {
   issues.push(...crossCheck(data as unknown as GameData, refs, readJson('tools/data-validate/rules.json') as Rules));
   // 3. 맵 (maps/*.json, 위치·장애물)
   issues.push(...checkMaps(data.rooms as Rooms, data.monsters as Record<string, MonsterDef>, roomMap));
+  // 4. 섬: 시설·배경 그림 id가 client/data/sprites/island.json에 있는지, 칸이 격자 안인지
+  const isl = data.island as IslandDef, sprites = new Set(Object.keys(withoutNotes(readJson('client/data/sprites/island.json'))));
+  for (const o of [...isl.facilities, ...isl.scenery]) {
+    if (!sprites.has(o.id)) issues.push({ level: 'error', where: `island.json ${o.id}`, message: '섬 사물 그림(client/data/sprites/island.json)에 없음' });
+  }
+  for (const r of [isl.walk, isl.place, ...isl.facilities, ...isl.paths]) {
+    if (r.x + r.w > isl.grid.w || r.y + r.h > isl.grid.h - isl.shoreRows) issues.push({ level: 'error', where: `island.json (${r.x},${r.y})`, message: '섬 격자(물가 제외) 밖' });
+  }
 }
 
 const errors = issues.filter((i) => i.level === 'error');

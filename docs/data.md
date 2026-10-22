@@ -221,3 +221,23 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 
 - 행동 진행은 shared/src/actions.ts, 판정·데미지는 hit.ts, 피격 반응·높이는 body.ts (클라이언트·서버 공용)
 - 연출 값(번쩍임 프레임, 섬광, 숫자, 스미어 모양, 리듬 오프셋)은 client/data/fx.json (docs/motion.md)
+
+---
+
+## 8. island.json
+
+섬 공간 (island.md 2장). 단위는 칸 (1칸 = 16px, 화면 16×10). 형식 shared/src/data/islandSchema.ts, 계산 shared/src/island/world.ts
+
+| 필드 | 설명 |
+|---|---|
+| grid | `{ w, h }` 섬 격자 40×30 |
+| shoreRows | 맨 앞 줄 수: 모래·흙 절벽·물 (화면 30px = 3칸, 걸을 수 없음) |
+| walk | `{ x, y, w, h }` 걸을 수 있는 영역 (가장자리 나무 안쪽) |
+| place | 장식을 놓을 수 있는 영역 (약 30×22) |
+| facilities | `{ id, x, y, w, h }` 고정 시설: 그림 id(client/data/sprites/island.json)와 차지하는 칸. 걸어서 지나갈 수 없음 |
+| paths | 처음부터 깔린 흙길 (바닥 무늬만, 데모 길 무늬) |
+| scenery | `{ id, x, y }` 가장자리 배경 사물 (나무). 칸 = 발밑 |
+| spawn | 들어오는 자리 (우물 앞, 사람마다 옆으로 한 칸) |
+| interactRange | 시설 [E] 거리 px (시설 앞 가운데부터, 넓은 시설은 폭 안이면 0) |
+
+- data-validate: 그림 id가 섬 사물 그림에 있는지, 칸이 격자(물가 제외) 안인지

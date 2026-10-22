@@ -55,6 +55,7 @@ tools/                   개발 도구 (아래 표)
 | net-smoke | 완성 | 봇 2개로 서버 던전 방 접속 확인 (network.md 13장). `pnpm net-smoke` |
 | balance-check | 완성 | 스킬 예산 자동 계산·±25% 경고 (balance.md 3장). `pnpm balance-check`, 기준 rules.json |
 | font-gen | 완성 | 갈무리 BDF → 캔버스용 도트 글꼴 .bin (hud.md 7장). `pnpm font-gen <갈무리 dist 폴더>` |
+| island-bot | 완성 | 봇 주민이 초대 코드로 가입·섬 입장해 걷기 (2인 섬 확인, network.md 5장). `pnpm island-bot --invite <코드>` |
 | ttk-sim | 완성 | 예상 처치 시간·목표 비교 (balance.md 5장). `pnpm ttk-sim --weapon greatsword --level 1` |
 
 ## 문서 지도 — 작업에 필요한 문서만 읽는다
@@ -111,6 +112,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M3 완료. M4 4-1~4-4 완료(글꼴·DB·계정 API·로그인 화면·섬 그림: island.json 사물 16종, 바닥 islandGround.ts, 승인 데모와 픽셀 일치 테스트)
-- 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm --filter @game/server db:generate`
-- 다음: M4 4-5 IslandRoom + 섬 화면 (주민 이동·동기화, 섬 HUD, 주민 목록, 섬 BGM)
+- M0~M3 완료. M4 4-1~4-5 완료(글꼴·DB·계정·로그인·섬 그림·섬 화면: IslandRoom 쿠키 인증·걷기 예측, shared/data/island.json, 섬 HUD·주민 목록·이름표, 섬 BGM)
+- 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
+- 다음: M4 4-6 배치 모드 + items.json + 인벤토리 (같은 칸은 먼저 온 요청만, 활동 기록)

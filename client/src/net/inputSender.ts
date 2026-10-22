@@ -31,7 +31,8 @@ export class InputSender {
   private sinceSend = 0;
   private lastSeq = 0;
 
-  constructor(private conn: Connection) {}
+  /** 던전·섬 연결 공용 (시계·보내기·번호만 씀) */
+  constructor(private conn: Pick<Connection, 'clock' | 'send' | 'nextSeq'>) {}
 
   /** 프레임마다. dt = 실제 경과 초, me = 내 예측 상태 (없으면 검사 없이 보냄) */
   update(k: KeyInput, dt: number, me: PlayerState | null): Sent {

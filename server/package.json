@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@colyseus/schema": "2.0.37",
+    "@colyseus/ws-transport": "^0.15.3",
     "@game/shared": "workspace:*",
     "@node-rs/argon2": "^2.2.2",
     "better-sqlite3": "^13.0.3",

@@ -126,11 +126,16 @@ ZoneState
 ### IslandState
 ```
 IslandState
-  residents: Map<id, Resident>     이름, 접속 여부, 위치, 상태("섬" | "탐험 중 2층")
-  placements: Map<id, Placement>   itemId, x, y, rot, placedBy
-  treasury
-  well: { members[], floor, countdownEnd }
+  serverTime, name, treasury
+  residents: Map<userId, Resident> id, name, color(가입 순서 0~3 = 플레이어 색), online, status("island" | "away" | "dungeon:<층>"),
+                                   x, y, facing, state(idle/walk/run), lastInputSeq
+  placements: Map<id, Placement>   itemId, x, y, rot, placedBy (4-6)
+  well: { members[], floor, countdownEnd } (4-8)
 ```
+- 구현 (4-5): server/src/rooms/IslandRoom.ts (섬마다 한 방, `filterBy(['islandId'])`), 진행 systems/islandGame.ts. 입장 인증은 onAuth에서 세션 쿠키(sid) → 그 섬 주민만, 같은 계정의 이전 연결은 종료 코드 4002로 끊음
+- 이동: 클라이언트는 던전과 같은 input 메시지, 서버 60Hz로 마지막 입력 적용(shared/src/island/walker.ts), 내 캐릭터는 같은 함수로 예측·보정(client/src/net/walkPredict.ts, 7장 보정 규칙), 다른 주민은 100ms 보간
+- 입장 때 본인에게 `me { wallet, level }` 메시지. 끊기면 2초마다 다시 입장 (섬은 전체 상태를 새로 받으면 됨)
+- 개발: `pnpm island-bot --invite <초대 코드>` 봇 주민이 가입·입장해 우물 앞을 걷는다 (브라우저 하나로 2인 확인)
 - 개인 지갑·인벤토리는 본인 전용 메시지로 전송
 - 게시판 기록은 요청할 때 메시지로 가져온다 (상태에 넣지 않음)
 

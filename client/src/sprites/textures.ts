@@ -2,6 +2,7 @@
 import type Phaser from 'phaser';
 import type { CharacterLook } from './compose';
 import { spriteData } from './data';
+import { islandObjects, renderIslandFrame } from './island';
 import { renderMonsterFrame, renderPropFrame } from './monster';
 import { renderCharacter, type CharacterColors, type RenderedSprite } from './render';
 import { SLOTS } from './schema';
@@ -52,6 +53,19 @@ export function propTexture(scene: Phaser.Scene, id: string, frame: string): Cha
   const key = ['prop', id, frame].join('|');
   if (!scene.textures.exists(key)) {
     const sprite = renderPropFrame(spriteData(), id, frame);
+    scene.textures.addCanvas(key, paintCanvas(sprite));
+    feet.set(key, sprite.foot);
+  }
+  return { key, foot: feet.get(key)! };
+}
+
+/** 섬 사물 프레임 (sprites.md 12장). 좌우 반전 모습은 따로 그린 텍스처 */
+export function islandTexture(scene: Phaser.Scene, id: string, frame: string, flip = false): CharacterTexture {
+  const key = ['isl', id, frame, flip ? 'f' : '-'].join('|');
+  if (!scene.textures.exists(key)) {
+    const o = islandObjects()[id];
+    if (!o) throw new Error(`섬 사물 '${id}' 없음`);
+    const sprite = renderIslandFrame(o, frame, flip);
     scene.textures.addCanvas(key, paintCanvas(sprite));
     feet.set(key, sprite.foot);
   }

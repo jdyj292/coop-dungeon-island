@@ -22,8 +22,8 @@ export class PlayerView {
   private turnLeft = 0;
   private getupLeft = 0;
 
-  /** colorIndex = 플레이어 색 번호 (palette global.playerColors, 여럿일 때 구분) */
-  constructor(private scene: Phaser.Scene, depth: number, private colorIndex = 0) {
+  /** colorIndex = 플레이어 색 번호 (palette global.playerColors, 여럿일 때 구분), armed = 무기를 든 모습 (섬에서는 빈손) */
+  constructor(private scene: Phaser.Scene, depth: number, private colorIndex = 0, private armed = true) {
     this.actor = newActorView(scene);
     this.stars = scene.add.graphics().setDepth(depth);
   }
@@ -80,7 +80,7 @@ export class PlayerView {
     const lying = !known && (p.hurt?.kind === 'down' || p.downed);
     const look: CharacterLook = {
       hair: 'short', face: !known && (p.hurt || p.downed) ? 'hurt' : 'normal', outfit: data.outfits.sets.beginner!,
-      weapon: lying ? undefined : 'greatsword_basic', pose: lying ? undefined : fighterPose(p.fighter) ?? 'idle',
+      weapon: lying || !this.armed ? undefined : 'greatsword_basic', pose: lying || !this.armed ? undefined : fighterPose(p.fighter) ?? 'idle',
       frame: step.frame, bob: step.bob, motion: known ? motion : undefined,
     };
     const tex = characterTexture(this.scene, look, { hairColor: 'global.hairColors.0', playerColor: `global.playerColors.${this.colorIndex}` });

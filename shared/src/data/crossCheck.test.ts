@@ -93,6 +93,6 @@ describe('스키마', () => {
     expect(monsterAttack.safeParse({ ...m, damage: 5 }).success).toBe(false);
   });
   it('모든 파일 스키마가 있음', () => {
-    expect(Object.keys(FILE_SCHEMAS)).toHaveLength(6);
+    expect(Object.keys(FILE_SCHEMAS)).toHaveLength(7);
   });
 });

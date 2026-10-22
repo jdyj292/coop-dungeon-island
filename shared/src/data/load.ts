@@ -2,6 +2,7 @@
 // (복사하지 않으므로 tools/motion-preview가 메모리에서 바꾼 값이 게임 코드에 바로 반영된다)
 import type { z } from 'zod';
 import combatJson from '../../data/combat.json';
+import islandJson from '../../data/island.json';
 import monstersJson from '../../data/monsters.json';
 import playerJson from '../../data/player.json';
 import roomsJson from '../../data/rooms.json';
@@ -28,3 +29,4 @@ export const MONSTERS = load('monsters.json', monstersJson);
 export const ROOMS = load('rooms.json', roomsJson);
 export const PLAYER = load('player.json', playerJson);
 export const COMBAT = load('combat.json', combatJson);
+export const ISLAND = load('island.json', islandJson);
