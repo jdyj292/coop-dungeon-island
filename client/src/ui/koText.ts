@@ -90,3 +90,35 @@ export class KoText extends Phaser.GameObjects.Image {
 export function koText(scene: Phaser.Scene, x: number, y: number, text: string, st: KoStyle): KoText {
   return scene.add.existing(new KoText(scene, x, y, text, st));
 }
+
+/** 글자 폭 (배율 1, 글꼴을 아직 못 받았으면 0) */
+export function koWidth(text: string, font: FontKey = 'ko'): number {
+  const f = glyphFont(font);
+  return f ? measureText(f, text) : 0;
+}
+
+/** maxW 안에 들어가게 줄 나누기 (띄어쓰기 우선, 안 되면 글자 단위). maxLines를 넘으면 마지막 줄 끝을 '…'로 */
+export function wrapKo(text: string, maxW: number, maxLines: number, font: FontKey = 'ko'): string[] {
+  const lines: string[] = [];
+  let cur = '';
+  const push = () => { lines.push(cur); cur = ''; };
+  for (const word of text.split(' ')) {
+    const cand = cur ? `${cur} ${word}` : word;
+    if (koWidth(cand, font) <= maxW) { cur = cand; continue; }
+    if (cur) push();
+    // 한 단어가 너무 길면 글자 단위로
+    for (const ch of word) {
+      if (koWidth(cur + ch, font) > maxW && cur) push();
+      cur += ch;
+    }
+  }
+  if (cur) push();
+  if (lines.length > maxLines) {
+    const keep = lines.slice(0, maxLines);
+    let last = keep[maxLines - 1]!;
+    while (last && koWidth(`${last}…`, font) > maxW) last = [...last].slice(0, -1).join('');
+    keep[maxLines - 1] = `${last}…`;
+    return keep;
+  }
+  return lines;
+}

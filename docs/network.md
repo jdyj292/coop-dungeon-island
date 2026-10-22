@@ -62,9 +62,12 @@
 |---|---|
 | place / move / remove | 장식 배치 `{ itemId, x, y, rot, from: "mine" | "storage" }` / `{ placementId, x, y, rot }` / `{ placementId }`. 칸 좌표. 받은 순서대로 처리, 실패는 `placeFail { op, reason }` (본인에게) |
 | give | 개발 명령 (개발 모드만): `{ itemId, count }` 가방에 장식 |
-| buy | `{ itemId, count }` |
+| buy | `{ itemId, count }` 잡화점 구매. 장식·물약 = 개인 지갑 → 가방, 공용 장식 = 공동 금고 → 공용 창고 (트랜잭션, 조건부 차감). 결과 `buyResult { ok, itemId, count, reason? }`, 지갑은 `me`, 가방은 `inv`, 금고·창고는 상태 |
+| board | `{}` 게시판 열기 → `board { log(최근 100), memos(최근 20) }` (최신이 앞) |
+| giveCoins | 개발 명령 (개발 모드만): `{ to: "wallet" | "treasury", amount }` |
 | well | `{ op: "join" | "leave" | "depart", floor? }` |
-| memo | `{ text }` (1줄, 길이 제한) |
+| memo | `{ text }` 1줄 1~40자 (NET.memoMaxLen, 제어 문자·줄바꿈은 공백으로). 저장 후 `board` 다시 보냄 |
+- chat은 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
 | loadout | 무기 교체·스킬 장착·의상 장착 (MVP 이후 의상) |
 
 ### 검증과 제한

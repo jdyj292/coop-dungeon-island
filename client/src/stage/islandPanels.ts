@@ -1,0 +1,172 @@
+// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장식·물약·재료) / 게시판(기록·메모)
+// 키: ↑↓ 고르기, ←→ 수량, Q·E·Tab 탭, Enter 사기·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
+import type Phaser from 'phaser';
+import { ITEMS, NET } from '@game/shared';
+import type { IslandConnection } from '../net/islandNet';
+import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
+
+export type PanelKind = 'shop' | 'bag' | 'board';
+
+const TABS: Record<PanelKind, { label: string; disabled?: boolean }[]> = {
+  shop: [{ label: '물약' }, { label: '장식' }, { label: '의상', disabled: true }],
+  bag: [{ label: '장식' }, { label: '물약' }, { label: '재료' }],
+  board: [{ label: '기록' }, { label: '메모' }],
+};
+const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', board: '게시판' };
+const POTION_COLOR: Record<string, string> = { hpPotion: 'global.ui.hp', mpPotion: 'global.ui.mp' };
+const VERB: Record<string, string> = {
+  found: '섬을 만듦', join: '섬에 들어옴', invite: '초대 코드를 바꿈', place: '놓음', move: '옮김', remove: '치움', buy: '삼', treasury: '금고로 삼',
+};
+const MAX_QTY = 99;
+
+/** 몇 분 전 */
+export function ago(at: number, now: number): string {
+  const m = Math.floor((now - at) / 60_000);
+  if (m < 1) return '방금';
+  if (m < 60) return `${m}분 전`;
+  return m < 1440 ? `${Math.floor(m / 60)}시간 전` : `${Math.floor(m / 1440)}일 전`;
+}
+
+const itemName = (id: string | null) => (id ? ITEMS.decorations[id]?.name ?? ITEMS.consumables[id]?.name ?? ITEMS.materials[id]?.name ?? id : '');
+
+export class IslandPanels {
+  open: PanelKind | null = null;
+  private tab = 0;
+  private sel = 0;
+  private qty = 1;
+  /** 공동 금고 구매 확인 중 */
+  private confirm = false;
+  private panel: ListPanel;
+
+  /** writeMemo = 메모 입력창 열기 (DOM, Scene이 띄움) */
+  constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private writeMemo: () => void) {
+    this.panel = new ListPanel(scene, depth);
+  }
+
+  show(kind: PanelKind): void {
+    this.open = kind;
+    this.tab = 0;
+    this.sel = 0;
+    this.qty = 1;
+    this.confirm = false;
+    if (kind === 'board') this.conn.send('board', {});
+  }
+
+  close(): void {
+    this.open = null;
+    this.panel.hide();
+  }
+
+  destroy(): void {
+    this.panel.destroy();
+  }
+
+  /** 지금 탭의 줄과 줄마다의 품목 id */
+  private rows(): { rows: PanelRow[]; ids: string[] } {
+    const c = this.conn, wallet = c.me.wallet, treasury = c.island.treasury;
+    if (this.open === 'shop') {
+      const list = this.tab === 0
+        ? Object.entries(ITEMS.consumables).map(([id, d]) => ({ id, name: d.name, price: d.price, communal: false }))
+        : Object.entries(ITEMS.decorations).map(([id, d]) => ({ id, name: d.source === 'treasury' ? `${d.name} (금고)` : d.name, price: d.price, communal: d.source === 'treasury' }));
+      return {
+        ids: list.map((r) => r.id),
+        rows: list.map((r) => ({
+          icon: POTION_COLOR[r.id] ? { kind: 'potion' as const, color: POTION_COLOR[r.id]! } : { kind: 'deco' as const, itemId: r.id },
+          label: r.name, right: String(r.price), coin: true, dim: r.price > (r.communal ? treasury : wallet),
+        })),
+      };
+    }
+    if (this.open === 'bag') {
+      const inv = c.inventory, src = [ITEMS.decorations, ITEMS.consumables, ITEMS.materials][this.tab]!;
+      const ids = Object.keys(src).filter((id) => (inv[id] ?? 0) > 0);
+      return {
+        ids,
+        rows: ids.map((id) => ({
+          icon: this.tab === 0 ? { kind: 'deco' as const, itemId: id } : this.tab === 1 ? { kind: 'potion' as const, color: POTION_COLOR[id] ?? 'global.ui.hp' } : { kind: 'material' as const },
+          label: itemName(id), right: `X${inv[id]}`,
+        })),
+      };
+    }
+    const b = c.board, now = Date.now();
+    if (!b) return { ids: [], rows: [] };
+    const rows = this.tab === 0
+      ? b.log.map((l) => ({ label: `${l.who} · ${l.itemId ? `${itemName(l.itemId)} ` : ''}${VERB[l.action] ?? l.action} · ${ago(l.at, now)}` }))
+      : b.memos.map((m) => ({ label: `${m.who}: ${m.text}` }));
+    return { ids: rows.map(() => ''), rows };
+  }
+
+  private view(): PanelView {
+    const kind = this.open!, { rows, ids } = this.rows(), c = this.conn;
+    let footer = '', buttons: PanelView['buttons'] = [];
+    if (kind === 'shop') {
+      const id = ids[this.sel], price = id ? (ITEMS.consumables[id]?.price ?? ITEMS.decorations[id]?.price ?? 0) : 0;
+      const communal = !!id && ITEMS.decorations[id]?.source === 'treasury';
+      const total = price * this.qty, have = communal ? c.island.treasury : c.me.wallet;
+      footer = this.confirm ? `금고에서 ${total} 씁니다` : `${this.qty}개 ${total} · ${communal ? '금고' : '지갑'} ${have}`;
+      buttons = this.confirm
+        ? [{ id: 'cancel', label: '취소' }, { id: 'buy', label: '확인' }]
+        : [{ id: 'minus', label: '-' }, { id: 'plus', label: '+' }, { id: 'buy', label: '사기', disabled: !id || total > have }];
+    } else if (kind === 'board' && this.tab === 1) buttons = [{ id: 'memo', label: '메모 쓰기' }];
+    else if (kind === 'board') footer = '최근 100건';
+    return {
+      title: TITLE[kind], tabs: TABS[kind], tab: this.tab, rows, sel: kind === 'board' ? -1 : Math.min(this.sel, rows.length - 1), footer, buttons,
+      ...(kind === 'board' ? { scrollTop: this.sel } : {}),
+      empty: kind === 'board' ? (c.board ? '아직 없습니다' : '불러오는 중…') : '비어 있습니다',
+    };
+  }
+
+  private act(id: string): void {
+    const ids = this.rows().ids, item = ids[this.sel];
+    if (id === 'minus') this.qty = Math.max(1, this.qty - 1);
+    else if (id === 'plus') this.qty = Math.min(MAX_QTY, this.qty + 1);
+    else if (id === 'cancel') this.confirm = false;
+    else if (id === 'memo') this.writeMemo();
+    else if (id === 'buy' && item) {
+      if (ITEMS.decorations[item]?.source === 'treasury' && !this.confirm) this.confirm = true;
+      else {
+        this.conn.send('buy', { itemId: item, count: this.qty });
+        this.confirm = false;
+      }
+    }
+  }
+
+  /** 키 (패널이 열려 있으면 모두 여기서) */
+  onKey(code: string): void {
+    if (!this.open) return;
+    const tabs = TABS[this.open], n = this.rows().rows.length;
+    const nextTab = (d: number) => {
+      let t = this.tab;
+      do t = (t + d + tabs.length) % tabs.length; while (tabs[t]!.disabled);
+      this.tab = t;
+      this.sel = 0;
+      this.qty = 1;
+      this.confirm = false;
+    };
+    if (code === 'Escape') this.confirm ? (this.confirm = false) : this.close();
+    else if (code === 'ArrowUp' || code === 'KeyW') this.sel = Math.max(0, this.sel - 1);
+    else if (code === 'ArrowDown' || code === 'KeyS') this.sel = Math.min(Math.max(0, this.open === 'board' ? n - PANEL.rows : n - 1), this.sel + 1);
+    else if (code === 'ArrowLeft' || code === 'KeyA') this.act('minus');
+    else if (code === 'ArrowRight' || code === 'KeyD') this.act('plus');
+    else if (code === 'KeyQ') nextTab(-1);
+    else if (code === 'KeyE' || code === 'Tab') nextTab(1);
+    else if (code === 'Enter' || code === 'Space') this.act(this.open === 'board' ? (this.tab === 1 ? 'memo' : '') : this.open === 'shop' ? 'buy' : '');
+  }
+
+  /** 마우스 (화면 좌표). 패널이 열려 있으면 true */
+  onPointer(x: number, y: number): boolean {
+    if (!this.open) return false;
+    const h = this.panel.hit(x, y);
+    if (h.kind === 'outside') this.close();
+    else if (h.kind === 'tab') { this.tab = h.i; this.sel = 0; this.qty = 1; this.confirm = false; }
+    else if (h.kind === 'row') this.sel = h.i;
+    else if (h.kind === 'button') this.act(h.id);
+    return true;
+  }
+
+  update(width: number, fieldH: number): void {
+    if (this.open) this.panel.render(this.view(), width, fieldH);
+  }
+
+  /** 메모 글자 수 (입력창 maxLength) */
+  static readonly memoMax = NET.memoMaxLen;
+}

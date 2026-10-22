@@ -72,6 +72,15 @@ export const islandStorage = sqliteTable('island_storage', {
   count: integer('count').notNull().default(0),
 }, (t) => [primaryKey({ columns: [t.islandId, t.itemId] })]);
 
+/** 게시판 메모 (주민이 1줄, 최근 20개 표시, island.md 8장) */
+export const memos = sqliteTable('memos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  islandId: integer('island_id').notNull().references(() => islands.id),
+  userId: integer('user_id').references(() => users.id),
+  text: text('text').notNull(),
+  createdAt: integer('created_at').notNull(),
+}, (t) => [index('memos_island_created').on(t.islandId, t.createdAt)]);
+
 export const activityLog = sqliteTable('activity_log', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   islandId: integer('island_id').notNull().references(() => islands.id),

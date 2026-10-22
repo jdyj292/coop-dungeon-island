@@ -2,8 +2,10 @@
 // 60Hz로 각 주민의 마지막 입력을 적용하고 상태(정수 위치)에 반영. 상태는 20Hz로 전송 (IslandRoom)
 import { islandBounds, NET, newWalker, parseC2S, placementBlocks, spawnPos, stepWalker, TICK, type WalkInput, type Walker } from '@game/shared';
 import type { IslandStore } from '../db/islandStore';
+import type { ShopStore } from '../db/shopStore';
 import { IslandState, Resident } from '../schema/IslandState';
 import { IslandPlacement } from './islandPlacement';
+import { IslandShop } from './islandShop';
 import { RateLimit } from './rateLimit';
 
 export interface ResidentInfo {
@@ -14,6 +16,7 @@ export interface ResidentInfo {
 
 export interface IslandOut {
   send: (id: string, type: string, msg: unknown) => void;
+  broadcast: (type: string, msg: unknown) => void;
 }
 
 interface Live {
@@ -25,7 +28,11 @@ interface Live {
 /** 섬 메시지 제한 (network.md 4장): 이동 초당 30, 배치 등 섬 메시지 초당 5 */
 const islandRules = (): Record<string, readonly [number, number]> => {
   const l = NET.limits;
-  return { input: [1000, l.input], ping: [1000, l.input], place: [1000, l.island], move: [1000, l.island], remove: [1000, l.island], give: [1000, l.island] };
+  const island = [1000, l.island] as const;
+  return {
+    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax],
+    place: island, move: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island,
+  };
 };
 
 export class IslandGame {
@@ -34,16 +41,24 @@ export class IslandGame {
   private bounds = islandBounds();
   /** 장식 배치 (DB가 있을 때만: 테스트는 이동만 볼 수 있음) */
   readonly placement: IslandPlacement | null = null;
+  /** 잡화점·게시판·채팅 (DB가 있을 때만) */
+  readonly shop: IslandShop | null = null;
   /** 방 생성부터의 서버 시각 ms */
   now = 0;
 
-  constructor(name: string, treasury: number, residents: ResidentInfo[], private out: IslandOut, opts: { store?: IslandStore; dev?: boolean } = {}) {
+  constructor(name: string, treasury: number, residents: ResidentInfo[], private out: IslandOut, opts: { store?: IslandStore; shopStore?: ShopStore; dev?: boolean } = {}) {
     this.state.name = name;
     this.state.treasury = treasury;
     for (const r of residents) this.addResident(r);
     if (opts.store) {
       this.placement = new IslandPlacement(opts.store, this.state, out, () => [...this.live.values()].map((l) => l.walker.pos), !!opts.dev);
       this.updateBounds();
+    }
+    if (opts.shopStore) {
+      const placement = this.placement;
+      this.shop = new IslandShop(opts.shopStore, this.state, out, {
+        inventoryChanged: (id) => placement?.sendInventory(id), storageChanged: () => placement?.syncStorage(),
+      }, !!opts.dev);
     }
   }
 
@@ -68,6 +83,7 @@ export class IslandGame {
     this.live.set(id, { walker: newWalker(pos), input: { mx: 0, my: 0, run: false, seq: 0 }, limit: new RateLimit(islandRules()) });
     Object.assign(r, { online: true, status: 'island', x: Math.round(pos.x), y: Math.round(pos.y), facing: 1, state: 'idle', lastInputSeq: 0 });
     this.placement?.sendInventory(id);
+    this.shop?.sendMe(id);
   }
 
   leave(id: string): void {
@@ -87,6 +103,8 @@ export class IslandGame {
     } else if (type === 'ping') {
       const m = parseC2S('ping', raw);
       if (m) this.out.send(id, 'pong', { t: m.t, server: this.now });
+    } else if (this.shop?.onMessage(id, type, raw, Date.now())) {
+      // 잡화점·게시판·채팅
     } else if (this.placement?.onMessage(id, type, raw, Date.now())) this.updateBounds();
   }
 

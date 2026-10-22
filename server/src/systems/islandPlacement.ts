@@ -87,7 +87,8 @@ export class IslandPlacement {
     this.state.placements.set(p.id, p);
   }
 
-  private syncStorage(): void {
+  /** 공용 창고 개수를 상태에 (구매로 바뀌었을 때도) */
+  syncStorage(): void {
     const s = this.store.storage();
     for (const k of [...this.state.storage.keys()]) if (!(k in s)) this.state.storage.delete(k);
     for (const [k, v] of Object.entries(s)) this.state.storage.set(k, v);

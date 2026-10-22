@@ -53,6 +53,7 @@ export class OnlineStage {
   onResult: ((r: S2C['result']) => void) | null = null;
   /** 콤보 코인 보너스 달성 (비율) */
   onBonus: ((rate: number) => void) | null = null;
+  onChat: ((m: S2C['chat']) => void) | null = null;
   private players = new Map<string, Remote>();
   private monsters = new Map<string, { m: Monster; view: MonsterView }>();
   private hazards: HazardLayer;
@@ -213,7 +214,8 @@ export class OnlineStage {
       sfx.play('coin');
     } else if (type === 'comboBonus') {
       this.onBonus?.((msg as S2C['comboBonus']).rate);
-    } else if (type === 'rejected') {
+    } else if (type === 'chat') this.onChat?.(msg as S2C['chat']);
+    else if (type === 'rejected') {
       this.local.predictor?.reject((msg as S2C['rejected']).seq);
     }
   }

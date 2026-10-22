@@ -4,10 +4,13 @@ import { FixedStep, islandBounds, NET, newPlayerState, placementBlocks, TICK, ty
 import type { IslandConnection, ResidentSnap } from '../net/islandNet';
 import { InputSender, type KeyInput } from '../net/inputSender';
 import { WalkPredictor } from '../net/walkPredict';
+import { SpeechBubbles } from '../ui/chat';
 import { koText, type KoText } from '../ui/koText';
 import { DecorLayer } from '../view/decorLayer';
 import { project } from '../view/layout';
 import { PlayerView } from '../view/playerView';
+import { ChatBar } from './chatBar';
+import { IslandPanels } from './islandPanels';
 import { PlaceMode } from './placeMode';
 
 /** 이름표: 발밑 위로 (캐릭터 키 17 + 여유) */
@@ -30,15 +33,27 @@ export class IslandStage {
   private clock = 0;
   readonly decor: DecorLayer;
   readonly place: PlaceMode;
+  readonly panels: IslandPanels;
+  readonly chat: ChatBar;
+  private bubbles: SpeechBubbles;
   /** 걷기 장애물을 만든 장식 목록 (바뀌면 다시) */
   private blocksSig = '';
 
-  constructor(private scene: Phaser.Scene, readonly conn: IslandConnection) {
+  /** writeMemo = 게시판 메모 입력창 열기 (Scene) */
+  constructor(private scene: Phaser.Scene, readonly conn: IslandConnection, writeMemo: () => void) {
     const mine = conn.residents.latest?.items.get(conn.userId);
     this.predictor = new WalkPredictor(islandBounds(), { x: mine?.x ?? 0, y: mine?.y ?? 0 });
     this.sender = new InputSender(conn);
     this.decor = new DecorLayer(scene);
     this.place = new PlaceMode(scene, conn, (id) => this.nameOf(id), 6100);
+    this.panels = new IslandPanels(scene, conn, 6500, writeMemo);
+    this.chat = new ChatBar(scene, 6050, false);
+    this.bubbles = new SpeechBubbles(scene, 4600);
+    conn.onChat = (m) => {
+      const r = conn.residents.latest?.items.get(m.player);
+      this.chat.push({ name: r?.name ?? '?', color: r?.color ?? 0, text: m.text }, this.clock);
+      this.bubbles.say(m.player, m.text, this.clock);
+    };
     conn.onSnapshot = () => this.reconcile();
     conn.onRejoined = () => {
       // 다시 들어가면 서버가 새 자리를 준다: 첫 스냅샷에서 바로 맞춤
@@ -49,6 +64,11 @@ export class IslandStage {
   /** 주민 이름 (users.id 문자열) */
   nameOf(userId: string): string {
     return this.conn.residents.latest?.items.get(userId)?.name ?? '?';
+  }
+
+  /** 게임 시간 (초, 채팅 표시) */
+  get time(): number {
+    return this.clock;
   }
 
   /** 내 위치 (화면) */
@@ -80,6 +100,7 @@ export class IslandStage {
     }
     for (const [id, s] of this.shown) {
       if (seen.has(id)) continue;
+      this.bubbles.remove(id);
       s.view.destroy();
       s.name.destroy();
       this.shown.delete(id);
@@ -117,6 +138,7 @@ export class IslandStage {
     s.view.draw(s.p, moved, 0, this.clock);
     const { sx, sy } = project(at.x, at.y);
     s.name.moveTo(sx, sy - NAME_ABOVE);
+    this.bubbles.draw(id, sx, sy - NAME_ABOVE - 1, this.clock);
   }
 
   destroy(): void {
@@ -127,6 +149,9 @@ export class IslandStage {
     this.shown.clear();
     this.decor.destroy();
     this.place.exit();
+    this.panels.destroy();
+    this.chat.destroy();
+    this.bubbles.destroy();
     this.conn.leave();
   }
 }

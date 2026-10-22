@@ -2,6 +2,7 @@
 // 기본은 서버 없이 로컬 (방 하나 전투 테스트). ?online=1&party=2면 서버 던전 방에 접속해 ?room부터 보스 방까지 한 판 (roadmap 3-3)
 // 서버 방 번호가 바뀌면 같은 접속으로 씬을 다시 시작해 방 화면(배경·소품·장애물)을 새로 만든다
 import Phaser from 'phaser';
+import { ChatBar } from '../stage/chatBar';
 import { COMBAT, entryPos, floorRoom, mapOf, roomBounds, ROOMS, skillDef, TILE, WaveRunner, type Bounds, type PlayerState, type RoomDef } from '@game/shared';
 import type { Shake } from '../fx/timing';
 import { music } from '../audio/bgm/music';
@@ -54,6 +55,8 @@ export class Dungeon extends Phaser.Scene {
   private waves!: WaveRunner;
   private stage: CombatStage | null = null;
   private online: OnlineStage | null = null;
+  /** 채팅 (온라인만, 기록 3줄 반투명) */
+  private chat: ChatBar | null = null;
   private camCenter = 0;
   private hud!: HudBottom;
   private overlay!: HudOverlay;
@@ -133,6 +136,7 @@ export class Dungeon extends Phaser.Scene {
       this.events.once('shutdown', () => panel.destroy());
     }
     online.onBonus = (rate) => this.overlay.showBonus(rate);
+    this.chat = ChatBar.forDungeon(this, HUD_DEPTH + 5, online, conn, () => !!this.result);
     // 재접속에 성공하면 같은 접속으로 화면을 다시 만든다 (전체 상태를 다시 받음, network.md 10장)
     conn.onReconnected = () => {
       this.keepConn = true;
@@ -249,7 +253,8 @@ export class Dungeon extends Phaser.Scene {
       // 정산·보스 등장 연출·재접속 중에는 조작 없이 세계만 그린다
       const status = this.online.conn.status;
       this.overlay.connection = status;
-      this.online.update(dt, this.result || this.intro || status !== 'ok' ? NO_KEYS : input);
+      this.online.update(dt, this.result || this.intro || status !== 'ok' || this.chat?.open ? NO_KEYS : input);
+      this.chat?.draw(this.time.now / 1000);
       if (status === 'lost') this.waitKeyForNewRun();
       this.props.setExit(live.exitAt, live.exitNeed);
       this.props.setChestOpen(live.chestOpen);

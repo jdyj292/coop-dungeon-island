@@ -112,6 +112,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M3 완료. M4 4-1~4-6 완료(글꼴·DB·계정·로그인·섬 그림·섬 화면·배치 모드: items.json, 놓기·옮기기·치우기·회전, 먼저 온 요청만, 가방·공용 창고(island_storage), 가입 선물, 개발 give)
+- M0~M3 완료. M4 4-1~4-7 완료(계정·로그인·섬 그림·섬 화면·배치 모드·잡화점(지갑·금고)·가방·게시판(기록·메모)·채팅(섬·던전 기록)).
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
-- 다음: M4 4-7 잡화점·게시판·가방 패널, 섬 채팅
+- 다음: M4 4-8 우물 출발 → 던전 → 정산 저장 → 섬 복귀 (물약 반입·환불, 플레이어 색, 한글 이름)

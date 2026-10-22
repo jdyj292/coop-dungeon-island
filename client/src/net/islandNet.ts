@@ -50,6 +50,10 @@ export class IslandConnection {
   inventory: Record<string, number> = {};
   /** 배치 실패 (화면 알림) */
   onPlaceFail: (m: S2C['placeFail']) => void = () => {};
+  /** 구매 결과·게시판 내용·채팅 */
+  onBuy: (m: S2C['buyResult']) => void = () => {};
+  board: S2C['board'] | null = null;
+  onChat: (m: S2C['chat']) => void = () => {};
   /** 새 스냅샷 직후 (예측 보정) */
   onSnapshot: () => void = () => {};
   /** 다시 들어갔을 때 (화면의 내 위치를 새로 받음) */
@@ -79,6 +83,9 @@ export class IslandConnection {
     room.onMessage('me', (m: S2C['me']) => { this.me = m; });
     room.onMessage('inv', (m: S2C['inv']) => { this.inventory = m.items; });
     room.onMessage('placeFail', (m: S2C['placeFail']) => this.onPlaceFail(m));
+    room.onMessage('buyResult', (m: S2C['buyResult']) => this.onBuy(m));
+    room.onMessage('board', (m: S2C['board']) => { this.board = m; });
+    room.onMessage('chat', (m: S2C['chat']) => this.onChat(m));
     room.onLeave((code) => {
       if (this.leaving) return;
       if (code === REPLACED_CODE) {

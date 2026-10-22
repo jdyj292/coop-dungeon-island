@@ -13,5 +13,12 @@
     "campfire": { "name": "모닥불", "size": [1, 1], "price": 200, "walkable": false, "source": "shop" },
     "fountain": { "name": "분수", "size": [3, 3], "price": 1500, "walkable": false, "source": "treasury" }
   },
+  "consumables": {
+    "hpPotion": { "name": "HP 물약", "price": 15 },
+    "mpPotion": { "name": "MP 물약", "price": 10 }
+  },
+  "materials": {
+    "mushroom": { "name": "버섯", "floor": 1 }
+  },
   "starter": { "flowerBed": 2, "fence": 4, "pot": 1 }
 }

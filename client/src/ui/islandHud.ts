@@ -92,9 +92,11 @@ export class IslandHud {
     drawText(g, String(st.treasury), cx + 9, vy, { color: 'global.ui.coin', outline: 'none' });
   }
 
-  /** B 버튼을 눌렀는지 (화면 좌표) */
-  static hitB(x: number, y: number, bandTop: number): boolean {
-    return x >= BUTTON_X && x < BUTTON_X + 18 && y >= bandTop + 3 && y < bandTop + 21;
+  /** 누른 단축 버튼 B·I·M (화면 좌표, 없으면 null) */
+  static hitButton(x: number, y: number, bandTop: number): 'B' | 'I' | 'M' | null {
+    if (y < bandTop + 3 || y >= bandTop + 21) return null;
+    const i = Math.floor((x - BUTTON_X) / 24);
+    return i >= 0 && i < 3 && x - BUTTON_X - i * 24 < 18 ? (['B', 'I', 'M'] as const)[i]! : null;
   }
 
   /** 오른쪽 위 주민 목록: 섬 = 연두 점, 탐험 중 = 검 + 층 숫자, 접속 안 함 = 흐린 얼굴 + 점 세 개 */

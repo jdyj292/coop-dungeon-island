@@ -7,6 +7,9 @@ const seq = z.number().int().nonnegative();
 const t = z.number().nonnegative();
 const axis = z.union([z.literal(-1), z.literal(0), z.literal(1)]);
 const coord = z.number().finite();
+/** 사용자 한 줄 글: 제어 문자·줄바꿈 제거, 앞뒤 공백 제거, 1~max자 */
+// eslint-disable-next-line no-control-regex
+const lineText = (max: number) => z.string().max(max * 4).transform((s) => s.replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, ' ').replace(/\s+/g, ' ').trim()).pipe(z.string().min(1).max(max));
 /** 섬 칸 좌표, 회전 0~3 */
 const cell = z.number().int().min(0).max(63);
 const rot = z.number().int().min(0).max(3);
@@ -21,8 +24,8 @@ export const C2S = {
   item: z.object({ seq, t, slot: z.enum(['hp', 'mp']) }).strict(),
   interact: z.object({ targetId: z.string().max(40) }).strict(),
   emote: z.object({ id: z.number().int().min(1).max(4) }).strict(),
-  // 앞뒤 공백을 뺀 1~60자 (표시는 텍스트로만)
-  chat: z.object({ text: z.string().trim().min(1).max(NET.chatMaxLen) }).strict(),
+  // 앞뒤 공백을 뺀 1~60자, 제어 문자·줄바꿈 제거 (표시는 텍스트로만, security.md 4장)
+  chat: z.object({ text: lineText(NET.chatMaxLen) }).strict(),
   ping: z.object({ t: z.number().nonnegative() }).strict(),
   /** 개발 명령 (서버가 개발 모드일 때만): clear = 지금 방 몬스터를 모두 기절, down = 나를 쓰러뜨림 (부활 확인) */
   dev: z.object({ cmd: z.enum(['clear', 'down']) }).strict(),
@@ -30,8 +33,13 @@ export const C2S = {
   place: z.object({ itemId: z.string().max(32), x: cell, y: cell, rot, from: z.enum(['mine', 'storage']) }).strict(),
   move: z.object({ placementId: z.string().max(16), x: cell, y: cell, rot }).strict(),
   remove: z.object({ placementId: z.string().max(16) }).strict(),
-  /** 개발 명령 (서버가 개발 모드일 때만): 장식 받기 */
+  /** 개발 명령 (서버가 개발 모드일 때만): 장식·물약 받기 / 지갑·금고에 코인 */
   give: z.object({ itemId: z.string().max(32), count: z.number().int().min(1).max(99) }).strict(),
+  giveCoins: z.object({ to: z.enum(['wallet', 'treasury']), amount: z.number().int().min(1).max(100000) }).strict(),
+  // 섬: 잡화점 구매 (장식·물약은 지갑, 공용 장식은 공동 금고 → 공용 창고), 게시판 열기·메모 1줄 (island.md 5·8장)
+  buy: z.object({ itemId: z.string().max(32), count: z.number().int().min(1).max(99) }).strict(),
+  board: z.object({}).strict(),
+  memo: z.object({ text: lineText(NET.memoMaxLen) }).strict(),
 } as const;
 
 export type C2SType = keyof typeof C2S;
@@ -81,4 +89,8 @@ export interface S2C {
   inv: { items: Record<string, number> };
   /** 섬: 배치 요청 실패 (같은 칸에 먼저 온 요청 등) */
   placeFail: { op: 'place' | 'move' | 'remove'; reason: string };
+  /** 섬: 구매 결과 (본인에게). ok면 지갑·가방은 me·inv로 */
+  buyResult: { ok: boolean; itemId: string; count: number; reason?: 'unknown' | 'money' | 'treasury' };
+  /** 섬: 게시판 (요청한 사람에게). 최신이 앞 */
+  board: { log: { who: string; action: string; itemId: string | null; at: number }[]; memos: { who: string; text: string; at: number }[] };
 }

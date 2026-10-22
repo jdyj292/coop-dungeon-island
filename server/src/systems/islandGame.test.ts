@@ -5,7 +5,7 @@ import { IslandGame } from './islandGame';
 const make = () => {
   const sent: [string, string, unknown][] = [];
   const g = new IslandGame('모리의 섬', 120, [{ id: '1', name: '모리', color: 0 }, { id: '2', name: '카이', color: 1 }], {
-    send: (id, type, msg) => sent.push([id, type, msg]),
+    send: (id, type, msg) => sent.push([id, type, msg]), broadcast: () => {},
   });
   return { g, sent };
 };

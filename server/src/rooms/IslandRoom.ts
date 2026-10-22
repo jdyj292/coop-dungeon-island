@@ -3,6 +3,7 @@ import { Room, type Client } from 'colyseus';
 import { FixedStep, NET, TICK, type MeRes } from '@game/shared';
 import { loadIsland } from '../db/islandQueries';
 import { IslandStore } from '../db/islandStore';
+import { ShopStore } from '../db/shopStore';
 import { SESSION_COOKIE } from '../http/routes';
 import { IslandState } from '../schema/IslandState';
 import { readCookie, services } from '../services';
@@ -28,13 +29,17 @@ export class IslandRoom extends Room<IslandState> {
     if (!row) throw new Error(`섬 ${this.islandId} 없음`);
     this.game = new IslandGame(row.name, row.treasury, row.residents.map((r, i) => ({ id: String(r.id), name: r.nickname, color: i })), {
       send: (id, type, msg) => this.clientOf(id)?.send(type, msg),
-    }, { store: new IslandStore(services().db, this.islandId), dev: process.env.NODE_ENV !== 'production' });
+      broadcast: (type, msg) => this.broadcast(type, msg),
+    }, {
+      store: new IslandStore(services().db, this.islandId), shopStore: new ShopStore(services().db, this.islandId),
+      dev: process.env.NODE_ENV !== 'production',
+    });
     this.setState(this.game.state);
     this.setPatchRate(1000 / NET.patchRate);
     this.setSimulationInterval((ms) => {
       for (let n = this.ticks.advance(ms / 1000); n > 0; n--) this.game.tick();
     }, TICK * 1000);
-    for (const type of ['input', 'ping', 'place', 'move', 'remove', 'give']) {
+    for (const type of ['input', 'ping', 'place', 'move', 'remove', 'give', 'giveCoins', 'buy', 'board', 'memo', 'chat']) {
       this.onMessage(type, (client, raw) => {
         if (this.game.onMessage(this.userOf(client), type, raw) === 'kick') client.leave(KICK_CODE);
       });
@@ -60,7 +65,6 @@ export class IslandRoom extends Room<IslandState> {
     // 방이 생긴 뒤 가입한 주민
     this.game.addResident({ id, name: me.nickname, color: this.game.state.residents.size });
     this.game.join(id);
-    client.send('me', { wallet: me.wallet, level: 1 });
   }
 
   onLeave(client: Client): void {

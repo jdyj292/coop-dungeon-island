@@ -17,7 +17,7 @@ const user = (nickname: string) => db.insert(users).values({
 
 const game = (dev = true) => {
   const store = new IslandStore(db, islandId);
-  return { store, g: new IslandGame('섬', 0, [], { send: (id, type, msg) => sent.push([id, type, msg]) }, { store, dev }) };
+  return { store, g: new IslandGame('섬', 0, [], { send: (id, type, msg) => sent.push([id, type, msg]), broadcast: () => {} }, { store, dev }) };
 };
 const lastInv = (id: string) => (sent.filter(([to, type]) => to === id && type === 'inv').at(-1)?.[2] as { items: Record<string, number> } | undefined)?.items;
 const fails = (id: string) => sent.filter(([to, type]) => to === id && type === 'placeFail').map(([, , m]) => (m as { reason: string }).reason);

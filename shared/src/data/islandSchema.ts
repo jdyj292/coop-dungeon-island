@@ -42,6 +42,10 @@ export const items = z.object({
     /** 그림이 아니라 바닥 무늬 (돌길) */
     ground: z.boolean().optional(),
   }).strict()),
+  /** 잡화점 소모품 (물약, island.md 5장). 가방에 쌓이고 던전 입장 때 한도까지 지참 (4-8) */
+  consumables: z.record(z.object({ name: z.string().min(1), price: z.number().int().positive() }).strict()),
+  /** 층 재료 (던전 보상, 정산 때 가방으로) */
+  materials: z.record(z.object({ name: z.string().min(1), floor: z.number().int().positive() }).strict()),
   /** 가입 선물 (장식 id → 개수, island.md 7장) */
   starter: z.record(z.number().int().positive()),
 }).strict();

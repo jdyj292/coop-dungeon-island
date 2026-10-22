@@ -251,6 +251,8 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | 필드 | 설명 |
 |---|---|
 | decorations.<id> | `{ name, size: [가로, 세로], price, walkable, source, ground? }` id = 그림 id (client/data/sprites/island.json). source: shop(잡화점·개인 지갑) / treasury(공동 금고 → 공용 창고). ground = 그림 없이 바닥 무늬 (돌길) |
+| consumables.<id> | `{ name, price }` 잡화점 소모품 (hpPotion·mpPotion). 가방에 쌓이고 던전 입장 때 한도까지 지참 (4-8) |
+| materials.<id> | `{ name, floor }` 층 재료 (1층 mushroom = 버섯). 던전 정산 때 가방으로 (4-8) |
 | starter | 가입 선물 `{ 장식 id: 개수 }` |
 
 - 회전 1·3이면 차지하는 칸의 가로·세로가 바뀜 (shared footprint). 그림 모습은 sprites.md 12장 rot

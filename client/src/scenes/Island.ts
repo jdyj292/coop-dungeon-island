@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { nearFacility, type MeRes } from '@game/shared';
+import { ITEMS, NET, nearFacility, type MeRes } from '@game/shared';
 import { music } from '../audio/bgm/music';
 import { api } from '../net/api';
 import { IslandConnection } from '../net/islandNet';
@@ -13,6 +13,8 @@ import { HUD_HEIGHT, project } from '../view/layout';
 /** 카메라: 내 캐릭터가 화면 가운데에서 이만큼 벗어나면 따라감 */
 const DEADZONE = { x: 40, y: 24 };
 const NOTICE_MS = 2000;
+/** 구매 실패 이유 → 알림 */
+const BUY_FAIL: Record<string, string> = { money: '코인이 모자랍니다', treasury: '공동 금고가 모자랍니다', unknown: '살 수 없는 품목입니다' };
 /** 배치 실패 이유 → 알림 (서버 placeFail, shared canPlace) */
 const PLACE_FAIL: Record<string, string> = {
   overlap: '이미 다른 장식이 있습니다', occupied: '사람이 서 있는 칸입니다', clearance: '비워 둬야 하는 칸입니다 (우물 주변·시설 앞)',
@@ -20,8 +22,8 @@ const PLACE_FAIL: Record<string, string> = {
 };
 
 /**
- * 섬 씬 (docs/island.md, hud.md 8장): 섬 방에 접속해 주민과 함께 걷고, B(또는 B 버튼)로 배치 모드. 상점·게시판·우물 출발은 4-7~4-8
- * 조작: 방향키·WASD 이동(좌우 두 번 = 달리기), B 배치 모드(stage/placeMode.ts), L 로그아웃 (개발 임시)
+ * 섬 씬 (docs/island.md, hud.md 4·8장): 섬 방에 접속해 주민과 함께 걷고, 꾸미고, 사고, 이야기한다. 우물 출발은 4-8
+ * 조작: 방향키·WASD 이동(좌우 두 번 = 달리기), B 배치 모드, I 가방, M 게시판, E 잡화점·게시판(앞에서), Enter 채팅, L 로그아웃 (개발 임시)
  */
 export class Island extends Phaser.Scene {
   private stage: IslandStage | null = null;
@@ -65,8 +67,12 @@ export class Island extends Phaser.Scene {
     try {
       const conn = await IslandConnection.join(this.me.island.id, String(this.me.id));
       if (!this.scene.isActive()) return conn.leave();
-      this.stage = new IslandStage(this, conn);
+      this.stage = new IslandStage(this, conn, () => this.stage?.chat.input('게시판 메모 한 줄', NET.memoMaxLen, (text) => conn.send('memo', { text })));
       conn.onPlaceFail = (m) => this.showNotice(PLACE_FAIL[m.reason] ?? m.reason, NOTICE_MS);
+      conn.onBuy = (m) => {
+        const name = ITEMS.decorations[m.itemId]?.name ?? ITEMS.consumables[m.itemId]?.name ?? m.itemId;
+        this.showNotice(m.ok ? `${name} ${m.count}개를 샀습니다` : BUY_FAIL[m.reason ?? 'unknown'] ?? '살 수 없습니다', NOTICE_MS);
+      };
       const p = this.stage.myPos;
       this.cam = { x: p.x, y: p.y };
     } catch (e) {
@@ -79,15 +85,29 @@ export class Island extends Phaser.Scene {
     return this.scale.gameSize.height - HUD_HEIGHT;
   }
 
+  /** 키: 입력창 > 패널 > 배치 모드 > 걷는 중 단축키 순서 */
   private onKey(e: KeyboardEvent): void {
     const s = this.stage;
-    // 꾹 누를 때 반복은 커서 이동(방향키·WASD)만: 놓기·회전·치우기가 연달아 되지 않게
-    if (e.repeat && !/^(Arrow|Key[WASD]$)/.test(e.code)) return;
-    if (e.code === 'KeyL' && !s?.place.active) return this.logout();
-    if (!s) return;
-    if (e.code === 'KeyB') return this.togglePlace();
-    s.place.onKey(e.code);
+    // 꾹 누를 때 반복은 커서 이동(방향키·WASD)만: 놓기·회전·치우기·사기가 연달아 되지 않게
+    if (this.stage?.chat.open || (e.repeat && !/^(Arrow|Key[WASD]$)/.test(e.code))) return;
+    if (!s) return void (e.code === 'KeyL' && this.logout());
+    if (s.panels.open) {
+      const toggle = { KeyI: 'bag', KeyM: 'board' }[e.code];
+      return toggle === s.panels.open ? s.panels.close() : s.panels.onKey(e.code);
+    }
+    if (s.place.active) return e.code === 'KeyB' ? this.togglePlace() : s.place.onKey(e.code);
+    if (e.code === 'KeyB') this.togglePlace();
+    else if (e.code === 'KeyI') s.panels.show('bag');
+    else if (e.code === 'KeyM') s.panels.show('board');
+    else if (e.code === 'Enter') s.chat.chat((text) => s.conn.send('chat', { text }));
+    else if (e.code === 'KeyL') this.logout();
+    else if (e.code === 'KeyE') {
+      const near = nearFacility(s.myPos);
+      if (near === 'shop') s.panels.show('shop');
+      else if (near === 'board') s.panels.show('board');
+    }
   }
+
 
   private togglePlace(): void {
     const s = this.stage;
@@ -96,12 +116,15 @@ export class Island extends Phaser.Scene {
     else s.place.enter(s.myPos);
   }
 
-  /** 배치 모드면 그쪽으로, 아니면 B 버튼 */
+  /** 패널 > 배치 모드 > 아래 띠 B·I·M 버튼 */
   private onPointerDown(p: Phaser.Input.Pointer): void {
     const s = this.stage;
-    if (!s) return;
-    if (s.place.active) s.place.onPointerDown({ x: p.x, y: p.y }, { x: p.worldX, y: p.worldY }, this.bandTop());
-    else if (IslandHud.hitB(p.x, p.y, this.bandTop())) this.togglePlace();
+    if (!s || s.chat.open || s.panels.onPointer(p.x, p.y)) return;
+    if (s.place.active) return void s.place.onPointerDown({ x: p.x, y: p.y }, { x: p.worldX, y: p.worldY }, this.bandTop());
+    const b = IslandHud.hitButton(p.x, p.y, this.bandTop());
+    if (b === 'B') this.togglePlace();
+    else if (b === 'I') s.panels.show('bag');
+    else if (b === 'M') s.panels.show('board');
   }
 
   private logout(): void {
@@ -122,8 +145,8 @@ export class Island extends Phaser.Scene {
   update(time: number, deltaMs: number): void {
     const dt = Math.min(deltaMs / 1000, 0.1);
     const k = this.keys, s = this.stage;
-    // 배치 모드에서는 캐릭터가 서 있고 방향키는 커서
-    const walk = !s?.place.active;
+    // 배치 모드·패널·입력창 동안 캐릭터는 서 있음 (방향키는 커서·목록)
+    const walk = !s?.place.active && !s?.panels.open && !s?.chat.open;
     const x = walk ? (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0) : 0;
     const y = walk ? (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0) : 0;
     const { width, height } = this.scale.gameSize;
@@ -133,13 +156,17 @@ export class Island extends Phaser.Scene {
     }
     const pos = s?.myPos ?? null;
     const placing = !!s?.place.active;
-    this.world.update(time, pos && !placing ? nearFacility(pos) : null);
+    this.world.update(time, pos && !placing && !s?.panels.open ? nearFacility(pos) : null);
     const residents = s ? [...(s.conn.residents.latest?.items.values() ?? [])] : [];
     const mine = residents.find((r) => r.id === String(this.me.id));
     this.hud.draw({
       colorIndex: mine?.color ?? 0, level: s?.conn.me.level ?? 1, wallet: s?.conn.me.wallet ?? this.me.wallet,
       treasury: s?.conn.island.treasury ?? this.me.island.treasury, residents, placing,
     }, width, height - HUD_HEIGHT);
+    if (s) {
+      s.panels.update(width, height - HUD_HEIGHT);
+      s.chat.draw(s.time);
+    }
     if (s && placing) {
       const cam = this.cameras.main;
       s.place.update(time / 1000, width, height - HUD_HEIGHT, { x: cam.scrollX, y: cam.scrollY, w: width, h: height - HUD_HEIGHT });

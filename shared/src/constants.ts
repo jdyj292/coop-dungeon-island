@@ -44,4 +44,6 @@ export const NET = {
   limits: { input: 30, action: 10, island: 5, chatMax: 3, chatWindowMs: 3000, kickDrops: 30, kickWindowMs: 5000 },
   /** 채팅 길이 (hud.md 4장) */
   chatMaxLen: 60,
+  /** 게시판 메모 한 줄 최대 글자 (island.md 8장) */
+  memoMaxLen: 40,
 } as const;
