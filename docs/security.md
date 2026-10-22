@@ -77,3 +77,16 @@
 ## 7. 데이터
 - 테이블: docs/db.md (users, sessions, auth_log)
 - MVP 범위: docs/roadmap.md
+
+---
+
+## 8. 구현 (M4 4-2)
+- 입력 형식·규칙 상수: shared/src/auth.ts (`AUTH`, zod 스키마 — 클라이언트 폼과 서버가 같이 씀)
+- 서버: server/src/http/ — accounts.ts(가입·로그인·복구·비밀번호 변경·초대 코드), sessions.ts, secrets.ts(Argon2id: 19MiB·2회·병렬 1, 토큰 SHA-256), limiter.ts(시도 제한 표), routes.ts, app.ts
+- API (`/api`, JSON): POST signup {nickname, password, invite?} · login · logout · recover {nickname, recoveryCode, password} · password {current, password} · island/invite, GET me
+- 응답 오류 코드: invalid 400 · badLogin 401 · unauthorized 401 · nicknameTaken 409 · islandFull 409 · badInvite 400 · rateLimited 429
+- 쿠키 이름 `sid` (httpOnly, Secure, SameSite=Lax, 30일). 개발 http에서 Secure를 끄려면 `COOKIE_SECURE=0` (localhost는 켜도 동작)
+- 로그인 실패는 없는 닉네임·잠긴 계정·틀린 비밀번호 모두 badLogin (응답 시간도 같게: 없는 닉네임도 해시 검사 1회)
+- 시도 제한은 앱 메모리 (재시작하면 비워짐). 로그인 잠금은 DB(failed_logins·locked_until), 복구 코드 연속 실패 잠금은 메모리
+- 정리: 만료 세션·30일 지난 auth_log를 시작할 때 + 한 시간마다 삭제
+- 개발: Vite가 `/api`를 게임 서버(2567)로 넘김 (같은 출처 → 쿠키 전달)

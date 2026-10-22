@@ -14,7 +14,8 @@
     "colyseus": "^0.15.0",
     "cookie-parser": "^1.4.7",
     "drizzle-orm": "^0.45.4",
-    "express": "^4.22.3"
+    "express": "^4.22.3",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",

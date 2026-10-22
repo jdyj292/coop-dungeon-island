@@ -110,6 +110,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M3 완료. M4 4-1 완료: 갈무리 글꼴(client/public/fonts, CREDITS.md), 서버 DB(better-sqlite3 WAL + Drizzle, server/src/db, 테이블 8개 마이그레이션)
+- M0~M3 완료. M4 4-1(글꼴·DB), 4-2 완료: 계정 API server/src/http (/api 가입·로그인·복구·비밀번호·초대 코드, sid 쿠키, 시도 제한), 형식 shared/src/auth.ts
 - 명령: `pnpm dev`(?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm --filter @game/server db:generate`
-- 다음: M4 4-2 계정 API (가입·로그인·복구 코드·세션 쿠키·시도 제한, docs/security.md)
+- 다음: M4 4-3 로그인 화면 (DOM 폼 + 도트 스타일, 갈무리 글꼴 불러오기, 세션 있으면 바로 섬)
