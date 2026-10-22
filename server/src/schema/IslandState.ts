@@ -1,5 +1,5 @@
 // 섬 방 상태 (docs/network.md 5장 IslandState). 위치 int16. 지갑·인벤토리는 본인에게 메시지로 (상태에 넣지 않음)
-import { MapSchema, Schema, type } from '@colyseus/schema';
+import { ArraySchema, MapSchema, Schema, type } from '@colyseus/schema';
 
 export class Resident extends Schema {
   /** users.id (문자열) */
@@ -33,6 +33,15 @@ export class Placement extends Schema {
   @type('boolean') communal = false;
 }
 
+/** 우물 출발 대기 (island.md 6장) */
+export class WellState extends Schema {
+  /** 대기 중인 주민 users.id (들어온 순서, 첫 사람 = 대기 시작자) */
+  @type(['string']) members = new ArraySchema<string>();
+  @type('string') floor = '';
+  /** 출발 서버 시각 ms (0 = 카운트다운 안 함) */
+  @type('float64') departAt = 0;
+}
+
 export class IslandState extends Schema {
   /** 이 상태의 서버 시각 ms (보간 기준) */
   @type('float64') serverTime = 0;
@@ -42,4 +51,5 @@ export class IslandState extends Schema {
   @type({ map: Placement }) placements = new MapSchema<Placement>();
   /** 공용 창고: 장식 id → 개수 (주민 모두에게) */
   @type({ map: 'uint16' }) storage = new MapSchema<number>();
+  @type(WellState) well = new WellState();
 }

@@ -23,7 +23,7 @@ export class IslandShop {
 
   /** 본인 값 (입장·지갑이 바뀔 때) */
   sendMe(userId: string): void {
-    this.out.send(userId, 'me', { wallet: this.store.wallet(Number(userId)), level: 1 });
+    this.out.send(userId, 'me', { wallet: this.store.wallet(Number(userId)), level: this.store.level(Number(userId)) });
   }
 
   /** 처리했으면 true */

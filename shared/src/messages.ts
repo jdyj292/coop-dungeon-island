@@ -39,6 +39,8 @@ export const C2S = {
   // 섬: 잡화점 구매 (장식·물약은 지갑, 공용 장식은 공동 금고 → 공용 창고), 게시판 열기·메모 1줄 (island.md 5·8장)
   buy: z.object({ itemId: z.string().max(32), count: z.number().int().min(1).max(99) }).strict(),
   board: z.object({}).strict(),
+  /** 우물 (island.md 6장): 대기 합류·나가기, 대기 시작자의 출발 */
+  well: z.object({ op: z.enum(['join', 'leave', 'depart']), floor: z.string().max(16).optional() }).strict(),
   memo: z.object({ text: lineText(NET.memoMaxLen) }).strict(),
 } as const;
 
@@ -91,6 +93,10 @@ export interface S2C {
   placeFail: { op: 'place' | 'move' | 'remove'; reason: string };
   /** 섬: 구매 결과 (본인에게). ok면 지갑·가방은 me·inv로 */
   buyResult: { ok: boolean; itemId: string; count: number; reason?: 'unknown' | 'money' | 'treasury' };
+  /** 섬: 출발 → 이 던전 방으로 들어가기 (파티원 각자에게) */
+  depart: { roomId: string; floor: string };
+  /** 섬: 우물 요청 실패 (멀리 있음·가득 참 등) */
+  wellFail: { reason: 'far' | 'full' | 'busy' | 'notHost' };
   /** 섬: 게시판 (요청한 사람에게). 최신이 앞 */
   board: { log: { who: string; action: string; itemId: string | null; at: number }[]; memos: { who: string; text: string; at: number }[] };
 }

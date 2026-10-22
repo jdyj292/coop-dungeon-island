@@ -1,21 +1,23 @@
 // 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장식·물약·재료) / 게시판(기록·메모)
 // 키: ↑↓ 고르기, ←→ 수량, Q·E·Tab 탭, Enter 사기·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
 import type Phaser from 'phaser';
-import { ITEMS, NET } from '@game/shared';
+import { ISLAND, ITEMS, NET } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
 
-export type PanelKind = 'shop' | 'bag' | 'board';
+export type PanelKind = 'shop' | 'bag' | 'board' | 'well';
 
 const TABS: Record<PanelKind, { label: string; disabled?: boolean }[]> = {
   shop: [{ label: '물약' }, { label: '장식' }, { label: '의상', disabled: true }],
   bag: [{ label: '장식' }, { label: '물약' }, { label: '재료' }],
   board: [{ label: '기록' }, { label: '메모' }],
+  // 층 선택 (해금된 층만, island.json well.floors)
+  well: ISLAND.well.floors.map((f) => ({ label: `${f.replace(/\D/g, '')}층` })),
 };
-const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', board: '게시판' };
+const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', board: '게시판', well: '우물' };
 const POTION_COLOR: Record<string, string> = { hpPotion: 'global.ui.hp', mpPotion: 'global.ui.mp' };
 const VERB: Record<string, string> = {
-  found: '섬을 만듦', join: '섬에 들어옴', invite: '초대 코드를 바꿈', place: '놓음', move: '옮김', remove: '치움', buy: '삼', treasury: '금고로 삼',
+  found: '섬을 만듦', 'dungeon:clear': '1층 클리어', 'dungeon:return': '1층에서 귀환', 'dungeon:wipe': '1층 전멸', join: '섬에 들어옴', invite: '초대 코드를 바꿈', place: '놓음', move: '옮김', remove: '치움', buy: '삼', treasury: '금고로 삼',
 };
 const MAX_QTY = 99;
 
@@ -87,6 +89,13 @@ export class IslandPanels {
         })),
       };
     }
+    if (this.open === 'well') {
+      const w = c.well, res = c.residents.latest?.items;
+      return {
+        ids: w.members,
+        rows: w.members.map((id, i) => ({ icon: { kind: 'face' as const, color: res?.get(id)?.color ?? 0 }, label: `${res?.get(id)?.name ?? '?'}${i === 0 ? ' (대기 시작)' : ''}` })),
+      };
+    }
     const b = c.board, now = Date.now();
     if (!b) return { ids: [], rows: [] };
     const rows = this.tab === 0
@@ -106,12 +115,17 @@ export class IslandPanels {
       buttons = this.confirm
         ? [{ id: 'cancel', label: '취소' }, { id: 'buy', label: '확인' }]
         : [{ id: 'minus', label: '-' }, { id: 'plus', label: '+' }, { id: 'buy', label: '사기', disabled: !id || total > have }];
+    } else if (kind === 'well') {
+      const w = c.well, me = c.userId, mine = w.members.includes(me), left = Math.ceil((w.departAt - c.clock.serverNow()) / 1000);
+      footer = w.departAt ? `출발까지 ${Math.max(0, left)}초` : w.members.length ? `${w.members.length}/${ISLAND.well.maxParty}명 대기 중` : '우물 앞에서 함께 출발';
+      buttons = !mine ? [{ id: 'join', label: '합류', disabled: w.members.length >= ISLAND.well.maxParty }]
+        : [{ id: 'leave', label: '나가기' }, ...(w.members[0] === me && !w.departAt ? [{ id: 'depart', label: w.members.length > 1 ? '출발' : '혼자 출발' }] : [])];
     } else if (kind === 'board' && this.tab === 1) buttons = [{ id: 'memo', label: '메모 쓰기' }];
     else if (kind === 'board') footer = '최근 100건';
     return {
-      title: TITLE[kind], tabs: TABS[kind], tab: this.tab, rows, sel: kind === 'board' ? -1 : Math.min(this.sel, rows.length - 1), footer, buttons,
+      title: TITLE[kind], tabs: TABS[kind], tab: this.tab, rows, sel: kind === 'board' || kind === 'well' ? -1 : Math.min(this.sel, rows.length - 1), footer, buttons,
       ...(kind === 'board' ? { scrollTop: this.sel } : {}),
-      empty: kind === 'board' ? (c.board ? '아직 없습니다' : '불러오는 중…') : '비어 있습니다',
+      empty: kind === 'board' ? (c.board ? '아직 없습니다' : '불러오는 중…') : kind === 'well' ? '대기 중인 주민이 없습니다' : '비어 있습니다',
     };
   }
 
@@ -121,6 +135,7 @@ export class IslandPanels {
     else if (id === 'plus') this.qty = Math.min(MAX_QTY, this.qty + 1);
     else if (id === 'cancel') this.confirm = false;
     else if (id === 'memo') this.writeMemo();
+    else if (id === 'join' || id === 'leave' || id === 'depart') this.conn.send('well', { op: id, floor: ISLAND.well.floors[this.tab] });
     else if (id === 'buy' && item) {
       if (ITEMS.decorations[item]?.source === 'treasury' && !this.confirm) this.confirm = true;
       else {
@@ -149,7 +164,7 @@ export class IslandPanels {
     else if (code === 'ArrowRight' || code === 'KeyD') this.act('plus');
     else if (code === 'KeyQ') nextTab(-1);
     else if (code === 'KeyE' || code === 'Tab') nextTab(1);
-    else if (code === 'Enter' || code === 'Space') this.act(this.open === 'board' ? (this.tab === 1 ? 'memo' : '') : this.open === 'shop' ? 'buy' : '');
+    else if (code === 'Enter' || code === 'Space') this.act(this.open === 'board' ? (this.tab === 1 ? 'memo' : '') : this.open === 'shop' ? 'buy' : this.open === 'well' ? this.wellKey() : '');
   }
 
   /** 마우스 (화면 좌표). 패널이 열려 있으면 true */
@@ -161,6 +176,13 @@ export class IslandPanels {
     else if (h.kind === 'row') this.sel = h.i;
     else if (h.kind === 'button') this.act(h.id);
     return true;
+  }
+
+  /** 우물 패널 Enter: 합류 → (대기 시작자면) 출발 */
+  private wellKey(): string {
+    const w = this.conn.well, me = this.conn.userId;
+    if (!w.members.includes(me)) return 'join';
+    return w.members[0] === me && !w.departAt ? 'depart' : '';
   }
 
   update(width: number, fieldH: number): void {

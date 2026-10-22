@@ -23,5 +23,6 @@
     { "id": "treeBig", "x": 39, "y": 7 }, { "id": "tree", "x": 39, "y": 14 }, { "id": "treeBig", "x": 39, "y": 21 }
   ],
   "spawn": { "x": 20, "y": 18 },
-  "interactRange": 20
+  "interactRange": 20,
+  "well": { "countdownSec": 10, "maxParty": 4, "floors": ["floor1"] }
 }

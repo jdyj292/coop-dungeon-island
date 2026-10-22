@@ -8,6 +8,7 @@ import { colorInt } from '../palette';
 import { setFace } from './hudFace';
 import { bar, coinIcon, materialIcon, panel } from './hudParts';
 import { drawText } from './pixelFont';
+import { koText, wrapKo, type KoText } from './koText';
 
 type Result = S2C['result'];
 const C = (p: string) => colorInt(p);
@@ -28,9 +29,14 @@ function treasuryIcon(g: Phaser.GameObjects.Graphics, x: number, y: number): voi
   dot(g, x + 2, y + 2, C('global.fx.flash'), 2, 1);
 }
 
+/** 파티원 이름 칸 폭 (px) */
+const NAME_W = 44;
+
 export class ResultPanel {
   private g: Phaser.GameObjects.Graphics;
   private faces: Phaser.GameObjects.Image[] = [];
+  /** 파티원 이름 (갈무리7, 길면 말줄임) */
+  private names: KoText[] = [];
   private t = 0;
 
   /** colorOf = pid → 플레이어 색 번호, myId = 내 줄 (위쪽 줄은 내 정산) */
@@ -38,6 +44,8 @@ export class ResultPanel {
     this.g = scene.add.graphics().setScrollFactor(0).setDepth(depth);
     for (let i = 0; i < r.lines.length; i++) {
       this.faces.push(scene.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setScrollFactor(0).setDepth(depth + 1).setVisible(false));
+      const name = wrapKo(r.lines[i]!.name, NAME_W, 1, 'koSmall')[0] ?? '';
+      this.names.push(koText(scene, 0, 0, name, { font: 'koSmall', color: 'global.fx.flash' }).setScrollFactor(0).setDepth(depth + 1).setVisible(false));
     }
   }
 
@@ -91,18 +99,20 @@ export class ResultPanel {
       if (me.levelAfter > me.levelBefore && blink) drawText(g, 'LV UP!', x0 + W - 12, y, { color: 'global.allyFx.gold', outline: 'none', align: 'right' });
     }
     y += ROW + 4;
-    // 파티원별 한 줄: 색 막대 + 얼굴 + 지갑 코인 + 재료
+    // 파티원별 한 줄: 색 막대 + 얼굴 + 이름 + 지갑 코인 + 재료
     r.lines.forEach((l, i) => {
-      const face = this.faces[i]!, show = step >= HEAD_ROWS + i, ly = y + i * 13;
+      const face = this.faces[i]!, name = this.names[i]!, show = step >= HEAD_ROWS + i, ly = y + i * 13;
       face.setVisible(show);
+      name.setVisible(show);
       if (!show) return;
       const color = this.colorOf(l.pid);
       dot(g, lx - 4, ly, C(`global.playerColors.${color}`), 2, 11);
       setFace(this.scene, face, r.kind === 'wipe', color, lx, ly);
-      coinIcon(g, lx + 18, ly + 3);
-      drawText(g, String(l.wallet), lx + 26, ly + 3, { color: 'global.allyFx.gold', outline: 'none' });
-      materialIcon(g, cx + 8, ly + 3);
-      drawText(g, String(l.materials), cx + 16, ly + 3, { color: 'global.fx.flash', outline: 'none' });
+      name.moveTo(lx + 15, ly);
+      coinIcon(g, lx + 15 + NAME_W + 3, ly + 3);
+      drawText(g, String(l.wallet), lx + 15 + NAME_W + 11, ly + 3, { color: 'global.allyFx.gold', outline: 'none' });
+      materialIcon(g, x0 + W - 34, ly + 3);
+      drawText(g, String(l.materials), x0 + W - 26, ly + 3, { color: 'global.fx.flash', outline: 'none' });
     });
     // 다 보이면 아무 키 (오른쪽 아래 깜빡이는 >)
     if (this.done && Math.floor(this.t / fx.hud.resultBlinkSec) % 2 === 0) drawText(g, '>', x0 + W - 10, y0 + h - 9, { color: 'global.allyFx.gold', outline: 'none' });
@@ -111,5 +121,6 @@ export class ResultPanel {
   destroy(): void {
     this.g.destroy();
     this.faces.forEach((f) => f.destroy());
+    this.names.forEach((n) => n.destroy());
   }
 }

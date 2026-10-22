@@ -47,6 +47,8 @@ export class Dungeon extends Phaser.Scene {
   private params = new URLSearchParams(location.search);
   private room = floorRoom('floor1', Number(this.params.get('room') ?? 1));
   private onlineMode = this.params.get('online') === '1';
+  /** 섬 우물에서 출발한 던전 방 번호 (registry dungeonRoom, 정산 뒤 섬으로) */
+  private islandRoom: string | null = null;
   /** 다시 시작해도 이어 쓰는 접속 (방 진행) */
   private conn: Connection | null = null;
   /** 씬을 다시 시작할 때 접속을 끊지 않음 */
@@ -84,6 +86,8 @@ export class Dungeon extends Phaser.Scene {
     this.result = null;
     this.awaitingKey = false;
     this.keepConn = false;
+    this.islandRoom = (this.registry.get('dungeonRoom') as string | undefined) ?? null;
+    this.onlineMode ||= !!this.islandRoom;
     this.cameras.main.setBackgroundColor(color(`floors.${FLOOR}.env.void`));
     // HUD는 카메라 흔들림과 무관하게 화면에 고정 (hud.md 1·3장)
     this.hud = new HudBottom(this, HUD_DEPTH);
@@ -158,21 +162,15 @@ export class Dungeon extends Phaser.Scene {
     if (boss && !conn.progress.doorOpen) this.intro = new BossIntro(this.camCenter, boss.x);
   }
 
-  /** ?party=1~4 (기본 2). 개발용 네트워크 흉내 초기값: ?lag=왕복ms&jitter=±ms&loss=% (` 키 패널에서 조정) */
+  /** 섬에서 출발한 방, 아니면 개발 방 (?room ?party, 지연 흉내 ?lag&jitter&loss: Connection.devRoom·netSimFrom) */
   private connect(): void {
-    const party = Math.min(4, Math.max(1, Number(this.params.get('party') ?? 2)));
-    const num = (k: string) => Math.max(0, Number(this.params.get(k) ?? 0) || 0);
-    const sim = { lagMs: num('lag'), jitterMs: num('jitter'), loss: num('loss') / 100 };
-    Connection.join({ room: Number(this.params.get('room') ?? 1), partySize: party }, sim).then((conn) => {
+    Connection.join(this.islandRoom ? { roomId: this.islandRoom } : Connection.devRoom(this.params), Connection.netSimFrom(this.params)).then((conn) => {
       if (!this.scene.isActive()) return conn.leave();
       this.setupOnline(conn);
     }, (e: unknown) => console.error('[online] 접속 실패 (서버가 떠 있나요? pnpm dev)', e));
   }
 
-  /**
-   * E 상호작용 (판정은 서버, combat.json interactRange): 가까운 대상 위에 [E] (나에게만)
-   * 보물상자 = 클리어 뒤 한 번 누르기, 쓰러진 동료 = 누르고 있는 동안 부활 (combat.md 4장)
-   */
+  /** E 상호작용 (판정은 서버): 가까운 대상 위에 [E], 상자 = 클리어 뒤 한 번, 쓰러진 동료 = 누르는 동안 부활 (combat.md 4장) */
   private interact(live: { doorOpen: boolean; chestOpen: boolean }, down: boolean, pressed: boolean): void {
     const online = this.online!, me = online.me, chest = mapOf(this.room).chest, range = COMBAT.interactRange;
     const near = (x: number, y: number) => !!me && !me.downed && Math.hypot(me.pos.x - x, me.pos.y - y) <= range;
@@ -189,14 +187,14 @@ export class Dungeon extends Phaser.Scene {
     }
   }
 
-  /** 정산 화면이 다 보인 뒤 아무 키: 섬(M4) 대신 새 판으로 다시 접속 */
+  /** 정산 화면이 다 보인 뒤 아무 키: 섬으로 (개발 방은 새 판) */
   private showResult(dt: number): void {
     const r = this.result!, { width, height } = this.scale.gameSize;
     r.draw(dt, width, height);
     if (r.done) this.waitKeyForNewRun();
   }
 
-  /** 아무 키 → 새 판 (정산 화면 뒤, 재접속 실패 뒤) */
+  /** 아무 키 → 섬에서 왔으면 섬 우물 앞으로(hud.md 6장), 개발 방은 새 판 (정산 화면 뒤, 재접속 실패 뒤) */
   private waitKeyForNewRun(): void {
     if (this.awaitingKey) return;
     this.awaitingKey = true;
@@ -204,7 +202,9 @@ export class Dungeon extends Phaser.Scene {
       this.awaitingKey = false;
       this.conn?.leave();
       this.conn = null;
-      this.scene.restart();
+      if (!this.islandRoom) return this.scene.restart();
+      this.registry.remove('dungeonRoom');
+      this.scene.start('Island');
     });
   }
 

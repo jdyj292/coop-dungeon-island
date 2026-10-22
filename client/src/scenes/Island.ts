@@ -15,6 +15,7 @@ const DEADZONE = { x: 40, y: 24 };
 const NOTICE_MS = 2000;
 /** 구매 실패 이유 → 알림 */
 const BUY_FAIL: Record<string, string> = { money: '코인이 모자랍니다', treasury: '공동 금고가 모자랍니다', unknown: '살 수 없는 품목입니다' };
+const WELL_FAIL: Record<string, string> = { far: '우물 앞에서 합류할 수 있습니다', full: '파티가 가득 찼습니다 (최대 4명)', notHost: '대기를 시작한 사람만 출발할 수 있습니다', busy: '잠시 뒤 다시' };
 /** 배치 실패 이유 → 알림 (서버 placeFail, shared canPlace) */
 const PLACE_FAIL: Record<string, string> = {
   overlap: '이미 다른 장식이 있습니다', occupied: '사람이 서 있는 칸입니다', clearance: '비워 둬야 하는 칸입니다 (우물 주변·시설 앞)',
@@ -22,8 +23,8 @@ const PLACE_FAIL: Record<string, string> = {
 };
 
 /**
- * 섬 씬 (docs/island.md, hud.md 4·8장): 섬 방에 접속해 주민과 함께 걷고, 꾸미고, 사고, 이야기한다. 우물 출발은 4-8
- * 조작: 방향키·WASD 이동(좌우 두 번 = 달리기), B 배치 모드, I 가방, M 게시판, E 잡화점·게시판(앞에서), Enter 채팅, L 로그아웃 (개발 임시)
+ * 섬 씬 (docs/island.md, hud.md 4·8장): 섬 방에 접속해 주민과 함께 걷고, 꾸미고, 사고, 이야기하고, 우물에서 던전으로 출발한다
+ * 조작: 방향키·WASD 이동(좌우 두 번 = 달리기), B 배치 모드, I 가방, M 게시판, E 잡화점·게시판·우물(앞에서), Enter 채팅, L 로그아웃 (개발 임시)
  */
 export class Island extends Phaser.Scene {
   private stage: IslandStage | null = null;
@@ -69,6 +70,12 @@ export class Island extends Phaser.Scene {
       if (!this.scene.isActive()) return conn.leave();
       this.stage = new IslandStage(this, conn, () => this.stage?.chat.input('게시판 메모 한 줄', NET.memoMaxLen, (text) => conn.send('memo', { text })));
       conn.onPlaceFail = (m) => this.showNotice(PLACE_FAIL[m.reason] ?? m.reason, NOTICE_MS);
+      conn.onWellFail = (m) => this.showNotice(WELL_FAIL[m.reason] ?? m.reason, NOTICE_MS);
+      // 우물 출발: 섬 방을 나가 던전 방으로 (network.md 3장), 정산 뒤 Dungeon 씬이 섬으로 돌려보냄
+      conn.onDepart = (m) => {
+        this.registry.set('dungeonRoom', m.roomId);
+        this.scene.start('Dungeon');
+      };
       conn.onBuy = (m) => {
         const name = ITEMS.decorations[m.itemId]?.name ?? ITEMS.consumables[m.itemId]?.name ?? m.itemId;
         this.showNotice(m.ok ? `${name} ${m.count}개를 샀습니다` : BUY_FAIL[m.reason ?? 'unknown'] ?? '살 수 없습니다', NOTICE_MS);
@@ -105,6 +112,10 @@ export class Island extends Phaser.Scene {
       const near = nearFacility(s.myPos);
       if (near === 'shop') s.panels.show('shop');
       else if (near === 'board') s.panels.show('board');
+      else if (near === 'well') {
+        if (!s.conn.well.members.includes(s.conn.userId)) s.conn.send('well', { op: 'join' });
+        s.panels.show('well');
+      }
     }
   }
 

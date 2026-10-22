@@ -23,6 +23,8 @@ export class PlayerState extends Schema {
   @type('string') name = '';
   /** 외형 키 (머리·머리색·의상·플레이어 색 번호) */
   @type('string') look = '';
+  /** 플레이어 색 번호 (섬 주민 순서, 개발 방은 입장 순서) */
+  @type('uint8') color = 0;
   @type('string') weapon = '';
   @type('int16') x = 0;
   @type('int16') y = 0;

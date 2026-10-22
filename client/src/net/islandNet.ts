@@ -34,6 +34,7 @@ type Live = {
   treasury: number;
   residents: Map<string, Omit<ResidentSnap, 'z'>>;
   placements?: Map<string, Partial<PlacementSnap>>;
+  well?: { members?: string[]; floor?: string; departAt?: number };
   storage?: Map<string, number>;
 };
 
@@ -54,6 +55,9 @@ export class IslandConnection {
   onBuy: (m: S2C['buyResult']) => void = () => {};
   board: S2C['board'] | null = null;
   onChat: (m: S2C['chat']) => void = () => {};
+  /** 우물 출발 → 던전 방 / 우물 요청 실패 */
+  onDepart: (m: S2C['depart']) => void = () => {};
+  onWellFail: (m: S2C['wellFail']) => void = () => {};
   /** 새 스냅샷 직후 (예측 보정) */
   onSnapshot: () => void = () => {};
   /** 다시 들어갔을 때 (화면의 내 위치를 새로 받음) */
@@ -86,6 +90,8 @@ export class IslandConnection {
     room.onMessage('buyResult', (m: S2C['buyResult']) => this.onBuy(m));
     room.onMessage('board', (m: S2C['board']) => { this.board = m; });
     room.onMessage('chat', (m: S2C['chat']) => this.onChat(m));
+    room.onMessage('depart', (m: S2C['depart']) => this.onDepart(m));
+    room.onMessage('wellFail', (m: S2C['wellFail']) => this.onWellFail(m));
     room.onLeave((code) => {
       if (this.leaving) return;
       if (code === REPLACED_CODE) {
@@ -121,6 +127,12 @@ export class IslandConnection {
     return [...(this.live.placements?.values() ?? [])].map((p) => ({
       id: p.id ?? '', itemId: p.itemId ?? '', x: p.x ?? 0, y: p.y ?? 0, rot: p.rot ?? 0, placedBy: p.placedBy ?? '', communal: p.communal ?? false,
     }));
+  }
+
+  /** 우물 대기 (기본값은 전송되지 않으므로 채움) */
+  get well(): { members: string[]; floor: string; departAt: number } {
+    const w = this.live.well;
+    return { members: [...(w?.members ?? [])], floor: w?.floor ?? '', departAt: w?.departAt ?? 0 };
   }
 
   /** 공용 창고 (장식 id → 개수) */

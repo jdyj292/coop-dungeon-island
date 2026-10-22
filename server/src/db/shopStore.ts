@@ -3,6 +3,7 @@
 import { ITEMS } from '@game/shared';
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
 import type { Db } from './client';
+import { mastery } from './runStore';
 import { activityLog, inventory, islandStorage, islands, memos, users } from './schema';
 
 export type BuyFail = 'unknown' | 'money' | 'treasury';
@@ -15,6 +16,11 @@ export class ShopStore {
 
   wallet(userId: number): number {
     return this.db.select({ w: users.wallet }).from(users).where(eq(users.id, userId)).get()?.w ?? 0;
+  }
+
+  /** 숙련도 레벨 (섬 HUD LV) */
+  level(userId: number): number {
+    return mastery(this.db, userId).level;
   }
 
   treasury(): number {

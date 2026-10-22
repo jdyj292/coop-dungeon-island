@@ -148,13 +148,11 @@ export class OnlineStage {
       this.cues.forget(`m:${id}`);
     }
 
-    // 플레이어 (입장 순서대로 색 번호)
+    // 플레이어 (색 번호는 서버가 정함: 섬 주민 순서)
     const ps = c.players.sample(t);
-    let index = 0;
     for (const [id, s] of ps) {
       let r = this.players.get(id);
-      if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1, index), colorIndex: index, ghosts: new Afterimages(this.scene), last: null }));
-      index++;
+      if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1, s.color), colorIndex: s.color, ghosts: new Afterimages(this.scene), last: null }));
       // 나 = 예측 상태 (화면 위치는 보정 오프셋 포함), 다른 사람 = 보간
       const mine = id === c.myId && !!this.local.predictor;
       const p = mine ? { ...this.local.predictor!.state, pos: this.local.predictor!.display } : mirrorPlayer(s, t, WEAPON, undefined, now);

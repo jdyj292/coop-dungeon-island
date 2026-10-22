@@ -24,6 +24,8 @@ export const island = z.object({
   spawn: z.object({ x: cell, y: cell }).strict(),
   /** 시설 상호작용 거리 (px, 시설 앞 가운데부터) */
   interactRange: z.number().positive(),
+  /** 우물 출발 (island.md 6장): 카운트다운 초, 파티 최대, 갈 수 있는 층 (rooms.json 키) */
+  well: z.object({ countdownSec: z.number().positive(), maxParty: z.number().int().min(1).max(4), floors: z.array(z.string()).min(1) }).strict(),
 }).strict();
 
 export type IslandDef = z.infer<typeof island>;

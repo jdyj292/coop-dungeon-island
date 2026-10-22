@@ -55,7 +55,7 @@ tools/                   개발 도구 (아래 표)
 | net-smoke | 완성 | 봇 2개로 서버 던전 방 접속 확인 (network.md 13장). `pnpm net-smoke` |
 | balance-check | 완성 | 스킬 예산 자동 계산·±25% 경고 (balance.md 3장). `pnpm balance-check`, 기준 rules.json |
 | font-gen | 완성 | 갈무리 BDF → 캔버스용 도트 글꼴 .bin (hud.md 7장). `pnpm font-gen <갈무리 dist 폴더>` |
-| island-bot | 완성 | 봇 주민이 초대 코드로 가입·섬 입장해 걷기 (2인 섬 확인, network.md 5장). `pnpm island-bot --invite <코드>` |
+| island-bot | 완성 | 봇 주민이 초대 코드로 가입·섬 입장해 걷기, `--well`이면 우물 대기 합류 → 함께 던전 (network.md 3·5장). `pnpm island-bot --invite <코드> [--well]` |
 | ttk-sim | 완성 | 예상 처치 시간·목표 비교 (balance.md 5장). `pnpm ttk-sim --weapon greatsword --level 1` |
 
 ## 문서 지도 — 작업에 필요한 문서만 읽는다
@@ -108,10 +108,10 @@ tools/                   개발 도구 (아래 표)
 - [x] M1 로컬 전투
 - [x] M2 멀티플레이
 - [x] M3 던전 1층 완성
-- [ ] M4 섬·계정
+- [x] M4 섬·계정
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M3 완료. M4 4-1~4-7 완료(계정·로그인·섬 그림·섬 화면·배치 모드·잡화점(지갑·금고)·가방·게시판(기록·메모)·채팅(섬·던전 기록)).
+- M0~M4 완료. M4 4-1~4-8: 가입 → 섬 꾸미기·구매 → 우물 출발(1~4명) → 던전 → 정산 저장(지갑·금고·재료·물약·숙련도) → 섬 복귀 한 바퀴 확인
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
-- 다음: M4 4-8 우물 출발 → 던전 → 정산 저장 → 섬 복귀 (물약 반입·환불, 플레이어 색, 한글 이름)
+- 다음: M5 배포 (docs/roadmap.md, security 5·6장). 미룬 것: 숙련도 ATK 반영, 던전 말풍선, 보스 한글 이름

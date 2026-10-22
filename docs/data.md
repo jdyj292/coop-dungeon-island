@@ -239,6 +239,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | scenery | `{ id, x, y }` 가장자리 배경 사물 (나무). 칸 = 발밑 |
 | spawn | 들어오는 자리 (우물 앞, 사람마다 옆으로 한 칸) |
 | interactRange | 시설 [E] 거리 px (시설 앞 가운데부터, 넓은 시설은 폭 안이면 0) |
+| well | `{ countdownSec, maxParty, floors }` 우물 출발: 카운트다운 초, 파티 최대, 갈 수 있는 층 (rooms.json 키) |
 
 - data-validate: 그림 id가 섬 사물 그림에 있는지, 칸이 격자(물가 제외) 안인지
 

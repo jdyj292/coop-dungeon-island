@@ -1,12 +1,15 @@
 import type { IncomingMessage } from 'node:http';
-import { Room, type Client } from 'colyseus';
+import { matchMaker, Room, type Client } from 'colyseus';
 import { FixedStep, NET, TICK, type MeRes } from '@game/shared';
 import { loadIsland } from '../db/islandQueries';
 import { IslandStore } from '../db/islandStore';
+import { carryPotions, mastery } from '../db/runStore';
 import { ShopStore } from '../db/shopStore';
 import { SESSION_COOKIE } from '../http/routes';
 import { IslandState } from '../schema/IslandState';
 import { readCookie, services } from '../services';
+import type { PartyMember } from '../systems/gameTypes';
+import { islandBus } from '../systems/islandBus';
 import { IslandGame } from '../systems/islandGame';
 
 const KICK_CODE = 4001;
@@ -22,6 +25,7 @@ export class IslandRoom extends Room<IslandState> {
   private game!: IslandGame;
   private ticks = new FixedStep();
   private islandId = 0;
+  private unwatch: (() => void) | null = null;
 
   onCreate(options: { islandId?: unknown }): void {
     this.islandId = Number(options?.islandId);
@@ -33,13 +37,16 @@ export class IslandRoom extends Room<IslandState> {
     }, {
       store: new IslandStore(services().db, this.islandId), shopStore: new ShopStore(services().db, this.islandId),
       dev: process.env.NODE_ENV !== 'production',
+      onDepart: (ids, floor) => void this.depart(ids, floor),
     });
+    // 던전에서 돌아옴 (정산 저장 뒤, DungeonRoom)
+    this.unwatch = islandBus.watch(this.islandId, (e) => { if (!e.floor) this.game.returned(e.userIds); });
     this.setState(this.game.state);
     this.setPatchRate(1000 / NET.patchRate);
     this.setSimulationInterval((ms) => {
       for (let n = this.ticks.advance(ms / 1000); n > 0; n--) this.game.tick();
     }, TICK * 1000);
-    for (const type of ['input', 'ping', 'place', 'move', 'remove', 'give', 'giveCoins', 'buy', 'board', 'memo', 'chat']) {
+    for (const type of ['input', 'ping', 'place', 'move', 'remove', 'give', 'giveCoins', 'buy', 'board', 'memo', 'chat', 'well']) {
       this.onMessage(type, (client, raw) => {
         if (this.game.onMessage(this.userOf(client), type, raw) === 'kick') client.leave(KICK_CODE);
       });
@@ -72,6 +79,30 @@ export class IslandRoom extends Room<IslandState> {
     // 같은 계정이 이미 새로 들어와 있으면 그대로 둔다
     if (this.clients.some((c) => c !== client && this.userOf(c) === id)) return;
     this.game.leave(id);
+  }
+
+  /**
+   * 우물 출발 (network.md 3장): 파티원 정보(이름·색·숙련도·가져갈 물약)로 던전 방을 만들고 각자에게 방 번호.
+   * 주민 상태는 "탐험 중"이 되고, 클라이언트는 섬 방을 나가 던전 방으로 들어간다
+   */
+  private async depart(ids: string[], floor: string): Promise<void> {
+    const db = services().db;
+    const members: PartyMember[] = ids.map((id) => {
+      const r = this.game.state.residents.get(id), m = mastery(db, Number(id));
+      return { userId: id, name: r?.name ?? '?', color: r?.color ?? 0, level: m.level, levelExp: m.exp, potions: carryPotions(db, Number(id)) };
+    });
+    islandBus.departed(this.islandId, ids, floor);
+    try {
+      const room = await matchMaker.createRoom('dungeon', { party: { islandId: this.islandId, floor, members } });
+      for (const id of ids) this.clientOf(id)?.send('depart', { roomId: room.roomId, floor });
+    } catch (e) {
+      console.error('[island] 던전 방을 만들지 못함', e);
+      islandBus.returned(this.islandId, ids);
+    }
+  }
+
+  onDispose(): void {
+    this.unwatch?.();
   }
 
   private userOf(client: Client): string {

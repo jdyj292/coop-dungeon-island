@@ -22,6 +22,8 @@ export interface PlayerSnap extends Pos {
   lastInputSeq: number;
   /** 쓰러진 동안 동료 부활 진행도 0~255 */
   reviveProgress: number;
+  /** 플레이어 색 번호 (섬 주민 순서, 개발 방은 입장 순서) */
+  color: number;
 }
 
 export interface MonsterSnap extends Pos {
@@ -161,8 +163,21 @@ export class Connection {
   }
 
   /** 첫 상태까지 받은 뒤 돌려준다 (방 번호를 알아야 화면을 만든다) */
-  static async join(opts: { room: number; partySize: number; name?: string }, sim: NetSim): Promise<Connection> {
-    const room = await new Client(serverUrl()).joinOrCreate('dungeon', opts);
+  /** 개발 방: ?room=1~6 (기본 1) ?party=1~4 (기본 2) */
+  static devRoom(p: URLSearchParams): { room: number; partySize: number } {
+    return { room: Number(p.get('room') ?? 1), partySize: Math.min(4, Math.max(1, Number(p.get('party') ?? 2))) };
+  }
+
+  /** 개발용 네트워크 흉내 초기값: ?lag=왕복ms&jitter=±ms&loss=% (` 키 패널에서 조정) */
+  static netSimFrom(p: URLSearchParams): NetSim {
+    const num = (k: string) => Math.max(0, Number(p.get(k) ?? 0) || 0);
+    return { lagMs: num('lag'), jitterMs: num('jitter'), loss: num('loss') / 100 };
+  }
+
+  /** 개발 방(joinOrCreate, ?online=1) 또는 섬에서 출발한 방(roomId, 세션 쿠키로 인증) */
+  static async join(opts: { room: number; partySize: number; name?: string } | { roomId: string }, sim: NetSim): Promise<Connection> {
+    const client = new Client(serverUrl());
+    const room = 'roomId' in opts ? await client.joinById(opts.roomId) : await client.joinOrCreate('dungeon', opts);
     const conn = new Connection(room, sim);
     await new Promise<void>((res) => (conn.live.players ? res() : room.onStateChange.once(() => res())));
     return conn;
@@ -227,7 +242,7 @@ export class Connection {
     const players = new Map<string, PlayerSnap>();
     s.players.forEach((p, id) => players.set(id, {
       id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, state: p.state, since: since(prevP?.get(id), p.state),
-      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0,
+      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0,
     }));
     const monsters = new Map<string, MonsterSnap>();
     s.monsters.forEach((m, id) => monsters.set(id, {

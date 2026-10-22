@@ -5,7 +5,9 @@ import type { IslandStore } from '../db/islandStore';
 import type { ShopStore } from '../db/shopStore';
 import { IslandState, Resident } from '../schema/IslandState';
 import { IslandPlacement } from './islandPlacement';
+import { dungeonStatus, islandBus } from './islandBus';
 import { IslandShop } from './islandShop';
+import { IslandWell } from './islandWell';
 import { RateLimit } from './rateLimit';
 
 export interface ResidentInfo {
@@ -31,7 +33,7 @@ const islandRules = (): Record<string, readonly [number, number]> => {
   const island = [1000, l.island] as const;
   return {
     input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax],
-    place: island, move: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island,
+    place: island, move: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island, well: island,
   };
 };
 
@@ -43,13 +45,18 @@ export class IslandGame {
   readonly placement: IslandPlacement | null = null;
   /** 잡화점·게시판·채팅 (DB가 있을 때만) */
   readonly shop: IslandShop | null = null;
+  readonly well: IslandWell;
   /** 방 생성부터의 서버 시각 ms */
   now = 0;
 
-  constructor(name: string, treasury: number, residents: ResidentInfo[], private out: IslandOut, opts: { store?: IslandStore; shopStore?: ShopStore; dev?: boolean } = {}) {
+  constructor(name: string, treasury: number, residents: ResidentInfo[], private out: IslandOut, opts: { store?: IslandStore; shopStore?: ShopStore; dev?: boolean; onDepart?: (userIds: string[], floor: string) => void } = {}) {
     this.state.name = name;
     this.state.treasury = treasury;
     for (const r of residents) this.addResident(r);
+    this.well = new IslandWell(this.state, out, (id) => this.live.get(id)?.walker.pos, (ids, floor) => {
+      for (const id of ids) this.state.residents.get(id)?.assign({ status: dungeonStatus(floor) });
+      opts.onDepart?.(ids, floor);
+    });
     if (opts.store) {
       this.placement = new IslandPlacement(opts.store, this.state, out, () => [...this.live.values()].map((l) => l.walker.pos), !!opts.dev);
       this.updateBounds();
@@ -71,7 +78,8 @@ export class IslandGame {
   addResident(info: ResidentInfo): void {
     if (this.state.residents.has(info.id)) return;
     const r = new Resident();
-    Object.assign(r, { id: info.id, name: info.name, color: info.color });
+    const floor = islandBus.floorOf(info.id);
+    Object.assign(r, { id: info.id, name: info.name, color: info.color, status: floor ? dungeonStatus(floor) : 'away' });
     this.state.residents.set(info.id, r);
   }
 
@@ -86,10 +94,20 @@ export class IslandGame {
     this.shop?.sendMe(id);
   }
 
+  /** 섬을 나감 (끊김·던전 출발). 던전에 간 사람은 "탐험 중" 그대로 */
   leave(id: string): void {
     this.live.delete(id);
-    const r = this.state.residents.get(id);
-    if (r) Object.assign(r, { online: false, status: 'away', state: 'idle' });
+    this.well.drop(id);
+    const r = this.state.residents.get(id), floor = islandBus.floorOf(id);
+    if (r) Object.assign(r, { online: false, status: floor ? dungeonStatus(floor) : 'away', state: 'idle' });
+  }
+
+  /** 던전에서 나옴 (섬에 아직 안 들어왔으면 away) */
+  returned(ids: string[]): void {
+    for (const id of ids) {
+      const r = this.state.residents.get(id);
+      if (r && !this.live.has(id)) r.status = 'away';
+    }
   }
 
   /** 메시지. 제한을 계속 넘기면 'kick' */
@@ -103,13 +121,15 @@ export class IslandGame {
     } else if (type === 'ping') {
       const m = parseC2S('ping', raw);
       if (m) this.out.send(id, 'pong', { t: m.t, server: this.now });
-    } else if (this.shop?.onMessage(id, type, raw, Date.now())) {
+    } else if (type === 'well') this.well.onMessage(id, raw, this.now);
+    else if (this.shop?.onMessage(id, type, raw, Date.now())) {
       // 잡화점·게시판·채팅
     } else if (this.placement?.onMessage(id, type, raw, Date.now())) this.updateBounds();
   }
 
   tick(): void {
     this.now += TICK * 1000;
+    this.well.tick(this.now);
     for (const [id, l] of this.live) {
       stepWalker(l.walker, l.input, TICK, this.bounds);
       const r = this.state.residents.get(id)!, w = l.walker;
