@@ -2,6 +2,7 @@
 import { characterTab } from './characterTab';
 import { compareTab } from './compareTab';
 import { monsterTab } from './monsterTab';
+import { islandTab } from './islandTab';
 import { propTab } from './propTab';
 import { el } from './ui';
 
@@ -10,6 +11,7 @@ const tabs: [string, () => HTMLElement][] = [
   ['비교', compareTab],
   ['몬스터', monsterTab],
   ['소품', propTab],
+  ['섬', islandTab],
 ];
 
 const app = document.getElementById('app')!;

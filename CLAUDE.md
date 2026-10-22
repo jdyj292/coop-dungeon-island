@@ -111,6 +111,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M3 완료. M4 4-1(글꼴·DB), 4-2(계정 API), 4-3 완료: 로그인 화면(DOM 폼, ui/dom), 캔버스 한글 koText(갈무리 비트맵 .bin), 섬 씬은 임시 화면
+- M0~M3 완료. M4 4-1~4-4 완료(글꼴·DB·계정 API·로그인 화면·섬 그림: island.json 사물 16종, 바닥 islandGround.ts, 승인 데모와 픽셀 일치 테스트)
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm --filter @game/server db:generate`
-- 다음: M4 4-4 섬 그림 초안 (타일·시설 5개·장식 10종·분수 → sprite-preview, island_hud.png 비교)
+- 다음: M4 4-5 IslandRoom + 섬 화면 (주민 이동·동기화, 섬 HUD, 주민 목록, 섬 BGM)

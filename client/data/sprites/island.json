@@ -1,0 +1,970 @@
+{
+  "_note": "섬 사물 (시설·장식·배경). 형식 docs/sprites.md 12장. 승인 데모 island_screen_hud_mockup.html과 픽셀 단위로 같음 (island.test.ts). 데모에 없던 사물·회전 모습은 4-4 초안 검토로 승인. 승인 전 그림은 drafts/island.json",
+  "well": {
+    "_note": "우물 (시설 3×3)",
+    "colors": {
+      "a": "island.roof:2",
+      "b": "island.roof:0",
+      "c": "island.roof",
+      "d": "island.wood:0",
+      "e": "island.wood",
+      "f": "island.wood:2",
+      "g": "island.path",
+      "h": "island.stone:0",
+      "i": "island.waterDeep:2",
+      "j": "island.stone",
+      "k": "island.waterDeep",
+      "l": "island.sky",
+      "m": "island.stone:2",
+      "n": "island.stone:3"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "..............aaaaaaaaaaaaaaaaaaaaaa..............",
+          "..............aaaaaaaaaaaaaaaaaaaaaa..............",
+          "........bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb........",
+          "........cccccccccccccccccccccccccccccccccc........",
+          "........cccccccccccccccccccccccccccccccccc........",
+          "........cccccccccccccccccccccccccccccccccc........",
+          "....bbabbbbabbbbabbbbabbbbabbbbabbbbabbbbabbbb....",
+          "....bbabbbbabbbbabbbbabbbbabbbbabbbbabbbbabbbb....",
+          "....ccaccccaccccaccccaccccaccccaccccaccccacccc....",
+          "....ccaccccaccccaccccaccccaccccaccccaccccacccc....",
+          "....ccaccccaccccaccccaccccaccccaccccaccccacccc....",
+          "....ccaccccaccccaccccaccccaccccaccccaccccacccc....",
+          "....ccaccccaccccaccccaccccaccccaccccaccccacccc....",
+          "....aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "....aadeeaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaeefaaaa..",
+          "......dee................................eef......",
+          "......dee................................eef......",
+          "......dee................................eef......",
+          "......deeffffffffffffffffffffffffffffffffeef......",
+          "......deeffffffffffffffffffffffffffffffffeef......",
+          "......dee...............g................eef......",
+          "......dee...............g................eef......",
+          "......dee...............g................eef......",
+          "......dee...............g................eef......",
+          "......dee...............g................eef......",
+          "......dee...............g................eef......",
+          "......dee.........hhhhhhhhhhhhhhh........eef......",
+          "......dee....hhhhhhhhhhhhhhhhhhhhhhhhh...eef......",
+          "......deehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhef......",
+          "......dhhhhhhhhhhhhiiiiiiiiiiiiihhhhhhhhhhhh......",
+          "......hhhhhhhhhiiiiiiiiiiiiiiiiiiiiihhhhhhhhh.....",
+          "....jjjjjjjjiiiiiiiiiiiiiiiiiiiiiiiiiiijjjjjjjj...",
+          "....jjjjjjjkkkkkkkkklkkkkkkkkkkkkkkkkkkkjjjjjjj...",
+          "...jjjjjjjkkkkkkkkkkkkkkkkkkklkkkkkkkkkkkjjjjjjj..",
+          "...jjjjjjjkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkjjjjjjj..",
+          "...jjjjjjjkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkjjjjjjj..",
+          "....jjjjjjjkkkkkkkkkkkkkkkkkkkkkkkkkkkkkjjjjjjj...",
+          "....jjjjjjjjkkkkkkkkkkkkkkkkkkkkkkkkkkkjjjjjjjj...",
+          "......jjjjjjjjjkkkkkkkkkkkkkkkkkkkkkjjjjjjjjj.....",
+          ".......jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj......",
+          "...jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj..",
+          "...mnmmmmmnmmmmmnmmmmmnmmmmmnmmmmmnmmmmmnmmmmmmm..",
+          "....nmmmmmnmmmmmnmmmmmnmmmmmnmmmmmnmmmmmnmmmmmm...",
+          "...nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn...",
+          "....n.mmmmnmmmmmnmmmmmnmmmmmnmmmmmnmmmmmnmmmm.....",
+          ".......mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm......"
+        ],
+        "foot": [25, 46]
+      }
+    },
+    "rot": ["front"]
+  },
+  "shop": {
+    "_note": "잡화점 (시설 3×2)",
+    "colors": {
+      "a": "island.awningALight",
+      "b": "island.awningBLight",
+      "c": "island.awningA",
+      "d": "island.awningB",
+      "e": "island.awningAShade",
+      "f": "island.awningBShade",
+      "g": "island.wood:0",
+      "h": "island.wood",
+      "i": "island.wood:2",
+      "j": "island.cork",
+      "k": "global.outline",
+      "l": "island.foam",
+      "m": "island.fruit",
+      "n": "island.fruitLight",
+      "o": "island.green",
+      "p": "island.blue",
+      "q": "island.yellow",
+      "r": "island.pink",
+      "s": "island.paper"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "..aaaaaabbbbbbaaaaaabbbbbbaaaaaabbbbbbaaaaaabbbb..",
+          "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
+          "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
+          "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
+          "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
+          "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
+          "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
+          "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
+          "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
+          "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
+          "..eeeeeeffffffeeeeeeffffffeeeeeeffffffeeeeeeffffff",
+          "..geeee..ffff..eeee..ffff..eeee..ffff..eeee..ffff.",
+          "..ghh........................................iii..",
+          "..ghh........................................iii..",
+          "..ghh........................................iii..",
+          "..ghh........................................iii..",
+          "..ghh........................................iii..",
+          "..ghh........................................iii..",
+          "..ghh........................................iii..",
+          "..ghh........................................iii..",
+          "..ghh......j.....j.....j...........j....j....iii..",
+          "..ghh.....kkk...kkk...kkk.........kkk..kkk...iii..",
+          "..ghh.....klk...klk...klk...mnmm..klk..klk...iii..",
+          "..ghh.....kok...kpk...kok...mmmm..kqk..krk...iii..",
+          "..ghh.....kok...kpk...kok...mmmm..kqk..krk...iii..",
+          "..ghh.....kkk...kkk...kkk...mmmm..kkk..kkk...iii..",
+          "..ghssssssssssssssssssssssssssssssssssssssssssii..",
+          "..ghddddddddddddddddddddddddddddddddddddddddddii..",
+          "..ghddddddddddddddddddddddddddddddddddddddddddii..",
+          "..ghddddddddddddddddddddddddddddddddddddddddddii..",
+          "..ghggggggggggggggggggggggggggggggggggggggggggii..",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
+          "....hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh....",
+          "..................................................",
+          ".................................................."
+        ],
+        "foot": [25, 44]
+      }
+    },
+    "rot": ["front"]
+  },
+  "board": {
+    "_note": "게시판 (시설 1×1)",
+    "colors": {
+      "a": "island.wood:0",
+      "b": "island.wood",
+      "c": "island.awningB",
+      "d": "island.pink",
+      "e": "island.ink",
+      "f": "island.paper",
+      "g": "island.blue",
+      "h": "island.wood:2"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "aaaaaaaaaaaaaaaaaa",
+          "bbbbbbbbbbbbbbbbbb",
+          "bbccdcccbbbbbbbbbb",
+          "bbceeeecbbffgfffbb",
+          "bbccccccbbfeeeefbb",
+          "bbceeeccbbffffffbb",
+          "bbccccccbbfeeeffbb",
+          "bbbbbbbbbbffffffbb",
+          "bbbbbbbbbbffffffbb",
+          "bbbbbbbbbbbbbbbbbb",
+          "bbbbbbbbbbbbbbbbbb",
+          "hhhhhhhhhhhhhhhhhh",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........",
+          ".......abb........"
+        ],
+        "foot": [9, 26]
+      }
+    },
+    "rot": ["front"]
+  },
+  "flowerBed": {
+    "_note": "꽃밭 (1×1, 회전하면 꽃 색이 바뀜)",
+    "colors": {
+      "a": "island.pink",
+      "b": "island.paper",
+      "c": "island.yellow",
+      "d": "island.foliage",
+      "e": "island.dirt:0",
+      "f": "island.dirt",
+      "g": "island.sky",
+      "h": "island.foam"
+    },
+    "frames": {
+      "pink": {
+        "rows": [
+          "..............",
+          "aba...aba..aba",
+          "aaacbcaaacbaaa",
+          ".d.ccc.d.cccd.",
+          ".d..d..d..d.d.",
+          "eeeedeeeeedeee",
+          "ffffffffffffff",
+          "ffffffffffffff"
+        ],
+        "foot": [7, 8]
+      },
+      "blue": {
+        "rows": [
+          "..............",
+          "gbg...gbg..gbg",
+          "ggghbhggghbggg",
+          ".d.hhh.d.hhhd.",
+          ".d..d..d..d.d.",
+          "eeeedeeeeedeee",
+          "ffffffffffffff",
+          "ffffffffffffff"
+        ],
+        "foot": [7, 8]
+      }
+    },
+    "rot": ["pink", "blue"]
+  },
+  "fence": {
+    "_note": "울타리 (1×1) (2방향)",
+    "colors": {
+      "a": "island.wood:0",
+      "b": "island.wood",
+      "c": "island.wood:2"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          ".ab....ab....ab.",
+          ".bc....bc....bc.",
+          ".bc....bc....bc.",
+          "aaaaaaaaaaaaaaaa",
+          "bbbbbbbbbbbbbbbb",
+          ".bc....bc....bc.",
+          ".bc....bc....bc.",
+          "cccccccccccccccc",
+          ".bc....bc....bc.",
+          ".bc....bc....bc."
+        ],
+        "foot": [8, 10]
+      },
+      "side": {
+        "rows": [
+          ".abb..",
+          ".bbc..",
+          ".bbc..",
+          "bbbc..",
+          "bbbc..",
+          ".bbc..",
+          ".abb..",
+          ".abc..",
+          ".abcb.",
+          ".abcb.",
+          "babc..",
+          "babc..",
+          ".abc..",
+          ".abc..",
+          ".abc..",
+          ".abc.."
+        ],
+        "foot": [3, 16]
+      }
+    },
+    "rot": ["front", "side"]
+  },
+  "bench": {
+    "_note": "벤치 (2×1) (4방향)",
+    "colors": {
+      "a": "island.wood:0",
+      "b": "island.wood",
+      "c": "island.woodDark",
+      "d": "island.wood:2"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "..cc....................cc..",
+          "..cc....................cc..",
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "dddddddddddddddddddddddddddd",
+          "..cc....................cc..",
+          "..cc....................cc..",
+          "..cc....................cc..",
+          "..cc....................cc.."
+        ],
+        "foot": [14, 12]
+      },
+      "side": {
+        "rows": [
+          "abd.........",
+          "abd.........",
+          "abd.........",
+          "abd.........",
+          "abd.........",
+          "abdaaaaaaaa.",
+          "abdbbbbbbbb.",
+          "abdbbbbbbbb.",
+          "abdaaaaaaaa.",
+          "abdbbbbbbbb.",
+          "abdbbbbbbbb.",
+          "abdaaaaaaaa.",
+          "abdbbbbbbbb.",
+          "abdbbbbbbbb.",
+          "abdaaaaaaaa.",
+          ".ccbbbbbbbb.",
+          ".ccbbbbbbbb.",
+          ".ccaaaaaaaa.",
+          ".ccdddddddd.",
+          "...cc....cc.",
+          "...cc....cc.",
+          "...cc....cc."
+        ],
+        "foot": [6, 22]
+      },
+      "back": {
+        "rows": [
+          "dddddddddddddddddddddddddddd",
+          "dddddddddddddddddddddddddddd",
+          "..cc....................cc..",
+          "..cc....................cc..",
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "dddddddddddddddddddddddddddd",
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "dddddddddddddddddddddddddddd",
+          "..cc....................cc..",
+          "..cc....................cc..",
+          "..cc....................cc.."
+        ],
+        "foot": [14, 12]
+      }
+    },
+    "rot": ["front", "side", "back", "side|flip"]
+  },
+  "lamp": {
+    "_note": "가로등 (1×1)",
+    "colors": {
+      "a": "island.iron",
+      "b": "island.lampGlow",
+      "c": "island.lampCore",
+      "d": "island.ironLight"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "aaaaaaaa",
+          "abbbbbba",
+          "abccbbba",
+          "abccbbba",
+          "abbbbbba",
+          "abbbbbba",
+          "abbbbbba",
+          "aaaaaaaa",
+          "...da...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          "...aa...",
+          ".aaaaaa.",
+          ".aaaaaa."
+        ],
+        "foot": [4, 30]
+      }
+    },
+    "rot": ["front"]
+  },
+  "mailbox": {
+    "_note": "우체통 (1×1) (4방향)",
+    "colors": {
+      "a": "island.mailboxLight",
+      "b": "island.mailbox",
+      "c": "island.yellow",
+      "d": "island.mailboxDark",
+      "e": "island.wood"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "aaaaaaaaaa",
+          "aaaaaaaaaa",
+          "bbbbbbbccb",
+          "bbbbbbbcbb",
+          "bbbbbbbcbb",
+          "bbbbbbbcbb",
+          "bbbbbbbbbb",
+          "dddddddddd",
+          "dddddddddd",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee...."
+        ],
+        "foot": [5, 18]
+      },
+      "side": {
+        "rows": [
+          ".abbbbb.",
+          "aaaaaaaa",
+          "bbbbbbcc",
+          "bbbbbbcc",
+          "bbbbbbcb",
+          "bbbbbbcb",
+          "bbbbbbcb",
+          "dddddddd",
+          "dddddddd",
+          "...ee...",
+          "...ee...",
+          "...ee...",
+          "...ee...",
+          "...ee...",
+          "...ee...",
+          "...ee...",
+          "...ee...",
+          "...ee..."
+        ],
+        "foot": [4, 18]
+      },
+      "back": {
+        "rows": [
+          "aaaaaaaaaa",
+          "aaaaaaaaaa",
+          "bbbbbbbbbb",
+          "bbddddddbb",
+          "bbbbbbbbbb",
+          "bbbbbbbbbb",
+          "bbbbbbbbbb",
+          "dddddddddd",
+          "dddddddddd",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee....",
+          "....ee...."
+        ],
+        "foot": [5, 18]
+      }
+    },
+    "rot": ["front", "side", "back", "side|flip"]
+  },
+  "tree": {
+    "_note": "나무 (1×1)",
+    "colors": {
+      "a": "island.foliage:0",
+      "b": "island.foliageAlt:0",
+      "c": "island.foliage",
+      "d": "island.foliage:2",
+      "e": "island.wood:0",
+      "f": "island.wood"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "........................",
+          ".........aaaaaaa........",
+          ".......aaaaaaaabaa......",
+          "......aaaaabaaaaaaa.....",
+          "......abaaaaaaaaaaa.....",
+          ".....aaaccccccccccccc...",
+          "....aaaacccccccccccccc..",
+          "...aaaaaccccccccccbcccc.",
+          "...cccccccccccbcccccccc.",
+          "..ccccccccbcccccccccccc.",
+          "..ccccbcccccccccccccccc.",
+          "..bcccccccccccccccccccc.",
+          "..cccccccccccccccccccbc.",
+          "...ddddddddddddddbdddd..",
+          "...ddddddddddbddddddd...",
+          ".....ddddbdddddddddd....",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "..........efff..........",
+          "........................",
+          "........................"
+        ],
+        "foot": [12, 30]
+      }
+    },
+    "rot": ["front"]
+  },
+  "treeBig": {
+    "_note": "큰 나무 (섬 가장자리 배경, 판매 안 함)",
+    "colors": {
+      "a": "island.foliage:0",
+      "b": "island.foliageAlt:0",
+      "c": "island.foliage",
+      "d": "island.foliage:2",
+      "e": "island.wood:0",
+      "f": "island.wood"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "............................",
+          "..........aaaaaaaaa.........",
+          ".........aaaaaabaaaa........",
+          ".......aaaabaaaaaaaaaa......",
+          ".......baaaaaaaaaaaaaa......",
+          "......aaaaaaaaaaaaaaaaa.....",
+          ".....aaaacccccccccccccbcc...",
+          ".....aaaacccccccccbccccccc..",
+          "....aaaaacccccbcccccccccccc.",
+          "...aaaaaacbcccccccccccccccc.",
+          "..ccccbccccccccccccccccccccc",
+          "..bccccccccccccccccccccccbcc",
+          "..cccccccccccccccccccbcccccc",
+          "..cccccccccccccccbcccccccccc",
+          "..cccccccccccbcccccccccccccc",
+          "..cccccccbccccccccccccccccc.",
+          "..dddbddddddddddddddddddddd.",
+          "...dddddddddddddddddddddbd..",
+          "....ddddddddddddddddbdddd...",
+          ".....dddddddddddbdddddd.....",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............efff............",
+          "............................",
+          "............................"
+        ],
+        "foot": [14, 34]
+      }
+    },
+    "rot": ["front"]
+  },
+  "weaponRack": {
+    "_note": "무기 거치대 (시설 2×1)",
+    "colors": {
+      "a": "global.materials.gold",
+      "b": "island.sky",
+      "c": "global.materials.grip",
+      "d": "island.foam",
+      "e": "island.wood:0",
+      "f": "island.wood",
+      "g": "island.wood:2",
+      "h": "island.ironLight",
+      "i": "global.materials.wood:0",
+      "j": "global.materials.wood",
+      "k": "island.iron",
+      "l": "global.materials.steel:0",
+      "m": "global.materials.steel",
+      "n": "global.materials.steel:2"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "..........a.......bbbb........",
+          "..........c.......bdbb........",
+          "eeeeeeeeeeceeeeeeebbbbeeeeeeee",
+          "ffffffffffcfffffffbbbbffffffff",
+          "ggggggghhhhhhhgggggijggggggggg",
+          "..eff..kkkkkkk.....ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..eff....lmn.......ij....ffg..",
+          "..effeeeelmneeeeeeeijeeeeffg..",
+          "..efffffffmffffffffijffffffg..",
+          "..eff..............ij....ffg..",
+          "..eff..............ij....ffg..",
+          "..eff..............ij....ffg..",
+          "ggggggg................ggggggg",
+          "ggggggg................ggggggg"
+        ],
+        "foot": [15, 24]
+      }
+    },
+    "rot": ["front"]
+  },
+  "storage": {
+    "_note": "공용 창고 (시설 2×2, 작은 헛간)",
+    "colors": {
+      "a": "island.roof:0",
+      "b": "island.roof",
+      "c": "island.roof:2",
+      "d": "island.wood:2",
+      "e": "island.wood:0",
+      "f": "island.wood",
+      "g": "global.materials.gold",
+      "h": "island.stone",
+      "i": "island.stone:2"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "........aaaaaaaaaaaaaaaaaa........",
+          "........bbbbbbbbbbbbbbbbbb........",
+          "........bbbbbbbbbbbbbbbbbb........",
+          "........bbbbbbbbbbbbbbbbbb........",
+          "...aacaaaacaaaacaaaacaaaacaaaac...",
+          "...aacaaaacaaaacaaaacaaaacaaaac...",
+          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
+          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
+          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
+          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
+          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
+          ".cccccccccccccccccccccccccccccccc.",
+          ".cccccccccccccccccccccccccccccccc.",
+          "...dddddddddddddddddddddddddddd...",
+          "...efffdffffdffffdffffdffffdfff...",
+          "...efffdffffdffffdffffdffffdfff...",
+          "...efffdffffdffffdffffdffffdfff...",
+          "...efffdfffddddddddddddffffdfff...",
+          "...efffdfffdeffffffffedffffdfff...",
+          "...efffdfffdfeffffffefdffffdfff...",
+          "...efffdfffdffeffffeffdffffdfff...",
+          "...efffdfffdffffffffffdffffdfff...",
+          "...efffdfffdfffeffefffdffffdfff...",
+          "...efffdfffdffffggffffdffffdfff...",
+          "...efffdfffdffffggffffdffffdfff...",
+          "...efffdfffdfffeffefffdffffdfff...",
+          "...efffdfffdffffffffffdffffdfff...",
+          "...efffdfffdffeffffeffdffffdfff...",
+          "...efffdfffdfeffffffefdffffdfff...",
+          "...efffdfffdeffffffffedffffdfff...",
+          "..hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh..",
+          "..iiiiiiiiiiiiiiiiiiiiiiiiiiiiii.."
+        ],
+        "foot": [17, 32]
+      }
+    },
+    "rot": ["front"]
+  },
+  "pot": {
+    "_note": "화분 (1×1)",
+    "colors": {
+      "a": "island.paper",
+      "b": "island.pink",
+      "c": "island.foliage:0",
+      "d": "island.foliage",
+      "e": "island.foliage:2",
+      "f": "island.roof:0",
+      "g": "island.roof",
+      "h": "island.roof:2"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          ".....ab.....",
+          "....cbbc....",
+          "..ccdddddd..",
+          "..dddddddd..",
+          "..dddddddd..",
+          "...eeeeee...",
+          ".ffffffffff.",
+          ".gggggggggg.",
+          "..fggggggh..",
+          "..fggggggh..",
+          "..fggggggh..",
+          "..fggggggh..",
+          "..fggggggh..",
+          "..hhhhhhhh.."
+        ],
+        "foot": [6, 14]
+      }
+    },
+    "rot": ["front"]
+  },
+  "flag": {
+    "_note": "깃발 (1×1, 펄럭임 2프레임)",
+    "colors": {
+      "a": "global.materials.gold",
+      "b": "island.ironLight",
+      "c": "island.iron",
+      "d": "island.blue:0",
+      "e": "island.blue",
+      "f": "island.yellow",
+      "g": "island.blue:2",
+      "h": "island.stone:0",
+      "i": "island.stone"
+    },
+    "frames": {
+      "a": {
+        "rows": [
+          "aaaa..........",
+          "aaaa..........",
+          ".bcdddddd.....",
+          ".bceeeeeedddd.",
+          ".bceeefeeeeee.",
+          ".bceefffeeeeg.",
+          ".bceeefeeeee..",
+          ".bceeeeeeeeg..",
+          ".bcggggggee...",
+          ".bc......gg...",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          "hhhh..........",
+          "iiii.........."
+        ],
+        "foot": [7, 26]
+      },
+      "b": {
+        "rows": [
+          "aaaa..........",
+          "aaaa..........",
+          ".bcddd....ddd.",
+          ".bceeeddddeee.",
+          ".bceeefeeeeeg.",
+          ".bceefffeeee..",
+          ".bceeefeeeeg..",
+          ".bceeeeeeee...",
+          ".bcgggeeeeg...",
+          ".bc...gggg....",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          ".bc...........",
+          "hhhh..........",
+          "iiii.........."
+        ],
+        "foot": [7, 26]
+      }
+    },
+    "rot": [["a", "b"]],
+    "animSec": 0.4
+  },
+  "campfire": {
+    "_note": "모닥불 (1×1, 불꽃 2프레임)",
+    "colors": {
+      "a": "island.fruit",
+      "b": "island.fruit:0",
+      "c": "island.yellow",
+      "d": "island.lampCore",
+      "e": "island.wood",
+      "f": "island.wood:2",
+      "g": "island.stone:0",
+      "h": "island.stone"
+    },
+    "frames": {
+      "a": {
+        "rows": [
+          "................",
+          ".......a........",
+          "......aaaa......",
+          "......aaaab.....",
+          ".....aaaaaa.....",
+          ".....acccca.....",
+          ".....acddca.....",
+          ".....acddca.....",
+          ".....acddca.....",
+          ".....eeeeee.....",
+          "...feeeeeeeef...",
+          "...ffffffffff...",
+          "ggg..........ggg",
+          "hhhggg.....gghhh",
+          "...hhh.ggg.hhh..",
+          ".......hhh......"
+        ],
+        "foot": [8, 16]
+      },
+      "b": {
+        "rows": [
+          "................",
+          "........a.......",
+          "........a.......",
+          "......aaa.......",
+          ".....baaa.......",
+          ".....aaaaaa.....",
+          ".....acccca.....",
+          ".....acddca.....",
+          ".....acddca.....",
+          ".....eeeeee.....",
+          "...feeeeeeeef...",
+          "...ffffffffff...",
+          "ggg..........ggg",
+          "hhhggg.....gghhh",
+          "...hhh.ggg.hhh..",
+          ".......hhh......"
+        ],
+        "foot": [8, 16]
+      }
+    },
+    "rot": [["a", "b"]],
+    "animSec": 0.2
+  },
+  "fountain": {
+    "_note": "분수 (공용 3×3, 물줄기 2프레임)",
+    "colors": {
+      "a": "island.foam",
+      "b": "island.waterLight",
+      "c": "island.water:0",
+      "d": "island.stone:0",
+      "e": "island.stone",
+      "f": "island.stone:2",
+      "g": "island.water",
+      "h": "island.stone:3"
+    },
+    "frames": {
+      "a": {
+        "rows": [
+          "................................................",
+          ".......................ab.......................",
+          ".......................bb.......................",
+          "...................c...bb...c...................",
+          ".......................bb.......................",
+          ".......................bb.......................",
+          "...............c.......bb.......c...............",
+          ".......................bb.......................",
+          "................dddddddddddddddd................",
+          "................eeeeeeeeeeeeeeee................",
+          "................eeeeeeeeeeeeeeee................",
+          ".................ffffffffffffff.................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................cdddddeeeefddddcd...............",
+          "..........ddddddcdddddeeeefddddcddddddd.........",
+          ".......dddddddddgggggdeeeefggggggddddddddd......",
+          "....dddddddggggggggggdeeeefgggggggggggddddddd...",
+          "...eeeeeeggggggggggggdeeeefgggggggggggggeeeeee..",
+          "..eeeeeccccccccccccccdeeeefcccaccccccccccceeeee.",
+          "..eeeeeccccccccccccccccccccccccccccccccccceeeee.",
+          "..eeeeecccccccccccaccccccccccccccccccccccceeeee.",
+          "...eeeeeeccccccccccccccccccccccccccccccceeeeee..",
+          "....eeeeeeeccccccccccccccccccccccccccceeeeeee...",
+          ".......eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee......",
+          "..........eeeeeeeeeeeeeeeeeeeeeeeeeeeee.........",
+          "..eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.",
+          "..ffhfffffhfffffhfffffhfffffhfffffhfffffhffffff.",
+          "...fhfffffhfffffhfffffhfffffhfffffhfffffhfffff..",
+          "...fhfffffhfffffhfffffhfffffhfffffhfffffhfffff..",
+          "....hfffffhfffffhfffffhfffffhfffffhfffffhfff....",
+          "......fffffffffffffffffffffffffffffffffffff....."
+        ],
+        "foot": [24, 36]
+      },
+      "b": {
+        "rows": [
+          "................................................",
+          "................................................",
+          ".......................ab.......................",
+          ".......................bb.......................",
+          "..................c....bb....c..................",
+          ".......................bb.......................",
+          ".......................bb.......................",
+          "..............c........bb........c..............",
+          "................dddddddddddddddd................",
+          "................eeeeeeeeeeeeeeee................",
+          "................eeeeeeeeeeeeeeee................",
+          ".................ffffffffffffff.................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................c....deeeef....c................",
+          "................cdddddeeeefddddcd...............",
+          "..........ddddddcdddddeeeefddddcddddddd.........",
+          ".......dddddddddcggggdeeeefggggcgddddddddd......",
+          "....dddddddggggggggggdeeeefgggggggggggddddddd...",
+          "...eeeeeeggggggggggggdeeeefgggggggggggggeeeeee..",
+          "..eeeeeccccccccccccccdeeeefcaccccccccccccceeeee.",
+          "..eeeeeccccccccccccccccccccccccccccccccccceeeee.",
+          "..eeeeecccccccccccccaccccccccccccccccccccceeeee.",
+          "...eeeeeeccccccccccccccccccccccccccccccceeeeee..",
+          "....eeeeeeeccccccccccccccccccccccccccceeeeeee...",
+          ".......eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee......",
+          "..........eeeeeeeeeeeeeeeeeeeeeeeeeeeee.........",
+          "..eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.",
+          "..ffhfffffhfffffhfffffhfffffhfffffhfffffhffffff.",
+          "...fhfffffhfffffhfffffhfffffhfffffhfffffhfffff..",
+          "...fhfffffhfffffhfffffhfffffhfffffhfffffhfffff..",
+          "....hfffffhfffffhfffffhfffffhfffffhfffffhfff....",
+          "......fffffffffffffffffffffffffffffffffffff....."
+        ],
+        "foot": [24, 36]
+      }
+    },
+    "rot": [["a", "b"]],
+    "animSec": 0.3
+  }
+}

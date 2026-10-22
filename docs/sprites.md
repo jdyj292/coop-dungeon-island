@@ -16,6 +16,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 | poses.json | 무기 종류별 포즈(손 위치, 무기 방향, 이펙트), 걷기 순환 | 확정 |
 | monsters.json | 몬스터 스프라이트 (1층 다섯 종) | 확정 |
 | props.json | 환경 소품 (장애물·문·귀환 고리·보물상자, 11장) | 확정 (3-2 승인) |
+| island.json | 섬 사물 (시설·장식·배경, 12장) | 확정 (승인 데모에서 옮김 + 4-4 초안 승인) |
 
 - "확정" 데이터는 검토를 거친 디자인. 수정하면 docs/refs/approved/ 캡처와 비교 검토
 - 확정 데이터는 이 문서의 합성 절차로 승인 디자인과 픽셀 단위로 일치함을 검증함
@@ -191,6 +192,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
   - drafts/monsters.json: 몬스터 프레임 초안 (monsters.json과 같은 형식, frames·states만)
   - drafts/poses.json: 포즈 초안 (무기 종류 → 포즈 이름 → 포즈), 모션 초안 (motions → 모션 이름 → 모션)
   - drafts/props.json: 소품 초안 (새 소품은 통째로, 있는 소품은 frames·states만)
+  - drafts/island.json: 섬 사물 초안 (새 사물은 통째로, 있는 사물은 frames를 겹치고 rot·animSec은 바꿈)
 - 보기: sprite-preview 몬스터·캐릭터·소품 탭 "초안 보기" (초안은 이름 옆에 "(초안)", 캐릭터 탭 "포즈 모아 보기"·"모션 모아 보기"로 나란히), 게임은 개발 모드에서 `?drafts=1`
 - 승인되면 초안을 승인 파일로 옮기고 초안 파일에서 지운다. 코드: client/src/sprites/data.ts setUseDrafts·withMonsterDrafts
 
@@ -207,3 +209,32 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 - 깊이 정렬: 장애물·상자는 캐릭터와 같이 y, 귀환 고리는 바닥 높이, 문은 벽 높이 (항상 캐릭터 뒤)
 - 그리기 client/src/view/props.ts (PropLayer), 텍스처 sprites/textures.ts propTexture. props.json에 없는 장애물 종류는 임시 판으로 표시
 - 보기: sprite-preview "소품" 탭 (모든 프레임 나란히, 순환 상태 재생)
+
+---
+
+## 12. 섬 사물 (island.json)
+
+섬 사물은 **승인 데모(island_screen_hud_mockup.html)의 그리기 방식**을 따른다: 자동 음영 없이 픽셀마다 색을 정해 두고, 바깥 4방향에 1px 외곽선(global.outline)만 붙인다.
+
+```json
+"bench": {
+  "colors": { "a": "island.wood:0", "b": "island.wood", "c": "island.woodDark" },
+  "frames": { "front": { "rows": [...], "foot": [14, 12] }, "side": { ... } },
+  "rot": ["front", "side", "back", "side|flip"],
+  "animSec": 0.3
+}
+```
+
+| 필드 | 설명 |
+|---|---|
+| colors | 글자 → 팔레트 경로, 또는 `경로:단계` = 그 색의 램프(art.md 5장) 단계 (0 밝음, 1 기본, 2 그림자, 3 가장 어두움) |
+| frames.rows / foot | 색 격자와 발밑. 발밑 = 가운데 아래 (데모 put(): 왼쪽 = x − floor(외곽선 포함 폭 / 2), 아래 줄 = y) |
+| rot | 회전 방향별 모습, 길이 1(대칭)·2·4 (art.md 6장 회전). `이름|flip` = 좌우 반전. 배열이면 순환 (모닥불·깃발·분수) |
+| animSec | 순환 한 프레임 길이 (초) |
+
+- 사물 id: 시설 well·shop·board·weaponRack·storage, 장식 flowerBed·stonePath(아래)·fence·pot·flag·mailbox·tree·bench·lamp·campfire·fountain, 배경 treeBig (섬 가장자리, 판매 안 함). 크기(칸)·가격은 shared/data/items.json (4-6)
+- 꽃밭은 회전하면 꽃 색이 바뀜 (분홍·노랑 ↔ 하늘·흰색, 데모의 두 꽃밭)
+- **돌길**은 그림이 아니라 바닥 무늬: 데모의 길 무늬(흙길 색 + 자갈 점)를 돌길이 놓인 칸에 월드 좌표로 깐다 → 이웃 돌길과 이어짐 (client/src/view/islandGround.ts)
+- **바닥** (islandGround.ts `paintGround`): 잔디(16×10 두 색 + 점·풀 포기, 씨앗 난수) → 모래 8 → 흙 절벽 10 → 물 12. 물은 2프레임 (반짝임·거품 위치), 프레임 0이 데모
+- 검증: island.test.ts·islandGround.test.ts가 데모 그리기 코드를 가짜 캔버스로 돌려 **픽셀 단위로 비교** (사물 11개 프레임·바닥)
+- 코드: client/src/sprites/island.ts (`islandObjects`, `renderIslandFrame`, `islandView`), 보기: sprite-preview "섬" 탭 (데모와 같은 배치 장면 + 승인 캡처, 초안 배치, 모든 회전·프레임)
