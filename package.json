@@ -16,7 +16,8 @@
     "ttk-sim": "tsx tools/ttk-sim/index.ts",
     "net-smoke": "tsx tools/net-smoke/index.ts",
     "map-gen": "tsx tools/map-gen/index.ts",
-    "run-sim": "tsx --tsconfig tools/run-sim/tsconfig.json tools/run-sim/index.ts"
+    "run-sim": "tsx --tsconfig tools/run-sim/tsconfig.json tools/run-sim/index.ts",
+    "font-gen": "tsx tools/font-gen/index.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

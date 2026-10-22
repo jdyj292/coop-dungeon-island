@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { Boot } from './scenes/Boot';
 import { Dungeon } from './scenes/Dungeon';
+import { Island } from './scenes/Island';
+import { Title } from './scenes/Title';
 import { computeView } from './scale';
 import { setUseDrafts } from './sprites/data';
 
@@ -26,7 +28,7 @@ const game = new Phaser.Game({
   roundPixels: true,
   backgroundColor: '#000000',
   scale: { mode: Phaser.Scale.NONE, zoom: initial.scale },
-  scene: [Boot, Dungeon],
+  scene: [Boot, Title, Island, Dungeon],
 });
 
 window.addEventListener('resize', () => applyView(game));

@@ -109,10 +109,12 @@
 ## 7. 글꼴
 
 - 숫자·영문 짧은 표시: 3×5 도트 글꼴 (자체 제작)
-- 한글: **갈무리(Galmuri)** — SIL OFL 1.1 비트맵 글꼴. 내부 해상도 기준 Galmuri9(10px)를 이름·알림에, 아주 작은 표시는 Galmuri7(8px, 일부 한글만 지원하므로 사용 글자 확인)
+- 한글: **갈무리(Galmuri)** — SIL OFL 1.1 비트맵 글꼴. 내부 해상도 기준 Galmuri9(고유 크기 12px: 기준선 위 11 + 아래 1)를 이름·알림에, 아주 작은 표시는 Galmuri7(10px: 9 + 1, 일부 한글만 지원 → 없는 글자는 '?')
 - OFL 조건: 글꼴 파일을 함께 배포할 때 저작권·라이선스 고지를 포함 (게임 내 크레딧 화면 + 저장소의 라이선스 파일)
 - 글꼴은 정수 배율로만 확대
-- 파일: client/public/fonts/Galmuri9.woff2·Galmuri7.woff2 (갈무리 2.40.3), 라이선스 전문 Galmuri-OFL.txt, 출처 기록 저장소 루트 CREDITS.md
+- **캔버스 글자는 비트맵 그대로**: 브라우저 글꼴 렌더링(woff2·Phaser Text)은 어느 크기에서도 가장자리를 반투명하게 섞어 도트가 깨진다. 그래서 갈무리 배포본의 BDF를 `pnpm font-gen <갈무리 dist 폴더>`로 .bin(글자표 + 비트맵, 형식 client/src/ui/glyphFont.ts)으로 바꿔 두고, client/src/ui/koText.ts(`koText(scene, x, y, 글자, { color, size, outline, align })`)가 픽셀을 찍는다. 넣는 글자: 영문·숫자·기호, 한글 자모·음절 11,172자, 문장 부호 (tools/font-gen/bdf.ts RANGES)
+- DOM 입력창(로그인·채팅·메모)만 Galmuri9.woff2 (입력은 브라우저 글꼴이 필요). 크기 = 12px × 정수 배율
+- 파일: client/public/fonts/Galmuri9.bin·Galmuri7.bin·Galmuri9.woff2 (갈무리 2.40.3), 라이선스 전문 Galmuri-OFL.txt, 출처 기록 저장소 루트 CREDITS.md
 
 ---
 
@@ -144,3 +146,16 @@
 | 게시판 | 활동 기록 목록, 메모 쓰기(1줄) |
 | 가방 | 장식·재료·물약·의상 탭 |
 - 패널이 열려 있으면 캐릭터 이동 정지. Esc 또는 바깥 클릭으로 닫기
+
+---
+
+## 9. 로그인 화면 (M4 4-3)
+
+- 시작: 글꼴을 받은 뒤 세션이 있으면(`GET /api/me`) 섬으로, 없으면 로그인 화면. 개발 경로 `?room=N`·`?online=1`은 로그인 없이 던전
+- 한글 입력기 때문에 **DOM 폼**을 게임 위에 겹친다 (client/src/ui/dom/). 모양은 도트 패널: 색 global.ui (panel·panelBorder·panelInner·barTrack·coin 버튼·bossHp 오류), 크기는 게임 정수 배율의 배수. 패널이 화면보다 크면 들어갈 때까지 배율을 한 단계씩 줄임
+- 탭: 로그인 / 가입 (닉네임·비밀번호·확인·초대 코드 선택). 아래 "비밀번호를 잊었어요" → 닉네임·복구 코드·새 비밀번호
+- 형식 검사는 서버와 같은 shared/src/auth.ts 스키마. 틀린 칸에 주황 테두리 + 문구 한 줄 (서버 오류 문구는 client/src/net/api.ts)
+- 가입·복구 뒤 복구 코드 화면 (한 번만, 복사하기 / 적어 두었어요) → 섬
+- 글자는 모두 textContent (innerHTML 금지). 비밀번호 관리자를 위해 autocomplete(username·current-password·new-password)
+- 섬 씬은 4-5 전까지 임시 화면 (섬 이름·닉네임·지갑·금고·초대 코드, L 로그아웃)
+

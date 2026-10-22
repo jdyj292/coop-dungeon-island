@@ -54,6 +54,7 @@ tools/                   개발 도구 (아래 표)
 | run-sim | 완성 | 봇으로 1층 한 판 (서버 규칙) 시간·클리어율·보상 (balance.md 10장). `pnpm run-sim --party 2 --runs 5 [--invincible]` |
 | net-smoke | 완성 | 봇 2개로 서버 던전 방 접속 확인 (network.md 13장). `pnpm net-smoke` |
 | balance-check | 완성 | 스킬 예산 자동 계산·±25% 경고 (balance.md 3장). `pnpm balance-check`, 기준 rules.json |
+| font-gen | 완성 | 갈무리 BDF → 캔버스용 도트 글꼴 .bin (hud.md 7장). `pnpm font-gen <갈무리 dist 폴더>` |
 | ttk-sim | 완성 | 예상 처치 시간·목표 비교 (balance.md 5장). `pnpm ttk-sim --weapon greatsword --level 1` |
 
 ## 문서 지도 — 작업에 필요한 문서만 읽는다
@@ -110,6 +111,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M3 완료. M4 4-1(글꼴·DB), 4-2 완료: 계정 API server/src/http (/api 가입·로그인·복구·비밀번호·초대 코드, sid 쿠키, 시도 제한), 형식 shared/src/auth.ts
-- 명령: `pnpm dev`(?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm --filter @game/server db:generate`
-- 다음: M4 4-3 로그인 화면 (DOM 폼 + 도트 스타일, 갈무리 글꼴 불러오기, 세션 있으면 바로 섬)
+- M0~M3 완료. M4 4-1(글꼴·DB), 4-2(계정 API), 4-3 완료: 로그인 화면(DOM 폼, ui/dom), 캔버스 한글 koText(갈무리 비트맵 .bin), 섬 씬은 임시 화면
+- 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm --filter @game/server db:generate`
+- 다음: M4 4-4 섬 그림 초안 (타일·시설 5개·장식 10종·분수 → sprite-preview, island_hud.png 비교)
