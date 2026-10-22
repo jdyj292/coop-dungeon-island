@@ -27,6 +27,10 @@ export class HudOverlay {
     this.bonus = { text: `+${Math.round(rate * 100)}%`, left: fx.hud.bonusSec };
   }
 
+  /** 접속 끊김 띠: reconnecting = 깜빡이는 RECONNECT, lost = LOST (아무 키로 새 판) */
+  connection: 'ok' | 'reconnecting' | 'lost' = 'ok';
+  private blink = 0;
+
   /** 보스 이름 띠 (등장 연출 동안, 한글 이름은 글꼴 추가 뒤: 지금은 아이콘 + BOSS) */
   bossBand = false;
 
@@ -54,6 +58,14 @@ export class HudOverlay {
       dot(g, tx - 27, BANNER.textY + 8, colorInt('global.outline'), 1, 1);
       dot(g, tx - 24, BANNER.textY + 8, colorInt('global.outline'), 1, 1);
       drawText(g, 'BOSS', tx, BANNER.textY, { color: 'global.ui.bossHp', scale: 3, align: 'center' });
+    }
+    this.blink += dt;
+    if (this.connection !== 'ok') {
+      const lost = this.connection === 'lost', color = lost ? 'global.semantic.danger' : 'global.ui.textDim';
+      this.band(width, color);
+      if (lost || Math.floor(this.blink / fx.hud.resultBlinkSec) % 2 === 0) {
+        drawText(g, lost ? 'LOST' : 'RECONNECT', width / 2, BANNER.textY, { color, scale: 3, align: 'center' });
+      }
     }
     this.clearLeft = Math.max(0, this.clearLeft - dt);
     if (this.clearLeft > 0) {

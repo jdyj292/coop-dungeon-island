@@ -20,6 +20,7 @@ export class DungeonRoom extends Room<DungeonState> {
     }, {
       broadcast: (type, msg) => this.broadcast(type, msg),
       send: (pid, type, msg) => this.clients.find((c) => c.sessionId === pid)?.send(type, msg),
+      close: () => { void this.disconnect(); },
     });
     this.maxClients = this.game.state.partySize;
     this.setState(this.game.state);
@@ -38,8 +39,16 @@ export class DungeonRoom extends Room<DungeonState> {
     this.game.join(client.sessionId, options?.name);
   }
 
-  /** 끊김 대기·이탈 정산은 M3 (network.md 10장) */
-  onLeave(client: Client): void {
-    this.game.leave(client.sessionId);
+  /** 스스로 나가면 바로 이탈, 끊기면 재접속 대기 (파티 30초·솔로 60초·전원 60초, network.md 10장) */
+  async onLeave(client: Client, consented: boolean): Promise<void> {
+    const pid = client.sessionId;
+    if (consented) return this.game.leave(pid);
+    const wait = this.game.disconnect(pid);
+    try {
+      await this.allowReconnection(client, wait);
+      this.game.reconnect(pid);
+    } catch {
+      // 시간 초과: 이탈 처리는 DungeonGame 틱이 한다
+    }
   }
 }

@@ -55,14 +55,15 @@ export class RunFlow {
         out.revived.push(pid);
       } else out.revive.set(pid, h.sec / PLAYER.revive.holdSec);
     }
-    const alive = [...sim.players.values()].filter((sp) => !sp.state.downed);
+    // 접속이 끊긴 사람은 빼고 센다 (network.md 10장)
+    const alive = [...sim.players.values()].filter((sp) => !sp.state.downed && !sp.away);
     // 결과 대기 중이면 기다렸다가 끝
     if (this.pending) {
       this.pending.left -= dt;
       if (this.pending.left <= 0) out.end = this.pending.kind;
       return out;
     }
-    if (sim.players.size && !alive.length) this.pending = { kind: 'wipe', left: COMBAT.resultDelaySec };
+    if ([...sim.players.values()].some((sp) => !sp.away) && !alive.length) this.pending = { kind: 'wipe', left: COMBAT.resultDelaySec };
     else if (isLast && cleared) this.pending = { kind: 'clear', left: COMBAT.resultDelaySec };
     // 귀환 지점: 클리어 뒤 살아 있는 전원이 고리 안에 returnSec 동안
     const ring = mapOf(room).returnPoint;

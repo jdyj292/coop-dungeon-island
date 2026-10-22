@@ -13,8 +13,8 @@ export function exitCount(sim: RoomSim, room: RoomDef): { at: number; need: numb
   if (!door) return { at: 0, need: 0 };
   const { halfWidth, depth } = COMBAT.exit;
   let at = 0, need = 0;
-  for (const { state: p } of sim.players.values()) {
-    if (p.downed) continue;
+  for (const { state: p, away } of sim.players.values()) {
+    if (p.downed || away) continue;
     need++;
     if (Math.abs(p.pos.x - door.x) <= halfWidth && p.pos.y <= door.y + depth) at++;
   }

@@ -108,6 +108,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0·M1·M2 완료. M3 3-1~3-7 완료: 맵·소품, 방 진행, 보상, 쓰러짐·부활·귀환·정산, 보스 방, BGM(engine.js 이식, 원본과 기록 일치, floor1 → boss1 크로스페이드, 정산 페이드아웃)
-- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널·개발 기절/쓰러지기) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: 3-8 접속 끊김 처리 (network.md 10장)
+- M0·M1·M2 완료. M3 3-1~3-8 완료: 맵·소품, 방 진행, 보상, 쓰러짐·부활·귀환·정산, 보스 방, BGM, 접속 끊김(파티 30초·솔로/전원 60초 대기, 자동 재접속, 이탈 정산·체력 재계산)
+- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널·개발 기절/쓰러지기/연결 끊기) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
+- 다음: 3-9 한 판 통합 확인·튜닝 (1층 11~13분, 솔로·2인 클리어)

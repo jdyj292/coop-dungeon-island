@@ -54,7 +54,7 @@ export class RoomSim {
   }
 
   addPlayer(pid: string, pos: Vec2, weapon: WeaponDef = this.weapon): SimPlayer {
-    const sp: SimPlayer = { pid, state: newPlayerState({ ...pos }), weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null };
+    const sp: SimPlayer = { pid, state: newPlayerState({ ...pos }), weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null, away: false };
     this.players.set(pid, sp);
     return sp;
   }
@@ -67,9 +67,24 @@ export class RoomSim {
     const fresh = newPlayerState({ ...pos });
     const p = from.state;
     const state: PlayerState = { ...p, pos: fresh.pos, fighter: fresh.fighter, run: fresh.run, backstep: null, hurt: null };
-    const sp: SimPlayer = { pid: from.pid, state, weapon: from.weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null };
+    const sp: SimPlayer = { pid: from.pid, state, weapon: from.weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null, away: from.away };
     this.players.set(sp.pid, sp);
     return sp;
+  }
+
+  /**
+   * 인원이 바뀜 (이탈, network.md 10장): 공격 토큰 수와 몬스터 체력 배율을 새 인원으로. 지금 체력 비율은 유지
+   */
+  setPartySize(n: number): void {
+    this.opts.partySize = n;
+    this.tokens = new AttackTokens(n);
+    for (const m of this.monsters) m.hasToken = false;
+    const mul = COMBAT.partyHpMul[Math.min(4, Math.max(1, n)) - 1]!;
+    for (const m of this.alive) {
+      const ratio = m.hp / m.maxHp;
+      m.maxHp = Math.round(m.def.hp * mul);
+      m.hp = m.hp > 0 ? Math.max(1, Math.round(m.maxHp * ratio)) : 0;
+    }
   }
 
   removePlayer(pid: string): void {
@@ -106,8 +121,8 @@ export class RoomSim {
   /** 맞을 수 있는 플레이어들 (백스텝·기상 무적, 다운, 쓰러짐 제외) */
   playerTargets(): PlayerTarget[] {
     const out: PlayerTarget[] = [];
-    for (const { pid, state: p } of this.players.values()) {
-      if (!isInvulnerable(p)) out.push({ pid, x: p.pos.x, y: p.pos.y, airborne: false, hurtbox: PLAYER.hurtbox });
+    for (const { pid, state: p, away } of this.players.values()) {
+      if (!away && !isInvulnerable(p)) out.push({ pid, x: p.pos.x, y: p.pos.y, airborne: false, hurtbox: PLAYER.hurtbox });
     }
     return out;
   }
@@ -177,7 +192,8 @@ export class RoomSim {
 
   /** 이 몬스터가 노리는 플레이어 (아무도 없으면 undefined) */
   private aimFor(m: Monster): SimPlayer | undefined {
-    const pid = chooseTarget(m, [...this.players.values()], this.aim.get(m.id));
+    // 접속이 끊긴 사람은 노리지 않는다 (network.md 10장)
+    const pid = chooseTarget(m, [...this.players.values()].filter((sp) => !sp.away), this.aim.get(m.id));
     if (pid) this.aim.set(m.id, pid);
     return pid ? this.players.get(pid) : undefined;
   }
@@ -206,6 +222,7 @@ export class RoomSim {
 
   private stepPlayer(sp: SimPlayer, raw: PlayerInput, dt: number, events: SimEvent[]): number {
     const { pid, state: p } = sp;
+    if (sp.away) return 0;
     if (sp.stop > 0) {
       sp.stop = Math.max(0, sp.stop - dt);
       sp.held = mergePresses(sp.held, raw);
@@ -254,7 +271,7 @@ export class RoomSim {
   /** 몬스터 공격 적중 → HP·경직·다운 (무적이면 무시) */
   private hitPlayer(events: SimEvent[], pid: string, from: Monster | undefined, def: MonsterAttack, damage: number): void {
     const sp = this.players.get(pid), p = sp?.state;
-    if (!sp || !p) return;
+    if (!sp || !p || sp.away) return;
     if (!isInvulnerable(p)) sp.hits.save(this.time, p);
     const hurt = hurtPlayer(p, damage, def.strength);
     if (!hurt.length) return;

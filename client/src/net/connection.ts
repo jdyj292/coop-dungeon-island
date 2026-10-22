@@ -70,6 +70,10 @@ type Live = {
 
 export type EventHandler = <K extends keyof S2C>(type: K, msg: S2C[K]) => void;
 
+/** 재접속 시도 간격·최대 시간 (서버 대기: 파티 30초, 솔로·전원 60초) */
+const RECONNECT_EVERY_MS = 2000;
+const RECONNECT_MAX_MS = 60_000;
+
 const EVENTS: (keyof S2C)[] = [
   'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter', 'result',
 ];
@@ -95,16 +99,65 @@ export class Connection {
   private outLine: DelayLine;
   private inLine: DelayLine;
 
-  private constructor(readonly room: Room, sim: NetSim) {
+  /** 접속 상태: 끊기면 재접속을 시도 (network.md 10장), 시간 안에 못 하면 lost */
+  status: 'ok' | 'reconnecting' | 'lost' = 'ok';
+  /** 재접속에 성공했을 때 (화면을 다시 만든다) */
+  onReconnected: () => void = () => {};
+  /** 우리가 나가는 중 (이때 끊긴 것은 재접속하지 않음) */
+  private leaving = false;
+  room: Room;
+
+  private constructor(room: Room, sim: NetSim) {
+    this.room = room;
     this.netSim = sim;
     this.outLine = new DelayLine(() => this.netSim);
     this.inLine = new DelayLine(() => this.netSim);
+    this.attach(room);
+    this.ping();
+    this.pingTimer = window.setInterval(() => this.ping(), NET.pingMs);
+  }
+
+  /** 방 메시지 연결 (처음·재접속 때) */
+  private attach(room: Room): void {
     room.onStateChange((s) => this.snapshot(s as unknown as Live));
     for (const type of EVENTS) room.onMessage(type, (msg) => this.later(() => this.onEvent(type, msg)));
     room.onMessage('pong', (m: S2C['pong']) => this.later(() => this.clock.onPong(m.t, m.server)));
-    this.ping();
-    this.pingTimer = window.setInterval(() => this.ping(), NET.pingMs);
-    room.onLeave(() => window.clearInterval(this.pingTimer));
+    room.onLeave(() => {
+      if (this.leaving) window.clearInterval(this.pingTimer);
+      else void this.reconnect();
+    });
+  }
+
+  /**
+   * 끊김: RECONNECT_EVERY_MS마다 재접속 시도, RECONNECT_MAX_MS 안에 못 하면 lost (서버는 파티 30초·솔로 60초 기다림)
+   * 성공하면 전체 상태를 다시 받으므로 보간 버퍼를 비운다
+   */
+  private async reconnect(): Promise<void> {
+    if (this.status === 'reconnecting') return;
+    this.status = 'reconnecting';
+    const token = this.room.reconnectionToken, until = performance.now() + RECONNECT_MAX_MS;
+    while (performance.now() < until && !this.leaving) {
+      await new Promise((r) => window.setTimeout(r, RECONNECT_EVERY_MS));
+      try {
+        const room = await new Client(serverUrl()).reconnect(token);
+        this.room = room;
+        this.players.clear();
+        this.monsters.clear();
+        this.bufferedRoom = -1;
+        this.attach(room);
+        this.status = 'ok';
+        this.onReconnected();
+        return;
+      } catch {
+        // 서버가 아직 못 받거나 이미 이탈 처리됨: 다시 시도
+      }
+    }
+    this.status = 'lost';
+  }
+
+  /** 개발용: 소켓만 닫아 끊김을 흉내 (서버는 동의 없는 끊김으로 본다) */
+  debugDrop(): void {
+    (this.room.connection as unknown as { close(): void }).close();
   }
 
   /** 첫 상태까지 받은 뒤 돌려준다 (방 번호를 알아야 화면을 만든다) */
@@ -156,6 +209,7 @@ export class Connection {
   }
 
   leave(): void {
+    this.leaving = true;
     window.clearInterval(this.pingTimer);
     void this.room.leave();
   }

@@ -29,6 +29,8 @@ export interface SimPlayer {
   hits: HitLog;
   /** 히트스톱 동안 들어온 누름 (멈춤이 끝난 틱에 적용) */
   held: PlayerInput | null;
+  /** 접속 끊김 (network.md 10장): 제자리에 멈춤, 무적, 몬스터가 노리지 않음 */
+  away: boolean;
 }
 
 /** pid = 그 사건의 플레이어 (hit은 공격자, playerHit·playerHurt는 맞은 사람) */

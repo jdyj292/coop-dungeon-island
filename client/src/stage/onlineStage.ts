@@ -28,6 +28,7 @@ import { PlayerView } from '../view/playerView';
 import { drawReviveGauges } from '../view/reviveGauge';
 
 const FX_DEPTH = 5000;
+const DISCONNECTED_ALPHA = 0.45;
 const WEAPON = 'greatsword';
 
 /** 몬스터 공격 id → 정의 (투사체·장판 그리기용) */
@@ -165,6 +166,8 @@ export class OnlineStage {
       const moved = mine ? myMoved : r.last ? Math.hypot(p.pos.x - r.last.x, p.pos.y - r.last.y) : 0;
       r.last = { x: p.pos.x, y: p.pos.y };
       r.view.draw(p, moved, 0, this.clock);
+      // 접속이 끊긴 동료는 반투명 (network.md 10장)
+      r.view.actor.img.setAlpha(s.state === 'disconnected' ? DISCONNECTED_ALPHA : 1);
       r.ghosts.update(realDt, !!p.backstep, r.view.actor.img);
     }
     for (const [id, r] of this.players) {

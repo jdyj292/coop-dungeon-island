@@ -1,8 +1,8 @@
 // 던전 한 판의 진행 (Colyseus 없이 테스트 가능): 방마다 RoomSim + 웨이브 + 방 진행 + 입력 대기열 + 상태 반영 + 이벤트
 // DungeonRoom(rooms/)은 연결·전송만 맡는다. 흐름은 docs/network.md 3~6장
 import {
-  COMBAT, entryPos, mapOf, NET, parseC2S, ROOMS, RoomSim, TICK, WaveRunner, weaponDef,
-  type C2SMessage, type C2SType, type RoomDef, type PlayerInput, type Projectile, type S2C, type SimOptions, type SimPlayer,
+  COMBAT, entryPos, mapOf, parseC2S, ROOMS, RoomSim, TICK, WaveRunner, weaponDef,
+  type C2SType, type RoomDef, type PlayerInput, type Projectile, type S2C, type SimOptions, type SimPlayer,
 } from '@game/shared';
 import { DungeonState, PlayerState } from '../schema/DungeonState';
 import { eventsFor, projectileEvents, type Outgoing } from './events';
@@ -10,34 +10,14 @@ import { InputQueue } from './inputs';
 import { dungeonRules, RateLimit } from './rateLimit';
 import { LootBook, type LootMessage } from './reward';
 import { buildRoom, exitCount, floorRooms, FLOOR } from './roomFlow';
+import { lagCompensate } from './lagComp';
+import { Presence } from './presence';
 import { RunFlow } from './runFlow';
 import { settle, type RunEnd } from './settle';
 import { syncPlayer, syncWorld } from './sync';
 
-export interface Outbox {
-  broadcast<K extends keyof S2C>(type: K, msg: S2C[K]): void;
-  send<K extends keyof S2C>(pid: string, type: K, msg: S2C[K]): void;
-}
-
-export interface DungeonOptions {
-  /** 시작할 1층 방 번호 1~6 (개발용, 기본 1). 한 판은 여기서 보스 방까지 */
-  room?: number;
-  /** 던전 인원 1~4 (공격 토큰) */
-  partySize?: number;
-  /** 테스트용 난수 */
-  rng?: () => number;
-  /** 개발 명령 허용 (서버 개발 모드, 배포에서는 false) */
-  dev?: boolean;
-}
-
-const NAME_MAX = 12;
-
-interface Member {
-  inputs: InputQueue;
-  limit: RateLimit;
-  /** 입장 순서 (입장 위치) */
-  index: number;
-}
+export type { DungeonOptions, Outbox } from './gameTypes';
+import { NAME_MAX, type DungeonOptions, type Member, type Outbox } from './gameTypes';
 
 export class DungeonGame {
   readonly state = new DungeonState();
@@ -52,6 +32,9 @@ export class DungeonGame {
   private readonly dev: boolean;
   private readonly loot: LootBook;
   private readonly flow = new RunFlow();
+  private readonly presence = new Presence();
+  /** 이탈한 사람의 정산 (저장은 M4) */
+  readonly dropped: ReturnType<typeof settle>[] = [];
 
   constructor(opts: DungeonOptions, private out: Outbox) {
     const rooms = floorRooms();
@@ -100,10 +83,40 @@ export class DungeonGame {
     this.members.set(pid, { inputs: new InputQueue(), limit: new RateLimit(dungeonRules()), index });
   }
 
+  /**
+   * 이탈 (스스로 나감·재접속 시간 초과, network.md 10장): 그 사람은 전멸과 같은 정산 (저장은 M4),
+   * 남은 인원으로 몬스터 체력 배율·공격 토큰 다시 계산. 아무도 안 남으면 방 종료
+   */
   leave(pid: string): void {
+    if (!this.members.has(pid)) return;
+    if (this.state.phase !== 'result') {
+      const name = this.state.players.get(pid)?.name ?? pid;
+      this.dropped.push(settle('wipe', [{ pid, name, level: 1, levelExp: 0 }], (id) => this.loot.of(id)));
+    }
     this.sim.removePlayer(pid);
     this.state.players.delete(pid);
     this.members.delete(pid);
+    this.presence.forget(pid);
+    if (!this.members.size) return this.out.close?.();
+    this.sim.setPartySize(this.members.size);
+    this.state.partySize = this.members.size;
+  }
+
+  /** 끊김: 제자리에 멈춤·무적·대상 제외. 반환 = 재접속을 기다릴 초 */
+  disconnect(pid: string): number {
+    const sp = this.sim.players.get(pid);
+    if (!sp) return 0;
+    sp.away = true;
+    return this.presence.disconnect(pid, this.now, this.members.size);
+  }
+
+  /** 재접속: 그대로 이어서 (입력 대기열은 새로) */
+  reconnect(pid: string): void {
+    const sp = this.sim.players.get(pid), m = this.members.get(pid);
+    if (!sp || !m) return;
+    sp.away = false;
+    m.inputs = new InputQueue();
+    this.presence.reconnect(pid);
   }
 
   /** 메시지 하나. 'kick' = 제한을 계속 넘김 → 연결 종료 */
@@ -121,7 +134,7 @@ export class DungeonGame {
       case 'action': {
         const msg = parseC2S('action', raw);
         if (!msg) return 'ignored';
-        this.lagCompensate(sp, msg);
+        lagCompensate(this.sim, sp, msg, this.now);
         const reason = m.inputs.onAction(msg, sp.state, sp.weapon);
         if (reason) this.out.send(pid, 'rejected', { seq: msg.seq, reason });
         return 'ok';
@@ -177,24 +190,6 @@ export class DungeonGame {
     }
   }
 
-  /**
-   * 지연 보정 (network.md 9장): 백스텝은 입력 시각 뒤 짧은 피격을 취소하고,
-   * 공격은 그 플레이어가 본 시점(action.t − 보간 지연, 최대 150ms 전)의 몬스터 위치로 판정. 공격자 위치는 12px 안이면 클라이언트 값
-   */
-  private lagCompensate(sp: SimPlayer, msg: C2SMessage<'action'>): void {
-    if (msg.kind === 'backstep') {
-      this.sim.cancelHitsSince(sp.pid, msg.t / 1000);
-      return;
-    }
-    const back = this.now - (msg.t - NET.interpDelayMs);
-    sp.rewind = Math.min(NET.rewindMaxMs, Math.max(0, back)) / 1000;
-    const p = sp.state;
-    if (!p.fighter.run && Math.hypot(msg.x - p.pos.x, msg.y - p.pos.y) <= NET.attackerTrustPx) {
-      const b = this.sim.bounds;
-      p.pos = { x: Math.min(b.maxX, Math.max(b.minX, msg.x)), y: Math.min(b.maxY, Math.max(b.minY, msg.y)) };
-    }
-  }
-
   private pids(): string[] {
     return [...this.sim.players.keys()];
   }
@@ -209,8 +204,7 @@ export class DungeonGame {
   /** 보물상자: 방 클리어 뒤, 가까이 (combat.json interactRange), 방마다 한 번 (rooms.json chest) */
   private openChest(sp: SimPlayer): void {
     const at = mapOf(this.room).chest, c = ROOMS[FLOOR]!.chest;
-    if (!at || !c || !this.state.doorOpen || this.state.chestOpen) return;
-    if (Math.hypot(sp.state.pos.x - at.x, sp.state.pos.y - at.y) > COMBAT.interactRange) return;
+    if (!at || !c || !this.state.doorOpen || this.state.chestOpen || Math.hypot(sp.state.pos.x - at.x, sp.state.pos.y - at.y) > COMBAT.interactRange) return;
     this.state.chestOpen = true;
     this.deliver(this.loot.chest(c, this.pids()));
   }
@@ -225,8 +219,10 @@ export class DungeonGame {
 
   tick(): void {
     this.now += TICK * 1000;
-    // 결과가 나온 뒤에는 세계를 멈춘다 (정산 화면)
-    if (this.state.phase === 'result') {
+    // 재접속 시간이 다 된 사람은 이탈
+    for (const pid of this.presence.expired(this.now)) this.leave(pid);
+    // 결과가 나온 뒤, 또는 솔로·전원 끊김이면 세계를 멈춘다
+    if (this.state.phase === 'result' || this.presence.paused(this.members.size)) {
       this.state.serverTime = this.now;
       return;
     }

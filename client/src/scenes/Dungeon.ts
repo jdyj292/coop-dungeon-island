@@ -133,6 +133,11 @@ export class Dungeon extends Phaser.Scene {
       this.events.once('shutdown', () => panel.destroy());
     }
     online.onBonus = (rate) => this.overlay.showBonus(rate);
+    // 재접속에 성공하면 같은 접속으로 화면을 다시 만든다 (전체 상태를 다시 받음, network.md 10장)
+    conn.onReconnected = () => {
+      this.keepConn = true;
+      this.scene.restart();
+    };
     online.onResult = (r) => {
       this.result = new ResultPanel(this, HUD_DEPTH + 10, r, conn.myId, (pid) => online.colorOf(pid));
       // 정산 화면: 음악은 0.5초에 걸쳐 줄이고 정지 (정산 효과음이 주인공)
@@ -184,7 +189,12 @@ export class Dungeon extends Phaser.Scene {
   private showResult(dt: number): void {
     const r = this.result!, { width, height } = this.scale.gameSize;
     r.draw(dt, width, height);
-    if (!r.done || this.awaitingKey) return;
+    if (r.done) this.waitKeyForNewRun();
+  }
+
+  /** 아무 키 → 새 판 (정산 화면 뒤, 재접속 실패 뒤) */
+  private waitKeyForNewRun(): void {
+    if (this.awaitingKey) return;
     this.awaitingKey = true;
     this.input.keyboard!.once('keydown', () => {
       this.awaitingKey = false;
@@ -236,8 +246,11 @@ export class Dungeon extends Phaser.Scene {
         this.scene.restart();
         return;
       }
-      // 정산·보스 등장 연출 중에는 조작 없이 세계만 그린다
-      this.online.update(dt, this.result || this.intro ? NO_KEYS : input);
+      // 정산·보스 등장 연출·재접속 중에는 조작 없이 세계만 그린다
+      const status = this.online.conn.status;
+      this.overlay.connection = status;
+      this.online.update(dt, this.result || this.intro || status !== 'ok' ? NO_KEYS : input);
+      if (status === 'lost') this.waitKeyForNewRun();
       this.props.setExit(live.exitAt, live.exitNeed);
       this.props.setChestOpen(live.chestOpen);
       this.props.setReturn(live.returnLeft);

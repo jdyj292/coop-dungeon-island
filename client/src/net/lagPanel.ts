@@ -39,7 +39,10 @@ export class LagPanel {
     const down = document.createElement('button');
     down.textContent = '나 쓰러지기 (개발)';
     down.onclick = () => this.conn.send('dev', { cmd: 'down' });
-    this.root.append(this.info, reset, clear, down);
+    const drop = document.createElement('button');
+    drop.textContent = '연결 끊기 (개발)';
+    drop.onclick = () => this.conn.debugDrop();
+    this.root.append(this.info, reset, clear, down, drop);
     document.body.append(this.root);
     window.addEventListener('keydown', this.onKey);
     this.timer = window.setInterval(() => this.refresh(), REFRESH_MS);
