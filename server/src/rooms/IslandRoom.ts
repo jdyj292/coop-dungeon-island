@@ -1,6 +1,7 @@
 import type { IncomingMessage } from 'node:http';
 import { matchMaker, Room, type Client } from 'colyseus';
 import { FixedStep, NET, TICK, type MeRes } from '@game/shared';
+import { CONFIG } from '../config';
 import { loadIsland } from '../db/islandQueries';
 import { IslandStore } from '../db/islandStore';
 import { carryPotions, mastery } from '../db/runStore';
@@ -36,7 +37,7 @@ export class IslandRoom extends Room<IslandState> {
       broadcast: (type, msg) => this.broadcast(type, msg),
     }, {
       store: new IslandStore(services().db, this.islandId), shopStore: new ShopStore(services().db, this.islandId),
-      dev: process.env.NODE_ENV !== 'production',
+      dev: !CONFIG.production,
       onDepart: (ids, floor) => void this.depart(ids, floor),
     });
     // 던전에서 돌아옴 (정산 저장 뒤, DungeonRoom)

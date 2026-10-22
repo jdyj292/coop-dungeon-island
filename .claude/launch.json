@@ -32,6 +32,14 @@
         "sfx-preview"
       ],
       "port": 5176
+    },
+    {
+      "name": "prod-local",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "deploy-local"
+      ],
+      "port": 8080
     }
   ]
 }

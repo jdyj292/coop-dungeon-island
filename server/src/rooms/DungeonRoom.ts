@@ -1,6 +1,7 @@
 import type { IncomingMessage } from 'node:http';
 import { Room, type Client } from 'colyseus';
 import { C2S, FixedStep, NET, TICK, type C2SType, type S2C } from '@game/shared';
+import { CONFIG } from '../config';
 import { saveRun } from '../db/runStore';
 import { SESSION_COOKIE } from '../http/routes';
 import { DungeonState } from '../schema/DungeonState';
@@ -32,7 +33,7 @@ export class DungeonRoom extends Room<DungeonState> {
     this.game = new DungeonGame({
       room: Number(options?.room) || 1, partySize: this.party?.members.length || Number(options?.partySize) || 1,
       // 개발 명령은 배포(NODE_ENV=production)에서 받지 않는다
-      dev: process.env.NODE_ENV !== 'production',
+      dev: !CONFIG.production,
     }, {
       broadcast: (type, msg) => this.broadcast(type, msg),
       send: (pid, type, msg) => this.clients.find((c) => c.sessionId === pid)?.send(type, msg),

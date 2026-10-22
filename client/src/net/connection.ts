@@ -80,8 +80,15 @@ const EVENTS: (keyof S2C)[] = [
   'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter', 'result',
 ];
 
+/**
+ * 게임 서버 주소. 배포(빌드)는 페이지와 같은 주소 (Nginx → 게임 서버가 정적 파일·/api·소켓을 모두 받음, docs/deploy.md),
+ * 개발은 Vite(5173)와 따로 뜬 게임 서버 2567. VITE_SERVER_URL로 덮어쓸 수 있음
+ */
 export function serverUrl(): string {
-  return (import.meta.env.VITE_SERVER_URL as string | undefined) ?? `ws://${location.hostname}:2567`;
+  const env = import.meta.env.VITE_SERVER_URL as string | undefined;
+  if (env) return env;
+  if (import.meta.env.PROD) return `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
+  return `ws://${location.hostname}:2567`;
 }
 
 export class Connection {

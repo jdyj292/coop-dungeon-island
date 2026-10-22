@@ -1,4 +1,4 @@
-// 실행: 서버를 띄운 뒤 pnpm island-bot --invite <초대 코드> [--sec 30] [--name 봇이름] [--well]
+// 실행: 서버를 띄운 뒤 pnpm island-bot --invite <초대 코드> [--sec 30] [--name 봇이름] [--well [--depart]] [--url http://localhost:8080]
 // 봇 주민 하나가 가입(초대 코드로 그 섬에 합류)·입장해 우물 앞을 왔다 갔다 한다. 브라우저 한 개로 2인 섬 화면을 볼 때 (roadmap 4-5)
 // --well: 우물 앞으로 걸어가 출발 대기에 합류 → 출발하면 던전 방에 들어가 --sec 동안 서 있다가 나감 (2인 출발 확인, roadmap 4-8)
 // 이미 가입한 봇 이름이면 같은 비밀번호로 로그인. 세션 쿠키를 WebSocket 입장에 실어야 해서 ws로 연결한다
@@ -9,7 +9,7 @@ import { ISLAND, nearFacility, TILE } from '../../shared/src';
 const { values } = parseArgs({
   options: {
     url: { type: 'string', default: 'http://localhost:2567' }, invite: { type: 'string' },
-    sec: { type: 'string', default: '30' }, name: { type: 'string', default: '봇주민' }, well: { type: 'boolean', default: false },
+    sec: { type: 'string', default: '30' }, name: { type: 'string', default: '봇주민' }, well: { type: 'boolean', default: false }, depart: { type: 'boolean', default: false },
   },
 });
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -22,8 +22,8 @@ async function auth(): Promise<{ cookie: string; islandId: number; userId: strin
   });
   let res = await post('/login', { nickname: values.name, password: BOT_PASSWORD });
   if (!res.ok) {
-    if (!values.invite) throw new Error('처음이면 --invite <초대 코드>가 필요합니다');
-    res = await post('/signup', { nickname: values.name, password: BOT_PASSWORD, invite: values.invite });
+    // 초대 코드가 없으면 봇 자기 섬을 새로 만든다
+    res = await post('/signup', { nickname: values.name, password: BOT_PASSWORD, ...(values.invite ? { invite: values.invite } : {}) });
   }
   if (!res.ok) throw new Error(`로그인·가입 실패 ${res.status} ${await res.text()}`);
   const cookie = res.headers.get('set-cookie')!.split(';')[0]!;
@@ -62,6 +62,8 @@ async function main(): Promise<void> {
     room.onMessage('wellFail', (m: unknown) => console.log('우물 실패', m));
     room.send('well', { op: 'join' });
     console.log('우물 대기 합류, 출발 기다림');
+    // --depart: 내가 대기 시작자면 바로 출발 (혼자면 즉시, 여럿이면 카운트다운)
+    if (values.depart) setTimeout(() => room.send('well', { op: 'depart' }), 500);
     const { roomId } = await departed;
     await room.leave();
     const dungeon = await new Client(values.url.replace(/^http/, 'ws')).joinById(roomId);

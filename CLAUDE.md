@@ -56,6 +56,7 @@ tools/                   개발 도구 (아래 표)
 | balance-check | 완성 | 스킬 예산 자동 계산·±25% 경고 (balance.md 3장). `pnpm balance-check`, 기준 rules.json |
 | font-gen | 완성 | 갈무리 BDF → 캔버스용 도트 글꼴 .bin (hud.md 7장). `pnpm font-gen <갈무리 dist 폴더>` |
 | island-bot | 완성 | 봇 주민이 초대 코드로 가입·섬 입장해 걷기, `--well`이면 우물 대기 합류 → 함께 던전 (network.md 3·5장). `pnpm island-bot --invite <코드> [--well]` |
+| deploy-build / deploy-local | 완성 | 배포 묶음 dist/ 만들기 / 이 PC에서 프로덕션 모드로 띄우기 (localhost:8080) (deploy.md). `pnpm deploy-build` · `pnpm deploy-local` |
 | ttk-sim | 완성 | 예상 처치 시간·목표 비교 (balance.md 5장). `pnpm ttk-sim --weapon greatsword --level 1` |
 
 ## 문서 지도 — 작업에 필요한 문서만 읽는다
@@ -75,6 +76,7 @@ tools/                   개발 도구 (아래 표)
 | 섬 규칙·가격 | island |
 | 네트워크 | network |
 | 계정·보안 / DB | security / db |
+| 배포·운영 | deploy |
 - 같은 정보는 한 문서에만. 문서와 다르게 결정하면 그 문서를 함께 고친다
 
 ## 작업 규칙
@@ -112,6 +114,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M4 완료. M4 4-1~4-8: 가입 → 섬 꾸미기·구매 → 우물 출발(1~4명) → 던전 → 정산 저장(지갑·금고·재료·물약·숙련도) → 섬 복귀 한 바퀴 확인
+- M0~M4 완료. M5 5-1 완료: 프로덕션 빌드(dist/: server.mjs·public·migrations), 같은 주소 접속, 서버가 정적 파일도, 환경 변수 server/src/config.ts·.env.example
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
-- 다음: M5 배포 (docs/roadmap.md, security 5·6장). 미룬 것: 숙련도 ATK 반영, 던전 말풍선, 보스 한글 이름
+- 다음: M5 5-2 보안 마감 (Origin 제한·보안 헤더·배포에서 개발 방 막기). 미룬 것: 숙련도 ATK 반영, 던전 말풍선, 보스 한글 이름
