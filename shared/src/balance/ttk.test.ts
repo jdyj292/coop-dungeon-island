@@ -18,7 +18,8 @@ describe('예상 처치 시간 (balance.md 5장)', () => {
   });
   it('방은 모든 웨이브를 더하고 보스가 있으면 보스 비율', () => {
     const rooms = roomTtks(ROOMS, MONSTERS, 50, { normal: 0.5, boss: 0.25 });
-    expect(rooms.find((r) => r.id === 'f1_r1')!.sec).toBeCloseTo((4 * MONSTERS.mushroom!.hp) / 25);
+    const r1 = ROOMS.floor1!.rooms[0]!, hp = r1.waves.reduce((s, w) => s + (w.monsters.mushroom ?? 0) * MONSTERS.mushroom!.hp, 0);
+    expect(rooms.find((r) => r.id === 'f1_r1')!.sec).toBeCloseTo(hp / 25);
     const boss = rooms.find((r) => r.boss)!;
     expect(boss.sec).toBeGreaterThanOrEqual(MONSTERS.mossbear!.hp / 12.5);
     expect(COMBAT.cooldownScale).toBe(1.5);

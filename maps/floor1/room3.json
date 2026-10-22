@@ -10,7 +10,7 @@
   "tileheight": 16,
   "infinite": false,
   "nextlayerid": 4,
-  "nextobjectid": 15,
+  "nextobjectid": 22,
   "tilesets": [
     {
       "firstgid": 1,
@@ -763,6 +763,174 @@
         },
         {
           "id": 13,
+          "name": "spawn",
+          "type": "",
+          "x": 360,
+          "y": 22,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "back"
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "spawn",
+          "type": "",
+          "x": 147,
+          "y": 101,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 15,
+          "name": "spawn",
+          "type": "",
+          "x": 184,
+          "y": 43,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "name": "spawn",
+          "type": "",
+          "x": 221,
+          "y": 101,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 17,
+          "name": "spawn",
+          "type": "",
+          "x": 259,
+          "y": 43,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 18,
+          "name": "spawn",
+          "type": "",
+          "x": 296,
+          "y": 101,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 19,
+          "name": "spawn",
+          "type": "",
+          "x": 333,
+          "y": 43,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 20,
           "name": "return_point",
           "type": "",
           "x": 192,
@@ -774,7 +942,7 @@
           "point": true
         },
         {
-          "id": 14,
+          "id": 21,
           "name": "chest",
           "type": "",
           "x": 240,

@@ -24,6 +24,16 @@
             "monsters": {
               "mushroom": 4
             }
+          },
+          {
+            "monsters": {
+              "mushroom": 3
+            }
+          },
+          {
+            "monsters": {
+              "mushroom": 3
+            }
           }
         ]
       },
@@ -40,6 +50,17 @@
             "monsters": {
               "boar": 2,
               "mushroom": 2
+            }
+          },
+          {
+            "monsters": {
+              "mushroom": 3,
+              "boar": 1
+            }
+          },
+          {
+            "monsters": {
+              "boar": 2
             }
           }
         ]
@@ -58,6 +79,13 @@
               "sporeflower": 2,
               "mushroom": 3,
               "boar": 1
+            }
+          },
+          {
+            "monsters": {
+              "sporeflower": 1,
+              "mushroom": 4,
+              "boar": 2
             }
           }
         ],
@@ -83,7 +111,14 @@
           },
           {
             "monsters": {
-              "sporeflower": 1
+              "sporeflower": 1,
+              "mushroom": 3
+            }
+          },
+          {
+            "monsters": {
+              "boar": 2,
+              "mushroom": 2
             }
           }
         ]
@@ -106,8 +141,15 @@
           },
           {
             "monsters": {
-              "capknight": 1,
+              "mushroom": 3,
               "boar": 2
+            }
+          },
+          {
+            "monsters": {
+              "capknight": 1,
+              "boar": 2,
+              "sporeflower": 1
             }
           }
         ]

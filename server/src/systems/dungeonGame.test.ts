@@ -94,8 +94,11 @@ describe('DungeonGame (서버 진행)', () => {
     for (const m of g.sim.monsters) m.body.gone = true;
     run(g, 1);
     expect(g.state.wave).toBe(2);
-    for (const m of g.sim.monsters) m.body.gone = true;
-    run(g, 1);
+    // 남은 웨이브도 모두
+    for (let w = 0; w < 5 && !g.state.doorOpen; w++) {
+      for (const m of g.sim.monsters) m.body.gone = true;
+      run(g, 1);
+    }
     expect(g.state.doorOpen).toBe(true);
     expect(sent.some((s) => s.type === 'roomClear')).toBe(true);
     expect(g.state.monsters.size).toBe(0);

@@ -10,7 +10,7 @@
   "tileheight": 16,
   "infinite": false,
   "nextlayerid": 4,
-  "nextobjectid": 11,
+  "nextobjectid": 17,
   "tilesets": [
     {
       "firstgid": 1,
@@ -553,6 +553,150 @@
               "name": "wave",
               "type": "int",
               "value": 1
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "spawn",
+          "type": "",
+          "x": 137,
+          "y": 78,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "spawn",
+          "type": "",
+          "x": 197,
+          "y": 34,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 13,
+          "name": "spawn",
+          "type": "",
+          "x": 258,
+          "y": 78,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "spawn",
+          "type": "",
+          "x": 137,
+          "y": 78,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 3
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 15,
+          "name": "spawn",
+          "type": "",
+          "x": 197,
+          "y": 34,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 3
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "name": "spawn",
+          "type": "",
+          "x": 258,
+          "y": 78,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 3
             },
             {
               "name": "role",

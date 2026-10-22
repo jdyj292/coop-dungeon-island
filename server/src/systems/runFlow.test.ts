@@ -17,6 +17,14 @@ const ticks = (g: DungeonGame, n: number) => { for (let i = 0; i < n; i++) g.tic
 const result = (sent: Sent[]) => sent.find((s) => s.type === 'result')?.msg as S2C['result'] | undefined;
 const down = (g: DungeonGame, pid: string) => Object.assign(g.sim.players.get(pid)!.state, { hp: 0, downed: true });
 
+/** 방의 모든 웨이브를 개발 명령으로 기절시키고 출구가 열릴 때까지 (퇴장 stunExitSec 기다림) */
+function clearRoom(g: DungeonGame): void {
+  for (let w = 0; w < 5 && !g.state.doorOpen; w++) {
+    g.onMessage('a', 'dev', { cmd: 'clear' });
+    for (let i = 0; i < 90; i++) g.tick();
+  }
+}
+
 describe('쓰러짐·부활 (combat.md 4장)', () => {
   it('깃털은 솔로만', () => {
     expect(game(1, 1).g.sim.players.get('a')!.state.feathers).toBe(1);
@@ -58,8 +66,7 @@ describe('한 판의 끝', () => {
   });
   it('귀환 지점: 클리어 뒤 살아 있는 전원이 고리 안에 3초 → 귀환, 나가면 취소', () => {
     const { g, sent } = game(3);
-    g.onMessage('a', 'dev', { cmd: 'clear' });
-    ticks(g, 120);
+    clearRoom(g);
     expect(g.state.doorOpen).toBe(true);
     const ring = { x: 24 * 16 / 2, y: 9 * 16 / 2 };
     g.sim.players.get('a')!.state.pos = { ...ring };
@@ -75,7 +82,7 @@ describe('한 판의 끝', () => {
   });
   it('보스 방 클리어 → 결과 clear', () => {
     const { g, sent } = game(6);
-    g.onMessage('a', 'dev', { cmd: 'clear' });
+    clearRoom(g);
     ticks(g, 250);
     expect(result(sent)?.kind).toBe('clear');
   });

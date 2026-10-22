@@ -68,11 +68,11 @@
     },
     "reward": {
       "coins": [
-        6,
-        9
+        2,
+        4
       ],
-      "exp": 8,
-      "material": 0.15
+      "exp": 3,
+      "material": 0.06
     }
   },
   "boar": {
@@ -150,11 +150,11 @@
     },
     "reward": {
       "coins": [
-        6,
-        9
+        2,
+        4
       ],
-      "exp": 8,
-      "material": 0.15
+      "exp": 3,
+      "material": 0.06
     }
   },
   "sporeflower": {
@@ -218,11 +218,11 @@
     },
     "reward": {
       "coins": [
-        6,
-        9
+        2,
+        4
       ],
-      "exp": 8,
-      "material": 0.15
+      "exp": 3,
+      "material": 0.06
     }
   },
   "capknight": {

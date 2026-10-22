@@ -10,7 +10,7 @@
   "tileheight": 16,
   "infinite": false,
   "nextlayerid": 4,
-  "nextobjectid": 15,
+  "nextobjectid": 21,
   "tilesets": [
     {
       "firstgid": 1,
@@ -777,7 +777,7 @@
           "id": 12,
           "name": "spawn",
           "type": "",
-          "x": 180,
+          "x": 163,
           "y": 101,
           "width": 0,
           "height": 0,
@@ -801,7 +801,7 @@
           "id": 13,
           "name": "spawn",
           "type": "",
-          "x": 261,
+          "x": 212,
           "y": 43,
           "width": 0,
           "height": 0,
@@ -825,7 +825,7 @@
           "id": 14,
           "name": "spawn",
           "type": "",
-          "x": 343,
+          "x": 261,
           "y": 101,
           "width": 0,
           "height": 0,
@@ -837,6 +837,150 @@
               "name": "wave",
               "type": "int",
               "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 15,
+          "name": "spawn",
+          "type": "",
+          "x": 310,
+          "y": 43,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "name": "spawn",
+          "type": "",
+          "x": 359,
+          "y": 101,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 17,
+          "name": "spawn",
+          "type": "",
+          "x": 392,
+          "y": 22,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 3
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "back"
+            }
+          ]
+        },
+        {
+          "id": 18,
+          "name": "spawn",
+          "type": "",
+          "x": 180,
+          "y": 101,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 3
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 19,
+          "name": "spawn",
+          "type": "",
+          "x": 261,
+          "y": 43,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 3
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "value": "front"
+            }
+          ]
+        },
+        {
+          "id": 20,
+          "name": "spawn",
+          "type": "",
+          "x": 343,
+          "y": 101,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "wave",
+              "type": "int",
+              "value": 3
             },
             {
               "name": "role",

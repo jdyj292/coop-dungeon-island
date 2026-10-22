@@ -110,6 +110,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0·M1·M2 완료. M3 3-1~3-9 구현 완료 (3-9: run-sim 봇 한 판 — 2인 무적 봇 약 4분 40초에 보스 클리어, 코인·경험치 목표대로). 한 판 시간이 목표 11~13분보다 크게 짧음 → 튜닝 결정 대기
+- M0·M1·M2 완료. M3 3-1~3-9 구현 완료. 3-9 A안: 방마다 웨이브 2~3개(일반 몬스터 24→56), 일반 보상 낮춰 한 판 합계 유지 → run-sim 2인 약 6분 40초·솔로 약 8~9분
 - 명령: `pnpm dev`(?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: 한 판 시간 튜닝 결정 + docs/playtest.md 사람 플레이 → M3 체크
+- 다음: docs/playtest.md 사람 플레이 (시간·조작감·라인 판정) → M3 체크 또는 추가 튜닝

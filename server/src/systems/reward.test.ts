@@ -5,8 +5,9 @@ import { killReward, LootBook } from './reward';
 
 describe('보상 (balance.md 7장)', () => {
   it('처치 보상: 코인 범위 안 무작위, 재료는 확률(1 이상이면 개수), 경험치 고정', () => {
-    expect(killReward(MONSTERS.mushroom!, () => 0)).toEqual({ coins: 6, material: 1, exp: 8 });
-    expect(killReward(MONSTERS.mushroom!, () => 0.99)).toEqual({ coins: 9, material: 0, exp: 8 });
+    const mr = MONSTERS.mushroom!.reward;
+    expect(killReward(MONSTERS.mushroom!, () => 0)).toEqual({ coins: mr.coins[0], material: 1, exp: mr.exp });
+    expect(killReward(MONSTERS.mushroom!, () => 0.99)).toEqual({ coins: mr.coins[1], material: 0, exp: mr.exp });
     expect(killReward(MONSTERS.mossbear!, () => 0.5)).toEqual({ coins: 100, material: 3, exp: 60 });
   });
   it('콤보 보너스: 더 높은 단계만, 솔로 30/60/90 · 팀 20/40/60 → 5/10/15%', () => {
@@ -28,6 +29,14 @@ function game(room: number, party = 2) {
   return { g, sent };
 }
 
+/** 방의 모든 웨이브를 개발 명령으로 기절시키고 출구가 열릴 때까지 (퇴장 stunExitSec 기다림) */
+function clearRoom(g: DungeonGame): void {
+  for (let w = 0; w < 5 && !g.state.doorOpen; w++) {
+    g.onMessage('a', 'dev', { cmd: 'clear' });
+    for (let i = 0; i < 90; i++) g.tick();
+  }
+}
+
 describe('DungeonGame 보상', () => {
   it('인원 체력 보정: 2인 방 버섯 체력 60 × 1.5', () => {
     expect(game(1).g.sim.alive[0]!.maxHp).toBe(90);
@@ -40,9 +49,11 @@ describe('DungeonGame 보상', () => {
     const rewards = sent.filter((s) => s.type === 'reward');
     expect(rewards.filter((s) => s.to === 'a')).toHaveLength(4);
     expect(rewards.filter((s) => s.to === 'b')).toHaveLength(4);
-    expect(g.state.players.get('b')!.priv.coins).toBe(24);
+    // 1번 방 첫 웨이브 버섯 4마리, 난수 0 → 최소 코인·재료 1개씩
+    const mr = MONSTERS.mushroom!.reward;
+    expect(g.state.players.get('b')!.priv.coins).toBe(4 * mr.coins[0]);
     expect(g.state.players.get('b')!.priv.materials).toBe(4);
-    expect(g.state.players.get('b')!.priv.exp).toBe(32);
+    expect(g.state.players.get('b')!.priv.exp).toBe(4 * mr.exp);
   });
   it('보물상자: 클리어 뒤 가까이서 한 번만, 파티원 모두 코인 15 + 버섯 1', () => {
     const { g, sent } = game(3);
@@ -50,9 +61,7 @@ describe('DungeonGame 보상', () => {
     a.pos = { x: 240, y: 36 };
     g.onMessage('a', 'interact', { targetId: 'chest' });
     expect(g.state.chestOpen).toBe(false); // 클리어 전
-    g.onMessage('a', 'dev', { cmd: 'clear' });
-    // 기절 → 퇴장(stunExitSec)까지 기다려야 웨이브 진행
-    for (let i = 0; i < 120; i++) g.tick();
+    clearRoom(g);
     expect(g.state.doorOpen).toBe(true);
     a.pos = { x: 100, y: 36 };
     const before = g.state.players.get('b')!.priv.coins;

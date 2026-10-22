@@ -119,7 +119,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
   "ai": { "type": "charger", "preferRange": [32, 96] },
   "attacks": [ action ],
   "pattern": { "type": "choose", "rules": [ { "attack": "boar_charge", "range": [24, 96], "alignDepth": 6 } ] },
-  "reward": { "coins": [6, 9], "exp": 8, "material": 0.15 }
+  "reward": { "coins": [2, 4], "exp": 3, "material": 0.06 }
 }
 ```
 
