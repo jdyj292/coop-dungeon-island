@@ -105,11 +105,11 @@ tools/                   개발 도구 (아래 표)
 - [x] M0 스타일 테스트
 - [x] M1 로컬 전투
 - [x] M2 멀티플레이
-- [ ] M3 던전 1층 완성
+- [x] M3 던전 1층 완성
 - [ ] M4 섬·계정
 - [ ] M5 배포
 
 ## 현재 상태
-- M0·M1·M2 완료. M3 3-1~3-9 구현 완료. 3-9 A안: 방마다 웨이브 2~3개(일반 몬스터 24→56), 일반 보상 낮춰 한 판 합계 유지 → run-sim 2인 약 6분 40초·솔로 약 8~9분
-- 명령: `pnpm dev`(?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: docs/playtest.md 사람 플레이 (시간·조작감·라인 판정) → M3 체크 또는 추가 튜닝
+- M0~M3 완료. M4 4-1 완료: 갈무리 글꼴(client/public/fonts, CREDITS.md), 서버 DB(better-sqlite3 WAL + Drizzle, server/src/db, 테이블 8개 마이그레이션)
+- 명령: `pnpm dev`(?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm --filter @game/server db:generate`
+- 다음: M4 4-2 계정 API (가입·로그인·복구 코드·세션 쿠키·시도 제한, docs/security.md)

@@ -112,6 +112,7 @@
 - 한글: **갈무리(Galmuri)** — SIL OFL 1.1 비트맵 글꼴. 내부 해상도 기준 Galmuri9(10px)를 이름·알림에, 아주 작은 표시는 Galmuri7(8px, 일부 한글만 지원하므로 사용 글자 확인)
 - OFL 조건: 글꼴 파일을 함께 배포할 때 저작권·라이선스 고지를 포함 (게임 내 크레딧 화면 + 저장소의 라이선스 파일)
 - 글꼴은 정수 배율로만 확대
+- 파일: client/public/fonts/Galmuri9.woff2·Galmuri7.woff2 (갈무리 2.40.3), 라이선스 전문 Galmuri-OFL.txt, 출처 기록 저장소 루트 CREDITS.md
 
 ---
 
