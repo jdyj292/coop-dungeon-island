@@ -1,9 +1,20 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2022"],
-    "types": ["node"]
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node"
+    ]
   },
-  "include": ["**/*.ts"],
-  "exclude": ["sprite-preview", "motion-preview", "sfx-preview"]
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "sprite-preview",
+    "motion-preview",
+    "sfx-preview",
+    "run-sim"
+  ]
 }

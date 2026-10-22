@@ -248,4 +248,6 @@
 - tools/balance-check (`pnpm balance-check`): skills.json을 읽어 각 스킬의 예산 계수를 자동 계산(3장 자동 판정)하고 ±25% 벗어나면 경고. note가 있으면 "기록됨"으로 통과. 경고가 있으면 종료 코드 1
 - tools/ttk-sim (`pnpm ttk-sim --weapon greatsword --level 1 --skills gs_launch,gs_earthsplit`): 몬스터별·방별 예상 처치 시간과 목표(5장) 비교. 스킬 기본값 = 무기 baseSkills
 - 평타 초당 계수 목표(4장)는 `pnpm data-validate`가 검사
+- tools/run-sim (`pnpm run-sim --party 1|2 --runs 5 [--invincible]`): 서버와 같은 DungeonGame에 봇을 넣어 1번 방부터 보스까지 실제 규칙으로 돌림 (시간 가속). 방별 전투·이동 시간, 한 판 시간, 클리어율, 받은 피해, 코인·경험치. 봇은 사람보다 단순해 시간은 참고값, 규칙이 끝까지 도는지는 확실히 확인. --invincible = 봇 HP를 계속 채움, 방 하나가 5분 넘으면 봇 막힘으로 기록하고 넘김
+- 사람 플레이 기록은 docs/playtest.md
 - 수치를 바꿀 때마다 두 도구를 돌려서 확인

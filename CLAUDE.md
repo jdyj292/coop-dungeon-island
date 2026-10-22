@@ -51,6 +51,7 @@ tools/                   개발 도구 (아래 표)
 | palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
 | data-validate | 완성 | shared/data 형식·교차 참조 검사 (data.md 5장). `pnpm data-validate`, 기준 rules.json |
 | map-gen | 완성 | 1층 방 Tiled 맵 초기 생성 + 편집용 타일셋 (dungeon.md 10장). `pnpm map-gen [--force]` |
+| run-sim | 완성 | 봇으로 1층 한 판 (서버 규칙) 시간·클리어율·보상 (balance.md 10장). `pnpm run-sim --party 2 --runs 5 [--invincible]` |
 | net-smoke | 완성 | 봇 2개로 서버 던전 방 접속 확인 (network.md 13장). `pnpm net-smoke` |
 | balance-check | 완성 | 스킬 예산 자동 계산·±25% 경고 (balance.md 3장). `pnpm balance-check`, 기준 rules.json |
 | ttk-sim | 완성 | 예상 처치 시간·목표 비교 (balance.md 5장). `pnpm ttk-sim --weapon greatsword --level 1` |
@@ -59,6 +60,7 @@ tools/                   개발 도구 (아래 표)
 | 작업 | 문서 |
 |---|---|
 | 지금 할 일·범위 | roadmap (마일스톤별 읽을 문서 표) |
+| 사람 플레이 테스트 | playtest |
 | 조작·판정·상태·연출 시간 값 | combat |
 | 무기·스킬 | skills (계열 스킬은 MVP 이후) |
 | 수치 공식·쿨타임·보상 | balance |
@@ -108,6 +110,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0·M1·M2 완료. M3 3-1~3-8 완료: 맵·소품, 방 진행, 보상, 쓰러짐·부활·귀환·정산, 보스 방, BGM, 접속 끊김(파티 30초·솔로/전원 60초 대기, 자동 재접속, 이탈 정산·체력 재계산)
-- 명령: `pnpm dev`(클라이언트+서버, ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널·개발 기절/쓰러지기/연결 끊기) / `pnpm test` / `pnpm typecheck` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
-- 다음: 3-9 한 판 통합 확인·튜닝 (1층 11~13분, 솔로·2인 클리어)
+- M0·M1·M2 완료. M3 3-1~3-9 구현 완료 (3-9: run-sim 봇 한 판 — 2인 무적 봇 약 4분 40초에 보스 클리어, 코인·경험치 목표대로). 한 판 시간이 목표 11~13분보다 크게 짧음 → 튜닝 결정 대기
+- 명령: `pnpm dev`(?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview`
+- 다음: 한 판 시간 튜닝 결정 + docs/playtest.md 사람 플레이 → M3 체크
