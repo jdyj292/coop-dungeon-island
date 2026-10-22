@@ -3,6 +3,7 @@
 import type { z } from 'zod';
 import combatJson from '../../data/combat.json';
 import islandJson from '../../data/island.json';
+import itemsJson from '../../data/items.json';
 import monstersJson from '../../data/monsters.json';
 import playerJson from '../../data/player.json';
 import roomsJson from '../../data/rooms.json';
@@ -30,3 +31,4 @@ export const ROOMS = load('rooms.json', roomsJson);
 export const PLAYER = load('player.json', playerJson);
 export const COMBAT = load('combat.json', combatJson);
 export const ISLAND = load('island.json', islandJson);
+export const ITEMS = load('items.json', itemsJson);

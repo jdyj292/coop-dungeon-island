@@ -7,6 +7,9 @@ const seq = z.number().int().nonnegative();
 const t = z.number().nonnegative();
 const axis = z.union([z.literal(-1), z.literal(0), z.literal(1)]);
 const coord = z.number().finite();
+/** 섬 칸 좌표, 회전 0~3 */
+const cell = z.number().int().min(0).max(63);
+const rot = z.number().int().min(0).max(3);
 
 /** 던전: 클라이언트 → 서버 */
 export const C2S = {
@@ -23,6 +26,12 @@ export const C2S = {
   ping: z.object({ t: z.number().nonnegative() }).strict(),
   /** 개발 명령 (서버가 개발 모드일 때만): clear = 지금 방 몬스터를 모두 기절, down = 나를 쓰러뜨림 (부활 확인) */
   dev: z.object({ cmd: z.enum(['clear', 'down']) }).strict(),
+  // 섬: 장식 놓기·옮기기·치우기 (island.md 3장). from = 내 가방 / 공용 창고
+  place: z.object({ itemId: z.string().max(32), x: cell, y: cell, rot, from: z.enum(['mine', 'storage']) }).strict(),
+  move: z.object({ placementId: z.string().max(16), x: cell, y: cell, rot }).strict(),
+  remove: z.object({ placementId: z.string().max(16) }).strict(),
+  /** 개발 명령 (서버가 개발 모드일 때만): 장식 받기 */
+  give: z.object({ itemId: z.string().max(32), count: z.number().int().min(1).max(99) }).strict(),
 } as const;
 
 export type C2SType = keyof typeof C2S;
@@ -68,4 +77,8 @@ export interface S2C {
   teamMilestone: { count: number };
   /** 섬: 입장 때 본인에게 (지갑은 상태에 넣지 않음, network.md 5장) */
   me: { wallet: number; level: number };
+  /** 섬: 내 가방 (장식 id → 개수, 바뀔 때마다 본인에게) */
+  inv: { items: Record<string, number> };
+  /** 섬: 배치 요청 실패 (같은 칸에 먼저 온 요청 등) */
+  placeFail: { op: 'place' | 'move' | 'remove'; reason: string };
 }

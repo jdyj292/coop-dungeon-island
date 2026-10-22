@@ -1,8 +1,8 @@
-import { AUTH, recoverReq, signupReq } from '@game/shared';
+import { AUTH, ITEMS, recoverReq, signupReq } from '@game/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
-import { activityLog, authLog, sessions, users } from '../db/schema';
+import { activityLog, authLog, inventory, sessions, users } from '../db/schema';
 import { Accounts } from './accounts';
 import { LOCKS } from './limiter';
 
@@ -34,6 +34,8 @@ describe('가입', () => {
     expect(row.passwordHash).toMatch(/^\$argon2id\$/);
     expect(row.passwordHash).not.toContain('password1');
     expect(row.recoveryHash).toMatch(/^\$argon2id\$/);
+    // 가입 선물
+    expect(Object.fromEntries(db.select().from(inventory).all().map((r) => [r.itemId, r.count]))).toEqual(ITEMS.starter);
     // 토큰 원문은 DB에 없음
     expect(db.select().from(sessions).get()!.tokenHash).not.toBe(r.value.token);
   });

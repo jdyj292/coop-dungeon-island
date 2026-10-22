@@ -53,6 +53,8 @@ export const placements = sqliteTable('placements', {
   y: integer('y').notNull(),
   rotation: integer('rotation').notNull().default(0),
   placedBy: integer('placed_by').references(() => users.id),
+  /** 공동 금고로 산 공용 장식 (치우면 공용 창고로, island.md 3장) */
+  communal: integer('communal', { mode: 'boolean' }).notNull().default(false),
   placedAt: integer('placed_at').notNull(),
 }, (t) => [index('placements_island').on(t.islandId)]);
 
@@ -62,6 +64,13 @@ export const inventory = sqliteTable('inventory', {
   itemId: text('item_id').notNull(),
   count: integer('count').notNull().default(0),
 }, (t) => [primaryKey({ columns: [t.userId, t.itemId] })]);
+
+/** 공용 창고: 섬 단위 보관 (공동 금고로 산 장식, 치운 공용 장식) */
+export const islandStorage = sqliteTable('island_storage', {
+  islandId: integer('island_id').notNull().references(() => islands.id),
+  itemId: text('item_id').notNull(),
+  count: integer('count').notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.islandId, t.itemId] })]);
 
 export const activityLog = sqliteTable('activity_log', {
   id: integer('id').primaryKey({ autoIncrement: true }),

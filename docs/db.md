@@ -9,7 +9,8 @@ MVP 열: O = MVP에 포함, — = MVP 이후.
 | sessions | token_hash, user_id, created_at, expires_at, last_seen_at | O | security |
 | auth_log | user_id(null 가능), ip, event, created_at (30일 보관) | O | security |
 | islands | id, name, invite_code, treasury | O | island |
-| placements | id, island_id, item_id, x, y, rotation, placed_by, placed_at | O | island |
+| placements | id, island_id, item_id, x, y, rotation, placed_by, communal(공동 금고 장식), placed_at | O | island |
+| island_storage | island_id, item_id, count (공용 창고: 공동 금고로 산 장식, 치운 공용 장식) | O | island |
 | inventory | user_id, item_id, count (장식·재료·물약·의상) | O | island |
 | activity_log | id, island_id, user_id, action, item_id, created_at | O | island |
 | weapon_mastery | user_id, weapon, level, exp, sp | O | balance, skills |

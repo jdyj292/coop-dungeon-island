@@ -17,11 +17,24 @@ export interface ResidentSnap extends Pos {
   lastInputSeq: number;
 }
 
+/** 놓인 장식 (상태 그대로, 보간 없음) */
+export interface PlacementSnap {
+  id: string;
+  itemId: string;
+  x: number;
+  y: number;
+  rot: number;
+  placedBy: string;
+  communal: boolean;
+}
+
 type Live = {
   serverTime: number;
   name: string;
   treasury: number;
   residents: Map<string, Omit<ResidentSnap, 'z'>>;
+  placements?: Map<string, Partial<PlacementSnap>>;
+  storage?: Map<string, number>;
 };
 
 const RETRY_MS = 2000;
@@ -33,6 +46,10 @@ export class IslandConnection {
   readonly residents = new SnapshotBuffer<ResidentSnap>();
   /** 본인 값 (입장 때 me 메시지) */
   me: S2C['me'] = { wallet: 0, level: 1 };
+  /** 내 가방 (inv 메시지) */
+  inventory: Record<string, number> = {};
+  /** 배치 실패 (화면 알림) */
+  onPlaceFail: (m: S2C['placeFail']) => void = () => {};
   /** 새 스냅샷 직후 (예측 보정) */
   onSnapshot: () => void = () => {};
   /** 다시 들어갔을 때 (화면의 내 위치를 새로 받음) */
@@ -60,6 +77,8 @@ export class IslandConnection {
     room.onStateChange((s) => this.snapshot(s as unknown as Live));
     room.onMessage('pong', (m: S2C['pong']) => this.clock.onPong(m.t, m.server));
     room.onMessage('me', (m: S2C['me']) => { this.me = m; });
+    room.onMessage('inv', (m: S2C['inv']) => { this.inventory = m.items; });
+    room.onMessage('placeFail', (m: S2C['placeFail']) => this.onPlaceFail(m));
     room.onLeave((code) => {
       if (this.leaving) return;
       if (code === REPLACED_CODE) {
@@ -88,6 +107,18 @@ export class IslandConnection {
 
   get live(): Live {
     return this.room.state as unknown as Live;
+  }
+
+  /** 놓인 장식 (기본값 0·false는 전송되지 않으므로 채움) */
+  get placements(): PlacementSnap[] {
+    return [...(this.live.placements?.values() ?? [])].map((p) => ({
+      id: p.id ?? '', itemId: p.itemId ?? '', x: p.x ?? 0, y: p.y ?? 0, rot: p.rot ?? 0, placedBy: p.placedBy ?? '', communal: p.communal ?? false,
+    }));
+  }
+
+  /** 공용 창고 (장식 id → 개수) */
+  get storage(): Record<string, number> {
+    return Object.fromEntries(this.live.storage?.entries() ?? []);
   }
 
   /** 섬 이름·금고 (기본값이면 전송되지 않으므로 채움) */

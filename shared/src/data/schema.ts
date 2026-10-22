@@ -1,6 +1,6 @@
 // shared/data JSON 스키마 (형식 docs/data.md, 값의 의미 docs/combat.md). 로드 시 한 번 검사한다
 import { z } from 'zod';
-import { island } from './islandSchema';
+import { island, items } from './islandSchema';
 
 export const FLAGS = ['launch', 'knockback', 'down', 'downhit', 'pull', 'hold', 'grab', 'multi', 'projectile'] as const;
 export const STRENGTHS = ['light', 'medium', 'heavy'] as const;
@@ -236,7 +236,7 @@ export type Weapon = z.infer<typeof weapon>;
 export type MonsterDef = z.infer<typeof monster>;
 export type Combat = z.infer<typeof combat>;
 export type Rooms = z.infer<typeof rooms>;
-export type { IslandDef } from './islandSchema';
+export type { DecorationDef, IslandDef, ItemsDef } from './islandSchema';
 
 /** 파일 → 스키마. notes = 바깥에 _note 등 '_' 키가 섞인 레코드 파일 (검사 전에 뺀다) */
 export const FILE_SCHEMAS = {
@@ -247,6 +247,7 @@ export const FILE_SCHEMAS = {
   'player.json': { schema: player, notes: false },
   'combat.json': { schema: combat, notes: false },
   'island.json': { schema: island, notes: true },
+  'items.json': { schema: items, notes: true },
 } as const;
 
 /** '_'로 시작하는 키(_note 등)를 뺀 바깥 객체. 안쪽 객체는 원본 그대로 */

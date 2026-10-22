@@ -20,10 +20,26 @@ export class Resident extends Schema {
   @type('uint32') lastInputSeq = 0;
 }
 
+/** 놓인 장식 (칸 좌표, island.md 3장) */
+export class Placement extends Schema {
+  @type('string') id = '';
+  @type('string') itemId = '';
+  @type('uint8') x = 0;
+  @type('uint8') y = 0;
+  @type('uint8') rot = 0;
+  /** 놓은 사람 users.id (없으면 '') */
+  @type('string') placedBy = '';
+  /** 공동 금고로 산 공용 장식 */
+  @type('boolean') communal = false;
+}
+
 export class IslandState extends Schema {
   /** 이 상태의 서버 시각 ms (보간 기준) */
   @type('float64') serverTime = 0;
   @type('string') name = '';
   @type('uint32') treasury = 0;
   @type({ map: Resident }) residents = new MapSchema<Resident>();
+  @type({ map: Placement }) placements = new MapSchema<Placement>();
+  /** 공용 창고: 장식 id → 개수 (주민 모두에게) */
+  @type({ map: 'uint16' }) storage = new MapSchema<number>();
 }

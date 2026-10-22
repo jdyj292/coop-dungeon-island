@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crossCheck, type GameData, type Issue, type Rules } from '../../shared/src/data/crossCheck';
-import { FILE_SCHEMAS, formatIssues, withoutNotes, type IslandDef, type MonsterDef, type Rooms } from '../../shared/src/data/schema';
+import { FILE_SCHEMAS, formatIssues, withoutNotes, type IslandDef, type ItemsDef, type MonsterDef, type Rooms } from '../../shared/src/data/schema';
 import { checkMaps } from '../../shared/src/map/check';
 import { roomMap } from '../../shared/src/map/maps';
 
@@ -38,6 +38,14 @@ if (!issues.length) {
   const isl = data.island as IslandDef, sprites = new Set(Object.keys(withoutNotes(readJson('client/data/sprites/island.json'))));
   for (const o of [...isl.facilities, ...isl.scenery]) {
     if (!sprites.has(o.id)) issues.push({ level: 'error', where: `island.json ${o.id}`, message: '섬 사물 그림(client/data/sprites/island.json)에 없음' });
+  }
+  // 장식: 그림이 있는지 (돌길처럼 바닥 무늬는 빼고), 가입 선물은 있는 장식만
+  const itemsData = data.items as ItemsDef;
+  for (const [id, d] of Object.entries(itemsData.decorations)) {
+    if (!d.ground && !sprites.has(id)) issues.push({ level: 'error', where: `items.json ${id}`, message: '섬 사물 그림(client/data/sprites/island.json)에 없음' });
+  }
+  for (const id of Object.keys(itemsData.starter)) {
+    if (!itemsData.decorations[id]) issues.push({ level: 'error', where: `items.json starter.${id}`, message: '없는 장식' });
   }
   for (const r of [isl.walk, isl.place, ...isl.facilities, ...isl.paths]) {
     if (r.x + r.w > isl.grid.w || r.y + r.h > isl.grid.h - isl.shoreRows) issues.push({ level: 'error', where: `island.json (${r.x},${r.y})`, message: '섬 격자(물가 제외) 밖' });

@@ -112,6 +112,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M3 완료. M4 4-1~4-5 완료(글꼴·DB·계정·로그인·섬 그림·섬 화면: IslandRoom 쿠키 인증·걷기 예측, shared/data/island.json, 섬 HUD·주민 목록·이름표, 섬 BGM)
+- M0~M3 완료. M4 4-1~4-6 완료(글꼴·DB·계정·로그인·섬 그림·섬 화면·배치 모드: items.json, 놓기·옮기기·치우기·회전, 먼저 온 요청만, 가방·공용 창고(island_storage), 가입 선물, 개발 give)
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
-- 다음: M4 4-6 배치 모드 + items.json + 인벤토리 (같은 칸은 먼저 온 요청만, 활동 기록)
+- 다음: M4 4-7 잡화점·게시판·가방 패널, 섬 채팅

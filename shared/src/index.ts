@@ -29,3 +29,4 @@ export * from './map/check';
 export * from './monster/groggy';
 export * from './island/world';
 export * from './island/walker';
+export * from './island/placement';

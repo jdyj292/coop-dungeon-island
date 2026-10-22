@@ -1,0 +1,17 @@
+{
+  "_note": "섬 장식 (docs/island.md 3장, 형식 docs/data.md 9장). 그림은 client/data/sprites/island.json의 같은 id (돌길은 바닥 무늬)",
+  "decorations": {
+    "flowerBed": { "name": "꽃밭", "size": [1, 1], "price": 40, "walkable": true, "source": "shop" },
+    "stonePath": { "name": "돌길", "size": [1, 1], "price": 30, "walkable": true, "source": "shop", "ground": true },
+    "fence": { "name": "울타리", "size": [1, 1], "price": 30, "walkable": false, "source": "shop" },
+    "pot": { "name": "화분", "size": [1, 1], "price": 50, "walkable": false, "source": "shop" },
+    "flag": { "name": "깃발", "size": [1, 1], "price": 80, "walkable": false, "source": "shop" },
+    "mailbox": { "name": "우체통", "size": [1, 1], "price": 100, "walkable": false, "source": "shop" },
+    "tree": { "name": "나무", "size": [1, 1], "price": 120, "walkable": false, "source": "shop" },
+    "bench": { "name": "벤치", "size": [2, 1], "price": 150, "walkable": false, "source": "shop" },
+    "lamp": { "name": "가로등", "size": [1, 1], "price": 180, "walkable": false, "source": "shop" },
+    "campfire": { "name": "모닥불", "size": [1, 1], "price": 200, "walkable": false, "source": "shop" },
+    "fountain": { "name": "분수", "size": [3, 3], "price": 1500, "walkable": false, "source": "treasury" }
+  },
+  "starter": { "flowerBed": 2, "fence": 4, "pot": 1 }
+}

@@ -23,6 +23,8 @@ export interface IslandHudInput {
   /** 선택된 버튼 (배치 모드 등, 4-6) */
   selected?: 'B' | 'I' | 'M' | null;
   residents: { id: string; color: number; status: string }[];
+  /** 배치 모드: 아래 띠는 PlaceTray가 그린다 (주민 목록만) */
+  placing?: boolean;
 }
 
 export class IslandHud {
@@ -44,6 +46,10 @@ export class IslandHud {
   draw(st: IslandHudInput, width: number, bandTop: number): void {
     const g = this.g, Y = (y: number) => y + bandTop - TOP;
     g.clear();
+    this.face.setVisible(!st.placing);
+    this.fence.setVisible(!st.placing);
+    this.drawResidents(st.residents, width);
+    if (st.placing) return;
     dot(g, 0, Y(140), C('global.ui.panelBorder'), width, 1);
     dot(g, 0, Y(141), C('global.ui.panelInner'), width, 1);
     dot(g, 0, Y(142), C('global.ui.panel'), width, 20);
@@ -84,7 +90,11 @@ export class IslandHud {
     dot(g, cx, vy, C('global.ui.bagLight'), 7, 2);
     dot(g, cx + 3, vy + 2, C('global.ui.coin'), 1, 2);
     drawText(g, String(st.treasury), cx + 9, vy, { color: 'global.ui.coin', outline: 'none' });
-    this.drawResidents(st.residents, width);
+  }
+
+  /** B 버튼을 눌렀는지 (화면 좌표) */
+  static hitB(x: number, y: number, bandTop: number): boolean {
+    return x >= BUTTON_X && x < BUTTON_X + 18 && y >= bandTop + 3 && y < bandTop + 21;
   }
 
   /** 오른쪽 위 주민 목록: 섬 = 연두 점, 탐험 중 = 검 + 층 숫자, 접속 안 함 = 흐린 얼굴 + 점 세 개 */

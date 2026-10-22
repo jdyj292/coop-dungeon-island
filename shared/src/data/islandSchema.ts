@@ -27,3 +27,24 @@ export const island = z.object({
 }).strict();
 
 export type IslandDef = z.infer<typeof island>;
+
+/** shared/data/items.json (docs/data.md 9장) */
+export const items = z.object({
+  decorations: z.record(z.object({
+    name: z.string().min(1),
+    /** 차지하는 칸 [가로, 세로] (회전 1·3이면 바뀜) */
+    size: z.tuple([size, size]),
+    price: z.number().int().positive(),
+    /** 위로 걸어 다닐 수 있는지 */
+    walkable: z.boolean(),
+    /** shop = 잡화점·개인 지갑, treasury = 공동 금고 → 공용 창고 (island.md 3장) */
+    source: z.enum(['shop', 'treasury']),
+    /** 그림이 아니라 바닥 무늬 (돌길) */
+    ground: z.boolean().optional(),
+  }).strict()),
+  /** 가입 선물 (장식 id → 개수, island.md 7장) */
+  starter: z.record(z.number().int().positive()),
+}).strict();
+
+export type ItemsDef = z.infer<typeof items>;
+export type DecorationDef = ItemsDef['decorations'][string];

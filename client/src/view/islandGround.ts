@@ -30,6 +30,11 @@ function lcg(seed: number): () => number {
   };
 }
 
+/** 길 무늬 한 픽셀 (화면 월드 좌표): 흙길 색에 자갈 점. 돌길 장식도 같은 무늬를 칸에 깐다 */
+export function pathColor(x: number, y: number, RPA = ramp(color('island.path'))): string {
+  return (x * 3 + y * 7) % 11 === 0 ? RPA[2] : (x + y * 5) % 13 === 0 ? RPA[0] : RPA[1];
+}
+
 /**
  * 바닥을 plot(x, y, hex)로 찍는다. frame = 물 반짝임 프레임 (0·1, art.md 6장 "물 2프레임 반짝임 + 해안선 거품")
  * frame 0이 승인 데모와 같은 그림, 1은 반짝임·거품 위치만 옮긴 것
@@ -55,7 +60,7 @@ export function paintGround(spec: GroundSpec, plot: (x: number, y: number, hex: 
   // 길: 흙길 색에 자갈 점
   for (let y = 0; y < GH; y++) {
     for (let x = 0; x < W; x++) {
-      if (spec.path(x, y)) plot(x, y, (x * 3 + y * 7) % 11 === 0 ? RPA[2] : (x + y * 5) % 13 === 0 ? RPA[0] : RPA[1]);
+      if (spec.path(x, y)) plot(x, y, pathColor(x, y, RPA));
     }
   }
   // 모래: 위 가장자리 한 줄 밝게

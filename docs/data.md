@@ -241,3 +241,17 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | interactRange | 시설 [E] 거리 px (시설 앞 가운데부터, 넓은 시설은 폭 안이면 0) |
 
 - data-validate: 그림 id가 섬 사물 그림에 있는지, 칸이 격자(물가 제외) 안인지
+
+---
+
+## 9. items.json
+
+섬 장식 (island.md 3장). 형식 shared/src/data/islandSchema.ts `items`
+
+| 필드 | 설명 |
+|---|---|
+| decorations.<id> | `{ name, size: [가로, 세로], price, walkable, source, ground? }` id = 그림 id (client/data/sprites/island.json). source: shop(잡화점·개인 지갑) / treasury(공동 금고 → 공용 창고). ground = 그림 없이 바닥 무늬 (돌길) |
+| starter | 가입 선물 `{ 장식 id: 개수 }` |
+
+- 회전 1·3이면 차지하는 칸의 가로·세로가 바뀜 (shared footprint). 그림 모습은 sprites.md 12장 rot
+- data-validate: 그림이 있는지(ground 제외), 가입 선물이 있는 장식인지

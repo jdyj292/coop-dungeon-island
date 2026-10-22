@@ -15,6 +15,11 @@ export class WalkPredictor {
     this.state = newWalker(start);
   }
 
+  /** 장식이 바뀌면 걷기 장애물을 바꾼다 */
+  setBounds(b: Bounds): void {
+    this.bounds = b;
+  }
+
   get display(): Vec2 {
     return { x: this.state.pos.x + this.offset.x, y: this.state.pos.y + this.offset.y };
   }

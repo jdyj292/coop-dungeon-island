@@ -1,12 +1,14 @@
-// 섬 진행 (클라이언트): 내 걷기 예측·보정, 다른 주민 보간, 주민 그림·이름 (docs/network.md 7·8장, hud.md 8장 월드 표시)
+// 섬 진행 (클라이언트): 내 걷기 예측·보정, 다른 주민 보간, 주민 그림·이름, 놓인 장식·배치 모드 (docs/network.md 7·8장, hud.md 8장)
 import type Phaser from 'phaser';
-import { FixedStep, islandBounds, NET, newPlayerState, TICK, type PlayerState, type Vec2 } from '@game/shared';
+import { FixedStep, islandBounds, NET, newPlayerState, placementBlocks, TICK, type PlayerState, type Vec2 } from '@game/shared';
 import type { IslandConnection, ResidentSnap } from '../net/islandNet';
 import { InputSender, type KeyInput } from '../net/inputSender';
 import { WalkPredictor } from '../net/walkPredict';
 import { koText, type KoText } from '../ui/koText';
+import { DecorLayer } from '../view/decorLayer';
 import { project } from '../view/layout';
 import { PlayerView } from '../view/playerView';
+import { PlaceMode } from './placeMode';
 
 /** 이름표: 발밑 위로 (캐릭터 키 17 + 여유) */
 const NAME_ABOVE = 31;
@@ -26,16 +28,27 @@ export class IslandStage {
   private sent = { x: 0, y: 0, run: false, seq: 0 };
   private shown = new Map<string, Shown>();
   private clock = 0;
+  readonly decor: DecorLayer;
+  readonly place: PlaceMode;
+  /** 걷기 장애물을 만든 장식 목록 (바뀌면 다시) */
+  private blocksSig = '';
 
   constructor(private scene: Phaser.Scene, readonly conn: IslandConnection) {
     const mine = conn.residents.latest?.items.get(conn.userId);
     this.predictor = new WalkPredictor(islandBounds(), { x: mine?.x ?? 0, y: mine?.y ?? 0 });
     this.sender = new InputSender(conn);
+    this.decor = new DecorLayer(scene);
+    this.place = new PlaceMode(scene, conn, (id) => this.nameOf(id), 6100);
     conn.onSnapshot = () => this.reconcile();
     conn.onRejoined = () => {
       // 다시 들어가면 서버가 새 자리를 준다: 첫 스냅샷에서 바로 맞춤
       this.sent.seq = 0;
     };
+  }
+
+  /** 주민 이름 (users.id 문자열) */
+  nameOf(userId: string): string {
+    return this.conn.residents.latest?.items.get(userId)?.name ?? '?';
   }
 
   /** 내 위치 (화면) */
@@ -51,6 +64,7 @@ export class IslandStage {
   /** 프레임마다. keys = 방향 입력 (패널이 열려 있으면 0) */
   update(dt: number, keys: { x: number; y: number }): void {
     this.clock += dt;
+    this.syncDecor();
     const k: KeyInput = { x: keys.x, y: keys.y, attack: false, skill: null, backstep: false, potion: null };
     const s = this.sender.update(k, dt, null);
     this.sent = { x: s.x, y: s.y, run: s.run, seq: s.seq };
@@ -69,6 +83,17 @@ export class IslandStage {
       s.view.destroy();
       s.name.destroy();
       this.shown.delete(id);
+    }
+  }
+
+  /** 놓인 장식 그리기 + 걷기 장애물 갱신 (서버와 같은 placementBlocks) */
+  private syncDecor(): void {
+    const list = this.conn.placements;
+    this.decor.sync(list, this.clock, this.place.moving?.id ?? null);
+    const sig = list.map((p) => `${p.id}:${p.itemId}:${p.x}:${p.y}:${p.rot}`).join('|');
+    if (sig !== this.blocksSig) {
+      this.blocksSig = sig;
+      this.predictor.setBounds(islandBounds(placementBlocks(list)));
     }
   }
 
@@ -100,6 +125,8 @@ export class IslandStage {
       s.name.destroy();
     }
     this.shown.clear();
+    this.decor.destroy();
+    this.place.exit();
     this.conn.leave();
   }
 }
