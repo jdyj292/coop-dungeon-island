@@ -39,6 +39,7 @@ server/src/http/         인증 API (docs/security.md)
 server/src/db/           Drizzle 스키마·마이그레이션 (docs/db.md)
 maps/                    Tiled 원본 JSON 맵 (게임이 직접 읽음, docs/dungeon.md 10장)
 tools/                   개발 도구 (아래 표)
+deploy/                  서버 설치 파일: Nginx 틀·systemd·백업 cron·install.sh (docs/deploy.md 5장, 항상 LF)
 ```
 
 ### 도구 (tools/)
@@ -115,6 +116,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M4 완료. M5 5-1(프로덕션 빌드 dist/, 같은 주소 접속, config·.env.example), 5-2(Origin 제한·CSP·배포에서 개발 방 거절), 5-3(관리자 명령·정지 suspended_until·온라인 백업 7일치) 완료
+- M0~M4 완료. M5 5-1(프로덕션 빌드 dist/), 5-2(Origin 제한·CSP), 5-3(관리자 명령·온라인 백업), 5-4(deploy/: Nginx 틀·systemd·백업 cron·install.sh·coop-admin, docs/deploy.md 5장) 완료
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
-- 다음: M5 5-4 배포 파일·문서 (Nginx 서브도메인 설정 틀, systemd, 백업 cron, 설치 순서) → 실제 배포. 미룬 것: 숙련도 ATK 반영, 던전 말풍선, 보스 한글 이름
+- 다음: 실제 배포 (docs/deploy.md 5장 순서) → 친구 접속 확인. 미룬 것: 게임 화면 초대 코드 표시, 숙련도 ATK 반영, 던전 말풍선, 보스 한글 이름

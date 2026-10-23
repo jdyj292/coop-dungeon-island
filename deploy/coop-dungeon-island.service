@@ -1,0 +1,34 @@
+# systemd 유닛 (docs/deploy.md 5장). /etc/systemd/system/ 에 둔다 (install.sh가 복사)
+[Unit]
+Description=coop-dungeon-island game server
+After=network.target
+
+[Service]
+Type=simple
+User=coopgame
+Group=coopgame
+WorkingDirectory=/opt/coop-dungeon-island
+# 환경 변수 (비밀 값 포함, 저장소에 넣지 않음. 예시: .env.example)
+EnvironmentFile=/etc/coop-dungeon-island.env
+ExecStart=/usr/bin/env node --enable-source-maps server.mjs
+Restart=on-failure
+RestartSec=3
+# 방을 정리할 시간 (Colyseus가 SIGTERM을 받아 접속을 닫는다)
+TimeoutStopSec=20
+# 새 파일은 서비스 계정만 (DB·백업 권한 600, security.md 6장)
+UMask=0077
+
+# 보호: 쓰기는 DB 폴더에서만
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/var/lib/coop-dungeon-island
+
+[Install]
+WantedBy=multi-user.target

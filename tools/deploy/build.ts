@@ -1,6 +1,6 @@
 // 실행: pnpm deploy-build — 배포 묶음을 dist/에 만든다 (docs/deploy.md)
-// dist/server.mjs (게임 서버 한 파일, esbuild) + dist/admin.mjs (관리자 명령) + dist/migrations (DB) + dist/public (빌드한 클라이언트) + dist/package.json (네이티브 모듈만)
-// 서버에서는 dist/를 통째로 복사한 뒤 `npm ci --omit=dev` 또는 `npm install --omit=dev` → `node server.mjs`
+// dist/server.mjs (게임 서버 한 파일, esbuild) + dist/admin.mjs (관리자 명령) + dist/migrations (DB) + dist/public (빌드한 클라이언트) + dist/package.json (네이티브 모듈만) + dist/deploy (설치 파일)
+// 서버에서는 dist/를 통째로 올린 뒤 `sudo bash deploy/install.sh`
 import { execSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -46,4 +46,6 @@ writeFileSync(join(out, 'package.json'), `${JSON.stringify({
   engines: { node: '>=22' },
 }, null, 2)}\n`);
 for (const f of ['.env.example', 'CREDITS.md']) if (existsSync(join(root, f))) cpSync(join(root, f), join(out, f));
+// 서버 설치 파일 (Nginx 틀·systemd·백업 cron·install.sh, docs/deploy.md 5장)
+cpSync(join(root, 'deploy'), join(out, 'deploy'), { recursive: true });
 console.log(`완료: ${out}`);

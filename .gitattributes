@@ -1,0 +1,3 @@
+# 리눅스 서버에서 쓰는 파일은 항상 LF (docs/deploy.md 5장)
+deploy/** text eol=lf
+.env.example text eol=lf
