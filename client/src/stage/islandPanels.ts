@@ -1,8 +1,9 @@
-// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장식·물약·재료) / 게시판(기록·메모)
+// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장식·물약·재료) / 게시판(기록·메모·초대)
 // 키: ↑↓ 고르기, ←→ 수량, Q·E·Tab 탭, Enter 사기·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
 import type Phaser from 'phaser';
 import { ISLAND, ITEMS, NET } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
+import { InviteTab } from './islandInvite';
 import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
 
 export type PanelKind = 'shop' | 'bag' | 'board' | 'well';
@@ -10,7 +11,7 @@ export type PanelKind = 'shop' | 'bag' | 'board' | 'well';
 const TABS: Record<PanelKind, { label: string; disabled?: boolean }[]> = {
   shop: [{ label: '물약' }, { label: '장식' }, { label: '의상', disabled: true }],
   bag: [{ label: '장식' }, { label: '물약' }, { label: '재료' }],
-  board: [{ label: '기록' }, { label: '메모' }],
+  board: [{ label: '기록' }, { label: '메모' }, { label: '초대' }],
   // 층 선택 (해금된 층만, island.json well.floors)
   well: ISLAND.well.floors.map((f) => ({ label: `${f.replace(/\D/g, '')}층` })),
 };
@@ -20,6 +21,8 @@ const VERB: Record<string, string> = {
   found: '섬을 만듦', 'dungeon:clear': '1층 클리어', 'dungeon:return': '1층에서 귀환', 'dungeon:wipe': '1층 전멸', join: '섬에 들어옴', invite: '초대 코드를 바꿈', place: '놓음', move: '옮김', remove: '치움', buy: '삼', treasury: '금고로 삼',
 };
 const MAX_QTY = 99;
+/** 게시판 초대 탭 번호 */
+const INVITE_TAB = 2;
 
 /** 몇 분 전 */
 export function ago(at: number, now: number): string {
@@ -39,6 +42,7 @@ export class IslandPanels {
   /** 공동 금고 구매 확인 중 */
   private confirm = false;
   private panel: ListPanel;
+  private invite = new InviteTab();
 
   /** writeMemo = 메모 입력창 열기 (DOM, Scene이 띄움) */
   constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private writeMemo: () => void) {
@@ -52,6 +56,20 @@ export class IslandPanels {
     this.qty = 1;
     this.confirm = false;
     if (kind === 'board') this.conn.send('board', {});
+  }
+
+  private setTab(t: number): void {
+    this.tab = t;
+    this.sel = 0;
+    this.qty = 1;
+    this.confirm = false;
+    // 초대 코드·기록은 다른 주민이 바꿨을 수 있으니 탭을 열 때마다 새로
+    if (this.onInvite()) this.invite.refresh();
+    else if (this.open === 'board') this.conn.send('board', {});
+  }
+
+  private onInvite(): boolean {
+    return this.open === 'board' && this.tab === INVITE_TAB;
   }
 
   close(): void {
@@ -96,6 +114,10 @@ export class IslandPanels {
         rows: w.members.map((id, i) => ({ icon: { kind: 'face' as const, color: res?.get(id)?.color ?? 0 }, label: `${res?.get(id)?.name ?? '?'}${i === 0 ? ' (대기 시작)' : ''}` })),
       };
     }
+    if (this.onInvite()) {
+      const rows = this.invite.rows(c.live.residents?.size ?? 0);
+      return { ids: rows.map(() => ''), rows };
+    }
     const b = c.board, now = Date.now();
     if (!b) return { ids: [], rows: [] };
     const rows = this.tab === 0
@@ -120,16 +142,20 @@ export class IslandPanels {
       footer = w.departAt ? `출발까지 ${Math.max(0, left)}초` : w.members.length ? `${w.members.length}/${ISLAND.well.maxParty}명 대기 중` : '우물 앞에서 함께 출발';
       buttons = !mine ? [{ id: 'join', label: '합류', disabled: w.members.length >= ISLAND.well.maxParty }]
         : [{ id: 'leave', label: '나가기' }, ...(w.members[0] === me && !w.departAt ? [{ id: 'depart', label: w.members.length > 1 ? '출발' : '혼자 출발' }] : [])];
+    } else if (this.onInvite()) {
+      footer = this.invite.footer();
+      buttons = this.invite.buttons();
     } else if (kind === 'board' && this.tab === 1) buttons = [{ id: 'memo', label: '메모 쓰기' }];
     else if (kind === 'board') footer = '최근 100건';
     return {
       title: TITLE[kind], tabs: TABS[kind], tab: this.tab, rows, sel: kind === 'board' || kind === 'well' ? -1 : Math.min(this.sel, rows.length - 1), footer, buttons,
       ...(kind === 'board' ? { scrollTop: this.sel } : {}),
-      empty: kind === 'board' ? (c.board ? '아직 없습니다' : '불러오는 중…') : kind === 'well' ? '대기 중인 주민이 없습니다' : '비어 있습니다',
+      empty: this.onInvite() ? '불러오는 중…' : kind === 'board' ? (c.board ? '아직 없습니다' : '불러오는 중…') : kind === 'well' ? '대기 중인 주민이 없습니다' : '비어 있습니다',
     };
   }
 
   private act(id: string): void {
+    if (this.onInvite()) return this.invite.act(id);
     const ids = this.rows().ids, item = ids[this.sel];
     if (id === 'minus') this.qty = Math.max(1, this.qty - 1);
     else if (id === 'plus') this.qty = Math.min(MAX_QTY, this.qty + 1);
@@ -152,19 +178,20 @@ export class IslandPanels {
     const nextTab = (d: number) => {
       let t = this.tab;
       do t = (t + d + tabs.length) % tabs.length; while (tabs[t]!.disabled);
-      this.tab = t;
-      this.sel = 0;
-      this.qty = 1;
-      this.confirm = false;
+      this.setTab(t);
     };
-    if (code === 'Escape') this.confirm ? (this.confirm = false) : this.close();
+    if (code === 'Escape') {
+      if (this.onInvite() && this.invite.confirm) this.invite.confirm = false;
+      else if (this.confirm) this.confirm = false;
+      else this.close();
+    }
     else if (code === 'ArrowUp' || code === 'KeyW') this.sel = Math.max(0, this.sel - 1);
     else if (code === 'ArrowDown' || code === 'KeyS') this.sel = Math.min(Math.max(0, this.open === 'board' ? n - PANEL.rows : n - 1), this.sel + 1);
     else if (code === 'ArrowLeft' || code === 'KeyA') this.act('minus');
     else if (code === 'ArrowRight' || code === 'KeyD') this.act('plus');
     else if (code === 'KeyQ') nextTab(-1);
     else if (code === 'KeyE' || code === 'Tab') nextTab(1);
-    else if (code === 'Enter' || code === 'Space') this.act(this.open === 'board' ? (this.tab === 1 ? 'memo' : '') : this.open === 'shop' ? 'buy' : this.open === 'well' ? this.wellKey() : '');
+    else if (code === 'Enter' || code === 'Space') this.act(this.open === 'board' ? (this.tab === 1 ? 'memo' : this.tab === INVITE_TAB ? 'copy' : '') : this.open === 'shop' ? 'buy' : this.open === 'well' ? this.wellKey() : '');
   }
 
   /** 마우스 (화면 좌표). 패널이 열려 있으면 true */
@@ -172,7 +199,7 @@ export class IslandPanels {
     if (!this.open) return false;
     const h = this.panel.hit(x, y);
     if (h.kind === 'outside') this.close();
-    else if (h.kind === 'tab') { this.tab = h.i; this.sel = 0; this.qty = 1; this.confirm = false; }
+    else if (h.kind === 'tab') this.setTab(h.i);
     else if (h.kind === 'row') this.sel = h.i;
     else if (h.kind === 'button') this.act(h.id);
     return true;

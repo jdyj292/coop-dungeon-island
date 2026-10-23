@@ -28,6 +28,8 @@ export const api = {
   recover: (nickname: string, recoveryCode: string, password: string) =>
     call<{ me: MeRes; recoveryCode: string }>('POST', '/recover', { nickname, recoveryCode, password }),
   logout: () => call<{ ok: true }>('POST', '/logout'),
+  /** 섬 초대 코드 새로 (이전 코드는 바로 무효, island.md 7장) */
+  reissueInvite: () => call<{ inviteCode: string }>('POST', '/island/invite'),
 };
 
 /** 오류 → 화면 문구 */
