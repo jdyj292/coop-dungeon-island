@@ -1,5 +1,5 @@
 // 실행: pnpm deploy-build — 배포 묶음을 dist/에 만든다 (docs/deploy.md)
-// dist/server.mjs (게임 서버 한 파일, esbuild) + dist/migrations (DB) + dist/public (빌드한 클라이언트) + dist/package.json (네이티브 모듈만)
+// dist/server.mjs (게임 서버 한 파일, esbuild) + dist/admin.mjs (관리자 명령) + dist/migrations (DB) + dist/public (빌드한 클라이언트) + dist/package.json (네이티브 모듈만)
 // 서버에서는 dist/를 통째로 복사한 뒤 `npm ci --omit=dev` 또는 `npm install --omit=dev` → `node server.mjs`
 import { execSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -23,8 +23,9 @@ cpSync(join(root, 'client/dist'), join(out, 'public'), { recursive: true });
 
 console.log('2/4 서버 묶기 (esbuild)');
 await build({
-  entryPoints: [join(root, 'server/src/index.ts')],
-  outfile: join(out, 'server.mjs'),
+  // 게임 서버 + 관리자 명령줄 (admin.mjs: 정지·백업 등, docs/deploy.md)
+  entryPoints: { server: join(root, 'server/src/index.ts'), admin: join(root, 'server/src/admin.ts') },
+  outdir: out, outExtension: { '.js': '.mjs' },
   bundle: true, platform: 'node', format: 'esm', target: 'node22', sourcemap: true,
   tsconfig: join(root, 'server/tsconfig.json'),
   external: [...NATIVE, ...OPTIONAL],
@@ -40,7 +41,7 @@ console.log('4/4 실행용 package.json');
 const serverPkg = JSON.parse(readFileSync(join(root, 'server/package.json'), 'utf8')) as { dependencies: Record<string, string> };
 writeFileSync(join(out, 'package.json'), `${JSON.stringify({
   name: 'coop-dungeon-island-server', private: true, type: 'module',
-  scripts: { start: 'node --enable-source-maps server.mjs' },
+  scripts: { start: 'node --enable-source-maps server.mjs', admin: 'node admin.mjs' },
   dependencies: Object.fromEntries(NATIVE.map((n) => [n, serverPkg.dependencies[n]!])),
   engines: { node: '>=22' },
 }, null, 2)}\n`);

@@ -13,7 +13,7 @@ export type Db = BetterSQLite3Database<typeof schema>;
 const MIGRATIONS = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
 export const DEFAULT_DB_PATH = 'data/game.sqlite';
 
-export function openDb(path = process.env.DB_PATH ?? DEFAULT_DB_PATH): { db: Db; close: () => void } {
+export function openDb(path = process.env.DB_PATH ?? DEFAULT_DB_PATH): { db: Db; sqlite: Database.Database; close: () => void } {
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
   const sqlite = new Database(path);
   sqlite.pragma('journal_mode = WAL');
@@ -21,5 +21,5 @@ export function openDb(path = process.env.DB_PATH ?? DEFAULT_DB_PATH): { db: Db;
   sqlite.pragma('busy_timeout = 5000');
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: MIGRATIONS });
-  return { db, close: () => sqlite.close() };
+  return { db, sqlite, close: () => sqlite.close() };
 }

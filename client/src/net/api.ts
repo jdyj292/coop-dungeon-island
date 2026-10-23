@@ -35,6 +35,7 @@ export const API_ERROR_TEXT: Record<ApiError, string> = {
   invalid: '입력 형식을 확인해 주세요',
   badLogin: '닉네임 또는 비밀번호가 틀렸습니다',
   locked: '잠시 뒤 다시 시도해 주세요',
+  suspended: '이용이 정지된 계정입니다',
   rateLimited: '시도가 너무 많습니다. 잠시 뒤 다시 시도해 주세요',
   nicknameTaken: '이미 쓰는 닉네임입니다',
   badInvite: '초대 코드가 맞지 않습니다',

@@ -19,6 +19,8 @@ export const users = sqliteTable('users', {
   recoveryHash: text('recovery_hash').notNull(),
   failedLogins: integer('failed_logins').notNull().default(0),
   lockedUntil: integer('locked_until').notNull().default(0),
+  /** 관리자 정지: 이 시각까지 로그인·입장 불가 (0 = 정상, security.md 6장 관리자 도구) */
+  suspendedUntil: integer('suspended_until').notNull().default(0),
   islandId: integer('island_id').references(() => islands.id),
   wallet: integer('wallet').notNull().default(0),
   hairStyle: integer('hair_style').notNull().default(0),

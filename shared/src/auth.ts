@@ -62,4 +62,4 @@ export interface MeRes {
 }
 
 /** 오류 코드 (화면 문구는 클라이언트가 고름. 로그인 실패는 닉네임 존재 여부를 알리지 않음) */
-export type AuthError = 'invalid' | 'badLogin' | 'locked' | 'rateLimited' | 'nicknameTaken' | 'badInvite' | 'islandFull' | 'unauthorized';
+export type AuthError = 'invalid' | 'badLogin' | 'locked' | 'suspended' | 'rateLimited' | 'nicknameTaken' | 'badInvite' | 'islandFull' | 'unauthorized';

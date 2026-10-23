@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "typecheck": "tsc -p .",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "admin": "tsx src/admin.ts"
   },
   "dependencies": {
     "@colyseus/schema": "2.0.37",

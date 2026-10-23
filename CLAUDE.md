@@ -57,6 +57,7 @@ tools/                   개발 도구 (아래 표)
 | font-gen | 완성 | 갈무리 BDF → 캔버스용 도트 글꼴 .bin (hud.md 7장). `pnpm font-gen <갈무리 dist 폴더>` |
 | island-bot | 완성 | 봇 주민이 초대 코드로 가입·섬 입장해 걷기, `--well`이면 우물 대기 합류 → 함께 던전 (network.md 3·5장). `pnpm island-bot --invite <코드> [--well]` |
 | deploy-build / deploy-local | 완성 | 배포 묶음 dist/ 만들기 / 이 PC에서 프로덕션 모드로 띄우기 (localhost:8080) (deploy.md). `pnpm deploy-build` · `pnpm deploy-local` |
+| admin | 완성 | 관리자 명령: 계정 목록·정지·해제·세션 종료·초대 코드·온라인 백업 (deploy.md 6장). `pnpm admin <명령>`, 배포 `node admin.mjs` |
 | ttk-sim | 완성 | 예상 처치 시간·목표 비교 (balance.md 5장). `pnpm ttk-sim --weapon greatsword --level 1` |
 
 ## 문서 지도 — 작업에 필요한 문서만 읽는다
@@ -114,6 +115,6 @@ tools/                   개발 도구 (아래 표)
 - [ ] M5 배포
 
 ## 현재 상태
-- M0~M4 완료. M5 5-1 완료: 프로덕션 빌드(dist/: server.mjs·public·migrations), 같은 주소 접속, 서버가 정적 파일도, 환경 변수 server/src/config.ts·.env.example
+- M0~M4 완료. M5 5-1(프로덕션 빌드 dist/, 같은 주소 접속, config·.env.example), 5-2(Origin 제한·CSP·배포에서 개발 방 거절), 5-3(관리자 명령·정지 suspended_until·온라인 백업 7일치) 완료
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
-- 다음: M5 5-2 보안 마감 (Origin 제한·보안 헤더·배포에서 개발 방 막기). 미룬 것: 숙련도 ATK 반영, 던전 말풍선, 보스 한글 이름
+- 다음: M5 5-4 배포 파일·문서 (Nginx 서브도메인 설정 틀, systemd, 백업 cron, 설치 순서) → 실제 배포. 미룬 것: 숙련도 ATK 반영, 던전 말풍선, 보스 한글 이름

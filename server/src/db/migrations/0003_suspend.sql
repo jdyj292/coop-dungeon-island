@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `suspended_until` integer DEFAULT 0 NOT NULL;

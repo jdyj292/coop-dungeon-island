@@ -3,16 +3,19 @@ import express from 'express';
 import type { Db } from '../db/client';
 import { Accounts } from './accounts';
 import { authRouter, type HttpOptions } from './routes';
+import { apiOriginGuard, securityHeaders } from './security';
 
 const HOUR = 3_600_000;
 
-export function createHttpApp(db: Db, opts: HttpOptions & { staticDir?: string } = {}): { app: express.Express; accounts: Accounts; stop: () => void } {
+export function createHttpApp(db: Db, opts: HttpOptions & { staticDir?: string; publicOrigin?: string } = {}): { app: express.Express; accounts: Accounts; stop: () => void } {
   const accounts = new Accounts(db);
   const app = express();
   app.disable('x-powered-by');
   // Nginx 뒤에서 실제 IP (M5). 개발은 바로 접속
   app.set('trust proxy', 'loopback');
-  app.use('/api', authRouter(accounts, opts));
+  // 보안 헤더 (CSP 등)와 /api Origin 제한 (security.md 5장, http/security.ts)
+  app.use(securityHeaders(opts.publicOrigin ?? ''));
+  app.use('/api', apiOriginGuard(opts.publicOrigin ?? ''), authRouter(accounts, opts));
   // 빌드한 클라이언트 (배포). 이름에 해시가 붙은 assets는 오래 캐시, index.html은 매번 확인
   if (opts.staticDir) {
     app.use(express.static(opts.staticDir, {

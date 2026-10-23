@@ -90,3 +90,13 @@
 - 시도 제한은 앱 메모리 (재시작하면 비워짐). 로그인 잠금은 DB(failed_logins·locked_until), 복구 코드 연속 실패 잠금은 메모리
 - 정리: 만료 세션·30일 지난 auth_log를 시작할 때 + 한 시간마다 삭제
 - 개발: Vite가 `/api`를 게임 서버(2567)로 넘김 (같은 출처 → 쿠키 전달)
+
+### 통신 보안 구현 (M5 5-2, server/src/http/security.ts)
+- `PUBLIC_ORIGIN`(우리 사이트 주소)을 정하면: `/api` POST·WebSocket 연결은 Origin이 그것이거나 없을 때(봇·curl)만 받음 (다르면 403 / 소켓 거절), 매치메이킹 CORS는 그 주소로 고정. 비어 있으면 개발 (제한 없음)
+- 보안 헤더 (모든 응답): CSP `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'`(DOM 폼·index.html <style>)`; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' wss://<도메인>; object-src 'none'; frame-ancestors 'none'`, nosniff, Referrer-Policy same-origin, X-Frame-Options DENY, COOP same-origin. HSTS는 Nginx
+### 운영 구현 (M5 5-3)
+- 관리자 명령줄 server/src/admin.ts (배포 dist/admin.mjs, 개발 `pnpm admin`): users · suspend <닉네임> [--days N] · unsuspend · kick · invite · backup. 모두 auth_log에 `admin:*` (ip admin)
+- 정지: users.suspended_until까지 로그인(비밀번호가 맞을 때만 403 suspended, 틀리면 그대로 badLogin)·세션·게임 입장 막힘, 정지하면 세션도 지움. 이미 열린 게임 연결은 다음 재접속부터 막힘
+- 백업: SQLite 온라인 백업 API (서버가 돌아도 됨) → <폴더>/game-<UTC 시각>.sqlite, 권한 600, 최근 keep개(기본 7)만. 매일 cron (docs/deploy.md 6장)
+
+- 배포(NODE_ENV=production): 로그인 없는 개발 던전 방(?online=1) 거절, 개발 명령(dev·give·giveCoins) 무시, 게임 서버는 127.0.0.1에서만

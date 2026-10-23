@@ -99,6 +99,11 @@ export class Accounts {
       return fail('badLogin');
     }
     if (u.failedLogins) this.db.update(users).set({ failedLogins: 0 }).where(eq(users.id, u.id)).run();
+    // 관리자 정지: 비밀번호가 맞을 때만 알림 (닉네임 존재 여부는 숨긴 채)
+    if (u.suspendedUntil > now) {
+      this.log(u.id, ip, 'login_suspended', now);
+      return fail('suspended');
+    }
     this.log(u.id, ip, 'login', now);
     return { ok: true, value: { token: this.sessions.create(u.id, now), userId: u.id } };
   }

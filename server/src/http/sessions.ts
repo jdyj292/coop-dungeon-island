@@ -2,7 +2,7 @@
 import { AUTH } from '@game/shared';
 import { eq, lt } from 'drizzle-orm';
 import type { Db } from '../db/client';
-import { authLog, sessions } from '../db/schema';
+import { authLog, sessions, users } from '../db/schema';
 import { newToken, tokenHash } from './secrets';
 
 const DAY = 86_400_000;
@@ -21,12 +21,16 @@ export class Sessions {
     return token;
   }
 
-  /** 토큰 → userId. 만료면 지우고 null, 살아 있으면 연장 */
+  /** 토큰 → userId. 만료면 지우고 null, 정지된 계정이면 null, 살아 있으면 연장 */
   user(token: string | undefined, now: number): number | null {
     if (!token || token.length > 128) return null;
     const h = tokenHash(token);
-    const s = this.db.select().from(sessions).where(eq(sessions.tokenHash, h)).get();
-    if (!s) return null;
+    const row = this.db.select({ s: sessions, suspendedUntil: users.suspendedUntil }).from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id)).where(eq(sessions.tokenHash, h)).get();
+    if (!row) return null;
+    const s = row.s;
+    // 관리자 정지 중이면 세션이 있어도 들어오지 못함
+    if (row.suspendedUntil > now) return null;
     if (s.expiresAt <= now) {
       this.db.delete(sessions).where(eq(sessions.tokenHash, h)).run();
       return null;

@@ -9,7 +9,7 @@ import type { Accounts } from './accounts';
 export const SESSION_COOKIE = 'sid';
 
 const STATUS: Record<AuthError, number> = {
-  invalid: 400, badLogin: 401, unauthorized: 401, locked: 423, rateLimited: 429, nicknameTaken: 409, badInvite: 400, islandFull: 409,
+  invalid: 400, badLogin: 401, unauthorized: 401, locked: 423, suspended: 403, rateLimited: 429, nicknameTaken: 409, badInvite: 400, islandFull: 409,
 };
 
 export interface HttpOptions {

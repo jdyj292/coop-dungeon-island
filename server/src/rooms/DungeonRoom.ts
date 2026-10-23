@@ -57,9 +57,12 @@ export class DungeonRoom extends Room<DungeonState> {
     }
   }
 
-  /** 섬 파티 방: 세션 쿠키의 계정이 파티원이고 아직 안 들어왔어야 (개발 방은 누구나) */
+  /** 섬 파티 방: 세션 쿠키의 계정이 파티원이고 아직 안 들어왔어야. 개발 방(파티 없음)은 개발 모드에서만 누구나 (배포는 거절) */
   onAuth(_client: Client, _options: unknown, request?: IncomingMessage): PartyMember | true {
-    if (!this.party) return true;
+    if (!this.party) {
+      if (CONFIG.production) throw new Error('forbidden');
+      return true;
+    }
     const userId = services().accounts.sessions.user(readCookie(request?.headers.cookie, SESSION_COOKIE), Date.now());
     const m = this.party.members.find((x) => x.userId === String(userId));
     if (!m || [...this.who.values()].includes(m)) throw new Error('forbidden');

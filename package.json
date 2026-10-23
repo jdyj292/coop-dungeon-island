@@ -20,7 +20,8 @@
     "font-gen": "tsx tools/font-gen/index.ts",
     "island-bot": "tsx tools/net-smoke/island.ts",
     "deploy-build": "tsx tools/deploy/build.ts",
-    "deploy-local": "tsx tools/deploy/local.ts"
+    "deploy-local": "tsx tools/deploy/local.ts",
+    "admin": "pnpm --filter @game/server admin"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

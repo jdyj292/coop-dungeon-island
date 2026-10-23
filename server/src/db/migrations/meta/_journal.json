@@ -22,6 +22,13 @@
       "when": 1792647838224,
       "tag": "0002_memos",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792714532125,
+      "tag": "0003_suspend",
+      "breakpoints": true
     }
   ]
 }
