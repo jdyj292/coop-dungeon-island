@@ -1,5 +1,5 @@
-// 섬에서 출발한 파티: 이름·색·숙련도(최대 HP)·가져온 물약, 정산에 숙련도·남은 물약이 실려 저장 쪽(settled)으로
-import { maxHpFor, type S2C } from '@game/shared';
+// 섬에서 출발한 파티: 이름·색·숙련도(최대 HP·ATK)·가져온 물약, 정산에 숙련도·남은 물약이 실려 저장 쪽(settled)으로
+import { atkFor, maxHpFor, type S2C } from '@game/shared';
 import { describe, expect, it } from 'vitest';
 import { DungeonGame } from './dungeonGame';
 import type { PartyMember } from './gameTypes';
@@ -13,12 +13,12 @@ function make() {
 }
 
 describe('섬 파티 던전', () => {
-  it('이름·색·최대 HP(숙련도)·물약', () => {
+  it('이름·색·최대 HP·ATK(숙련도)·물약', () => {
     const { g } = make();
     g.join('s1', '무시됨', member({}));
     const p = g.state.players.get('s1')!, sp = g.sim.players.get('s1')!.state;
     expect([p.name, p.color]).toEqual(['모리', 2]);
-    expect([sp.maxHp, sp.hp]).toEqual([maxHpFor(3), maxHpFor(3)]);
+    expect([sp.maxHp, sp.hp, sp.atk]).toEqual([maxHpFor(3), maxHpFor(3), atkFor(3)]);
     expect(sp.potions).toEqual({ hp: 2, mp: 1 });
   });
 
@@ -41,5 +41,6 @@ describe('섬 파티 던전', () => {
     g.join('b', '봇');
     expect([g.state.players.get('a')!.color, g.state.players.get('b')!.color]).toEqual([0, 1]);
     expect(g.sim.players.get('a')!.state.maxHp).toBe(maxHpFor(1));
+    expect(g.sim.players.get('a')!.state.atk).toBe(atkFor(1));
   });
 });

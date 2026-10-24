@@ -2,7 +2,7 @@
 import type { FxGrade } from './actions';
 import { COMBAT } from './data/load';
 
-/** 숙련도 레벨의 ATK = baseAtk × (1 + atkPerLevel × (Lv − 1)) (balance.md 1장, 섬 연마 보너스는 M4) */
+/** 숙련도 레벨의 ATK = baseAtk × (1 + atkPerLevel × (Lv − 1)) (balance.md 1장, 섬 연마 보너스는 MVP 이후) */
 export const atkFor = (level: number): number => COMBAT.baseAtk * (1 + COMBAT.atkPerLevel * (level - 1));
 
 /** 최종 데미지 = ATK × 계수 (스킬 레벨·피해 증가·상황 보정은 이후) */

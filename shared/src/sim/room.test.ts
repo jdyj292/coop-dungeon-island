@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { weaponDef } from '../actions';
 import { TICK } from '../constants';
+import { atkFor } from '../hit';
 import type { PlayerInput } from '../player';
 import { RoomSim } from './room';
 
@@ -35,5 +36,12 @@ describe('active 구간 판정', () => {
     expect(m!.body.ko).toBe(true);
     for (let i = 0; i < 120; i++) sim.tick(TICK, none);
     expect(sim.alive).toHaveLength(0);
+  });
+  it('데미지는 숙련도 ATK를 따름: 평타 계수 200 → Lv1 20, Lv20 39', () => {
+    const sim = room();
+    sim.player.atk = atkFor(20);
+    const [m] = sim.spawn([{ kind: 'mushroom', x: 114, y: 50 }]);
+    for (let i = 0; i < 40; i++) hits(sim, { ...none, attack: i === 0 });
+    expect(m!.hp).toBe(60 - 39);
   });
 });

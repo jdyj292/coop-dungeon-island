@@ -29,7 +29,7 @@ export function strike(p: PlayerState, run: ActionRun, monsters: Monster[], done
     if (!actionHits(a, def, t)) continue;
     done.add(m.id);
     applyHit(m.body, { dir: p.facing, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });
-    const damage = damageOf(def.coef);
+    const damage = damageOf(def.coef, p.atk);
     const ko = m.hp > 0 && m.hp - damage <= 0;
     m.hp = Math.max(0, m.hp - damage);
     if (m.hp === 0) m.body.ko = true;

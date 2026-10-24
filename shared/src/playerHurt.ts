@@ -1,6 +1,7 @@
 // 플레이어 피격·다운·기상·쓰러짐, HP·MP·물약 (docs/combat.md 4장, docs/balance.md 5·6장, docs/dungeon.md 3장 쓰러짐)
 import { newFighter, type Strength } from './actions';
 import { PLAYER } from './data/load';
+import { atkFor } from './hit';
 import type { PlayerState } from './player';
 
 export type HurtEvent = 'stun' | 'down' | 'getup' | 'revive' | 'wipe';
@@ -12,6 +13,8 @@ export const maxHpFor = (level: number): number => Math.round(PLAYER.hp.base * (
 export interface Vitals {
   hp: number;
   maxHp: number;
+  /** 공격력 (숙련도, balance.md 1장). 데미지 = atk × 계수 / 100 */
+  atk: number;
   mp: number;
   potions: Record<PotionKind, number>;
   potionCd: Record<PotionKind, number>;
@@ -30,7 +33,7 @@ export interface Vitals {
 export function newVitals(level = 1): Vitals {
   const maxHp = maxHpFor(level), pt = PLAYER.potions;
   return {
-    hp: maxHp, maxHp, mp: PLAYER.mp.max, potions: { hp: pt.hp.carry, mp: pt.mp.carry }, potionCd: { hp: 0, mp: 0 },
+    hp: maxHp, maxHp, atk: atkFor(level), mp: PLAYER.mp.max, potions: { hp: pt.hp.carry, mp: pt.mp.carry }, potionCd: { hp: 0, mp: 0 },
     hurt: null, invuln: 0, feathers: PLAYER.revive.feathers, downed: false, ult: 0,
   };
 }
