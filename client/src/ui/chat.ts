@@ -82,6 +82,11 @@ export class SpeechBubbles {
     b.lines.forEach((t, i) => t.moveTo(x + 3, y + 1 + i * LINE));
   }
 
+  /** 화면에 없는 사람(방을 나감 등)의 말풍선 지우기 */
+  prune(here: (who: string) => boolean): void {
+    for (const k of [...this.bubbles.keys()]) if (!here(k)) this.remove(k);
+  }
+
   /** 섬을 떠난 사람 등 */
   remove(who: string): void {
     const b = this.bubbles.get(who);

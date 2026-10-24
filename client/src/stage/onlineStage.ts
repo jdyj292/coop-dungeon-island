@@ -99,6 +99,11 @@ export class OnlineStage {
     return null;
   }
 
+  /** 플레이어 발 위치 (월드 화면 좌표, 던전 말풍선) */
+  feet(): Map<string, { sx: number; sy: number }> {
+    return new Map([...this.players].flatMap(([id, r]) => (r.last ? [[id, project(r.last.x, r.last.y)] as const] : [])));
+  }
+
   /** 내 플레이어 색 번호 (아래 HUD 얼굴) */
   get myColor(): number {
     return this.players.get(this.conn.myId)?.colorIndex ?? 0;
@@ -206,16 +211,11 @@ export class OnlineStage {
     } else if (type === 'projEnd') {
       const pr = this.projectiles.get((msg as S2C['projEnd']).id);
       if (pr) pr.endAt = now;
-    } else if (type === 'result') {
-      this.onResult?.(msg as S2C['result']);
-    } else if (type === 'reward') {
-      sfx.play('coin');
-    } else if (type === 'comboBonus') {
-      this.onBonus?.((msg as S2C['comboBonus']).rate);
-    } else if (type === 'chat') this.onChat?.(msg as S2C['chat']);
-    else if (type === 'rejected') {
-      this.local.predictor?.reject((msg as S2C['rejected']).seq);
-    }
+    } else if (type === 'result') this.onResult?.(msg as S2C['result']);
+    else if (type === 'reward') sfx.play('coin');
+    else if (type === 'comboBonus') this.onBonus?.((msg as S2C['comboBonus']).rate);
+    else if (type === 'chat') this.onChat?.(msg as S2C['chat']);
+    else if (type === 'rejected') this.local.predictor?.reject((msg as S2C['rejected']).seq);
   }
 
   private playHit(h: S2C['hit']): void {
