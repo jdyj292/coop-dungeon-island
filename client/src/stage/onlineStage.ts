@@ -91,10 +91,11 @@ export class OnlineStage {
     return out;
   }
 
-  /** 보스 체력 비율·그로기 (보스가 없으면 null, 위쪽 보스 HP 바) */
-  boss(): { ratio: number; groggy: boolean } | null {
+  /** 보스 체력 비율·그로기·이름 (보스가 없으면 null, 위쪽 보스 HP 바·등장 띠) */
+  boss(): { ratio: number; groggy: boolean; name: string } | null {
     for (const m of this.conn.monsters.latest?.items.values() ?? []) {
-      if (MONSTERS[m.type]?.rank === 'boss') return { ratio: m.hpRatio / 255, groggy: m.state === 'groggy' };
+      const def = MONSTERS[m.type];
+      if (def?.rank === 'boss') return { ratio: m.hpRatio / 255, groggy: m.state === 'groggy', name: def.name };
     }
     return null;
   }

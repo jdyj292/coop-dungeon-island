@@ -209,9 +209,9 @@ export class Dungeon extends Phaser.Scene {
   }
 
   /** 로컬 전투 테스트의 보스 체력 (보스 HP 바) */
-  private localBoss(): { ratio: number; groggy: boolean } | null {
+  private localBoss(): { ratio: number; groggy: boolean; name: string } | null {
     const b = this.stage?.monsters.find((m) => m.def.rank === 'boss');
-    return b ? { ratio: b.hp / b.maxHp, groggy: b.mode === 'groggy' } : null;
+    return b ? { ratio: b.hp / b.maxHp, groggy: b.mode === 'groggy', name: b.def.name } : null;
   }
 
   /** 몬스터를 모두 기절시키면 다음 웨이브, 마지막이면 방 클리어 (shared WaveRunner) */
@@ -287,7 +287,7 @@ export class Dungeon extends Phaser.Scene {
     let target = view.player?.pos.x ?? this.camCenter;
     if (this.intro) {
       const shot = this.intro.update(dt, target);
-      this.overlay.bossBand = shot.band;
+      this.overlay.bossBand = shot.band ? boss?.name ?? '' : null;
       target = shot.camX;
       if (this.intro.done) this.intro = null;
     }

@@ -3,6 +3,7 @@ import type Phaser from 'phaser';
 import fx from '../../data/fx.json';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
+import { koText, type KoText } from './koText';
 import { drawText } from './pixelFont';
 
 /** 승인 데모 기준 위치 (내부 해상도 288 너비, 오른쪽 끝에서 잰 거리) */
@@ -10,16 +11,20 @@ const COMBO_CX = 288 - 19;
 const COMBO_Y = 62;
 const HIT_Y = 79;
 const BANNER = { y: 64, h: 26, textY: 69 };
+/** 보스 한글 이름: 띠 아래 1px 선에서 이만큼 아래 (갈무리9, 흰 글자 + 외곽선) */
+const BOSS_NAME_GAP = 3;
 /** 콤보 코인 보너스 "+5%" (HIT 아래, hud.md 5장 "콤보 단계 달성") */
 const BONUS_Y = 87;
 
 export class HudOverlay {
   private g: Phaser.GameObjects.Graphics;
+  private bossName: KoText;
   private clearLeft = 0;
   private bonus = { text: '', left: 0 };
 
   constructor(scene: Phaser.Scene, depth: number) {
     this.g = scene.add.graphics().setScrollFactor(0).setDepth(depth);
+    this.bossName = koText(scene, 0, 0, '', { color: 'global.fx.flash', outline: 'four', align: 'center' }).setScrollFactor(0).setDepth(depth + 1).setVisible(false);
   }
 
   /** 콤보 단계 달성: 코인 보너스 비율을 bonusSec 동안 */
@@ -31,8 +36,8 @@ export class HudOverlay {
   connection: 'ok' | 'reconnecting' | 'lost' = 'ok';
   private blink = 0;
 
-  /** 보스 이름 띠 (등장 연출 동안, 한글 이름은 글꼴 추가 뒤: 지금은 아이콘 + BOSS) */
-  bossBand = false;
+  /** 보스 이름 띠 (등장 연출 동안): 아이콘 + BOSS, 띠 아래 한글 이름. null = 숨김 */
+  bossBand: string | null = null;
 
   /** 방 클리어 띠를 clearSec 동안 */
   showClear(): void {
@@ -50,7 +55,9 @@ export class HudOverlay {
     }
     this.bonus.left = Math.max(0, this.bonus.left - dt);
     if (this.bonus.left > 0) drawText(g, this.bonus.text, COMBO_CX + right + 1, BONUS_Y, { color: 'global.allyFx.gold', align: 'center' });
-    if (this.bossBand) {
+    this.bossName.setVisible(!!this.bossBand);
+    // 띠가 없을 때는 이름도 숨김 (빈 이름이면 BOSS만)
+    if (this.bossBand !== null) {
       this.band(width, 'global.ui.bossHp');
       const tx = width / 2 + 6;
       dot(g, tx - 30, BANNER.textY + 2, colorInt('global.ui.bossIcon'), 10, 10);
@@ -58,6 +65,7 @@ export class HudOverlay {
       dot(g, tx - 27, BANNER.textY + 8, colorInt('global.outline'), 1, 1);
       dot(g, tx - 24, BANNER.textY + 8, colorInt('global.outline'), 1, 1);
       drawText(g, 'BOSS', tx, BANNER.textY, { color: 'global.ui.bossHp', scale: 3, align: 'center' });
+      this.bossName.setText(this.bossBand).moveTo(width / 2, BANNER.y + BANNER.h + BOSS_NAME_GAP);
     }
     this.blink += dt;
     if (this.connection !== 'ok') {
