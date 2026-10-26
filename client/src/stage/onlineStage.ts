@@ -3,23 +3,25 @@
 import type Phaser from 'phaser';
 import {
   COMBAT, MONSTERS, NET, playerStateName, weaponDef,
-  type ActionDef, type Bounds, type Monster, type MonsterAttack, type PlayerState, type Projectile, type S2C, type ZoneArea,
+  type Bounds, type Monster, type PlayerState, type S2C, type ZoneArea,
 } from '@game/shared';
 import fx from '../../data/fx.json';
 import { sfx } from '../audio/player';
-import { actionSmear } from '../fx/actionSmear';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
+import { BoltLayer } from '../fx/boltLayer';
 import { HazardLayer } from '../fx/hazards';
+import { ATTACKS, RemoteShots } from '../net/remoteShots';
+import { monsterCue, playerCue } from './onlineCues';
 import { hitPackage, type FxContext } from '../fx/hitPackage';
 import { FxLayer } from '../fx/layer';
-import { dust, ring } from '../fx/particles';
+import { dust } from '../fx/particles';
 import { HitStop, Shake } from '../fx/timing';
 import type { Connection } from '../net/connection';
 import type { KeyInput } from '../net/inputSender';
 import { LocalPlayer } from '../net/localPlayer';
 import { mirrorMonster, mirrorPlayer } from '../net/mirror';
-import { Transitions, type Cue } from '../net/transitions';
+import { Transitions } from '../net/transitions';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
 import { MonsterView, placeMonster } from '../view/monsterView';
@@ -30,9 +32,6 @@ import { drawReviveGauges } from '../view/reviveGauge';
 
 const FX_DEPTH = 5000;
 const DISCONNECTED_ALPHA = 0.45;
-
-/** 몬스터 공격 id → 정의 (투사체·장판 그리기용) */
-const ATTACKS = new Map<string, MonsterAttack>(Object.values(MONSTERS).flatMap((m) => m.attacks.map((a) => [a.id, a] as const)));
 
 interface Remote {
   view: PlayerView;
@@ -58,7 +57,9 @@ export class OnlineStage {
   private monsters = new Map<string, { m: Monster; view: MonsterView }>();
   private hazards: HazardLayer;
   private cues = new Transitions();
-  private projectiles = new Map<number, { p: Projectile; t0: number; x0: number; endAt: number }>();
+  /** 몬스터 투사체·플레이어 마법탄 (이벤트로만 옴) */
+  private shots = new RemoteShots();
+  private boltLayer: BoltLayer;
   private hits: S2C['hit'][] = [];
   private clock = 0;
   /** 내 캐릭터 (입력·예측·보정) */
@@ -70,6 +71,7 @@ export class OnlineStage {
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.local = new LocalPlayer(conn, bounds);
     this.hazards = new HazardLayer(scene);
+    this.boltLayer = new BoltLayer(scene);
     this.reviveG = scene.add.graphics().setDepth(FX_DEPTH + 1);
     conn.onEvent = (type, msg) => this.onEvent(type, msg);
     conn.onSnapshot = () => this.local.reconcile();
@@ -141,7 +143,7 @@ export class OnlineStage {
       const m = mirrorMonster(s, t, e?.m);
       if (!e) this.monsters.set(id, (e = { m, view: new MonsterView(this.scene) }));
       e.view.update(m, realDt);
-      this.cues.monster(m, s.state, s.actionStart).forEach((q) => this.monsterCue(e!, q));
+      this.cues.monster(m, s.state, s.actionStart).forEach((q) => monsterCue(this.fx, e!.m.body, q));
     }
     for (const [id, e] of this.monsters) {
       if (ms.has(id)) continue;
@@ -156,7 +158,9 @@ export class OnlineStage {
       let r = this.players.get(id);
       if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1, s.color), colorIndex: s.color, ghosts: new Afterimages(this.scene), last: null }));
       r.view.hair = hairOfLook(s.look);
-      r.view.weaponVisual = weaponDef(s.weapon).visual;
+      const w = weaponDef(s.weapon);
+      r.view.weaponVisual = w.visual;
+      r.view.teleport = w.backstepStyle === 'teleport';
       // 나 = 예측 상태 (화면 위치는 보정 오프셋 포함), 다른 사람 = 보간
       const mine = id === c.myId && !!this.local.predictor;
       const p = mine ? { ...this.local.predictor!.state, pos: this.local.predictor!.display } : mirrorPlayer(s, t, s.weapon, undefined, now);
@@ -165,13 +169,13 @@ export class OnlineStage {
       const cues = mine
         ? this.cues.player(id, p, playerStateName(p, myMoved ?? 0), this.local.predictor!.runStamp)
         : this.cues.player(id, p, s.state, s.actionStart);
-      cues.forEach((q) => this.playerCue(r!, p, q, mine));
+      cues.forEach((q) => playerCue(this.fx, r!.view, p, q, mine, w));
       const moved = mine ? myMoved : r.last ? Math.hypot(p.pos.x - r.last.x, p.pos.y - r.last.y) : 0;
       r.last = { x: p.pos.x, y: p.pos.y };
       r.view.draw(p, moved, 0, this.clock);
       // 접속이 끊긴 동료는 반투명 (network.md 10장)
       r.view.actor.img.setAlpha(s.state === 'disconnected' ? DISCONNECTED_ALPHA : 1);
-      r.ghosts.update(realDt, !!p.backstep, r.view.actor.img);
+      r.ghosts.update(realDt, !!p.backstep && !r.view.teleport, r.view.actor.img);
     }
     for (const [id, r] of this.players) {
       if (ps.has(id)) continue;
@@ -189,6 +193,7 @@ export class OnlineStage {
 
   private onEvent<K extends keyof S2C>(type: K, msg: S2C[K]): void {
     const now = this.conn.clock.serverNow();
+    if (this.shots.on(type, msg, now)) return;
     if (type === 'hit') this.hits.push(msg as S2C['hit']);
     else if (type === 'playerHit') {
       const m = msg as S2C['playerHit'], r = this.players.get(m.pid), pos = r?.last;
@@ -204,12 +209,6 @@ export class OnlineStage {
     } else if (type === 'roomClear') {
       sfx.play('roomClear');
       this.onClear?.();
-    } else if (type === 'projSpawn') {
-      const m = msg as S2C['projSpawn'], def = ATTACKS.get(m.kind);
-      if (def) this.projectiles.set(m.id, { p: { id: m.id, ownerId: m.owner, def, x: m.x, y: m.y, dir: m.dir, traveled: 0, done: false, hitPids: [] }, t0: m.t0, x0: m.x, endAt: Infinity });
-    } else if (type === 'projEnd') {
-      const pr = this.projectiles.get((msg as S2C['projEnd']).id);
-      if (pr) pr.endAt = now;
     } else if (type === 'result') this.onResult?.(msg as S2C['result']);
     else if (type === 'reward') sfx.play('coin');
     else if (type === 'comboBonus') this.onBonus?.((msg as S2C['comboBonus']).rate);
@@ -231,42 +230,6 @@ export class OnlineStage {
     if (h.attacker === this.conn.myId) this.local.predictor?.stop(h.hitstop);
   }
 
-  private playerCue(r: Remote, p: PlayerState, q: Cue, mine: boolean): void {
-    if (q.type === 'actionStart' && q.def.sfx?.windup) sfx.play(q.def.sfx.windup);
-    if (q.type === 'actionActive') {
-      if (q.def.sfx?.active) sfx.play(q.def.sfx.active);
-      // 플레이어 cue의 def는 항상 플레이어 행동
-      actionSmear(this.fx.layer, q.def as ActionDef, () => ({ ...project(p.pos.x, p.pos.y), facing: p.facing }));
-    }
-    if (q.type !== 'enter') return;
-    if (q.state === 'backstep') sfx.play('backstep');
-    if (q.state === 'run' && mine) sfx.play('dash');
-    if (q.state === 'down') {
-      this.dustAt(p.pos.x, p.pos.y, fx.dust.down);
-      if (mine) this.fx.shake.start(fx.downShake.sec, fx.downShake.px);
-    }
-    if (q.from === 'down') r.view.onGetup();
-  }
-
-  private monsterCue(e: { m: Monster; view: MonsterView }, q: Cue): void {
-    const b = e.m.body;
-    if (q.type === 'actionStart' && q.def.sfx?.windup) sfx.play(q.def.sfx.windup);
-    if (q.type === 'actionActive' && q.def.sfx?.active) sfx.play(q.def.sfx.active);
-    if (q.type !== 'enter') return;
-    if (q.state === 'down') {
-      sfx.play('down');
-      this.dustAt(b.x, b.y, fx.dust.down);
-      const { sx, sy } = project(b.x, b.y);
-      this.fx.layer.add(ring(sx, sy));
-      this.fx.shake.start(fx.downShake.sec, fx.downShake.px);
-    }
-    if (q.state === 'groggy' || q.state === 'dizzy') {
-      if (q.state === 'groggy') sfx.play('mon_bear_roar');
-      this.dustAt(b.x, b.y, fx.dust.down);
-      this.fx.shake.start(fx.downShake.sec, fx.downShake.px);
-    }
-  }
-
   private dustAt(x: number, y: number, kind: typeof fx.dust.down): void {
     const { sx, sy } = project(x, y);
     dust(sx, sy, kind).forEach((d) => this.fx.layer.add(d));
@@ -286,11 +249,9 @@ export class OnlineStage {
   private drawWorld(t: number, dt: number): void {
     const data = spriteData(), alive = [...this.monsters.values()];
     alive.forEach((e, i) => placeMonster(this.scene, e.view, data, e.m, this.clock, i));
-    for (const [id, pr] of this.projectiles) {
-      if (t >= pr.endAt) this.projectiles.delete(id);
-      else pr.p.x = pr.x0 + pr.p.dir * pr.p.def.projectile!.speed * Math.max(0, (t - pr.t0) / 1000);
-    }
-    this.hazards.draw({ zones: this.zones, alive: alive.map((e) => e.m), projectiles: [...this.projectiles.values()].map((p) => p.p) });
+    const shots = this.shots.at(t, this.fx.layer);
+    this.boltLayer.draw(shots.bolts);
+    this.hazards.draw({ zones: this.zones, alive: alive.map((e) => e.m), projectiles: shots.projectiles });
     this.fx.layer.update(dt);
     this.fx.layer.draw();
   }

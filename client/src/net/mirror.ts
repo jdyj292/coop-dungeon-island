@@ -57,6 +57,7 @@ export function mirrorMonster(s: MonsterSnap, t: number, prev?: Monster): Monste
   const def = s.actionId ? m.def.attacks.find((a) => a.id === s.actionId) : undefined;
   m.attack = def ? { def, t: sec(t - s.actionStart), dir: s.facing, struck: [] } : null;
   m.moving = s.state === 'chase';
+  m.frozen = s.state === 'frozen' ? 1 : 0;
   m.hopT = m.moving ? el : 0;
   m.hp = Math.round((s.hpRatio / 255) * m.maxHp);
   return m;

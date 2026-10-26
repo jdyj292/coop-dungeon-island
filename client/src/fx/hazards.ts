@@ -10,7 +10,7 @@ import { dot } from './layer';
 type G = Phaser.GameObjects.Graphics;
 
 /** 바닥 타원 (반지름 r → 화면 rx = r, ry = r × 깊이 압축) 안의 점마다 */
-function ellipse(cx: number, cy: number, r: number, each: (x: number, y: number, edge: boolean) => void): void {
+export function ellipse(cx: number, cy: number, r: number, each: (x: number, y: number, edge: boolean) => void): void {
   const rx = r, ry = Math.max(1, Math.round(r * DEPTH_RATIO));
   for (let y = -ry; y <= ry; y++) {
     const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y / ry) ** 2)));
@@ -71,6 +71,17 @@ export class HazardLayer {
             dot(g, sx, sy, danger);
           }
         }
+      }
+    }
+
+    // 빙결: 머리 위 얼음 조각 (외곽선 하늘색은 monsterTexture)
+    const ice = colorInt('global.allyFx.sky'), glint = colorInt('global.allyFx.white');
+    for (const m of sim.alive) {
+      if (!(m.frozen > 0)) continue;
+      const { sx, sy } = project(m.body.x, m.body.y, m.body.z);
+      for (const [dx, dy] of fx.spell.frozen.shards as [number, number][]) {
+        dot(a, sx + dx, sy + dy, ice, 1, 2);
+        dot(a, sx + dx, sy + dy - 1, glint);
       }
     }
 

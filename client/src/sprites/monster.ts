@@ -10,6 +10,8 @@ const DITHER_WIDTH = 30;
 export interface MonsterFrameOptions {
   /** 슈퍼아머 외곽선 (프레임에 superArmorOutline이 있을 때 깜빡임의 '켜짐' 쪽) */
   superArmor?: boolean;
+  /** 빙결 외곽선 (하늘색, MVP 보충 ST-2a). 슈퍼아머보다 먼저 */
+  frozen?: boolean;
 }
 
 export function renderMonsterFrame(
@@ -36,7 +38,8 @@ function renderFrame(data: SpriteData, monster: SpriteData['monsters'][string] |
     rows: frame.rows,
     ...mats,
     outline: color('global.outline'),
-    outlineOverride: options.superArmor && frame.superArmorOutline ? color('global.semantic.superArmor') : undefined,
+    outlineOverride: options.frozen ? color('global.allyFx.sky')
+      : options.superArmor && frame.superArmorOutline ? color('global.semantic.superArmor') : undefined,
     dither: width > DITHER_WIDTH,
     ditherRow: frame.foot[1],
   });

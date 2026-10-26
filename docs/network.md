@@ -110,7 +110,7 @@ PlayerPrivate (본인에게만 필터링해서 전송)
 
 MonsterState
   id, type, x, y, z, facing
-  state                     idle / chase / action / hitstun / airborne / down / getup / dizzy(멧돼지 어지러움) / groggy / stunned (바운드는 airborne 안에서 z로)
+  state                     idle / chase / action / hitstun / airborne / down / getup / dizzy(멧돼지 어지러움) / groggy / frozen(빙결, 몸이 idle일 때) / stunned (바운드는 airborne 안에서 z로)
   actionId, actionStart     예고·공격 표시를 클라이언트가 데이터로 그린다
   hpRatio                   체력 비율 (0~1, uint8로 양자화)
   superArmor

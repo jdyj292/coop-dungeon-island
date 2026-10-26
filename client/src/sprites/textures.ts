@@ -39,10 +39,10 @@ export interface CharacterTexture {
 const feet = new Map<string, [number, number]>();
 
 /** 몬스터 프레임 텍스처. 슈퍼아머 외곽선은 별도 키 */
-export function monsterTexture(scene: Phaser.Scene, id: string, frame: string, superArmor = false): CharacterTexture {
-  const key = ['mon', id, frame, superArmor ? 'sa' : '-'].join('|');
+export function monsterTexture(scene: Phaser.Scene, id: string, frame: string, superArmor = false, frozen = false): CharacterTexture {
+  const key = ['mon', id, frame, frozen ? 'fz' : superArmor ? 'sa' : '-'].join('|');
   if (!scene.textures.exists(key)) {
-    const sprite = renderMonsterFrame(spriteData(), id, frame, { superArmor });
+    const sprite = renderMonsterFrame(spriteData(), id, frame, { superArmor, frozen });
     scene.textures.addCanvas(key, paintCanvas(sprite));
     feet.set(key, sprite.foot);
   }

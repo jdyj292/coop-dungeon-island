@@ -11,11 +11,14 @@ import { soundsFor } from '../audio/sfxEvents';
 import { actionSmear } from '../fx/actionSmear';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
+import { BoltLayer } from '../fx/boltLayer';
 import { HazardLayer } from '../fx/hazards';
 import { hitPackage, type FxContext } from '../fx/hitPackage';
 import { FxLayer } from '../fx/layer';
 import { dust, ring } from '../fx/particles';
 import { Rhythm } from '../fx/rhythm';
+import { boltFizzle, boltHit, teleportPuff } from '../fx/spell';
+import { castActive, castStart } from '../fx/spellCast';
 import { HitStop, Shake } from '../fx/timing';
 import { spriteData } from '../sprites/data';
 import { PlayerView } from '../view/playerView';
@@ -60,12 +63,16 @@ export class CombatStage {
   sound: (name: string) => void = (name) => { sfx.play(name); };
   /** 달리기 시작 소리용 */
   private wasRunning = false;
+  private wasBackstep = false;
+  private bolts: BoltLayer;
 
   constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, spawns: Spawn[], readonly opts: SimOptions = {}, readonly weapon: WeaponDef = weaponDef('greatsword')) {
     this.sim = new RoomSim(this.weapon, bounds, player, opts);
     this.sim.spawn(spawns);
     this.playerView = new PlayerView(scene, FX_DEPTH - 1);
     this.playerView.weaponVisual = this.weapon.visual;
+    this.playerView.teleport = this.weapon.backstepStyle === 'teleport';
+    this.bolts = new BoltLayer(scene);
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.hazards = new HazardLayer(scene);
     this.ghosts = new Afterimages(scene);
@@ -148,7 +155,18 @@ export class CombatStage {
     const add = (list: ReturnType<typeof dust>) => list.forEach((d) => this.fx.layer.add(d));
     if (e.type === 'fighter') {
       this.rhythm.onEvent(e.e);
-      if (e.e.type === 'active') this.smearFor(e.e.run.def);
+      const p = this.player, caster = { x: p.pos.x, y: p.pos.y, facing: p.facing };
+      if (e.e.type === 'start') castStart(this.fx.layer, this.weapon, e.e.run.def, caster);
+      if (e.e.type === 'active') {
+        this.smearFor(e.e.run.def);
+        castActive(this.fx.layer, this.weapon, e.e.run.def, caster);
+      }
+    } else if (e.type === 'boltEnd') {
+      const b = e.bolt, { sx, sy } = project(b.x, b.y, fx.spell.bolt.height);
+      if (b.hit.length) this.fx.layer.add(boltHit(sx, sy));
+      else add(boltFizzle(sx, sy));
+    } else if (e.type === 'backstep' && this.playerView.teleport) {
+      this.teleportAt(this.player);
     } else if (e.type === 'hit') {
       const b = e.m.body, facing = this.player.facing, { sx, sy } = project(b.x, b.y, b.z);
       const [ax, ay] = fx.star.at as [number, number];
@@ -193,6 +211,11 @@ export class CombatStage {
     }
   }
 
+  private teleportAt(p: PlayerState): void {
+    const { sx, sy } = project(p.pos.x, p.pos.y);
+    teleportPuff(sx, sy - fx.spell.bolt.height).forEach((e) => this.fx.layer.add(e));
+  }
+
   private smearFor(def: ActionDef): void {
     const p = this.player;
     actionSmear(this.fx.layer, def, () => ({ ...project(p.pos.x + this.rhythm.px * p.facing, p.pos.y), facing: p.facing }));
@@ -202,7 +225,11 @@ export class CombatStage {
   private draw(moved: number | null): void {
     const data = spriteData(), p = this.player;
     this.playerView.draw(p, moved, this.rhythm.px, this.clock);
-    this.ghosts.update(this.drawDt, !!p.backstep, this.playerView.actor.img);
+    this.ghosts.update(this.drawDt, !!p.backstep && !this.playerView.teleport, this.playerView.actor.img);
+    // 순간이동이 끝나는 순간: 나타나는 자리에 점
+    if (this.wasBackstep && !p.backstep && this.playerView.teleport) this.teleportAt(p);
+    this.wasBackstep = !!p.backstep;
+    this.bolts.draw(this.sim.bolts);
     this.drawDt = 0;
 
     this.sim.alive.forEach((m, i) => placeMonster(this.scene, this.view(m), data, m, this.clock, i));

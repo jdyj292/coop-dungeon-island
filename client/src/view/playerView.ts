@@ -20,6 +20,8 @@ export class PlayerView {
   hair: Hair = DEFAULT_HAIR;
   /** 무기 외형 (weapons.json visual → weapons_visual.json 프로필) */
   weaponVisual = 'greatsword_basic';
+  /** 순간이동 백스텝 (스태프 backstepStyle teleport): 뛰지 않고 가운데 구간은 안 보임 (combat.md 1장, 성능은 같음) */
+  teleport = false;
   private stars: Phaser.GameObjects.Graphics;
   private beat = 0;
   private moving = false;
@@ -90,13 +92,15 @@ export class PlayerView {
     };
     const tex = characterTexture(this.scene, look, { hairColor: hairColorPath(this.hair), playerColor: `global.playerColors.${this.colorIndex}` });
     // 백스텝: 뛰어 물러나는 높이는 위치 오프셋으로만 (판정은 지상, motion.md 6장)
-    const hop = p.backstep ? Math.round(Math.sin((p.backstep.t / PLAYER.backstep.sec) * Math.PI) * fx.backstepHop) : 0;
+    const bk = p.backstep ? p.backstep.t / PLAYER.backstep.sec : 0, tp = fx.spell.teleport;
+    const hop = p.backstep && !this.teleport ? Math.round(Math.sin(bk * Math.PI) * fx.backstepHop) : 0;
+    const vanished = !!p.backstep && this.teleport && bk > tp.visibleStart && bk < tp.visibleEnd;
     place(this.actor, tex, {
       x: p.pos.x + offsetX * p.facing, y: p.pos.y, z: hop, facing: p.facing, flash: this.flash > 0,
       angle: lying ? -90 * p.facing : 0,
     });
     // 기상·부활 무적: 깜빡임 (motion.md 4장)
-    this.actor.img.setVisible(!(p.invuln > 0 && Math.floor(clock / fx.reaction.stunBlink) % 2 === 1));
+    this.actor.img.setVisible(!vanished && !(p.invuln > 0 && Math.floor(clock / fx.reaction.stunBlink) % 2 === 1));
     this.drawStars(p, clock);
   }
 

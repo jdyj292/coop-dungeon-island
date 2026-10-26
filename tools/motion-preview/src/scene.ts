@@ -1,6 +1,6 @@
 // 모션 무대: 게임과 같은 CombatStage를 대본 입력으로 돌린다. 속도·일시정지·한 프레임 넘기기
 import Phaser from 'phaser';
-import { fighterPhase, type Spawn, type Vec2 } from '@game/shared';
+import { fighterPhase, weaponDef, type Spawn, type Vec2 } from '@game/shared';
 import { color } from '../../../client/src/palette';
 import { CombatStage } from '../../../client/src/stage/combatStage';
 import { FLOOR_TOP } from '../../../client/src/view/layout';
@@ -11,7 +11,8 @@ export const VIEW_W = 176;
 const DEPTH_TILES = 4;
 export const VIEW_H = FLOOR_TOP + DEPTH_TILES * 10 + 6;
 const PLAYER: Vec2 = { x: 48, y: 32 };
-const MUSHROOM: Spawn[] = [{ kind: 'mushroom', x: 64, y: 32 }];
+/** 버섯 자리: 대검은 바로 앞, 스태프는 화염 폭발이 닿는 4타일 앞 */
+const spawnsFor = (weapon: string): Spawn[] => [{ kind: 'mushroom', x: weapon === 'staff' ? 112 : 64, y: 32 }];
 const FRAME = 1 / 60;
 
 /** 화면 밖(조작 패널)에서 바꾸는 값 */
@@ -21,7 +22,10 @@ export const controls = {
   /** 일시정지 중 넘길 프레임 수 */
   stepFrames: 0,
   mode: 'all' as ScriptMode,
+  /** 무기 (바꾸면 무대를 새로 만든다) */
+  weapon: 'greatsword',
   restart: false,
+  rebuild: false,
   onInfo: (_text: string) => {},
 };
 
@@ -38,17 +42,23 @@ export class MotionScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(color('floors.1.env.void'));
     this.textures.addCanvas('motion-bg', drawRoomBg(1, VIEW_W + 16, DEPTH_TILES, VIEW_H + 8));
     this.add.image(-8, 0, 'motion-bg').setOrigin(0, 0).setDepth(-1000);
-    this.stage = new CombatStage(this, { minX: 8, maxX: VIEW_W - 8, minY: 0, maxY: DEPTH_TILES * 16 }, PLAYER, MUSHROOM, { ai: false });
+    this.stage = new CombatStage(this, { minX: 8, maxX: VIEW_W - 8, minY: 0, maxY: DEPTH_TILES * 16 }, PLAYER, spawnsFor(controls.weapon), { ai: false }, weaponDef(controls.weapon));
+    this.script = new Script(controls.mode);
   }
 
   private restart(): void {
-    this.stage.reset(PLAYER, MUSHROOM);
+    this.stage.reset(PLAYER, spawnsFor(controls.weapon));
     this.script.mode = controls.mode;
     this.script.restart();
     this.clock = 0;
   }
 
   update(_time: number, delta: number): void {
+    if (controls.rebuild) {
+      controls.rebuild = false;
+      this.scene.restart();
+      return;
+    }
     if (controls.restart) {
       controls.restart = false;
       this.restart();
@@ -67,7 +77,7 @@ export class MotionScene extends Phaser.Scene {
     this.clock += dt;
     if (this.script.needsReset) {
       const lap = this.script.finished;
-      s.reset(PLAYER, MUSHROOM);
+      s.reset(PLAYER, spawnsFor(controls.weapon));
       this.script.needsReset = false;
       if (lap) this.restart();
     }

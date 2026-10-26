@@ -87,8 +87,9 @@ export function hasArmor(m: Monster): boolean {
 /** 충돌 반 크기 (피격 상자 너비·깊이의 절반) */
 export const monsterHalf = (m: Monster): Half => ({ x: m.def.hurtbox.width / 2, y: m.def.hurtbox.depth / 2 });
 
-/** 몸 물리 한 틱 (넉백·띄우기). 넉백으로 장애물에 들어가면 그 틱의 좌우 이동은 취소 */
+/** 몸 물리 한 틱 (넉백·띄우기). 넉백으로 장애물에 들어가면 그 틱의 좌우 이동은 취소. 빙결 시간도 여기서 흐름 (AI를 끈 도구에서도) */
 export function stepBodyIn(m: Monster, dt: number, bounds: Bounds): BodyEvent[] {
+  m.frozen = Math.max(0, m.frozen - dt);
   const bd = monsterBounds(m, bounds), x0 = m.body.x;
   const ev = stepBody(m.body, dt, bd.minX, bd.maxX);
   if (hitsBlock(m.body, monsterHalf(m), bounds)) m.body.x = x0;

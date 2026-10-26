@@ -80,7 +80,6 @@ export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEv
   const ev: MonsterEvent[] = [];
   for (const id of Object.keys(m.cooldowns)) m.cooldowns[id] = Math.max(0, m.cooldowns[id]! - dt);
   m.moving = false;
-  m.frozen = Math.max(0, m.frozen - dt);
   m.body.armor = hasArmor(m);
   for (const e of stepBodyIn(m, dt, ctx.bounds)) ev.push({ type: 'body', e });
   if (m.body.ko || m.body.state !== 'idle') {

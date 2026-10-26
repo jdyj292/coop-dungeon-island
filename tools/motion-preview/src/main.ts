@@ -29,7 +29,11 @@ function stepFrame(): void {
 const speed = select('속도', [['1', '1배'], ['0.5', '1/2'], ['0.25', '1/4'], ['0.125', '1/8']], '1', (v) => {
   controls.speed = Number(v);
 });
-const mode = select('동작', [['all', '3연타 → 올려베기'], ['combo', '3연타만'], ['launch', '올려베기만']], 'all', (v) => {
+const weapon = select('무기', [['greatsword', '대검'], ['staff', '스태프']], 'greatsword', (v) => {
+  controls.weapon = v;
+  controls.rebuild = true;
+});
+const mode = select('동작', [['all', '3연타 → 스킬'], ['combo', '3연타만'], ['launch', '스킬만']], 'all', (v) => {
   controls.mode = v as ScriptMode;
   controls.restart = true;
 });
@@ -88,7 +92,7 @@ reference.addEventListener('load', () => {
 app.append(
   el('header', {},
     el('h1', { text: 'motion-preview' }), playBtn, button('▶ 1프레임 (.)', stepFrame),
-    button('처음부터', () => { controls.restart = true; }), speed.node, mode.node),
+    button('처음부터', () => { controls.restart = true; }), speed.node, weapon.node, mode.node),
   el('div', { className: 'tab' }, panel,
     el('div', { className: 'view' },
       el('div', { className: 'label', text: '구현 (게임 코드 그대로, 값은 메모리에서만 바뀜)' }), stageBox, info,

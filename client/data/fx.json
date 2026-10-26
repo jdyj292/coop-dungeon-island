@@ -42,5 +42,19 @@
   "hud": { "trailSec": 0.4, "readyFlashSec": 0.2, "clearSec": 0.8, "ultBlinkSec": 0.15, "countPopSec": 0.15, "coverAlpha": 0.6, "dimAlpha": 0.6, "ultFillAlpha": 0.35, "bannerAlpha": 0.75, "bonusSec": 1.5, "resultStepSec": 0.35, "resultBlinkSec": 0.4, "bossLines": 12 },
   "bossIntro": { "panSec": 0.8, "holdSec": 1.2, "backSec": 0.6 },
   "playerMotion": { "breatheSec": 0.6, "turnSec": 0.05, "getupSec": 0.3, "backstepLand": 0.7, "runCycle": ["run1", "run2", "run3", "run4"], "starRadius": [5, 2], "starAbove": 20, "starSpeed": 4 },
-  "monster": { "walkFrameSec": 0.15, "shakeSec": 0.033, "spinSec": 0.125, "armorBlink": 0.1 }
+  "monster": { "walkFrameSec": 0.15, "shakeSec": 0.033, "spinSec": 0.125, "armorBlink": 0.1 },
+  "spell": {
+    "_note": "스태프 마법 연출 (MVP 보충 ST-2a, art.md 7장 마법 = 아군 이펙트 색). 위치 px, 시간 초",
+    "spark": { "sec": 0.12, "radius": 2 },
+    "muzzle": { "sec": 0.1, "radius": 3 },
+    "bolt": { "radius": 2, "tail": 3, "height": 9 },
+    "boltHit": { "sec": 0.16, "radius": 4 },
+    "boltFizzle": { "sec": 0.18, "count": 4, "spread": 10 },
+    "circle": { "sec": 0.35, "r0": 4, "grow": 10 },
+    "target": { "dash": 2 },
+    "burst": { "sec": 0.3, "sparks": 10 },
+    "iceField": { "sec": 0.6, "fadeLast": 0.25 },
+    "frozen": { "shards": [[-4, -14], [1, -16], [5, -13]] },
+    "teleport": { "sec": 0.22, "count": 6, "spread": 7, "visibleStart": 0.15, "visibleEnd": 0.8 }
+  }
 }

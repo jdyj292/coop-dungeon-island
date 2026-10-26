@@ -102,7 +102,7 @@ export function placeMonster(scene: Phaser.Scene, v: MonsterView, data: SpriteDa
   // 슈퍼아머 외곽선은 금색으로 깜빡임 (art.md 8장)
   const armorOn = m.body.armor && Math.floor(clock / mf.armorBlink) % 2 === 0;
   v.view.img.setVisible(!pose.hidden);
-  place(v.view, monsterTexture(scene, m.def.sprite, pose.frame, armorOn), {
+  place(v.view, monsterTexture(scene, m.def.sprite, pose.frame, armorOn, m.frozen > 0), {
     x: m.body.x + dx * m.facing, y: m.body.y, z: m.body.z - dy, facing: m.facing, angle, flash: v.flash > 0,
     spin: frame.spin || pose.spin,
   });
