@@ -79,6 +79,14 @@ describe('게시판·채팅', () => {
     expect(cast.map(([, m]) => (m as { text: string }).text)).toEqual(['말 0', '말 1', '말 2']);
   });
 
+  it('이모트는 섬 모두에게 (1~4만)', () => {
+    const a = user('a'), g = game();
+    enter(g, a);
+    g.onMessage(a, 'emote', { id: 1 });
+    g.onMessage(a, 'emote', { id: 9 });
+    expect(cast.filter(([t]) => t === 'emote').map(([, m]) => m)).toEqual([{ player: a, id: 1 }]);
+  });
+
   it('개발 코인은 개발 모드에서만', () => {
     const a = user('a'), g = game(false);
     enter(g, a);

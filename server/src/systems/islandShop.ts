@@ -59,6 +59,11 @@ export class IslandShop {
         if (m) this.out.broadcast('chat', { player: userId, text: m.text, t: now });
         return true;
       }
+      case 'emote': {
+        const m = parseC2S('emote', raw);
+        if (m) this.out.broadcast('emote', { player: userId, id: m.id });
+        return true;
+      }
       case 'giveCoins': {
         const m = parseC2S('giveCoins', raw);
         if (m && this.dev) {

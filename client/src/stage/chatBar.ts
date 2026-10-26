@@ -2,7 +2,7 @@
 // 던전은 머리 위 말풍선도 여기서 (섬 말풍선은 islandStage가 이름표와 함께 그림)
 // 섬·던전 씬이 같이 쓴다. 입력창이 열려 있는 동안 open = true (씬은 캐릭터 조작을 멈춤)
 import type Phaser from 'phaser';
-import { NET, type S2C } from '@game/shared';
+import { NET } from '@game/shared';
 import type { Connection } from '../net/connection';
 import type { OnlineStage } from './onlineStage';
 import { ChatLog, SpeechBubbles, type ChatLine } from '../ui/chat';
@@ -57,19 +57,27 @@ export class ChatBar {
     this.bubbles?.b.destroy();
   }
 
-  /** 던전 온라인: 서버 채팅 → 기록 (이름·파티 색) + 머리 위 말풍선, Enter → 입력창 (blocked면 열지 않음: 정산 화면) */
+  /** 던전 온라인: 서버 채팅 → 기록 (이름·파티 색) + 머리 위 말풍선, 이모트 → 말풍선, Enter → 입력창, 1~4 → 이모트 (blocked면 안 함: 정산 화면·설정) */
   static forDungeon(scene: Phaser.Scene, depth: number, online: OnlineStage, conn: Connection, blocked: () => boolean): ChatBar {
     const bar = new ChatBar(scene, depth, true);
     // 말풍선은 캐릭터 위, 효과 아래 (onlineStage FX_DEPTH 5000)
     bar.bubbles = { b: new SpeechBubbles(scene, 4600), feet: () => online.feet() };
-    online.onChat = (m: S2C['chat']) => {
-      const now = scene.time.now / 1000;
-      bar.push({ name: conn.players.latest?.items.get(m.player)?.name || '?', color: online.colorOf(m.player), text: m.text }, now);
-      bar.bubbles!.b.say(m.player, m.text, now);
+    online.onTalk = ({ type, msg }) => {
+      const now = scene.time.now / 1000, b = bar.bubbles!.b;
+      if (type === 'emote') return b.emote(msg.player, msg.id, now);
+      bar.push({ name: conn.players.latest?.items.get(msg.player)?.name || '?', color: online.colorOf(msg.player), text: msg.text }, now);
+      b.say(msg.player, msg.text, now);
     };
     const open = () => { if (!blocked()) bar.chat((text) => conn.send('chat', { text })); };
+    // 이모트 1~4 (combat.md 1장)
+    const emote = (e: KeyboardEvent) => { if (/^Digit[1-4]$/.test(e.code) && !e.repeat && !blocked()) conn.send('emote', { id: Number(e.code.slice(5)) }); };
     scene.input.keyboard!.on('keydown-ENTER', open);
-    scene.events.once('shutdown', () => { bar.destroy(); scene.input.keyboard!.off('keydown-ENTER', open); });
+    scene.input.keyboard!.on('keydown', emote);
+    scene.events.once('shutdown', () => {
+      bar.destroy();
+      scene.input.keyboard!.off('keydown-ENTER', open);
+      scene.input.keyboard!.off('keydown', emote);
+    });
     return bar;
   }
 }

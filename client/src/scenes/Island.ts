@@ -114,6 +114,7 @@ export class Island extends Phaser.Scene {
     else if (e.code === 'KeyI') s.panels.show('bag');
     else if (e.code === 'KeyM') s.panels.show('board');
     else if (e.code === 'Enter') s.chat.chat((text) => s.conn.send('chat', { text }));
+    else if (/^Digit[1-4]$/.test(e.code)) s.conn.send('emote', { id: Number(e.code.slice(5)) });
     else if (e.code === 'KeyL') this.logout();
     else if (e.code === 'KeyE') {
       const near = nearFacility(s.myPos);

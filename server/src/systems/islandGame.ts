@@ -32,7 +32,7 @@ const islandRules = (): Record<string, readonly [number, number]> => {
   const l = NET.limits;
   const island = [1000, l.island] as const;
   return {
-    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax],
+    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], emote: island,
     place: island, move: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island, well: island,
   };
 };

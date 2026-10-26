@@ -54,6 +54,7 @@ export class IslandStage {
       this.chat.push({ name: r?.name ?? '?', color: r?.color ?? 0, text: m.text }, this.clock);
       this.bubbles.say(m.player, m.text, this.clock);
     };
+    conn.onEmote = (m) => this.bubbles.emote(m.player, m.id, this.clock);
     conn.onSnapshot = () => this.reconcile();
     conn.onRejoined = () => {
       // 다시 들어가면 서버가 새 자리를 준다: 첫 스냅샷에서 바로 맞춤

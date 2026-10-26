@@ -1,8 +1,9 @@
 // 채팅 표시 (hud.md 4장): 왼쪽 아래 대화 기록 최근 N줄(이름은 플레이어 색, 새 글 뒤 6초 지나면 흐려짐, 입력창을 열면 선명),
-// 말한 사람 머리 위 말풍선 3초 (최대 2줄, 넘치면 말줄임). 글은 모두 갈무리 비트맵 텍스트 (HTML로 해석하지 않음)
+// 말한 사람 머리 위 말풍선 3초 (최대 2줄, 넘치면 말줄임), 이모트도 같은 말풍선 1.5초 (emotes.ts). 글은 모두 갈무리 비트맵 텍스트 (HTML로 해석하지 않음)
 import type Phaser from 'phaser';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
+import { drawThumbsUp, EMOTE_SEC, EMOTE_TEXT, ICON_SIZE } from './emotes';
 import { koText, koWidth, wrapKo, type KoText } from './koText';
 
 const FADE_SEC = 6, FADED_ALPHA = 0.35, BUBBLE_SEC = 3, BUBBLE_W = 88, LINE = 11;
@@ -50,7 +51,7 @@ export class ChatLog {
   }
 }
 
-interface Bubble { lines: KoText[]; g: Phaser.GameObjects.Graphics; until: number; w: number; h: number }
+interface Bubble { lines: KoText[]; g: Phaser.GameObjects.Graphics; until: number; w: number; h: number; icon: boolean }
 
 /** 머리 위 말풍선 (월드 좌표): 흰 바탕 + 외곽선 + 아래 꼬리 */
 export class SpeechBubbles {
@@ -58,13 +59,21 @@ export class SpeechBubbles {
 
   constructor(private scene: Phaser.Scene, private depth: number) {}
 
-  say(who: string, text: string, nowSec: number): void {
+  say(who: string, text: string, nowSec: number, sec = BUBBLE_SEC): void {
     this.remove(who);
     const rows = wrapKo(text, BUBBLE_W, 2, 'koSmall');
     const w = Math.max(...rows.map((r) => koWidth(r, 'koSmall'))) + 6, h = rows.length * LINE + 3;
     const g = this.scene.add.graphics().setDepth(this.depth);
     const lines = rows.map((r) => koText(this.scene, 0, 0, r, { font: 'koSmall', color: 'global.outline' }).setDepth(this.depth + 1));
-    this.bubbles.set(who, { lines, g, until: nowSec + BUBBLE_SEC, w, h });
+    this.bubbles.set(who, { lines, g, until: nowSec + sec, w, h, icon: false });
+  }
+
+  /** 이모트 1~4: 1은 엄지 척 그림, 나머지는 글자 */
+  emote(who: string, id: number, nowSec: number): void {
+    if (id !== 1) return this.say(who, EMOTE_TEXT[id] ?? '?', nowSec, EMOTE_SEC);
+    this.remove(who);
+    const g = this.scene.add.graphics().setDepth(this.depth);
+    this.bubbles.set(who, { lines: [], g, until: nowSec + EMOTE_SEC, w: ICON_SIZE.w + 6, h: ICON_SIZE.h + 4, icon: true });
   }
 
   /** 프레임마다: 말한 사람 머리 위 (sx, top = 머리 위 화면 y) */
@@ -80,6 +89,7 @@ export class SpeechBubbles {
     dot(g, sx - 1, y + b.h, colorInt('island.paper'), 3, 1);
     dot(g, sx, y + b.h + 1, colorInt('global.outline'), 1, 1);
     b.lines.forEach((t, i) => t.moveTo(x + 3, y + 1 + i * LINE));
+    if (b.icon) drawThumbsUp(g, x + 3, y + 2);
   }
 
   /** 화면에 없는 사람(방을 나감 등)의 말풍선 지우기 */

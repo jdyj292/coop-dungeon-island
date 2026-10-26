@@ -53,7 +53,7 @@ export class OnlineStage {
   onResult: ((r: S2C['result']) => void) | null = null;
   /** 콤보 코인 보너스 달성 (비율) */
   onBonus: ((rate: number) => void) | null = null;
-  onChat: ((m: S2C['chat']) => void) | null = null;
+  onTalk: ((m: { type: 'chat'; msg: S2C['chat'] } | { type: 'emote'; msg: S2C['emote'] }) => void) | null = null;
   private players = new Map<string, Remote>();
   private monsters = new Map<string, { m: Monster; view: MonsterView }>();
   private hazards: HazardLayer;
@@ -215,7 +215,7 @@ export class OnlineStage {
     } else if (type === 'result') this.onResult?.(msg as S2C['result']);
     else if (type === 'reward') sfx.play('coin');
     else if (type === 'comboBonus') this.onBonus?.((msg as S2C['comboBonus']).rate);
-    else if (type === 'chat') this.onChat?.(msg as S2C['chat']);
+    else if (type === 'chat' || type === 'emote') this.onTalk?.({ type, msg } as Parameters<NonNullable<OnlineStage['onTalk']>>[0]);
     else if (type === 'rejected') this.local.predictor?.reject((msg as S2C['rejected']).seq);
   }
 
