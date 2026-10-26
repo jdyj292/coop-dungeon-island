@@ -51,7 +51,14 @@ export class Island extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(colorInt('island.water'));
     this.world = new IslandWorld(this);
     this.hud = new IslandHud(this, 6000);
-    this.settings = new SettingsPanel(this, 6600);
+    // 외형 탭: 내 주민 상태를 보이고, 바꾸면 look 메시지 (서버가 저장·상태 갱신)
+    this.settings = new SettingsPanel(this, 6600, {
+      get: () => {
+        const r = this.stage?.conn.residents.latest?.items.get(String(this.me.id));
+        return { hair: { style: r?.hair ?? 0, color: r?.hairColor ?? 0 }, color: r?.color ?? 0 };
+      },
+      set: (h) => this.stage?.conn.send('look', { hair: h.style, hairColor: h.color }),
+    });
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({ up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D }) as typeof this.keys;
     this.input.keyboard!.on('keydown', (e: KeyboardEvent) => this.onKey(e));
@@ -87,6 +94,11 @@ export class Island extends Phaser.Scene {
       };
       const p = this.stage.myPos;
       this.cam = { x: p.x, y: p.y };
+      // 방금 가입: 외형부터 고르게 (art.md 3장)
+      if (this.registry.get('chooseLook')) {
+        this.registry.set('chooseLook', false);
+        this.settings.show(1);
+      }
     } catch (e) {
       console.warn('[island] 접속 실패', e);
       this.showNotice('섬에 들어갈 수 없습니다 (서버 확인)');
@@ -179,7 +191,7 @@ export class Island extends Phaser.Scene {
     const residents = s ? [...(s.conn.residents.latest?.items.values() ?? [])] : [];
     const mine = residents.find((r) => r.id === String(this.me.id));
     this.hud.draw({
-      colorIndex: mine?.color ?? 0, level: s?.conn.me.level ?? 1, wallet: s?.conn.me.wallet ?? this.me.wallet,
+      colorIndex: mine?.color ?? 0, hair: { style: mine?.hair ?? 0, color: mine?.hairColor ?? 0 }, level: s?.conn.me.level ?? 1, wallet: s?.conn.me.wallet ?? this.me.wallet,
       treasury: s?.conn.island.treasury ?? this.me.island.treasury, residents, placing,
     }, width, height - HUD_HEIGHT);
     this.settings.update(width, height - HUD_HEIGHT);

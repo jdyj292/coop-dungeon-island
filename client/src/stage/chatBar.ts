@@ -65,7 +65,7 @@ export class ChatBar {
     online.onTalk = ({ type, msg }) => {
       const now = scene.time.now / 1000, b = bar.bubbles!.b;
       if (type === 'emote') return b.emote(msg.player, msg.id, now);
-      bar.push({ name: conn.players.latest?.items.get(msg.player)?.name || '?', color: online.colorOf(msg.player), text: msg.text }, now);
+      bar.push({ name: conn.players.latest?.items.get(msg.player)?.name || '?', color: online.lookOf(msg.player).color, text: msg.text }, now);
       b.say(msg.player, msg.text, now);
     };
     const open = () => { if (!blocked()) bar.chat((text) => conn.send('chat', { text })); };

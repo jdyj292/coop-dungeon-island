@@ -6,6 +6,7 @@ import fx from '../../data/fx.json';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { setFace } from './hudFace';
+import type { Hair } from '../view/look';
 import { bar, coinIcon, materialIcon, panel } from './hudParts';
 import { drawText } from './pixelFont';
 import { koText, wrapKo, type KoText } from './koText';
@@ -39,8 +40,8 @@ export class ResultPanel {
   private names: KoText[] = [];
   private t = 0;
 
-  /** colorOf = pid → 플레이어 색 번호, myId = 내 줄 (위쪽 줄은 내 정산) */
-  constructor(private scene: Phaser.Scene, depth: number, private r: Result, private myId: string, private colorOf: (pid: string) => number) {
+  /** lookOf = pid → 플레이어 색 번호·머리, myId = 내 줄 (위쪽 줄은 내 정산) */
+  constructor(private scene: Phaser.Scene, depth: number, private r: Result, private myId: string, private lookOf: (pid: string) => { color: number; hair: Hair }) {
     this.g = scene.add.graphics().setScrollFactor(0).setDepth(depth);
     for (let i = 0; i < r.lines.length; i++) {
       this.faces.push(scene.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setScrollFactor(0).setDepth(depth + 1).setVisible(false));
@@ -105,9 +106,9 @@ export class ResultPanel {
       face.setVisible(show);
       name.setVisible(show);
       if (!show) return;
-      const color = this.colorOf(l.pid);
+      const { color, hair } = this.lookOf(l.pid);
       dot(g, lx - 4, ly, C(`global.playerColors.${color}`), 2, 11);
-      setFace(this.scene, face, r.kind === 'wipe', color, lx, ly);
+      setFace(this.scene, face, r.kind === 'wipe', color, lx, ly, hair);
       name.moveTo(lx + 15, ly);
       coinIcon(g, lx + 15 + NAME_W + 3, ly + 3);
       drawText(g, String(l.wallet), lx + 15 + NAME_W + 11, ly + 3, { color: 'global.allyFx.gold', outline: 'none' });

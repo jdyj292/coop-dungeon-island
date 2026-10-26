@@ -9,12 +9,15 @@ import { walkStep, type CharacterLook } from '../sprites/compose';
 import { spriteData } from '../sprites/data';
 import { characterTexture } from '../sprites/textures';
 import { newActorView, place, type ActorView } from './actors';
+import { DEFAULT_HAIR, hairColorPath, hairName, type Hair } from './look';
 import { project } from './layout';
 
 export class PlayerView {
   readonly actor: ActorView;
   /** 번쩍임 남은 시간 (게임 시간) */
   flash = 0;
+  /** 머리 모양·색 (섬 주민 상태, 던전 look) */
+  hair: Hair = DEFAULT_HAIR;
   private stars: Phaser.GameObjects.Graphics;
   private beat = 0;
   private moving = false;
@@ -79,11 +82,11 @@ export class PlayerView {
     // 모션 그림이 아직 없으면(승인 전) 예전 표현: 피격 표정, 다운은 무기 없이 90° 눕힘
     const lying = !known && (p.hurt?.kind === 'down' || p.downed);
     const look: CharacterLook = {
-      hair: 'short', face: !known && (p.hurt || p.downed) ? 'hurt' : 'normal', outfit: data.outfits.sets.beginner!,
+      hair: hairName(this.hair), face: !known && (p.hurt || p.downed) ? 'hurt' : 'normal', outfit: data.outfits.sets.beginner!,
       weapon: lying || !this.armed ? undefined : 'greatsword_basic', pose: lying || !this.armed ? undefined : fighterPose(p.fighter) ?? 'idle',
       frame: step.frame, bob: step.bob, motion: known ? motion : undefined,
     };
-    const tex = characterTexture(this.scene, look, { hairColor: 'global.hairColors.0', playerColor: `global.playerColors.${this.colorIndex}` });
+    const tex = characterTexture(this.scene, look, { hairColor: hairColorPath(this.hair), playerColor: `global.playerColors.${this.colorIndex}` });
     // 백스텝: 뛰어 물러나는 높이는 위치 오프셋으로만 (판정은 지상, motion.md 6장)
     const hop = p.backstep ? Math.round(Math.sin((p.backstep.t / PLAYER.backstep.sec) * Math.PI) * fx.backstepHop) : 0;
     place(this.actor, tex, {

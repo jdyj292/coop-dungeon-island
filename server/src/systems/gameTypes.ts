@@ -18,6 +18,9 @@ export interface PartyMember {
   name: string;
   /** 섬의 플레이어 색 번호 */
   color: number;
+  /** 머리 모양·머리색 번호 (없으면 0) */
+  hair?: number;
+  hairColor?: number;
   /** 숙련도 (정산 전) */
   level: number;
   levelExp: number;

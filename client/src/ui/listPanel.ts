@@ -5,6 +5,7 @@ import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { islandObjects, islandView } from '../sprites/island';
 import { islandTexture } from '../sprites/textures';
+import type { Hair } from '../view/look';
 import { setFace } from './hudFace';
 import { coinIcon, materialIcon, panel } from './hudParts';
 import { koText, koWidth, wrapKo, type KoText } from './koText';
@@ -13,7 +14,7 @@ import { drawText } from './pixelFont';
 const C = (p: string) => colorInt(p);
 export const PANEL = { w: 208, h: 124, rowH: 13, rows: 6, pad: 6 } as const;
 
-export type RowIcon = { kind: 'deco'; itemId: string } | { kind: 'potion'; color: string } | { kind: 'material' } | { kind: 'face'; color: number } | null;
+export type RowIcon = { kind: 'deco'; itemId: string } | { kind: 'potion'; color: string } | { kind: 'material' } | { kind: 'face'; color: number; hair?: Hair } | null;
 
 export interface PanelRow {
   icon?: RowIcon;
@@ -156,7 +157,7 @@ export class ListPanel {
     else if (ic.kind === 'face') {
       // 주민 얼굴 12×11 (hudFace)
       const img = this.scene.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setScrollFactor(0).setDepth(this.depth + 1);
-      setFace(this.scene, img, false, ic.color, x, y + 1);
+      setFace(this.scene, img, false, ic.color, x, y + 1, ic.hair);
       this.icons.push(img);
     }
     else {

@@ -3,12 +3,14 @@
 import type Phaser from 'phaser';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
+import type { Hair } from '../view/look';
 import { setFace } from './hudFace';
 import { bar } from './hudParts';
 
 export interface PartyMember {
   id: string;
   colorIndex: number;
+  hair?: Hair;
   /** HP 비율 0~1 */
   hp: number;
   down: boolean;
@@ -50,7 +52,7 @@ export class HudParty {
       dot(g, 3, y, colorInt(`global.playerColors.${m.colorIndex}`), 2, 11);
       dot(g, 5, y, colorInt('global.ui.panel'), 40, 11, PANEL_ALPHA);
       const face = this.faces[i]!;
-      setFace(this.scene, face, m.down, m.colorIndex, 6, y);
+      setFace(this.scene, face, m.down, m.colorIndex, 6, y, m.hair);
       face.setAlpha(dim ? DIM : 1);
       bar(g, 20, y + 4, 22, 2, m.hp, 'global.ui.hp', 'global.ui.hpDark');
       if (m.down) X_MARK.forEach(([x, dy]) => dot(k, x, y + dy, colorInt('global.semantic.danger')));

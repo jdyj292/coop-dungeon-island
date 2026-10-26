@@ -1,4 +1,5 @@
 // 잡화점 구매(지갑·금고), 게시판(기록·메모), 채팅, 개발 코인
+import { eq } from 'drizzle-orm';
 import { ITEMS } from '@game/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
@@ -85,6 +86,15 @@ describe('게시판·채팅', () => {
     g.onMessage(a, 'emote', { id: 1 });
     g.onMessage(a, 'emote', { id: 9 });
     expect(cast.filter(([t]) => t === 'emote').map(([, m]) => m)).toEqual([{ player: a, id: 1 }]);
+  });
+
+  it('외형: 저장하고 주민 상태로 모두에게 (범위 밖은 무시)', () => {
+    const a = user('a'), g = game();
+    enter(g, a);
+    g.onMessage(a, 'look', { hair: 2, hairColor: 3 });
+    g.onMessage(a, 'look', { hair: 3, hairColor: 0 });
+    expect([g.state.residents.get(a)!.hair, g.state.residents.get(a)!.hairColor]).toEqual([2, 3]);
+    expect(db.select({ h: users.hairStyle, c: users.hairColor }).from(users).where(eq(users.id, Number(a))).get()).toEqual({ h: 2, c: 3 });
   });
 
   it('개발 코인은 개발 모드에서만', () => {

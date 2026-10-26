@@ -6,6 +6,7 @@ import icons from '../../data/sprites/hud_icons.json';
 import fx from '../../data/fx.json';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
+import type { Hair } from '../view/look';
 import { setFace } from './hudFace';
 import { bar, coinIcon, icon, materialIcon, panel, slot } from './hudParts';
 import { drawText } from './pixelFont';
@@ -27,6 +28,8 @@ export interface HudInput {
   materials: number;
   /** 내 플레이어 색 번호 (온라인은 입장 순서, 솔로 0) */
   colorIndex?: number;
+  /** 내 머리 (없으면 기본) */
+  hair?: Hair;
 }
 
 /** 줄어든 부분을 trailSec 동안 흰색으로 남김 */
@@ -86,7 +89,7 @@ export class HudBottom {
     // 얼굴 (지금 표정) + 부활의 깃털
     dot(g, 3, Y(143), C('global.ui.panelBorder'), 16, 16);
     dot(g, 4, Y(144), C('global.ui.faceBg'), 14, 14);
-    setFace(this.scene, this.face, !!(p.hurt || p.downed), st.colorIndex ?? 0, 5, Y(146));
+    setFace(this.scene, this.face, !!(p.hurt || p.downed), st.colorIndex ?? 0, 5, Y(146), st.hair);
     if (p.feathers > 0) icon(g, 'feather', 15, Y(153));
 
     // HP·MP·LV

@@ -17,6 +17,9 @@ export const DEPTH_RATIO = 10 / 16;
 export const TICK_RATE = 60;
 export const TICK = 1 / TICK_RATE;
 
+/** 외형 고르기 개수 (art.md 3장: 머리 모양 3종, palette global.hairColors 4색). 순서·그림은 클라이언트 스프라이트 데이터 */
+export const LOOK = { hairStyles: 3, hairColors: 4 } as const;
+
 /** 네트워크 (docs/network.md 2·4·7·9장) */
 export const NET = {
   /** 상태 전송 20Hz */

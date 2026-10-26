@@ -69,7 +69,8 @@
 | giveCoins | 개발 명령 (개발 모드만): `{ to: "wallet" | "treasury", amount }` |
 | well | `{ op: "join" | "leave" | "depart", floor? }` |
 | memo | `{ text }` 1줄 1~40자 (NET.memoMaxLen, 제어 문자·줄바꿈은 공백으로). 저장 후 `board` 다시 보냄 |
-- chat은 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
+| look | `{ hair: 0~2, hairColor: 0~3 }` (shared LOOK) 외형 바꾸기 → users.hair_style·hair_color 저장, 주민 상태 hair·hairColor |
+- chat·emote는 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }`·`emote { player, id }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
 | loadout | 무기 교체·스킬 장착·의상 장착 (MVP 이후 의상) |
 
 ### 검증과 제한
@@ -95,7 +96,7 @@ DungeonState
   objects: Map<id, ObjectState>      문, 레버, 누름돌, 폭탄 버섯 등 기믹
 
 PlayerState
-  id, name, look            look = 외형 키 (머리·머리색·의상·플레이어 색 번호, 스프라이트 캐시 키)
+  id, name, look            look = 외형 키 "의상:머리 번호:머리색 번호:플레이어 색" (예: beginner:1:2:0, 섬 출발 파티 정보에서)
   weapon, x, y, facing      x·y는 정수 px
   state                     idle / walk / run / action / backstep / hitstun / down / knocked / disconnected (기상 무적은 연출만)
   actionId, actionStart     진행 중 행동과 시작 서버 시각 (구간은 데이터로 계산)
@@ -133,7 +134,7 @@ ZoneState
 ```
 IslandState
   serverTime, name, treasury
-  residents: Map<userId, Resident> id, name, color(가입 순서 0~3 = 플레이어 색), online, status("island" | "away" | "dungeon:<층>"),
+  residents: Map<userId, Resident> id, name, color(가입 순서 0~3 = 플레이어 색), hair·hairColor(외형 번호), online, status("island" | "away" | "dungeon:<층>"),
                                    x, y, facing, state(idle/walk/run), lastInputSeq
   placements: Map<id, Placement>   id, itemId, x, y, rot, placedBy, communal (칸 좌표)
   storage: Map<itemId, count>      공용 창고

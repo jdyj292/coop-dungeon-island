@@ -135,6 +135,7 @@ export class IslandStage {
     s.p.pos = { x: at.x, y: at.y };
     s.p.facing = at.facing;
     s.p.run.running = at.running;
+    s.view.hair = { style: r.hair, color: r.hairColor };
     s.view.update(s.p, 0);
     s.view.draw(s.p, moved, 0, this.clock);
     const { sx, sy } = project(at.x, at.y);

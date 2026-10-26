@@ -4,6 +4,7 @@ import type Phaser from 'phaser';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { islandTexture } from '../sprites/textures';
+import type { Hair } from '../view/look';
 import { setFace } from './hudFace';
 import { drawText } from './pixelFont';
 
@@ -17,12 +18,13 @@ const CELL = 14, PANEL_ALPHA = 0.75, AWAY_ALPHA = 0.4;
 
 export interface IslandHudInput {
   colorIndex: number;
+  hair?: Hair;
   level: number;
   wallet: number;
   treasury: number;
   /** 선택된 버튼 (배치 모드 등, 4-6) */
   selected?: 'B' | 'I' | 'M' | null;
-  residents: { id: string; color: number; status: string }[];
+  residents: { id: string; color: number; status: string; hair?: number; hairColor?: number }[];
   /** 배치 모드: 아래 띠는 PlaceTray가 그린다 (주민 목록만) */
   placing?: boolean;
 }
@@ -56,7 +58,7 @@ export class IslandHud {
     // 얼굴·LV
     dot(g, 3, Y(143), C('global.ui.panelBorder'), 16, 16);
     dot(g, 4, Y(144), C('global.ui.islandFaceBg'), 14, 14);
-    setFace(this.scene, this.face, false, st.colorIndex, 5, Y(146));
+    setFace(this.scene, this.face, false, st.colorIndex, 5, Y(146), st.hair);
     drawText(g, `LV${st.level}`, 23, Y(148), { color: 'global.ui.textDim', outline: 'none' });
     // B I M
     (['B', 'I', 'M'] as const).forEach((k, i) => {
@@ -110,7 +112,7 @@ export class IslandHud {
       const x = x0 + i * CELL, away = r.status === 'away';
       dot(g, x, 4, C(`global.playerColors.${r.color}`), 12, 1);
       const face = this.faces[i]!;
-      setFace(this.scene, face, false, r.color, x, 5);
+      setFace(this.scene, face, false, r.color, x, 5, { style: r.hair ?? 0, color: r.hairColor ?? 0 });
       face.setAlpha(away ? AWAY_ALPHA : 1);
       if (r.status === 'island') dot(g, x + 4, 18, C('global.ui.hp'), 3, 2);
       else if (r.status.startsWith('dungeon:')) {

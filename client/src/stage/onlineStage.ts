@@ -24,6 +24,7 @@ import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
 import { MonsterView, placeMonster } from '../view/monsterView';
 import type { PartyMember } from '../ui/hudParty';
+import { DEFAULT_HAIR, hairOfLook, type Hair } from '../view/look';
 import { PlayerView } from '../view/playerView';
 import { drawReviveGauges } from '../view/reviveGauge';
 
@@ -75,9 +76,10 @@ export class OnlineStage {
     conn.onSnapshot = () => this.local.reconcile();
   }
 
-  /** 플레이어 색 번호 (입장 순서, 모르면 0) */
-  colorOf(pid: string): number {
-    return this.players.get(pid)?.colorIndex ?? 0;
+  /** 플레이어 색 번호(입장 순서)·머리 (모르면 0·기본, 얼굴·대화 기록·정산 화면) */
+  lookOf(pid: string): { color: number; hair: Hair } {
+    const r = this.players.get(pid);
+    return { color: r?.colorIndex ?? 0, hair: r?.view.hair ?? DEFAULT_HAIR };
   }
 
   /** 쓰러진 동료 (나 제외): 화면 위치와 부활 진행도 0~1 */
@@ -105,11 +107,6 @@ export class OnlineStage {
     return new Map([...this.players].flatMap(([id, r]) => (r.last ? [[id, project(r.last.x, r.last.y)] as const] : [])));
   }
 
-  /** 내 플레이어 색 번호 (아래 HUD 얼굴) */
-  get myColor(): number {
-    return this.players.get(this.conn.myId)?.colorIndex ?? 0;
-  }
-
   /** 파티원 프레임 (나 제외, 입장 순서). 접속 끊김은 M3에서 서버가 state 'disconnected'로 보낸다 */
   party(): PartyMember[] {
     const latest = this.conn.players.latest?.items;
@@ -117,7 +114,7 @@ export class OnlineStage {
     for (const [id, r] of this.players) {
       const s = latest?.get(id);
       if (id === this.conn.myId || !s) continue;
-      out.push({ id, colorIndex: r.colorIndex, hp: s.maxHp ? s.hp / s.maxHp : 0, down: s.state === 'knocked', disconnected: s.state === 'disconnected' });
+      out.push({ id, colorIndex: r.colorIndex, hair: r.view.hair, hp: s.maxHp ? s.hp / s.maxHp : 0, down: s.state === 'knocked', disconnected: s.state === 'disconnected' });
     }
     return out;
   }
@@ -159,6 +156,7 @@ export class OnlineStage {
     for (const [id, s] of ps) {
       let r = this.players.get(id);
       if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1, s.color), colorIndex: s.color, ghosts: new Afterimages(this.scene), last: null }));
+      r.view.hair = hairOfLook(s.look);
       // 나 = 예측 상태 (화면 위치는 보정 오프셋 포함), 다른 사람 = 보간
       const mine = id === c.myId && !!this.local.predictor;
       const p = mine ? { ...this.local.predictor!.state, pos: this.local.predictor!.display } : mirrorPlayer(s, t, WEAPON, undefined, now);

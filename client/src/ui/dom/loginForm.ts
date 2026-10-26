@@ -54,8 +54,8 @@ export class LoginForm {
   private panel = el('div', 'ui-panel');
   private busy = false;
 
-  /** onDone: 로그인 끝 (가입·복구는 복구 코드를 보여준 뒤). onLayout: 내용이 바뀜 (크기 맞추기) */
-  constructor(private layer: HTMLElement, private title: string, private onDone: (me: MeRes) => void, private onLayout: () => void = () => undefined) {
+  /** onDone: 로그인 끝 (가입·복구는 복구 코드를 보여준 뒤, signedUp = 방금 가입). onLayout: 내용이 바뀜 (크기 맞추기) */
+  constructor(private layer: HTMLElement, private title: string, private onDone: (me: MeRes, signedUp: boolean) => void, private onLayout: () => void = () => undefined) {
     layer.appendChild(this.panel);
     this.show('login');
   }
@@ -140,12 +140,12 @@ export class LoginForm {
       return;
     }
     const { me, recoveryCode } = res.value;
-    if (recoveryCode) this.showCode(recoveryCode, me);
-    else this.onDone(me);
+    if (recoveryCode) this.showCode(recoveryCode, me, mode === 'signup');
+    else this.onDone(me, false);
   }
 
   /** 복구 코드는 이번 한 번만 보여 준다 (서버엔 해시만) */
-  private showCode(code: string, me: MeRes): void {
+  private showCode(code: string, me: MeRes, signedUp: boolean): void {
     const p = this.panel;
     p.replaceChildren(
       el('div', 'ui-title', '복구 코드'),
@@ -158,7 +158,7 @@ export class LoginForm {
     copy.onclick = () => void navigator.clipboard?.writeText(code).then(() => { copy.textContent = '복사했습니다'; }, () => undefined);
     const ok = el('button', 'ui-btn', '적어 두었어요');
     ok.type = 'button';
-    ok.onclick = () => this.onDone(me);
+    ok.onclick = () => this.onDone(me, signedUp);
     p.append(copy, ok);
     this.onLayout();
   }

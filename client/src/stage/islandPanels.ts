@@ -111,7 +111,7 @@ export class IslandPanels {
       const w = c.well, res = c.residents.latest?.items;
       return {
         ids: w.members,
-        rows: w.members.map((id, i) => ({ icon: { kind: 'face' as const, color: res?.get(id)?.color ?? 0 }, label: `${res?.get(id)?.name ?? '?'}${i === 0 ? ' (대기 시작)' : ''}` })),
+        rows: w.members.map((id, i) => ({ icon: { kind: 'face' as const, color: res?.get(id)?.color ?? 0, hair: { style: res?.get(id)?.hair ?? 0, color: res?.get(id)?.hairColor ?? 0 } }, label: `${res?.get(id)?.name ?? '?'}${i === 0 ? ' (대기 시작)' : ''}` })),
       };
     }
     if (this.onInvite()) {

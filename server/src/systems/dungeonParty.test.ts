@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { DungeonGame } from './dungeonGame';
 import type { PartyMember } from './gameTypes';
 
-const member = (o: Partial<PartyMember>): PartyMember => ({ userId: '1', name: '모리', color: 2, level: 3, levelExp: 40, potions: { hp: 2, mp: 1 }, ...o });
+const member = (o: Partial<PartyMember>): PartyMember => ({ userId: '1', name: '모리', color: 2, hair: 1, hairColor: 2, level: 3, levelExp: 40, potions: { hp: 2, mp: 1 }, ...o });
 
 function make() {
   const settled: [S2C['result'], Record<string, { hp: number; mp: number }>][] = [];
@@ -17,7 +17,7 @@ describe('섬 파티 던전', () => {
     const { g } = make();
     g.join('s1', '무시됨', member({}));
     const p = g.state.players.get('s1')!, sp = g.sim.players.get('s1')!.state;
-    expect([p.name, p.color]).toEqual(['모리', 2]);
+    expect([p.name, p.color, p.look]).toEqual(['모리', 2, 'beginner:1:2:2']);
     expect([sp.maxHp, sp.hp, sp.atk]).toEqual([maxHpFor(3), maxHpFor(3), atkFor(3)]);
     expect(sp.potions).toEqual({ hp: 2, mp: 1 });
   });

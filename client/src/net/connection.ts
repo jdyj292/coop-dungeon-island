@@ -24,6 +24,8 @@ export interface PlayerSnap extends Pos {
   reviveProgress: number;
   /** 플레이어 색 번호 (섬 주민 순서, 개발 방은 입장 순서) */
   color: number;
+  /** 외형 키 "의상:머리:머리색:플레이어 색" (view/look.ts hairOfLook) */
+  look: string;
 }
 
 export interface MonsterSnap extends Pos {
@@ -249,7 +251,7 @@ export class Connection {
     const players = new Map<string, PlayerSnap>();
     s.players.forEach((p, id) => players.set(id, {
       id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, state: p.state, since: since(prevP?.get(id), p.state),
-      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0,
+      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0, look: p.look ?? '',
     }));
     const monsters = new Map<string, MonsterSnap>();
     s.monsters.forEach((m, id) => monsters.set(id, {

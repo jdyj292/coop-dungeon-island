@@ -148,7 +148,7 @@ export class Dungeon extends Phaser.Scene {
     // 재접속에 성공하면 같은 접속으로 화면을 다시 만든다 (전체 상태를 다시 받음, network.md 10장)
     conn.onReconnected = () => { this.keepConn = true; this.scene.restart(); };
     online.onResult = (r) => {
-      this.result = new ResultPanel(this, HUD_DEPTH + 10, r, conn.myId, (pid) => online.colorOf(pid));
+      this.result = new ResultPanel(this, HUD_DEPTH + 10, r, conn.myId, (pid) => online.lookOf(pid));
       // 정산 화면: 음악은 0.5초에 걸쳐 줄이고 정지 (정산 효과음이 주인공)
       music.stop();
     };
@@ -238,11 +238,11 @@ export class Dungeon extends Phaser.Scene {
       backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
       potion: Phaser.Input.Keyboard.JustDown(k.potionHp) ? 'hp' : Phaser.Input.Keyboard.JustDown(k.potionMp) ? 'mp' : null,
     };
-    let view: { player: PlayerState | null; combo: number; shake: Shake; color: number; coins: number; materials: number };
+    let view: { player: PlayerState | null; combo: number; shake: Shake; look: { color: number; hair?: import('../view/look').Hair }; coins: number; materials: number };
     if (this.stage) {
       this.checkWave(this.stage);
       this.stage.update(dt, this.settings.open ? NO_KEYS : input);
-      view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake, color: 0, coins: 0, materials: 0 };
+      view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake, look: { color: 0 }, coins: 0, materials: 0 };
     } else if (this.online) {
       const live = this.online.conn.progress;
       // 다음 방 (출구에 전원 모임): 같은 접속으로 방 화면을 다시 만든다
@@ -264,7 +264,7 @@ export class Dungeon extends Phaser.Scene {
       else this.interact(live, k.interact.isDown && !this.settings.open, Phaser.Input.Keyboard.JustDown(k.interact) && !this.settings.open);
       const mine = this.online.conn.mine;
       view = {
-        player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake, color: this.online.myColor,
+        player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake, look: this.online.lookOf(this.online.conn.myId),
         coins: mine?.coins ?? 0, materials: mine?.materials ?? 0,
       };
       this.party.draw(this.online.party());
@@ -274,7 +274,7 @@ export class Dungeon extends Phaser.Scene {
     if (view.player) {
       this.hud.draw({
         player: view.player, weapon: 'greatsword', skills: [SKILLS.skill1, SKILLS.skill2, null, null],
-        level: 1, coins: view.coins, materials: view.materials, colorIndex: view.color,
+        level: 1, coins: view.coins, materials: view.materials, colorIndex: view.look.color, hair: view.look.hair,
       }, dt, width, height - HUD_HEIGHT);
     }
     this.overlay.draw(view.combo, dt, width);

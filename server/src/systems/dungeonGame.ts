@@ -82,7 +82,7 @@ export class DungeonGame {
     const raw = party?.name ?? name;
     const nick = typeof raw === 'string' && raw.trim() ? raw.trim().slice(0, NAME_MAX) : `모험가${index + 1}`;
     const color = party?.color ?? index % 4;
-    const s = new PlayerState().assign({ id: pid, name: nick, look: `beginner:short:0:${color}`, color, weapon: 'greatsword' });
+    const s = new PlayerState().assign({ id: pid, name: nick, look: `beginner:${party?.hair ?? 0}:${party?.hairColor ?? 0}:${color}`, color, weapon: 'greatsword' });
     syncPlayer(s, sp, 0, this.now);
     this.state.players.set(pid, s);
     this.members.set(pid, { inputs: new InputQueue(), limit: new RateLimit(dungeonRules()), index, level, levelExp: party?.levelExp ?? 0 });

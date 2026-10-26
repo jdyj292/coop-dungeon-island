@@ -1,5 +1,5 @@
 // 섬 잡화점·게시판·채팅 (docs/island.md 5·8장, hud.md 4장): 구매(트랜잭션) → 지갑(me)·가방(inv)·금고(상태)·공용 창고(상태)
-// 게시판은 열 때 요청 → 기록·메모를 그 사람에게. 채팅은 섬에 있는 주민 모두에게 (저장 안 함)
+// 게시판은 열 때 요청 → 기록·메모를 그 사람에게. 채팅·이모트는 섬에 있는 주민 모두에게 (저장 안 함). 외형은 저장 + 주민 상태
 import { parseC2S } from '@game/shared';
 import { ShopStore } from '../db/shopStore';
 import type { IslandState } from '../schema/IslandState';
@@ -57,6 +57,14 @@ export class IslandShop {
       case 'chat': {
         const m = parseC2S('chat', raw);
         if (m) this.out.broadcast('chat', { player: userId, text: m.text, t: now });
+        return true;
+      }
+      case 'look': {
+        const m = parseC2S('look', raw), r = this.state.residents.get(userId);
+        if (m && r) {
+          this.store.setLook(uid, m.hair, m.hairColor);
+          Object.assign(r, { hair: m.hair, hairColor: m.hairColor });
+        }
         return true;
       }
       case 'emote': {
