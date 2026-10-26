@@ -19,6 +19,12 @@ export function eventsFor(events: SimEvent[], now: number, combos: Map<string, n
       comboPids.add(e.pid);
     } else if (e.type === 'teamMilestone') {
       out.push({ type: 'teamMilestone', msg: { count: e.count } });
+    } else if (e.type === 'bolt') {
+      const b = e.bolt;
+      out.push({ type: 'bolt', msg: { id: b.id, kind: b.def.id, pid: b.pid, x: int(b.x), y: int(b.y), dir: b.dir, t0: now } });
+    } else if (e.type === 'boltEnd') {
+      const b = e.bolt;
+      out.push({ type: 'boltEnd', msg: { id: b.id, reason: b.hit.length ? 'hit' : 'range', x: int(b.x), y: int(b.y) } });
     } else if (e.type === 'playerHit') {
       out.push({ type: 'playerHit', msg: { pid: e.pid, damage: e.damage, strength: e.def.strength ?? 'light', from: e.from?.id ?? null } });
     }

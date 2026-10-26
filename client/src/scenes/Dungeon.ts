@@ -1,9 +1,9 @@
 // 던전 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 · E 상호작용 (combat.md 1장)
-// 기본은 서버 없이 로컬 (방 하나 전투 테스트). ?online=1&party=2면 서버 던전 방에 접속해 ?room부터 보스 방까지 한 판 (roadmap 3-3)
+// 기본은 서버 없이 로컬 (방 하나 전투 테스트). ?online=1&party=2면 서버 던전 방에 접속해 ?room부터 보스 방까지 한 판 (roadmap 3-3), ?weapon=staff면 스태프
 // 서버 방 번호가 바뀌면 같은 접속으로 씬을 다시 시작해 방 화면(배경·소품·장애물)을 새로 만든다
 import Phaser from 'phaser';
 import { ChatBar } from '../stage/chatBar';
-import { COMBAT, entryPos, floorRoom, mapOf, roomBounds, ROOMS, skillDef, TILE, WaveRunner, type Bounds, type PlayerState, type RoomDef } from '@game/shared';
+import { COMBAT, entryPos, floorRoom, mapOf, MVP_WEAPONS, roomBounds, ROOMS, skillDef, TILE, WaveRunner, weaponDef, type Bounds, type PlayerState, type RoomDef } from '@game/shared';
 import type { Shake } from '../fx/timing';
 import { music } from '../audio/bgm/music';
 import { sfx } from '../audio/player';
@@ -39,8 +39,8 @@ const HUD_DEPTH = 10000;
 const ROOM_FADE_MS = 300;
 /** 부활: E를 누르고 있는 동안 서버에 알리는 간격 (서버는 300ms 안에 다시 오면 계속 누른 것으로) */
 const REVIVE_SEND_MS = 150;
-/** 스킬 슬롯 (임시 고정 장착, 슬롯 UI는 M4) */
-const SKILLS = { skill1: skillDef('gs_launch'), skill2: skillDef('gs_earthsplit') };
+/** 스킬 슬롯 U·I = 무기 기본 스킬 2개 (임시 고정 장착, 슬롯 UI는 MVP 이후) */
+const skillsOf = (weapon: string) => weaponDef(weapon).baseSkills.map(skillDef);
 
 type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2' | 'potionHp' | 'potionMp' | 'interact';
 
@@ -48,6 +48,7 @@ export class Dungeon extends Phaser.Scene {
   private params = new URLSearchParams(location.search);
   private room = floorRoom('floor1', Number(this.params.get('room') ?? 1));
   private onlineMode = this.params.get('online') === '1';
+  private weapon: string = MVP_WEAPONS.find((w) => w === this.params.get('weapon')) ?? 'greatsword';
   /** 섬 우물에서 출발한 던전 방 번호 (registry dungeonRoom, 정산 뒤 섬으로) */
   private islandRoom: string | null = null;
   /** 다시 시작해도 이어 쓰는 접속 (방 진행) */
@@ -104,7 +105,7 @@ export class Dungeon extends Phaser.Scene {
     this.events.once('shutdown', () => { if (!this.keepConn) this.conn?.leave(); });
     if (!this.onlineMode) {
       const { bounds } = this.buildRoom(this.room);
-      const stage = (this.stage = new CombatStage(this, bounds, entryPos(this.room, 0), this.waves.next()));
+      const stage = (this.stage = new CombatStage(this, bounds, entryPos(this.room, 0), this.waves.next(), {}, weaponDef(this.weapon)));
       stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
     } else if (this.conn) this.setupOnline(this.conn);
     else this.connect();
@@ -228,13 +229,12 @@ export class Dungeon extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    const k = this.keys, dt = delta / 1000;
+    const k = this.keys, dt = delta / 1000, sk = skillsOf(this.weapon);
     const input: KeyInput = {
       x: (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0),
       y: (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0),
       attack: Phaser.Input.Keyboard.JustDown(k.attack),
-      skill: Phaser.Input.Keyboard.JustDown(k.skill1) ? SKILLS.skill1
-        : Phaser.Input.Keyboard.JustDown(k.skill2) ? SKILLS.skill2 : null,
+      skill: Phaser.Input.Keyboard.JustDown(k.skill1) ? sk[0] ?? null : Phaser.Input.Keyboard.JustDown(k.skill2) ? sk[1] ?? null : null,
       backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
       potion: Phaser.Input.Keyboard.JustDown(k.potionHp) ? 'hp' : Phaser.Input.Keyboard.JustDown(k.potionMp) ? 'mp' : null,
     };
@@ -273,7 +273,7 @@ export class Dungeon extends Phaser.Scene {
     const { width, height } = this.scale.gameSize;
     if (view.player) {
       this.hud.draw({
-        player: view.player, weapon: 'greatsword', skills: [SKILLS.skill1, SKILLS.skill2, null, null],
+        player: view.player, weapon: this.weapon, skills: [sk[0] ?? null, sk[1] ?? null, null, null],
         level: 1, coins: view.coins, materials: view.materials, colorIndex: view.look.color, hair: view.look.hair,
       }, dt, width, height - HUD_HEIGHT);
     }

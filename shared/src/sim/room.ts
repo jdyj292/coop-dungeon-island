@@ -1,6 +1,6 @@
-// 방 시뮬레이션 한 틱 (클라이언트 로컬·서버 공용): 몬스터 AI → 투사체·장판 → 플레이어 행동·판정 → 몬스터끼리 겹침 풀기
+// 방 시뮬레이션 한 틱 (클라이언트 로컬·서버 공용): 몬스터 AI → 투사체·장판 → 플레이어 행동·판정(마법탄 포함) → 몬스터끼리 겹침 풀기
 // 플레이어는 여러 명 (pid로 구분). 솔로는 첫 플레이어만 쓰는 tick(dt, input)
-import type { ActionRun, WeaponDef } from '../actions';
+import type { ActionDef, ActionRun, WeaponDef } from '../actions';
 import { COMBAT, PLAYER } from '../data/load';
 import type { MonsterAttack } from '../data/schema';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
@@ -18,7 +18,8 @@ import { chooseTarget } from './aim';
 import { separateMonsters } from './separate';
 import { PositionHistory, type PastPos } from './history';
 import { HitLog } from './hitLog';
-import { phaseIsActive, strike, type PosOf } from './strike';
+import { hitMonster, phaseIsActive, strike, type PosOf, type StrikeHit } from './strike';
+import { spawnBolt, stepBolt, type Bolt } from './bolts';
 
 export type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
 import type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
@@ -32,6 +33,8 @@ export class RoomSim {
   monsters: Monster[] = [];
   projectiles: Projectile[] = [];
   zones: ZoneArea[] = [];
+  /** 플레이어 마법탄 (스태프) */
+  bolts: Bolt[] = [];
   tokens: AttackTokens;
   private ids = 1;
   /** 몬스터 id → 노리는 플레이어 */
@@ -238,6 +241,8 @@ export class RoomSim {
     for (const e of res.events) {
       events.push({ type: 'fighter', pid, e });
       if (e.type === 'active') runs.add(e.run);
+      // 투사체 행동은 active 순간 한 번 발사 (판정은 날아가는 마법탄이, 판정 모양이 없어 strike는 맞히지 않음)
+      if (e.type === 'active' && e.run.def.projectile) this.shoot(sp, e.run.def, events);
     }
     if (p.fighter.run && phaseIsActive(p.fighter.run)) runs.add(p.fighter.run);
     let hits = 0;
@@ -247,25 +252,38 @@ export class RoomSim {
     for (const run of runs) {
       let done = this.struck.get(run);
       if (!done) this.struck.set(run, (done = new Set()));
-      for (const h of strike(p, run, this.alive, done, posOf)) {
-        events.push({ type: 'hit', pid, m: h.m, def: run.def, damage: h.damage });
-        if (h.ko) events.push({ type: 'ko', pid, m: h.m });
-        // 보스 졸음 연장 (파티: 서로 다른 2명, 솔로: 15히트)
-        recordGroggyHit(h.m, pid, (this.opts.partySize ?? 1) >= 2);
-        hits++;
-        if (this.opts.hitstop === 'entity') {
-          const sec = gradeTiming(run.def.fx?.grade ?? 'light').hitstop;
-          sp.stop = Math.max(sp.stop, sec);
-          this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, sec));
-        }
-      }
+      hits += this.landHits(sp, run.def, strike(p, run, this.alive, done, posOf), events);
     }
+    for (const b of this.bolts) if (b.pid === pid) hits += this.landHits(sp, b.def, stepBolt(b, dt, this.bounds, this.alive).map((m) => hitMonster(p, b.def, m, b.dir)), events);
+    this.bolts = this.bolts.filter((b) => (b.done ? (events.push({ type: 'boltEnd', bolt: b }), false) : true));
     // 솔로는 개인 콤보 단계가 코인 보너스 (파티는 팀 콤보, stepTeamCombo)
     if ((this.opts.partySize ?? 1) < 2) {
       const ms = milestoneHit(sp.combo, hits, COMBAT.combo.soloMilestones);
       if (ms !== null) events.push({ type: 'comboMilestone', pid, count: ms });
     } else comboHit(sp.combo, hits);
     return res.moved;
+  }
+
+  /** 마법탄 발사 */
+  private shoot(sp: SimPlayer, def: ActionDef, events: SimEvent[]): void {
+    const b = spawnBolt(this.ids++, sp.pid, def, sp.state.pos.x, sp.state.pos.y, sp.state.facing);
+    this.bolts.push(b);
+    events.push({ type: 'bolt', bolt: b });
+  }
+
+  /** 적중 사건·기절·보스 졸음 연장(파티: 서로 다른 2명, 솔로: 15히트)·히트스톱. 적중 수 */
+  private landHits(sp: SimPlayer, def: ActionDef, hits: StrikeHit[], events: SimEvent[]): number {
+    for (const h of hits) {
+      events.push({ type: 'hit', pid: sp.pid, m: h.m, def, damage: h.damage });
+      if (h.ko) events.push({ type: 'ko', pid: sp.pid, m: h.m });
+      recordGroggyHit(h.m, sp.pid, (this.opts.partySize ?? 1) >= 2);
+      if (this.opts.hitstop === 'entity') {
+        const sec = gradeTiming(def.fx?.grade ?? 'light').hitstop;
+        sp.stop = Math.max(sp.stop, sec);
+        this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, sec));
+      }
+    }
+    return hits.length;
   }
 
   /** 몬스터 공격 적중 → HP·경직·다운 (무적이면 무시) */

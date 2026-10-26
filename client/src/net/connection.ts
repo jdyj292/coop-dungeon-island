@@ -26,6 +26,8 @@ export interface PlayerSnap extends Pos {
   color: number;
   /** 외형 키 "의상:머리:머리색:플레이어 색" (view/look.ts hairOfLook) */
   look: string;
+  /** 무기 id (weapons.json) */
+  weapon: string;
 }
 
 export interface MonsterSnap extends Pos {
@@ -79,7 +81,7 @@ const RECONNECT_EVERY_MS = 2000;
 const RECONNECT_MAX_MS = 60_000;
 
 const EVENTS: (keyof S2C)[] = [
-  'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter', 'result',
+  'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'bolt', 'boltEnd', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter', 'result',
 ];
 
 /**
@@ -173,8 +175,9 @@ export class Connection {
 
   /** 첫 상태까지 받은 뒤 돌려준다 (방 번호를 알아야 화면을 만든다) */
   /** 개발 방: ?room=1~6 (기본 1) ?party=1~4 (기본 2) */
-  static devRoom(p: URLSearchParams): { room: number; partySize: number } {
-    return { room: Number(p.get('room') ?? 1), partySize: Math.min(4, Math.max(1, Number(p.get('party') ?? 2))) };
+  static devRoom(p: URLSearchParams): { room: number; partySize: number; weapon?: string } {
+    const room = Number(p.get('room') ?? 1), partySize = Math.min(4, Math.max(1, Number(p.get('party') ?? 2)));
+    return p.has('weapon') ? { room, partySize, weapon: p.get('weapon')! } : { room, partySize };
   }
 
   /** 개발용 네트워크 흉내 초기값: ?lag=왕복ms&jitter=±ms&loss=% (` 키 패널에서 조정) */
@@ -184,7 +187,7 @@ export class Connection {
   }
 
   /** 개발 방(joinOrCreate, ?online=1) 또는 섬에서 출발한 방(roomId, 세션 쿠키로 인증) */
-  static async join(opts: { room: number; partySize: number; name?: string } | { roomId: string }, sim: NetSim): Promise<Connection> {
+  static async join(opts: { room: number; partySize: number; name?: string; weapon?: string } | { roomId: string }, sim: NetSim): Promise<Connection> {
     const client = new Client(serverUrl());
     const room = 'roomId' in opts ? await client.joinById(opts.roomId) : await client.joinOrCreate('dungeon', opts);
     const conn = new Connection(room, sim);
@@ -251,7 +254,7 @@ export class Connection {
     const players = new Map<string, PlayerSnap>();
     s.players.forEach((p, id) => players.set(id, {
       id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, state: p.state, since: since(prevP?.get(id), p.state),
-      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0, look: p.look ?? '',
+      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0, look: p.look ?? '', weapon: p.weapon || 'greatsword',
     }));
     const monsters = new Map<string, MonsterSnap>();
     s.monsters.forEach((m, id) => monsters.set(id, {

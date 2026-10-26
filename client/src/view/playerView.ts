@@ -18,6 +18,8 @@ export class PlayerView {
   flash = 0;
   /** 머리 모양·색 (섬 주민 상태, 던전 look) */
   hair: Hair = DEFAULT_HAIR;
+  /** 무기 외형 (weapons.json visual → weapons_visual.json 프로필) */
+  weaponVisual = 'greatsword_basic';
   private stars: Phaser.GameObjects.Graphics;
   private beat = 0;
   private moving = false;
@@ -83,7 +85,7 @@ export class PlayerView {
     const lying = !known && (p.hurt?.kind === 'down' || p.downed);
     const look: CharacterLook = {
       hair: hairName(this.hair), face: !known && (p.hurt || p.downed) ? 'hurt' : 'normal', outfit: data.outfits.sets.beginner!,
-      weapon: lying || !this.armed ? undefined : 'greatsword_basic', pose: lying || !this.armed ? undefined : fighterPose(p.fighter) ?? 'idle',
+      weapon: lying || !this.armed ? undefined : this.weaponVisual, pose: lying || !this.armed ? undefined : fighterPose(p.fighter) ?? 'idle',
       frame: step.frame, bob: step.bob, motion: known ? motion : undefined,
     };
     const tex = characterTexture(this.scene, look, { hairColor: hairColorPath(this.hair), playerColor: `global.playerColors.${this.colorIndex}` });

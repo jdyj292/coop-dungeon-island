@@ -155,6 +155,7 @@ IslandState
 |---|---|---|
 | hit | `{ attacker, target, damage, strength, flags, hitstop, x, y, z, t }` | 데미지 숫자, 섬광, 흰색 번쩍임, 히트스톱, 흔들림 |
 | projSpawn / projEnd | 위 참고 | 투사체 그리기 |
+| bolt / boltEnd | 플레이어 마법탄 `bolt { id, kind(행동 id), pid, x, y, dir, t0 }`, `boltEnd { id, reason, x, y }` | 마법탄 그리기 (MVP 보충 ST-2) |
 | playerHit | 내가 맞음 `{ damage, strength, from }` | 피격 표정, 화면 붉은 테두리 없이 흔들림 |
 | reward | `{ coins, material, exp }` 본인에게 (몬스터 기절·보물상자) | coin 효과음, HUD 숫자 튐 |
 | comboBonus | `{ count, rate }` 본인에게 | "+5%" 표시 |

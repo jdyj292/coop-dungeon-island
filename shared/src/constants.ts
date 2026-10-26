@@ -17,6 +17,9 @@ export const DEPTH_RATIO = 10 / 16;
 export const TICK_RATE = 60;
 export const TICK = 1 / TICK_RATE;
 
+/** 고를 수 있는 무기 (MVP: 대검·스태프, roadmap 1장). 주먹·쌍검은 데이터만 있음 */
+export const MVP_WEAPONS = ['greatsword', 'staff'] as const;
+
 /** 외형 고르기 개수 (art.md 3장: 머리 모양 3종, palette global.hairColors 4색). 순서·그림은 클라이언트 스프라이트 데이터 */
 export const LOOK = { hairStyles: 3, hairColors: 4 } as const;
 

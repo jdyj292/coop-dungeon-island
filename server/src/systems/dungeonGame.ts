@@ -1,7 +1,7 @@
 // 던전 한 판의 진행 (Colyseus 없이 테스트 가능): 방마다 RoomSim + 웨이브 + 방 진행 + 입력 대기열 + 상태 반영 + 이벤트
 // DungeonRoom(rooms/)은 연결·전송만 맡는다. 흐름은 docs/network.md 3~6장
 import {
-  atkFor, COMBAT, entryPos, mapOf, maxHpFor, parseC2S, ROOMS, RoomSim, TICK, WaveRunner, weaponDef,
+  atkFor, COMBAT, entryPos, mapOf, maxHpFor, MVP_WEAPONS, parseC2S, ROOMS, RoomSim, TICK, WaveRunner, weaponDef,
   type C2SType, type RoomDef, type PlayerInput, type Projectile, type S2C, type SimOptions, type SimPlayer,
 } from '@game/shared';
 import { DungeonState, PlayerState } from '../schema/DungeonState';
@@ -72,9 +72,11 @@ export class DungeonGame {
   }
 
   /** party = 섬에서 출발한 파티원 정보 (이름·색·숙련도(최대 HP·ATK)·가져온 물약). 없으면 개발용 (Lv1, 물약 한도만큼) */
-  join(pid: string, name: unknown, party?: PartyMember): void {
+  join(pid: string, name: unknown, party?: PartyMember, devWeapon?: unknown): void {
     const index = this.joined++;
-    const sp = this.sim.addPlayer(pid, entryPos(this.room, index % 4));
+    // 무기: 개발 방은 접속 옵션 weapon (MVP 무기만), 없으면 대검 (섬 파티는 MVP 보충 ST-4)
+    const weapon = !party && (MVP_WEAPONS as readonly unknown[]).includes(devWeapon) ? devWeapon as string : 'greatsword';
+    const sp = this.sim.addPlayer(pid, entryPos(this.room, index % 4), weaponDef(weapon));
     // 부활의 깃털은 솔로만 (dungeon.md 3장). 파티는 동료 부활
     if (this.state.partySize > 1) sp.state.feathers = 0;
     const level = party?.level ?? 1;
@@ -82,7 +84,7 @@ export class DungeonGame {
     const raw = party?.name ?? name;
     const nick = typeof raw === 'string' && raw.trim() ? raw.trim().slice(0, NAME_MAX) : `모험가${index + 1}`;
     const color = party?.color ?? index % 4;
-    const s = new PlayerState().assign({ id: pid, name: nick, look: `beginner:${party?.hair ?? 0}:${party?.hairColor ?? 0}:${color}`, color, weapon: 'greatsword' });
+    const s = new PlayerState().assign({ id: pid, name: nick, look: `beginner:${party?.hair ?? 0}:${party?.hairColor ?? 0}:${color}`, color, weapon });
     syncPlayer(s, sp, 0, this.now);
     this.state.players.set(pid, s);
     this.members.set(pid, { inputs: new InputQueue(), limit: new RateLimit(dungeonRules()), index, level, levelExp: party?.levelExp ?? 0 });

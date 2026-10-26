@@ -6,6 +6,7 @@ import type { MonsterEvent } from '../monster/ai';
 import type { Monster } from '../monster/state';
 import type { PlayerInput, PlayerState } from '../player';
 import type { HurtEvent, PotionKind } from '../playerHurt';
+import type { Bolt } from './bolts';
 import type { HitLog } from './hitLog';
 
 export interface Spawn {
@@ -49,7 +50,10 @@ export type SimEvent =
   /** 개인 콤보 단계 달성 (솔로, 코인 보너스) */
   | { type: 'comboMilestone'; pid: string; count: number }
   /** 몬스터 기절 (보상 시점). pid = 마지막 적중 */
-  | { type: 'ko'; pid: string; m: Monster };
+  | { type: 'ko'; pid: string; m: Monster }
+  /** 플레이어 마법탄 발사·사라짐 (스태프) */
+  | { type: 'bolt'; bolt: Bolt }
+  | { type: 'boltEnd'; bolt: Bolt };
 
 export interface SimOptions {
   /** false면 몬스터가 움직이거나 공격하지 않음 (tools/motion-preview) */

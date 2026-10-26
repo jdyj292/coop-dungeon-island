@@ -80,12 +80,20 @@ export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEv
   const ev: MonsterEvent[] = [];
   for (const id of Object.keys(m.cooldowns)) m.cooldowns[id] = Math.max(0, m.cooldowns[id]! - dt);
   m.moving = false;
+  m.frozen = Math.max(0, m.frozen - dt);
   m.body.armor = hasArmor(m);
   for (const e of stepBodyIn(m, dt, ctx.bounds)) ev.push({ type: 'body', e });
   if (m.body.ko || m.body.state !== 'idle') {
     // 맞아서 반응 중이면 공격은 끊긴다 (슈퍼아머면 body가 idle 그대로라 계속)
     if (m.attack) endAttack(m, ctx);
     if (m.mode === 'selfStun') m.mode = 'idle';
+    // 띄워지거나 다운되면 빙결이 풀린다 (경직은 그대로 이어짐)
+    if (m.body.state === 'air' || m.body.state === 'down') m.frozen = 0;
+    return ev;
+  }
+  // 빙결: 하던 공격은 취소, 움직이지 않음
+  if (m.frozen > 0) {
+    if (m.attack) endAttack(m, ctx);
     return ev;
   }
   if (m.mode === 'selfStun' || m.mode === 'groggy') {

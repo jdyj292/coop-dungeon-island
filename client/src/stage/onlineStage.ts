@@ -2,7 +2,7 @@
 // 내 캐릭터는 예측 상태로 바로 그리고 서버 패치마다 보정 (network.md 7장, net/localPlayer.ts)
 import type Phaser from 'phaser';
 import {
-  COMBAT, MONSTERS, NET, playerStateName,
+  COMBAT, MONSTERS, NET, playerStateName, weaponDef,
   type ActionDef, type Bounds, type Monster, type MonsterAttack, type PlayerState, type Projectile, type S2C, type ZoneArea,
 } from '@game/shared';
 import fx from '../../data/fx.json';
@@ -30,7 +30,6 @@ import { drawReviveGauges } from '../view/reviveGauge';
 
 const FX_DEPTH = 5000;
 const DISCONNECTED_ALPHA = 0.45;
-const WEAPON = 'greatsword';
 
 /** 몬스터 공격 id → 정의 (투사체·장판 그리기용) */
 const ATTACKS = new Map<string, MonsterAttack>(Object.values(MONSTERS).flatMap((m) => m.attacks.map((a) => [a.id, a] as const)));
@@ -69,7 +68,7 @@ export class OnlineStage {
 
   constructor(private scene: Phaser.Scene, readonly conn: Connection, bounds: Bounds) {
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
-    this.local = new LocalPlayer(conn, bounds, WEAPON);
+    this.local = new LocalPlayer(conn, bounds);
     this.hazards = new HazardLayer(scene);
     this.reviveG = scene.add.graphics().setDepth(FX_DEPTH + 1);
     conn.onEvent = (type, msg) => this.onEvent(type, msg);
@@ -157,9 +156,10 @@ export class OnlineStage {
       let r = this.players.get(id);
       if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1, s.color), colorIndex: s.color, ghosts: new Afterimages(this.scene), last: null }));
       r.view.hair = hairOfLook(s.look);
+      r.view.weaponVisual = weaponDef(s.weapon).visual;
       // 나 = 예측 상태 (화면 위치는 보정 오프셋 포함), 다른 사람 = 보간
       const mine = id === c.myId && !!this.local.predictor;
-      const p = mine ? { ...this.local.predictor!.state, pos: this.local.predictor!.display } : mirrorPlayer(s, t, WEAPON, undefined, now);
+      const p = mine ? { ...this.local.predictor!.state, pos: this.local.predictor!.display } : mirrorPlayer(s, t, s.weapon, undefined, now);
       if (mine) this.me = this.local.predictor!.state;
       if (r.view.update(p, realDt)) this.dustAt(p.pos.x, p.pos.y, fx.dust.bounce);
       const cues = mine

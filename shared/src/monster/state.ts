@@ -44,6 +44,13 @@ export interface Monster {
   /** 졸음 중 플레이어별 적중 수·연장 횟수 (groggy.ts) */
   groggyHits?: Record<string, number>;
   groggyExtended?: number;
+  /** 빙결 남은 시간 (combat.md 3장): 움직이지도 공격하지도 않음, 맞으면 피해·경직은 그대로, 띄워지거나 다운되면 풀림 */
+  frozen: number;
+}
+
+/** 빙결 (얼음 장판 등 status freeze). 더 긴 쪽으로 */
+export function freezeMonster(m: Monster, sec: number): void {
+  m.frozen = Math.max(m.frozen, sec);
 }
 
 /** hpMul = 인원 체력 보정 (combat.json partyHpMul) */
@@ -51,7 +58,7 @@ export function newMonster(id: number, kind: string, x: number, y: number, hpMul
   const def = MONSTERS[kind];
   if (!def) throw new Error(`몬스터 '${kind}' 없음`);
   return {
-    id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0,
+    id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0, frozen: 0,
     attack: null, hasToken: false, cooldowns: {}, aware: false, moving: false, hopT: 0, loop: { phase: 0, index: 0 },
   };
 }

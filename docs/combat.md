@@ -141,6 +141,16 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 - 슈퍼아머가 없는 몬스터는 예고(windup) 중 맞으면 공격이 끊기고 토큰을 반납한다
 - 구현: AI가 틱마다 body.armor를 정함 (shared/src/monster/state.ts hasArmor)
 
+### 빙결 (스태프 얼음 장판 등 status freeze)
+- 지속 시간 동안 움직이지도 공격하지도 않는다. 준비 중이던 공격은 취소
+- 맞으면 피해·경직은 그대로. 띄워지거나 다운되면 빙결이 풀린다 (경직 중에도 시간은 흐름)
+- 슈퍼아머 몬스터·보스에도 걸린다 (세기는 튜닝 때)
+- 구현: monster/state.ts frozen, ai.ts, 적중 시 sim/strike.ts hitMonster
+
+### 투사체 평타 (스태프 마법탄)
+- 행동 active 순간 손 앞(8px)에서 발사, 데이터 projectile { speed, range, radius, pierce }로 날아가 처음 닿은 몬스터에 적중 (pierce면 계속, 같은 대상은 한 번). 사거리 끝·벽·장애물에서 사라짐
+- 적중 처리(피해·반응·MP·콤보·히트스톱·보스 졸음 연장)는 근접과 같음. 지연 보정 되감기는 하지 않음. 구현 sim/bolts.ts
+
 ---
 
 ## 4. 플레이어 피격

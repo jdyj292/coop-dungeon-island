@@ -3,7 +3,7 @@ import type Phaser from 'phaser';
 import {
   FixedStep, RoomSim, TICK, weaponDef,
   type ActionDef, type Bounds, type Monster, type PlayerState, type PotionKind, type SimEvent, type SimOptions, type Spawn,
-  type Vec2,
+  type Vec2, type WeaponDef,
 } from '@game/shared';
 import fx from '../../data/fx.json';
 import { sfx } from '../audio/player';
@@ -39,7 +39,6 @@ const NO_PRESS: Presses = { attack: false, skill: null, backstep: false, potion:
 export const NO_INPUT: StageInput = { x: 0, y: 0, ...NO_PRESS };
 
 export class CombatStage {
-  readonly weapon = weaponDef('greatsword');
   sim: RoomSim;
   readonly fx: FxContext;
   readonly rhythm = new Rhythm();
@@ -62,10 +61,11 @@ export class CombatStage {
   /** 달리기 시작 소리용 */
   private wasRunning = false;
 
-  constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, spawns: Spawn[], readonly opts: SimOptions = {}) {
+  constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, spawns: Spawn[], readonly opts: SimOptions = {}, readonly weapon: WeaponDef = weaponDef('greatsword')) {
     this.sim = new RoomSim(this.weapon, bounds, player, opts);
     this.sim.spawn(spawns);
     this.playerView = new PlayerView(scene, FX_DEPTH - 1);
+    this.playerView.weaponVisual = this.weapon.visual;
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.hazards = new HazardLayer(scene);
     this.ghosts = new Afterimages(scene);

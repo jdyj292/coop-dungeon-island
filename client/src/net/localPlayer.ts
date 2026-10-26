@@ -16,7 +16,10 @@ export class LocalPlayer {
   /** 틱이 돌기 전에 보낸 누름을 다음 틱까지 보관 */
   private press: { input: Pick<KeyInput, 'attack' | 'skill' | 'backstep' | 'potion'>; seq: number | null } | null = null;
 
-  constructor(private conn: Connection, private bounds: Bounds, private weapon: string) {
+  /** 내 무기 (첫 서버 상태에서) */
+  private weapon = 'greatsword';
+
+  constructor(private conn: Connection, private bounds: Bounds) {
     this.sender = new InputSender(conn);
   }
 
@@ -24,7 +27,10 @@ export class LocalPlayer {
   reconcile(): void {
     const c = this.conn, snap = c.players.latest, s = snap?.items.get(c.myId);
     if (!snap || !s) return;
-    if (!this.predictor) this.predictor = new Predictor(weaponDef(this.weapon), this.bounds, { x: s.x, y: s.y });
+    if (!this.predictor) {
+      this.weapon = s.weapon;
+      this.predictor = new Predictor(weaponDef(this.weapon), this.bounds, { x: s.x, y: s.y });
+    }
     const server = mirrorPlayer(s, snap.t, this.weapon, c.mine, snap.t);
     const r = (this.lastCorrection = this.predictor.reconcile(server, s.lastInputSeq, TICK));
     const st = this.corrections;
