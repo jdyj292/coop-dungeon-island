@@ -13,6 +13,7 @@ import { LagPanel } from '../net/lagPanel';
 import type { KeyInput } from '../net/inputSender';
 import { CombatStage } from '../stage/combatStage';
 import { OnlineStage } from '../stage/onlineStage';
+import { SettingsPanel } from '../stage/settingsPanel';
 import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
 import { HudBottom } from '../ui/hudBottom';
 import { HudOverlay } from '../ui/hudOverlay';
@@ -65,6 +66,8 @@ export class Dungeon extends Phaser.Scene {
   private party!: HudParty;
   private roomHud!: HudRoom;
   private bossHud!: HudBoss;
+  /** 설정 (Esc, 볼륨). 열려 있는 동안 캐릭터는 제자리 */
+  private settings!: SettingsPanel;
   /** 보스 등장 연출 (보스 방에 들어갈 때 한 번) */
   private intro: BossIntro | null = null;
   /** 정산 화면 (한 판 끝) */
@@ -95,6 +98,7 @@ export class Dungeon extends Phaser.Scene {
     this.party = new HudParty(this, HUD_DEPTH);
     this.roomHud = new HudRoom(this, HUD_DEPTH);
     this.bossHud = new HudBoss(this, HUD_DEPTH);
+    this.settings = SettingsPanel.forDungeon(this, HUD_DEPTH + 8, () => !this.result && !this.chat?.open);
     this.intro = null;
     sfx.unlockOnFirstInput();
     this.events.once('shutdown', () => { if (!this.keepConn) this.conn?.leave(); });
@@ -140,12 +144,9 @@ export class Dungeon extends Phaser.Scene {
       this.events.once('shutdown', () => panel.destroy());
     }
     online.onBonus = (rate) => this.overlay.showBonus(rate);
-    this.chat = ChatBar.forDungeon(this, HUD_DEPTH + 5, online, conn, () => !!this.result);
+    this.chat = ChatBar.forDungeon(this, HUD_DEPTH + 5, online, conn, () => !!this.result || this.settings.open);
     // 재접속에 성공하면 같은 접속으로 화면을 다시 만든다 (전체 상태를 다시 받음, network.md 10장)
-    conn.onReconnected = () => {
-      this.keepConn = true;
-      this.scene.restart();
-    };
+    conn.onReconnected = () => { this.keepConn = true; this.scene.restart(); };
     online.onResult = (r) => {
       this.result = new ResultPanel(this, HUD_DEPTH + 10, r, conn.myId, (pid) => online.colorOf(pid));
       // 정산 화면: 음악은 0.5초에 걸쳐 줄이고 정지 (정산 효과음이 주인공)
@@ -240,7 +241,7 @@ export class Dungeon extends Phaser.Scene {
     let view: { player: PlayerState | null; combo: number; shake: Shake; color: number; coins: number; materials: number };
     if (this.stage) {
       this.checkWave(this.stage);
-      this.stage.update(dt, input);
+      this.stage.update(dt, this.settings.open ? NO_KEYS : input);
       view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake, color: 0, coins: 0, materials: 0 };
     } else if (this.online) {
       const live = this.online.conn.progress;
@@ -250,17 +251,17 @@ export class Dungeon extends Phaser.Scene {
         this.scene.restart();
         return;
       }
-      // 정산·보스 등장 연출·재접속 중에는 조작 없이 세계만 그린다
+      // 정산·보스 등장 연출·재접속·채팅·설정 중에는 조작 없이 세계만 그린다
       const status = this.online.conn.status;
       this.overlay.connection = status;
-      this.online.update(dt, this.result || this.intro || status !== 'ok' || this.chat?.open ? NO_KEYS : input);
+      this.online.update(dt, this.result || this.intro || status !== 'ok' || this.chat?.open || this.settings.open ? NO_KEYS : input);
       this.chat?.draw(this.time.now / 1000);
       if (status === 'lost') this.waitKeyForNewRun();
       this.props.setExit(live.exitAt, live.exitNeed);
       this.props.setChestOpen(live.chestOpen);
       this.props.setReturn(live.returnLeft);
-      if (!this.result) this.interact(live, k.interact.isDown, Phaser.Input.Keyboard.JustDown(k.interact));
-      else this.showResult(dt);
+      if (this.result) this.showResult(dt);
+      else this.interact(live, k.interact.isDown && !this.settings.open, Phaser.Input.Keyboard.JustDown(k.interact) && !this.settings.open);
       const mine = this.online.conn.mine;
       view = {
         player: this.online.me, combo: this.online.comboCount, shake: this.online.fx.shake, color: this.online.myColor,

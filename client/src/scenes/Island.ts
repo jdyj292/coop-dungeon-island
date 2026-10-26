@@ -5,6 +5,7 @@ import { api } from '../net/api';
 import { IslandConnection } from '../net/islandNet';
 import { colorInt } from '../palette';
 import { IslandStage } from '../stage/islandStage';
+import { SettingsPanel } from '../stage/settingsPanel';
 import { IslandHud } from '../ui/islandHud';
 import { koText } from '../ui/koText';
 import { islandScreenSize, IslandWorld } from '../view/islandWorld';
@@ -30,6 +31,8 @@ export class Island extends Phaser.Scene {
   private stage: IslandStage | null = null;
   private world!: IslandWorld;
   private hud!: IslandHud;
+  /** 설정 (Esc, 볼륨) */
+  private settings!: SettingsPanel;
   private keys!: Record<'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd', Phaser.Input.Keyboard.Key>;
   private me!: MeRes;
   private notice: Phaser.GameObjects.GameObject | null = null;
@@ -48,12 +51,14 @@ export class Island extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(colorInt('island.water'));
     this.world = new IslandWorld(this);
     this.hud = new IslandHud(this, 6000);
+    this.settings = new SettingsPanel(this, 6600);
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({ up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D }) as typeof this.keys;
     this.input.keyboard!.on('keydown', (e: KeyboardEvent) => this.onKey(e));
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.stage?.place.onPointerMove({ x: p.worldX, y: p.worldY }));
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onPointerDown(p));
     this.events.once('shutdown', () => {
+      this.settings.destroy();
       this.stage?.destroy();
       this.stage = null;
       this.input.keyboard!.off('keydown');
@@ -92,18 +97,20 @@ export class Island extends Phaser.Scene {
     return this.scale.gameSize.height - HUD_HEIGHT;
   }
 
-  /** 키: 입력창 > 패널 > 배치 모드 > 걷는 중 단축키 순서 */
+  /** 키: 입력창 > 설정 > 패널 > 배치 모드 > 걷는 중 단축키 순서 (Esc: 열린 것 닫기, 없으면 설정) */
   private onKey(e: KeyboardEvent): void {
     const s = this.stage;
     // 꾹 누를 때 반복은 커서 이동(방향키·WASD)만: 놓기·회전·치우기·사기가 연달아 되지 않게
     if (this.stage?.chat.open || (e.repeat && !/^(Arrow|Key[WASD]$)/.test(e.code))) return;
+    if (this.settings.open) return this.settings.onKey(e.code);
     if (!s) return void (e.code === 'KeyL' && this.logout());
     if (s.panels.open) {
       const toggle = { KeyI: 'bag', KeyM: 'board' }[e.code];
       return toggle === s.panels.open ? s.panels.close() : s.panels.onKey(e.code);
     }
     if (s.place.active) return e.code === 'KeyB' ? this.togglePlace() : s.place.onKey(e.code);
-    if (e.code === 'KeyB') this.togglePlace();
+    if (e.code === 'Escape' && !e.repeat) this.settings.show();
+    else if (e.code === 'KeyB') this.togglePlace();
     else if (e.code === 'KeyI') s.panels.show('bag');
     else if (e.code === 'KeyM') s.panels.show('board');
     else if (e.code === 'Enter') s.chat.chat((text) => s.conn.send('chat', { text }));
@@ -127,10 +134,10 @@ export class Island extends Phaser.Scene {
     else s.place.enter(s.myPos);
   }
 
-  /** 패널 > 배치 모드 > 아래 띠 B·I·M 버튼 */
+  /** 설정 > 패널 > 배치 모드 > 아래 띠 B·I·M 버튼 */
   private onPointerDown(p: Phaser.Input.Pointer): void {
     const s = this.stage;
-    if (!s || s.chat.open || s.panels.onPointer(p.x, p.y)) return;
+    if (this.settings.onPointer(p.x, p.y) || !s || s.chat.open || s.panels.onPointer(p.x, p.y)) return;
     if (s.place.active) return void s.place.onPointerDown({ x: p.x, y: p.y }, { x: p.worldX, y: p.worldY }, this.bandTop());
     const b = IslandHud.hitButton(p.x, p.y, this.bandTop());
     if (b === 'B') this.togglePlace();
@@ -156,8 +163,8 @@ export class Island extends Phaser.Scene {
   update(time: number, deltaMs: number): void {
     const dt = Math.min(deltaMs / 1000, 0.1);
     const k = this.keys, s = this.stage;
-    // 배치 모드·패널·입력창 동안 캐릭터는 서 있음 (방향키는 커서·목록)
-    const walk = !s?.place.active && !s?.panels.open && !s?.chat.open;
+    // 배치 모드·패널·설정·입력창 동안 캐릭터는 서 있음 (방향키는 커서·목록)
+    const walk = !s?.place.active && !s?.panels.open && !s?.chat.open && !this.settings.open;
     const x = walk ? (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0) : 0;
     const y = walk ? (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0) : 0;
     const { width, height } = this.scale.gameSize;
@@ -174,6 +181,7 @@ export class Island extends Phaser.Scene {
       colorIndex: mine?.color ?? 0, level: s?.conn.me.level ?? 1, wallet: s?.conn.me.wallet ?? this.me.wallet,
       treasury: s?.conn.island.treasury ?? this.me.island.treasury, residents, placing,
     }, width, height - HUD_HEIGHT);
+    this.settings.update(width, height - HUD_HEIGHT);
     if (s) {
       s.panels.update(width, height - HUD_HEIGHT);
       s.chat.draw(s.time);
