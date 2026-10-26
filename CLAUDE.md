@@ -46,7 +46,7 @@ deploy/                  서버 설치 파일: Nginx 틀·systemd·백업 cron·
 | 도구 | 상태 | 용도 |
 |---|---|---|
 | bgm-preview | 완성 | bgm.json 재생. reference.html = 승인 원본 |
-| sprite-preview | 완성 | 스프라이트 조합·확대 보기, 승인 캡처 비교. `pnpm sprite-preview` |
+| sprite-preview | 완성 | 스프라이트 조합·확대 보기, 승인 캡처 비교, HUD 아이콘 탭. `pnpm sprite-preview` |
 | motion-preview | 완성 | 모션 슬로우·프레임 넘기기·값 조정 → JSON 복사, 승인 데모와 비교. `pnpm motion-preview` |
 | sfx-preview | 완성 | 효과음 재생·조정 → JSON 복사, 승인 원본 나란히 듣기·자동 비교. `pnpm sfx-preview` |
 | palette-check | 완성 | palette.json 색 규칙 검사 (art.md 8장). `pnpm palette-check`, 기준 rules.json |
@@ -118,4 +118,4 @@ deploy/                  서버 설치 파일: Nginx 틀·systemd·백업 cron·
 ## 현재 상태
 - M0~M4 완료. M5 5-1(프로덕션 빌드 dist/), 5-2(Origin 제한·CSP), 5-3(관리자 명령·온라인 백업), 5-4(deploy/: Nginx 틀·systemd·백업 cron·install.sh·coop-admin, docs/deploy.md 5장), 게시판 초대 탭, 숙련도 ATK 반영, 던전 말풍선, 보스 한글 이름, 볼륨 설정(Esc 설정 패널), 이모트 1~4, 머리 모양·머리색(설정 외형 탭) 완료
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?weapon=staff, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
-- 다음: 실제 배포 (docs/deploy.md 5장 순서) → 친구 접속 확인. MVP 보충 ST-1(스태프 규칙), ST-2a(스태프 연출), ST-2b(스태프 효과음) 완료 → 다음 ST-3 HUD 아이콘 (roadmap MVP 보충)
+- 다음: 실제 배포 (docs/deploy.md 5장 순서) → 친구 접속 확인. MVP 보충 ST-1(스태프 규칙), ST-2a(스태프 연출), ST-2b(스태프 효과음), ST-3(HUD 아이콘) 완료 → 다음 ST-4 무기 고르기 (roadmap MVP 보충)

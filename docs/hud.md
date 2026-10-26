@@ -19,7 +19,7 @@
 | 257~285 | 이번 판 코인·재료 | 획득 시 숫자가 한 번 튐 |
 
 - 구현: client/src/ui/hudBottom.ts (그리기 부품 hudParts.ts, 3×5 글꼴 pixelFont.ts). 위치·모양은 승인 데모 floor1_room_hud_mockup.html과 같다. 시간 값(흰 잔상 0.4초, 사용 가능 깜빡임 0.2초 등)은 client/data/fx.json hud
-- 슬롯 아이콘 도트는 client/data/sprites/hud_icons.json (행동·무기 id → 아이콘은 slots). 키 글자 J U O P Z X는 승인 데모 글꼴에 없어 보이지 않았던 것을 같은 3×5 규칙으로 추가
+- 슬롯 아이콘 도트는 client/data/sprites/hud_icons.json (행동·무기 id → 아이콘은 slots). 스태프 J = 지팡이(하늘색 보석), U 화염 폭발 = 금색 폭발, I 얼음 장판 = 눈 결정 + 얼음판 (MVP 보충 ST-3). 새 아이콘은 drafts/hud_icons.json에 초안 → sprite-preview HUD 탭에서 승인 → 옮김. 키 글자 J U O P Z X는 승인 데모 글꼴에 없어 보이지 않았던 것을 같은 3×5 규칙으로 추가
 - 필살기 L: 지금은 게이지만 쌓인다 (발동은 이후). 이번 판 코인·재료는 서버 본인 전용 값 (로컬 테스트는 0)
 
 ### 슬롯 상태

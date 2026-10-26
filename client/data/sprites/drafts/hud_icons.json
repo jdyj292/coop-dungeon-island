@@ -1,0 +1,6 @@
+{
+ "_note": "HUD 아이콘 초안 (승인 전). sprite-preview HUD 탭에서 본 데이터와 나란히. 승인되면 hud_icons.json icons·slots·palette로 옮기고 이 파일은 비운다",
+ "palette": {},
+ "slots": {},
+ "icons": {}
+}

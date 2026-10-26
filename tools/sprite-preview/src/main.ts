@@ -4,6 +4,7 @@ import { compareTab } from './compareTab';
 import { monsterTab } from './monsterTab';
 import { islandTab } from './islandTab';
 import { propTab } from './propTab';
+import { hudTab } from './hudTab';
 import { el } from './ui';
 
 const tabs: [string, () => HTMLElement][] = [
@@ -12,6 +13,7 @@ const tabs: [string, () => HTMLElement][] = [
   ['몬스터', monsterTab],
   ['소품', propTab],
   ['섬', islandTab],
+  ['HUD', hudTab],
 ];
 
 const app = document.getElementById('app')!;
