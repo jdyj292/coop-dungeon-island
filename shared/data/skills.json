@@ -140,6 +140,7 @@
     "fx": {
       "grade": "medium"
     },
+    "sfx": { "windup": "skill_fireburst" },
     "weapon": "staff",
     "name": "화염 폭발",
     "branch": "base",
@@ -195,6 +196,7 @@
     "fx": {
       "grade": "medium"
     },
+    "sfx": { "active": "skill_icefield", "hit": "hitLight" },
     "weapon": "staff",
     "name": "얼음 장판",
     "branch": "base",

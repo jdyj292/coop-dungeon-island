@@ -166,7 +166,8 @@
         },
         "fx": {
           "grade": "light"
-        }
+        },
+        "sfx": { "active": "bolt_cast", "hit": "bolt_hit" }
       },
       {
         "id": "st_b2",
@@ -193,7 +194,8 @@
         },
         "fx": {
           "grade": "light"
-        }
+        },
+        "sfx": { "active": "bolt_cast", "hit": "bolt_hit" }
       },
       {
         "id": "st_b3",
@@ -220,7 +222,8 @@
         },
         "fx": {
           "grade": "medium"
-        }
+        },
+        "sfx": { "active": "bolt_cast", "hit": "bolt_hit" }
       }
     ],
     "dash": {
@@ -252,7 +255,8 @@
       },
       "fx": {
         "grade": "medium"
-      }
+      },
+      "sfx": { "active": "dash", "hit": "hitHeavy" }
     },
     "baseSkills": [
       "st_fireburst",

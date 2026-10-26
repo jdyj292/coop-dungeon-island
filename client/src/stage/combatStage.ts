@@ -136,7 +136,7 @@ export class CombatStage {
     }
     events.forEach((e) => this.onEvent(e));
     // 효과음은 이벤트 순간 바로 (히트스톱과 무관, audio.md 4장)
-    events.forEach((e) => soundsFor(e).forEach((n) => this.sound(n)));
+    events.forEach((e) => soundsFor(e, { teleport: this.playerView.teleport }).forEach((n) => this.sound(n)));
     const running = this.player.run.running && !this.player.fighter.run;
     if (running && !this.wasRunning) this.sound('dash');
     this.wasRunning = running;

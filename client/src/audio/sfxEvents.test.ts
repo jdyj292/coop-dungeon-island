@@ -6,13 +6,13 @@ import { soundsFor } from './sfxEvents';
 const none: PlayerInput = { x: 0, y: 0, attack: false, skill: null, backstep: false };
 
 /** AI 없이 행동을 넣고 들린 소리 목록 */
-function heard(script: [Partial<PlayerInput>, number][], spawn = true): string[] {
-  const sim = new RoomSim(weaponDef('greatsword'), { minX: 0, maxX: 1000, minY: 0, maxY: 100 }, { x: 100, y: 50 }, { ai: false });
-  if (spawn) sim.spawn([{ kind: 'mushroom', x: 114, y: 50 }]);
+function heard(script: [Partial<PlayerInput>, number][], spawn = true, weapon = 'greatsword', at = 114): string[] {
+  const sim = new RoomSim(weaponDef(weapon), { minX: 0, maxX: 1000, minY: 0, maxY: 100 }, { x: 100, y: 50 }, { ai: false });
+  if (spawn) sim.spawn([{ kind: 'mushroom', x: at, y: 50 }]);
   const out: string[] = [];
   for (const [input, ticks] of script) {
     for (let i = 0; i < ticks; i++) {
-      for (const e of sim.tick(TICK, { ...none, ...(i === 0 ? input : {}) }).events) out.push(...soundsFor(e));
+      for (const e of sim.tick(TICK, { ...none, ...(i === 0 ? input : {}) }).events) out.push(...soundsFor(e, { teleport: weapon === 'staff' }));
     }
   }
   return out;
@@ -35,9 +35,15 @@ describe('전투 이벤트 → 효과음 (audio.md 3장)', () => {
     expect(heard([[{ skill: skillDef('gs_earthsplit') }, 60]])).toEqual(['skill_slash', 'hitHeavy']);
     expect(heard([[{ backstep: true }, 5], [{ potion: 'hp' }, 2]], false)).toEqual(['backstep', 'potion']);
   });
+  it('스태프: 마법탄 bolt_cast·bolt_hit, 화염 폭발(준비 때), 얼음 장판, 순간이동 (MVP 보충 ST-2b)', () => {
+    expect(heard([[{ attack: true }, 40]], true, 'staff', 150)).toEqual(['bolt_cast', 'bolt_hit']);
+    expect(heard([[{ skill: skillDef('st_fireburst') }, 150]], true, 'staff', 164)).toEqual(['skill_fireburst', 'bounce', 'down']);
+    expect(heard([[{ skill: skillDef('st_icefield') }, 40]], true, 'staff', 148)).toEqual(['skill_icefield', 'hitLight']);
+    expect(heard([[{ backstep: true }, 5]], false, 'staff')).toEqual(['teleport']);
+  });
   it('연결된 소리는 모두 sfx.json에 있다', () => {
     for (const n of ['swing', 'hitLight', 'swingHeavy', 'hitHeavy', 'launch', 'bounce', 'down', 'skill_slash', 'backstep', 'potion',
-      'dash', 'mon_mushroom_windup', 'mon_boar_charge', 'mon_spore_shot', 'mon_bear_roar', 'bearYawn', 'roomClear']) {
+      'dash', 'bolt_cast', 'bolt_hit', 'teleport', 'skill_fireburst', 'skill_icefield', 'mon_mushroom_windup', 'mon_boar_charge', 'mon_spore_shot', 'mon_bear_roar', 'bearYawn', 'roomClear']) {
       expect(busOf(n), n).not.toBeNull();
     }
   });

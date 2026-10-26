@@ -1,7 +1,8 @@
 // 전투 이벤트 → 효과음 이름 (docs/audio.md 3장 연결표). 행동 소리는 데이터의 sfx 필드, 나머지는 여기서 정한다
 import type { SimEvent } from '@game/shared';
 
-export function soundsFor(e: SimEvent): string[] {
+/** teleport = 순간이동 백스텝 무기 (스태프 backstepStyle teleport): 백스텝 소리 대신 teleport */
+export function soundsFor(e: SimEvent, opts: { teleport?: boolean } = {}): string[] {
   const pick = (...names: (string | undefined)[]) => names.filter((n): n is string => !!n);
   switch (e.type) {
     case 'fighter':
@@ -11,7 +12,7 @@ export function soundsFor(e: SimEvent): string[] {
     case 'hit':
       return pick(e.def.sfx?.hit);
     case 'backstep':
-      return ['backstep'];
+      return [opts.teleport ? 'teleport' : 'backstep'];
     case 'playerHit':
       return [e.def.strength === 'heavy' ? 'hitHeavy' : 'hitLight'];
     case 'potion':

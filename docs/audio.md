@@ -45,15 +45,15 @@
 
 | 분류 | action | clear |
 |---|---|---|
-| 전투 | swing, swingHeavy, hitLight, hitHeavy, launch, bounce, down, backstep, dash, guard | |
+| 전투 | swing, swingHeavy, hitLight, hitHeavy, launch, bounce, down, backstep, dash, guard, bolt_cast, bolt_hit, teleport (스태프, MVP 보충 ST-2b) | |
 | 스킬 | skill_slash, skill_fireburst, skill_icefield (나머지는 스킬 추가 때) | |
 | 몬스터 | mon_mushroom_windup, mon_boar_charge, mon_spore_shot, mon_bear_roar | bearYawn |
 | 보상·UI | | coin, potion, levelup, roomClear, click, place |
 
 - 데이터 연결: 행동(action) 데이터에 `sfx: { windup?, active?, hit? }` 키로 소리 이름 지정 (예: 대검 평타 active = swing, hit = hitLight). 이름은 두 버스에서 겹치지 않으므로 버스 없이 쓴다. data-validate가 sfx.json에 있는지 검사
-- 지금 연결 (데이터 sfx): 대검 1·2타 swing/hitLight, 3타 swingHeavy/hitHeavy, 대시 dash/hitHeavy, 올려베기 launch/hitLight, 대지가르기 skill_slash/hitHeavy, 버섯 박치기 예고 mon_mushroom_windup, 멧돼지 돌진 mon_boar_charge, 포자탄 mon_spore_shot, 이끼곰 하품 예고 bearYawn
-- 지금 연결 (이벤트, client/src/audio/sfxEvents.ts): 달리기 시작 dash, 백스텝 backstep, 몬스터 바운드 bounce·다운 down, 플레이어 피격 hitLight(강 공격이면 hitHeavy), 이끼곰 그로기 진입 mon_bear_roar, 물약 potion, 방 클리어 roomClear
-- 아직 연결 안 함 (기능이 생길 때): coin, levelup, click, place, guard, skill_fireburst, skill_icefield
+- 지금 연결 (데이터 sfx): 대검 1·2타 swing/hitLight, 3타 swingHeavy/hitHeavy, 대시 dash/hitHeavy, 올려베기 launch/hitLight, 대지가르기 skill_slash/hitHeavy, 버섯 박치기 예고 mon_mushroom_windup, 멧돼지 돌진 mon_boar_charge, 포자탄 mon_spore_shot, 이끼곰 하품 예고 bearYawn, 스태프 평타 bolt_cast/bolt_hit, 스태프 대시 dash/hitHeavy, 화염 폭발 준비 skill_fireburst(레시피 안 0.45초 뒤 폭발음 = 준비 0.5초 끝), 얼음 장판 skill_icefield/hitLight
+- 지금 연결 (이벤트, client/src/audio/sfxEvents.ts): 달리기 시작 dash, 백스텝 backstep(순간이동 무기 = teleport), 몬스터 바운드 bounce·다운 down, 플레이어 피격 hitLight(강 공격이면 hitHeavy), 이끼곰 그로기 진입 mon_bear_roar, 물약 potion, 방 클리어 roomClear
+- 아직 연결 안 함 (기능이 생길 때): levelup, click, place, guard
 - 아직 없는 소리(멧돼지 벽 충돌, 포자탄 적중, 문 열림, 잡화점 구매, 채팅 알림, 오류 등)는 만들 때 같은 절차로 추가
 
 ---

@@ -36,7 +36,7 @@ export function playerCue(c: FxContext, view: PlayerView, p: PlayerState, q: Cue
     const { sx, sy } = project(p.pos.x, p.pos.y);
     teleportPuff(sx, sy - fx.spell.bolt.height).forEach((e) => c.layer.add(e));
   }
-  if (q.state === 'backstep') sfx.play('backstep');
+  if (q.state === 'backstep') sfx.play(view.teleport ? 'teleport' : 'backstep');
   if (q.state === 'run' && mine) sfx.play('dash');
   if (q.state === 'down') {
     dustAt(c, p.pos.x, p.pos.y, fx.dust.down);
