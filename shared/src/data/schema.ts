@@ -113,8 +113,8 @@ export const weapon = z.object({
   moveMul: pos,
   // 근접 역경직: 내 공격이 맞으면 나만 히트스톱 × 이 값 (없으면 1, 원거리 무기는 생략)
   recoilMul: pos.optional(),
-  // 평타 중 바라보는 방향 키를 누르고 있으면 전진하는 속도 px/s (없으면 0)
-  basicAdvance: pos.optional(),
+  // 평타 중 바라보는 방향 키를 누르고 있으면 전진하는 속도 px/s, 각 타 끝 stopBefore초 전부터는 전진 안 함 (없으면 전진 없음)
+  basicAdvance: z.object({ speed: pos, stopBefore: sec }).strict().optional(),
   visual: z.string(),
   poseSet: z.string(),
   backstepStyle: z.literal('teleport').optional(),
@@ -187,7 +187,7 @@ export const player = z.object({
   }).strict(),
   level: z.object({ expBase: pos, expPow: pos }).strict(),
   hurtbox: z.object({ width: pos, height: pos, depth: pos }).strict(),
-  backstep: z.object({ distance: pos, sec: pos, invuln: sec, cooldown: sec, cancelDelay: sec }).strict(),
+  backstep: z.object({ distance: pos, sec: pos, invuln: sec, cooldown: sec }).strict(),
   stamina: z.object({ max: pos, dodge: sec, runPerSec: sec, regen: sec, regenDelay: sec }).strict(),
 }).strict();
 

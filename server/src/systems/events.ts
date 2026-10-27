@@ -39,7 +39,7 @@ export function projectileEvents(before: Map<number, Projectile>, after: Project
   const live = new Set(after.map((p) => p.id));
   for (const p of after) {
     if (!before.has(p.id)) {
-      out.push({ type: 'projSpawn', msg: { id: p.id, kind: p.def.id, owner: p.ownerId, x: int(p.x), y: int(p.y), z: 0, dir: p.dir, t0: now } });
+      out.push({ type: 'projSpawn', msg: { id: p.id, kind: p.def.id, owner: p.ownerId, x: int(p.x), y: int(p.y), z: 0, dir: p.dir, dy: Math.round(p.dy * 1000) / 1000, t0: now } });
     }
   }
   for (const [id, p] of before) {

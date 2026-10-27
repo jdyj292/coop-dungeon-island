@@ -1,5 +1,5 @@
 // 원격 투사체 (상태에 넣지 않고 이벤트로만 옴, network.md 5·6장): 몬스터 투사체(projSpawn·projEnd)와 플레이어 마법탄(bolt·boltEnd)
-// 생긴 시각부터 직선으로 날리고, 사라진 시각(그리는 시점이 닿을 때)에 지운다. 마법탄은 사라질 때 적중 섬광 또는 흩어짐
+// 생긴 시각부터 직선으로(포자탄은 비스듬히도) 날리고, 사라진 시각(그리는 시점이 닿을 때)에 지운다. 마법탄은 사라질 때 적중 섬광 또는 흩어짐
 import { MONSTERS, WEAPONS, type ActionDef, type MonsterAttack, type Projectile, type S2C } from '@game/shared';
 import type { FxLayer } from '../fx/layer';
 import { boltFizzle, boltHit } from '../fx/spell';
@@ -14,8 +14,10 @@ const BOLT_DEFS = new Map<string, ActionDef>(Object.values(WEAPONS).flatMap((w) 
 interface Flying {
   speed: number;
   x0: number;
-  y: number;
+  y0: number;
   dir: number;
+  /** 깊이 방향 성분 (마법탄은 0) */
+  dy: number;
   t0: number;
   endAt: number;
 }
@@ -28,13 +30,13 @@ export class RemoteShots {
   on(type: string, msg: unknown, now: number): boolean {
     if (type === 'projSpawn') {
       const m = msg as S2C['projSpawn'], def = ATTACKS.get(m.kind);
-      if (def) this.monster.set(m.id, { p: { id: m.id, ownerId: m.owner, def, x: m.x, y: m.y, dir: m.dir, traveled: 0, done: false, hitPids: [] }, speed: def.projectile!.speed, x0: m.x, y: m.y, dir: m.dir, t0: m.t0, endAt: Infinity });
+      if (def) this.monster.set(m.id, { p: { id: m.id, ownerId: m.owner, def, x: m.x, y: m.y, dir: m.dir, dy: m.dy, traveled: 0, done: false, hitPids: [] }, speed: def.projectile!.speed, x0: m.x, y0: m.y, dir: m.dir, dy: m.dy, t0: m.t0, endAt: Infinity });
     } else if (type === 'projEnd') {
       const pr = this.monster.get((msg as S2C['projEnd']).id);
       if (pr) pr.endAt = now;
     } else if (type === 'bolt') {
       const m = msg as S2C['bolt'], def = BOLT_DEFS.get(m.kind);
-      if (def) this.bolts.set(m.id, { speed: def.projectile!.speed, x0: m.x, y: m.y, dir: m.dir, t0: m.t0, endAt: Infinity });
+      if (def) this.bolts.set(m.id, { speed: def.projectile!.speed, x0: m.x, y0: m.y, dir: m.dir, dy: 0, t0: m.t0, endAt: Infinity });
     } else if (type === 'boltEnd') {
       const m = msg as S2C['boltEnd'], b = this.bolts.get(m.id);
       if (b) Object.assign(b, { endAt: now, end: m });
@@ -44,15 +46,16 @@ export class RemoteShots {
 
   /** 시각 t: 몬스터 투사체 (위험 그리기용)와 날고 있는 마법탄 위치. 끝난 마법탄은 적중·흩어짐 연출을 layer에 */
   at(t: number, layer: FxLayer): { projectiles: Projectile[]; bolts: { x: number; y: number; dir: number }[] } {
-    const x = (f: Flying) => f.x0 + f.dir * f.speed * Math.max(0, (t - f.t0) / 1000);
+    const d = (f: Flying) => f.speed * Math.max(0, (t - f.t0) / 1000);
+    const x = (f: Flying) => f.x0 + f.dir * Math.sqrt(1 - f.dy * f.dy) * d(f);
     for (const [id, pr] of this.monster) {
       if (t >= pr.endAt) this.monster.delete(id);
-      else pr.p.x = x(pr);
+      else Object.assign(pr.p, { x: x(pr), y: pr.y0 + pr.dy * d(pr) });
     }
     const bolts: { x: number; y: number; dir: number }[] = [];
     for (const [id, b] of this.bolts) {
       if (t < b.endAt) {
-        bolts.push({ x: x(b), y: b.y, dir: b.dir });
+        bolts.push({ x: x(b), y: b.y0, dir: b.dir });
         continue;
       }
       this.bolts.delete(id);

@@ -171,7 +171,7 @@ export class RoomSim {
       for (const e of evs) {
         events.push({ type: 'monster', m, e });
         if (e.type === 'playerHit') this.hitPlayer(events, e.pid, m, e.def, e.damage, this.awayFrom(m, e.pid));
-        if (e.type === 'shoot') this.projectiles.push(spawnProjectile(this.ids++, m.id, e.def, m.body.x, m.body.y, m.attack?.dir ?? m.facing));
+        if (e.type === 'shoot') this.projectiles.push(spawnProjectile(this.ids++, m.id, e.def, m.body.x, m.body.y, m.attack?.dir ?? m.facing, ctx.player));
         if (e.type === 'zone') this.zones.push(spawnZone(this.ids++, e.def, { x: m.body.x, y: m.body.y, facing: m.facing }));
       }
     }

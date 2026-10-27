@@ -52,11 +52,12 @@ describe('백스텝 (combat.md 1장)', () => {
     ticks(p, Math.round(PLAYER.backstep.cooldown / TICK));
     expect(ticks(p, 1, { backstep: true })).toEqual(['backstep']);
   });
-  it('공격 중(어느 구간이든) 불가', () => {
+  it('공격 중에는 후딜레이에서만 가능', () => {
     const p = newPlayerState({ x: 100, y: 50 });
     ticks(p, 1, { attack: true });
+    expect(canDodge(p)).toBe(false);
     ticks(p, 20);
-    expect(ticks(p, 1, { backstep: true })).toEqual([]);
+    expect(canDodge(p)).toBe(true);
   });
 });
 
@@ -119,23 +120,24 @@ describe('회피 방향', () => {
 });
 
 describe('회피로 공격 끊기', () => {
-  it('공격 중에 누르면 cancelDelay 동안 공격이 이어지고, 그 뒤 공격을 끊고 회피', () => {
+  const b1 = gs.basic[0]!;
+  it('선딜·판정 중에 누른 회피는 무시', () => {
     const p = newPlayerState({ x: 500, y: 50 });
     ticks(p, 1, { attack: true });
+    expect(ticks(p, 1, { backstep: true })).not.toContain('backstep');
     expect(p.fighter.run).not.toBeNull();
-    const delay = Math.round(PLAYER.backstep.cancelDelay / TICK);
-    expect(ticks(p, delay - 1, { backstep: true })).not.toContain('backstep');
-    expect(p.fighter.run).not.toBeNull();
-    expect(ticks(p, 1)).toEqual(['backstep']);
+    // 미리 누른 것이 저장되지 않음: 후딜레이에 들어가도 회피가 나오지 않는다
+    expect(ticks(p, Math.ceil((b1.phases.windup + b1.phases.active) / TICK))).not.toContain('backstep');
+    expect(p.stamina).toBe(PLAYER.stamina.max);
+  });
+  it('후딜레이(recovery)에 누르면 바로 행동을 끊고 회피', () => {
+    const p = newPlayerState({ x: 500, y: 50 });
+    ticks(p, 1, { attack: true });
+    ticks(p, Math.ceil((b1.phases.windup + b1.phases.active) / TICK));
+    expect(canDodge(p)).toBe(true);
+    expect(ticks(p, 1, { backstep: true })).toEqual(['backstep']);
     expect(p.fighter.run).toBeNull();
     expect(p.stamina).toBeCloseTo(PLAYER.stamina.max - PLAYER.stamina.dodge, 0);
-  });
-  it('기다리는 중에 맞으면 회피 취소', () => {
-    const p = newPlayerState({ x: 500, y: 50 });
-    ticks(p, 1, { attack: true });
-    ticks(p, 1, { backstep: true });
-    hurtPlayer(p, 10, 'light');
-    expect(p.dodgeQueued).toBeNull();
   });
 });
 
@@ -145,13 +147,23 @@ describe('대검 평타 전진 (weapons.json basicAdvance)', () => {
     ticks(p, 30, { attack: true }, { x });
     return p.pos.x - 500;
   };
-  it('바라보는 쪽 키를 누르면 초당 basicAdvance로 전진, 안 누르면 제자리', () => {
-    expect(swing(1)).toBeCloseTo(gs.basicAdvance! * 30 * TICK, 0);
+  const adv = gs.basicAdvance!, b1 = gs.basic[0]!;
+  const len = b1.phases.windup + b1.phases.active + b1.phases.recovery;
+  it('바라보는 쪽 키를 누르면 초당 speed로 전진, 안 누르면 제자리', () => {
+    expect(swing(1)).toBeCloseTo(adv.speed * (len - adv.stopBefore), 0);
     expect(swing(0)).toBe(0);
     // 반대쪽 키: 돌아설 수 있는 구간(canTurn)에서 돌아선 뒤에만 그쪽으로 전진 → 끝까지 누른 것보다 짧음
     const back = swing(-1);
     expect(back).toBeLessThan(0);
-    expect(back).toBeGreaterThan(-gs.basicAdvance! * 30 * TICK);
+    expect(back).toBeGreaterThan(-adv.speed * (len - adv.stopBefore));
+  });
+  it('각 타 끝 stopBefore초 전부터는 키를 눌러도 멈춤', () => {
+    const p = newPlayerState({ x: 500, y: 50 });
+    ticks(p, Math.ceil((len - adv.stopBefore) / TICK) + 1, { attack: true }, { x: 1 });
+    const x = p.pos.x;
+    ticks(p, Math.floor(adv.stopBefore / TICK) - 2, {}, { x: 1 });
+    expect(p.fighter.run).not.toBeNull();
+    expect(p.pos.x).toBe(x);
   });
 });
 

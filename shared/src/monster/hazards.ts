@@ -11,6 +11,8 @@ export interface Projectile {
   x: number;
   y: number;
   dir: number;
+  /** 깊이 방향 성분 (진행 1px당 y 변화, -1~1). 좌우 성분은 dir × √(1 − dy²) */
+  dy: number;
   traveled: number;
   done: boolean;
   /** 이미 맞힌 플레이어 (관통 투사체가 같은 사람을 매 틱 맞히지 않게) */
@@ -30,8 +32,13 @@ export interface ZoneArea {
 /** 손 위치(발밑 앞 8px)에서 바라보는 방향으로 발사 (data.md 판정 모양) */
 export const MUZZLE = 8;
 
-export function spawnProjectile(id: number, ownerId: number, def: MonsterAttack, x: number, y: number, dir: number): Projectile {
-  return { id, ownerId, def, x: x + dir * MUZZLE, y, dir, traveled: 0, done: false, hitPids: [] };
+/** aim이 있으면 그쪽으로 비스듬히 (앞쪽에 있을 때만, 뒤쪽이면 곧게) — 포자꽃 조준 (dungeon.md 5장) */
+export function spawnProjectile(
+  id: number, ownerId: number, def: MonsterAttack, x: number, y: number, dir: number, aim?: { x: number; y: number },
+): Projectile {
+  const mx = x + dir * MUZZLE, ax = aim ? (aim.x - mx) * dir : 0, ay = aim ? aim.y - y : 0;
+  const dy = ax > 0 ? ay / Math.hypot(ax, ay) : 0;
+  return { id, ownerId, def, x: mx, y, dir, dy, traveled: 0, done: false, hitPids: [] };
 }
 
 /** 한 틱: 날아가고, 사거리·벽에서 사라짐. 맞으면 true (맞은 뒤 사라짐, pierce면 계속) */
@@ -39,10 +46,12 @@ export function spawnProjectile(id: number, ownerId: number, def: MonsterAttack,
 export function stepProjectile(p: Projectile, dt: number, b: Bounds, targets: PlayerTarget[]): string[] {
   const pr = p.def.projectile!;
   const d = pr.speed * dt;
-  p.x += p.dir * d;
+  p.x += p.dir * Math.sqrt(1 - p.dy * p.dy) * d;
+  p.y += p.dy * d;
   p.traveled += d;
-  // 사거리 끝, 방 벽, 장애물(바위)에 닿으면 사라짐
-  if (p.traveled >= pr.range || p.x < b.minX || p.x > b.maxX || pointBlocked(p, b)) p.done = true;
+  // 사거리 끝, 방 벽(위아래 포함), 장애물(바위)에 닿으면 사라짐
+  const out = p.x < b.minX || p.x > b.maxX || p.y < b.minY || p.y > b.maxY;
+  if (p.traveled >= pr.range || out || pointBlocked(p, b)) p.done = true;
   if (p.done) return [];
   const hit: string[] = [];
   for (const t of targets) {

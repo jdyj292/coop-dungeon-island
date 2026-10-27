@@ -16,6 +16,6 @@
   "revive": { "feathers": 1, "hpRatio": 0.5, "invuln": 2, "partyHpRatio": 0.3, "holdSec": 2 },
   "level": { "expBase": 100, "expPow": 1.3 },
   "hurtbox": { "width": 10, "height": 16, "depth": 8 },
-  "backstep": { "distance": 40, "sec": 0.25, "invuln": 0.2, "cooldown": 0.6, "cancelDelay": 0.1 },
+  "backstep": { "distance": 40, "sec": 0.25, "invuln": 0.2, "cooldown": 0.6 },
   "stamina": { "max": 100, "dodge": 17.5, "runPerSec": 15, "regen": 30, "regenDelay": 0.6 }
 }

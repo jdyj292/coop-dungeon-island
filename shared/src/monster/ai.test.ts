@@ -86,6 +86,14 @@ describe('포자꽃 (turret, 투사체)', () => {
     expect(ev.some((e) => e.type === 'playerHit' && e.def.id === 'spore_shot')).toBe(true);
     expect(m!.body.x).toBe(180);
   });
+  it('깊이가 달라도 플레이어 쪽으로 비스듬히 쏴 맞힘', () => {
+    const sim = room();
+    sim.spawn([{ kind: 'sporeflower', x: 180, y: 100 }]);
+    let dy = 0;
+    const ev = run(sim, 3, () => { dy ||= sim.projectiles[0]?.dy ?? 0; });
+    expect(dy).toBeLessThan(0);
+    expect(ev.some((e) => e.type === 'playerHit' && e.def.id === 'spore_shot')).toBe(true);
+  });
   it('백스텝 무적이면 맞지 않음', () => {
     const sim = room();
     sim.spawn([{ kind: 'sporeflower', x: 120, y: 56 }]);

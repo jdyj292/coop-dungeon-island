@@ -129,7 +129,7 @@ ZoneState
 - 예고 범위, 포즈, 이펙트는 상태로 보내지 않는다: actionId + actionStart만 받으면 클라이언트가 data로 그린다
 
 ### 투사체
-- 상태에 넣지 않고 이벤트로 처리: `projSpawn { id, kind, owner, x, y, z, dir, t0 }`, `projEnd { id, reason, x, y }`
+- 상태에 넣지 않고 이벤트로 처리: `projSpawn { id, kind, owner, x, y, z, dir, dy, t0 }` (dy = 진행 1px당 깊이 변화, 비스듬히 쏜 포자탄), `projEnd { id, reason, x, y }`
 - 클라이언트는 데이터(속도·사거리)로 직접 날려 그리고, 적중·소멸은 서버 이벤트로 확정
 
 ### IslandState

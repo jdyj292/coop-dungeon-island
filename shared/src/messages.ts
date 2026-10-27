@@ -67,7 +67,8 @@ export interface S2C {
   chat: { player: string; text: string; t: number };
   pong: { t: number; server: number };
   /** 투사체는 상태에 넣지 않고 이벤트로 (network.md 5장). kind = 공격 id */
-  projSpawn: { id: number; kind: string; owner: number; x: number; y: number; z: number; dir: number; t0: number };
+  /** dy = 깊이 방향 성분 (진행 1px당 y, 비스듬히 쏜 포자탄) */
+  projSpawn: { id: number; kind: string; owner: number; x: number; y: number; z: number; dir: number; dy: number; t0: number };
   projEnd: { id: number; reason: 'hit' | 'range'; x: number; y: number };
   /** 플레이어 마법탄 (스태프 평타). kind = 행동 id, pid = 쏜 사람 */
   bolt: { id: number; kind: string; pid: string; x: number; y: number; dir: number; t0: number };

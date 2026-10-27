@@ -50,7 +50,6 @@ export function hurtPlayer(p: PlayerState, damage: number, strength: Strength = 
   p.hp = Math.max(0, p.hp - damage);
   p.fighter = newFighter();
   p.backstep = null;
-  p.dodgeQueued = null;
   p.run.running = false;
   if (p.hp === 0) {
     p.hurt = null;
