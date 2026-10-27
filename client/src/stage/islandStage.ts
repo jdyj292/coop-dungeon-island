@@ -89,7 +89,8 @@ export class IslandStage {
     const k: KeyInput = { x: keys.x, y: keys.y, attack: false, skill: null, backstep: false, potion: null };
     const s = this.sender.update(k, dt, null);
     this.sent = { x: s.x, y: s.y, run: s.run, seq: s.seq };
-    for (let n = this.ticks.advance(dt); n > 0; n--) this.predictor.tick({ mx: this.sent.x, my: this.sent.y, run: this.sent.run }, TICK, this.sent.seq);
+    const ticks = this.ticks.advance(dt);
+    for (let n = ticks; n > 0; n--) this.predictor.tick({ mx: this.sent.x, my: this.sent.y, run: this.sent.run }, TICK, this.sent.seq);
     const others = this.conn.residents.sample(this.conn.clock.serverNow() - NET.interpDelayMs);
     const seen = new Set<string>();
     for (const [id, r] of others) {
@@ -97,7 +98,8 @@ export class IslandStage {
       seen.add(id);
       const mine = id === this.conn.userId;
       const w = this.predictor.state;
-      this.draw(id, r, mine ? { ...this.predictor.display, facing: w.facing, running: w.run.running } : { x: r.x, y: r.y, facing: r.facing, running: r.state === 'run' });
+      // 나: 틱이 안 돈 프레임은 걷기 박자 유지 (화면 주사율 > 60Hz에서 박자가 0으로 돌아가 다리가 떨리지 않게)
+      this.draw(id, r, mine ? { ...this.predictor.display, facing: w.facing, running: w.run.running } : { x: r.x, y: r.y, facing: r.facing, running: r.state === 'run' }, dt, mine && ticks === 0);
     }
     for (const [id, s] of this.shown) {
       if (seen.has(id)) continue;
@@ -119,7 +121,7 @@ export class IslandStage {
     }
   }
 
-  private draw(id: string, r: ResidentSnap, at: Vec2 & { facing: number; running: boolean }): void {
+  private draw(id: string, r: ResidentSnap, at: Vec2 & { facing: number; running: boolean }, dt: number, holdBeat = false): void {
     let s = this.shown.get(id);
     if (!s) {
       s = {
@@ -130,13 +132,14 @@ export class IslandStage {
       };
       this.shown.set(id, s);
     }
-    const moved = Math.hypot(at.x - s.last.x, at.y - s.last.y);
+    const moved = holdBeat ? null : Math.hypot(at.x - s.last.x, at.y - s.last.y);
     s.last = { x: at.x, y: at.y };
     s.p.pos = { x: at.x, y: at.y };
     s.p.facing = at.facing;
     s.p.run.running = at.running;
     s.view.hair = { style: r.hair, color: r.hairColor };
-    s.view.update(s.p, 0);
+    // dt를 넘겨야 돌아서기(turn) 같은 시간 모션이 끝난다 (0이면 돌아선 뒤 다리가 멈춤)
+    s.view.update(s.p, dt);
     s.view.draw(s.p, moved, 0, this.clock);
     const { sx, sy } = project(at.x, at.y);
     s.name.moveTo(sx, sy - NAME_ABOVE);
