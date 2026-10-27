@@ -28,6 +28,11 @@ export class PlaceMode {
     this.tray.setVisible(false);
   }
 
+  /** 마우스로 커서를 움직이는 중 (카메라는 따라가지 않음) */
+  get usingPointer(): boolean {
+    return this.pointer !== null;
+  }
+
   /** 카메라가 따라갈 커서 위치 (월드 화면 좌표) */
   get focus(): Vec2 {
     return { x: this.cursor.x * TILE_PX + 8, y: FLOOR_TOP + this.cursor.y * ROW_PX + 5 };

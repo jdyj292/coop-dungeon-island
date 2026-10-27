@@ -203,7 +203,7 @@ export class Island extends Phaser.Scene {
     if (s && placing) {
       const cam = this.cameras.main;
       s.place.update(time / 1000, width, height - HUD_HEIGHT, { x: cam.scrollX, y: cam.scrollY, w: width, h: height - HUD_HEIGHT });
-      this.follow(s.place.focus, width, height - HUD_HEIGHT, true);
+      if (!s.place.usingPointer) this.follow(s.place.focus, width, height - HUD_HEIGHT, true);
     } else if (pos) this.follow(pos, width, height - HUD_HEIGHT);
   }
 
