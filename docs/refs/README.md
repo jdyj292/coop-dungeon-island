@@ -19,7 +19,8 @@
 |---|---|
 | floor1_room_hud_mockup.html | 1층 방 + HUD (전투 중 / 보스전 HUD / 방 클리어 전환). 아래 띠는 예전 통짜 띠 |
 | hud_bottom_cluster.html | 던전 아래 HUD 묶음형 (현재 vs 묶음형 비교, 기준 = hudBottomDraft) |
-| island_screen_hud_mockup.html | 섬 기본 화면 / 배치 모드 |
+| island_screen_hud_mockup.html | 섬 기본 화면 / 배치 모드. 아래 띠는 예전 통짜 띠 |
+| island_hud_cluster.html | 섬 아래 HUD 묶음형 (기본 화면·배치 모드, 현재 vs 묶음형 비교, 기준 = islandDraft·placeDraft) |
 | character_expressions.html, character_outfit_layers.html, character_weapon_poses.html | 캐릭터 |
 | floor1_monster_animations.html | 몬스터 동작 |
 

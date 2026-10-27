@@ -1,16 +1,19 @@
-// 배치 모드 아래 띠 (hud.md 8장 배치 모드, 위치·모양은 승인 데모 island_screen_hud_mockup.html 배치 모드와 같음)
-// 가방 속 장식 목록(아이콘 + 개수, 선택은 금색 테두리) / 조작 안내 R 회전·X 치우기·ESC / 지갑
+// 배치 모드 아래 띠 (hud.md 8장 배치 모드, 위치·모양은 승인 데모 island_hud_cluster.html placeDraft와 같음)
+// 아래 끝에 붙은 묶음 3개: 가방 속 장식 목록(아이콘 + 개수, 선택은 금색 테두리) / 조작 안내 R 회전·X 치우기·ESC / 지갑
 import type Phaser from 'phaser';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { islandObjects, islandView } from '../sprites/island';
 import { islandTexture } from '../sprites/textures';
+import { cluster } from './hudParts';
 import { drawText } from './pixelFont';
 
 const C = (p: string) => colorInt(p);
 const TOP = 140;
-/** 데모: 칸 x = 4 + i × 21, 한 번에 7칸 */
-export const TRAY = { x: 4, step: 21, size: 18, max: 7 } as const;
+/** 칸 x = 5 + i × 19, 한 번에 7칸 */
+export const TRAY = { x: 5, step: 19, size: 18, max: 7 } as const;
+/** 조작 안내·지갑 묶음 x */
+const KEYS_X = 151, WALLET_X = 254;
 /** 데모 회전 화살표 (R 오른쪽) */
 const ROTATE = [[1, 0], [2, 0], [3, 0], [0, 1], [4, 1], [0, 2], [0, 3], [3, 3], [4, 3], [1, 4], [2, 4], [3, 4], [4, 2]] as const;
 
@@ -41,9 +44,8 @@ export class PlaceTray {
     const g = this.g, t = this.top, Y = (y: number) => y + bandTop - TOP;
     g.clear();
     t.clear();
-    dot(g, 0, Y(140), C('global.ui.panelBorder'), width, 1);
-    dot(g, 0, Y(141), C('global.ui.panelInner'), width, 1);
-    dot(g, 0, Y(142), C('global.ui.panel'), width, 20);
+    const bottom = Y(162);
+    cluster(g, TRAY.x - 3, Y(141), TRAY.max * TRAY.step + 5, bottom);
     const first = PlaceTray.firstShown(sel, items.length);
     this.icons.forEach((img, i) => {
       const it = items[first + i], x = TRAY.x + i * TRAY.step, y = Y(143);
@@ -58,24 +60,26 @@ export class PlaceTray {
       if (it.from === 'storage') dot(t, x + 14, y + 2, C('global.ui.coin'), 2, 2);
     });
     // 조작 안내 R(회전) X(치우기) ESC
-    let kx = 158;
+    cluster(g, KEYS_X - 4, Y(146), 64, bottom);
+    let kx = KEYS_X;
     for (const k of ['R', 'X', 'ESC']) {
       const w = k.length * 4 + 3, ix = kx + w + 2;
-      dot(g, kx, Y(146), C('global.ui.panelBorder'), w, 9);
-      dot(g, kx + 1, Y(147), C('global.ui.panel'), w - 2, 7);
-      drawText(g, k, kx + 2, Y(148), { color: 'global.fx.flash', outline: 'none' });
-      if (k === 'R') ROTATE.forEach(([a, b]) => dot(g, ix + a, Y(148) + b, C('global.ui.textDim')));
+      dot(g, kx, Y(149), C('global.ui.panelBorder'), w, 9);
+      dot(g, kx + 1, Y(150), C('global.ui.panel'), w - 2, 7);
+      drawText(g, k, kx + 2, Y(151), { color: 'global.fx.flash', outline: 'none' });
+      if (k === 'R') ROTATE.forEach(([a, b]) => dot(g, ix + a, Y(151) + b, C('global.ui.textDim')));
       if (k === 'X') {
-        dot(g, ix, Y(148), C('island.stone'), 5, 5);
-        dot(g, ix + 1, Y(149), C('global.ui.panel'), 3, 3);
+        dot(g, ix, Y(151), C('island.stone'), 5, 5);
+        dot(g, ix + 1, Y(152), C('global.ui.panel'), 3, 3);
       }
       kx = ix + (k === 'ESC' ? 0 : 8);
     }
-    // 지갑 (데모 coin(250,146))
-    dot(g, 250, Y(146), C('global.ui.coinShade'), 6, 6);
-    dot(g, 250, Y(146), C('global.ui.coin'), 5, 5);
-    dot(g, 251, Y(147), C('global.allyFx.gold'), 2, 2);
-    drawText(g, String(wallet), 258, Y(146), { color: 'global.allyFx.gold', outline: 'none' });
+    // 지갑
+    cluster(g, WALLET_X - 4, Y(147), 36, bottom);
+    dot(g, WALLET_X, Y(151), C('global.ui.coinShade'), 6, 6);
+    dot(g, WALLET_X, Y(151), C('global.ui.coin'), 5, 5);
+    dot(g, WALLET_X + 1, Y(152), C('global.allyFx.gold'), 2, 2);
+    drawText(g, String(wallet), WALLET_X + 9, Y(151), { color: 'global.allyFx.gold', outline: 'none' });
   }
 
   /** 장식 그림을 14×14 칸에 맞춰 줄임 (데모 mini(): 비율 유지, 가운데) */

@@ -1,18 +1,21 @@
-// 섬 HUD (hud.md 8장, 위치·모양은 승인 데모 island_screen_hud_mockup.html hudBase·hudTop과 같음. y는 띠 위 = 140 기준)
-// 아래 띠: 얼굴·LV / 단축 버튼 B(배치) I(가방) M(게시판) / 지갑·공동 금고. 오른쪽 위: 주민 목록 (색 막대·얼굴·상태)
+// 섬 HUD (hud.md 8장, 아래 띠는 승인 데모 island_hud_cluster.html islandDraft, 주민 목록은 island_screen_hud_mockup.html hudTop과 같음. y는 띠 위 = 140 기준)
+// 아래 끝에 붙은 묶음 3개: 얼굴·LV 배지 / 단축 버튼 B(배치) I(가방) M(게시판) / 지갑·공동 금고. 오른쪽 위: 주민 목록 (색 막대·얼굴·상태)
 import type Phaser from 'phaser';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { islandTexture } from '../sprites/textures';
 import type { Hair } from '../view/look';
 import { setFace } from './hudFace';
+import { cluster } from './hudParts';
 import { drawText } from './pixelFont';
 
 const C = (p: string) => colorInt(p);
 const TOP = 140;
-/** 데모 B·I·M 버튼 x (24 간격) */
-const BUTTON_X = 106;
-const MONEY_X = 222;
+/** B·I·M 버튼 x와 간격 */
+const BUTTON_X = 116, BUTTON_STEP = 19;
+const MONEY_X = 254;
+/** 버튼 그림 칸: 키 글자(왼쪽 위 3×5) 오른쪽 아래, 슬롯 안쪽 아래 끝까지 */
+const ICON_X = 5, ICON_W = 11, ICON_H = 10;
 /** 주민 칸 폭, 패널 rgba(29,24,48,.75) = global.ui.panel 75%, 접속 안 한 얼굴 40% */
 const CELL = 14, PANEL_ALPHA = 0.75, AWAY_ALPHA = 0.4;
 
@@ -52,37 +55,44 @@ export class IslandHud {
     this.fence.setVisible(!st.placing);
     this.drawResidents(st.residents, width);
     if (st.placing) return;
-    dot(g, 0, Y(140), C('global.ui.panelBorder'), width, 1);
-    dot(g, 0, Y(141), C('global.ui.panelInner'), width, 1);
-    dot(g, 0, Y(142), C('global.ui.panel'), width, 20);
-    // 얼굴·LV
-    dot(g, 3, Y(143), C('global.ui.panelBorder'), 16, 16);
-    dot(g, 4, Y(144), C('global.ui.islandFaceBg'), 14, 14);
-    setFace(this.scene, this.face, false, st.colorIndex, 5, Y(146), st.hair);
-    drawText(g, `LV${st.level}`, 23, Y(148), { color: 'global.ui.textDim', outline: 'none' });
-    // B I M
+    const bottom = Y(162);
+    // 얼굴 (테두리 = 내 플레이어 색) + LV 배지
+    cluster(g, 2, Y(142), 26, bottom);
+    dot(g, 5, Y(144), C(`global.playerColors.${st.colorIndex}`), 16, 16);
+    dot(g, 6, Y(145), C('global.ui.islandFaceBg'), 14, 14);
+    setFace(this.scene, this.face, false, st.colorIndex, 7, Y(147), st.hair);
+    dot(g, 15, Y(154), C('global.ui.panelBorder'), 9, 7);
+    dot(g, 16, Y(155), C('global.ui.panel'), 7, 5);
+    drawText(g, String(st.level), 19.5, Y(155), { color: 'global.ui.textDim', outline: 'none', align: 'center' });
+    // B I M: 그림은 키 글자를 가리지 않게 오른쪽 아래 칸(ICON_X~, 11×10)에
+    cluster(g, BUTTON_X - 3, Y(141), 62, bottom);
     (['B', 'I', 'M'] as const).forEach((k, i) => {
-      const x = BUTTON_X + i * 24, y = Y(143);
+      const x = BUTTON_X + i * BUTTON_STEP, y = Y(143);
       dot(g, x, y, C(st.selected === k ? 'global.ui.coin' : 'global.ui.panelBorder'), 18, 18);
       dot(g, x + 1, y + 1, C('global.ui.panelInner'), 16, 16);
       dot(g, x + 2, y + 2, C('global.ui.panel'), 14, 14);
       drawText(g, k, x + 2, Y(145), { color: 'global.ui.keyLabel', outline: 'none' });
-      if (k === 'B') this.fence.setPosition(x + 3, Y(149));
+      if (k === 'B') {
+        // 울타리 그림이 칸보다 넓어 왼쪽 위만 잘라 아래 끝에 맞춤
+        const f = this.fence.frame, w = Math.min(ICON_W, f.width), h = Math.min(ICON_H, f.height);
+        this.fence.setCrop(0, f.height - h, w, h).setPosition(x + ICON_X, y + 16 - f.height);
+      }
       if (k === 'I') {
-        dot(g, x + 5, Y(149), C('global.outline'), 9, 8);
-        dot(g, x + 6, Y(150), C('island.wood'), 7, 6);
-        dot(g, x + 6, Y(150), C('global.ui.bagLight'), 7, 2);
-        dot(g, x + 8, Y(148), C('island.woodDark'), 3, 2);
+        dot(g, x + 6, Y(150), C('global.outline'), 9, 8);
+        dot(g, x + 7, Y(151), C('island.wood'), 7, 6);
+        dot(g, x + 7, Y(151), C('global.ui.bagLight'), 7, 2);
+        dot(g, x + 9, Y(149), C('island.woodDark'), 3, 2);
       }
       if (k === 'M') {
-        dot(g, x + 4, Y(148), C('global.outline'), 11, 9);
-        dot(g, x + 5, Y(149), C('island.wood'), 9, 7);
-        dot(g, x + 6, Y(150), C('island.awningB'), 3, 3);
-        dot(g, x + 10, Y(151), C('island.awningB'), 3, 3);
+        dot(g, x + 5, Y(149), C('global.outline'), 11, 9);
+        dot(g, x + 6, Y(150), C('island.wood'), 9, 7);
+        dot(g, x + 7, Y(151), C('island.awningB'), 3, 3);
+        dot(g, x + 11, Y(152), C('island.awningB'), 3, 3);
       }
     });
-    // 지갑(동전) · 공동 금고(상자)
-    const cx = MONEY_X, cy = Y(145), vy = Y(154);
+    // 지갑(동전) · 공동 금고(상자): 오른쪽 낮은 묶음
+    cluster(g, MONEY_X - 4, Y(147), 36, bottom);
+    const cx = MONEY_X, cy = Y(149), vy = Y(156);
     dot(g, cx, cy, C('global.ui.coinShade'), 6, 6);
     dot(g, cx, cy, C('global.ui.coin'), 5, 5);
     dot(g, cx + 1, cy + 1, C('global.allyFx.gold'), 2, 2);
@@ -97,8 +107,8 @@ export class IslandHud {
   /** 누른 단축 버튼 B·I·M (화면 좌표, 없으면 null) */
   static hitButton(x: number, y: number, bandTop: number): 'B' | 'I' | 'M' | null {
     if (y < bandTop + 3 || y >= bandTop + 21) return null;
-    const i = Math.floor((x - BUTTON_X) / 24);
-    return i >= 0 && i < 3 && x - BUTTON_X - i * 24 < 18 ? (['B', 'I', 'M'] as const)[i]! : null;
+    const i = Math.floor((x - BUTTON_X) / BUTTON_STEP);
+    return i >= 0 && i < 3 && x - BUTTON_X - i * BUTTON_STEP < 18 ? (['B', 'I', 'M'] as const)[i]! : null;
   }
 
   /** 오른쪽 위 주민 목록: 섬 = 연두 점, 탐험 중 = 검 + 층 숫자, 접속 안 함 = 흐린 얼굴 + 점 세 개 */
