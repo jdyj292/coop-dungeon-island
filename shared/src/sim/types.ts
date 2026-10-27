@@ -39,7 +39,7 @@ export type SimEvent =
   | { type: 'fighter'; pid: string; e: FighterEvent }
   | { type: 'backstep'; pid: string }
   /** 플레이어 → 몬스터 적중 */
-  | { type: 'hit'; pid: string; m: Monster; def: ActionDef; damage: number; recoil: number }
+  | { type: 'hit'; pid: string; m: Monster; def: ActionDef; damage: number; recoil: number; act: string; actT: number }
   | { type: 'monster'; m: Monster; e: MonsterEvent }
   /** 몬스터 공격·투사체 → 플레이어 적중 (HP 감소·경직·다운은 playerHurt) */
   | { type: 'playerHit'; pid: string; from: Monster | undefined; def: MonsterAttack; damage: number }

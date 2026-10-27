@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newPlayerState, stepPlayerState, TICK, weaponDef, type PlayerInput } from '@game/shared';
+import { newPlayerState, RoomSim, SOLO_PID, stepPlayerState, TICK, weaponDef, type PlayerInput } from '@game/shared';
 import { Predictor } from './predict';
 
 const gs = weaponDef('greatsword');
@@ -83,4 +83,45 @@ describe('Predictor (network.md 7장)', () => {
     for (let i = 0; i < 3; i++) pr.tick(idle, TICK, 2);
     expect(pr.state.fighter.queued).toBe(true);
   });
+  it('대시 적중 역경직: 지연이 있어도 화면이 뒤로 갔다 앞으로 가지 않고, 서버와 같은 자리에서 끝난다', () => {
+    for (const oneWay of [1, 3, 6]) {
+      const { xs, server } = dashInto(oneWay);
+      const back = xs.findIndex((x, i) => i > 0 && x < xs[i - 1]! - 0.01);
+      expect(back).toBe(-1);
+      expect(xs[xs.length - 1]).toBeCloseTo(server, 0);
+    }
+  });
 });
+
+/** 달리다 J(대시)로 버섯을 맞힘: 서버 RoomSim(개체별 히트스톱) + Predictor, 한 방향 지연 oneWay틱. 화면 x 기록 */
+function dashInto(oneWay: number) {
+  const sim = new RoomSim(gs, { minX: 8, maxX: 800, minY: 0, maxY: 112 }, { x: 100, y: 50 }, { rng: () => 0.5, hitstop: 'entity', ai: false });
+  sim.spawn([{ kind: 'mushroom', x: 165, y: 50 }]);
+  const pr = new Predictor(gs, { minX: 8, maxX: 800, minY: 0, maxY: 112 }, { x: 100, y: 50 });
+  const toServer: { at: number; seq: number; input: PlayerInput }[] = [];
+  const toClient: { at: number; run: () => void }[] = [];
+  let serverSeq = 0, serverIn = idle, hits = 0;
+  const xs: number[] = [];
+  for (let tick = 0; tick < 120; tick++) {
+    // 70틱부터 멈춤 (끝 위치 비교용)
+    const input = { ...idle, x: tick < 70 ? 1 : 0, run: tick >= 5 && tick < 70, attack: tick === 30 };
+    toServer.push({ at: tick + oneWay, seq: tick + 1, input });
+    for (const m of toClient.filter((m) => m.at === tick)) m.run();
+    pr.tick(input, TICK, tick + 1, input.attack ? tick + 1 : null);
+    let press = false;
+    for (const m of toServer.filter((m) => m.at === tick)) [serverSeq, serverIn, press] = [m.seq, m.input, press || m.input.attack];
+    const { events } = sim.step(TICK, new Map([[SOLO_PID, { ...serverIn, attack: press }]]));
+    for (const e of events) {
+      if (e.type !== 'hit') continue;
+      hits++;
+      toClient.push({ at: tick + oneWay, run: () => pr.stop(e.recoil, e.act, e.actT) });
+    }
+    if (tick % 3 === 0) {
+      const [state, seq] = [structuredClone(sim.player), serverSeq];
+      toClient.push({ at: tick + oneWay, run: () => pr.reconcile(state, seq, TICK) });
+    }
+    xs.push(pr.display.x);
+  }
+  expect(hits).toBeGreaterThan(0);
+  return { xs, server: sim.player.pos.x };
+}

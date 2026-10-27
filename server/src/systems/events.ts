@@ -14,7 +14,7 @@ export function eventsFor(events: SimEvent[], now: number, combos: Map<string, n
       const grade = e.def.fx?.grade ?? 'light', b = e.m.body;
       out.push({ type: 'hit', msg: {
         attacker: e.pid, target: e.m.id, damage: e.damage, strength: e.def.strength ?? 'light', flags: e.def.flags ?? [],
-        hitstop: gradeTiming(grade).hitstop, recoil: e.recoil, x: int(b.x), y: int(b.y), z: int(b.z), t: now,
+        hitstop: gradeTiming(grade).hitstop, recoil: e.recoil, act: e.act, actT: e.actT, x: int(b.x), y: int(b.y), z: int(b.z), t: now,
       } });
       comboPids.add(e.pid);
     } else if (e.type === 'teamMilestone') {

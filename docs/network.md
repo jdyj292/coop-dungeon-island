@@ -154,7 +154,7 @@ IslandState
 
 | 이벤트 | 내용 | 클라이언트 처리 |
 |---|---|---|
-| hit | `{ attacker, target, damage, strength, flags, hitstop, x, y, z, t }` | 데미지 숫자, 섬광, 흰색 번쩍임, 히트스톱, 흔들림 |
+| hit | `{ attacker, target, damage, strength, flags, hitstop, recoil, act, actT, x, y, z, t }` (recoil = 공격자 멈춤 초, act·actT = 맞힌 행동 id·진행 시간, 히트스톱 동기화) | 데미지 숫자, 섬광, 흰색 번쩍임, 히트스톱, 흔들림 |
 | projSpawn / projEnd | 위 참고 | 투사체 그리기 |
 | bolt / boltEnd | 플레이어 마법탄 `bolt { id, kind(행동 id), pid, x, y, dir, t0 }`, `boltEnd { id, reason, x, y }` | 마법탄 그리기 (MVP 보충 ST-2) |
 | playerHit | 내가 맞음 `{ damage, strength, from }` | 피격 표정, 화면 붉은 테두리 없이 흔들림 |
@@ -232,6 +232,7 @@ IslandState
 - 클라이언트: hit 이벤트를 받으면 해당 두 엔티티의 표시를 같은 시간 멈춘다. 내가 공격자면 예측 중인 내 행동도 같은 시간 늦춘다
 - 구현: RoomSim 옵션 `hitstop: 'entity'`(서버). 멈춘 동안 들어온 누름은 멈춤이 끝난 틱에 적용 (연타가 끊기지 않게, 예측도 같게)
 - 다른 플레이어·몬스터는 서버 데이터가 이미 멈춰 있어 보간으로 그대로 보인다. 내 예측 멈춤은 적중 연출이 재생되는 순간 (Predictor.stop)
+- 공격자 멈춤 시간은 hit의 recoil (근접 역경직 포함, combat.md 5장). 서버는 적중 틱 **바로 뒤**를 멈추는데 클라이언트는 지연만큼 늦게 알므로, hit에 맞힌 행동 id·진행 시간(act, actT)을 실어 보낸다. Predictor는 예측 기록에서 그 틱을 찾아 뒤 recoil만큼을 "서버가 멈춘 틱"으로 표시하고 다시 계산할 때 그 틱만 멈춘다. 화면은 지금부터 recoil만큼 제자리에서 기다리고 그동안 위치를 뒤로 당기지 않는다 (두 번 멈춰 대시가 뒤로 갔다 앞으로 가 보이던 문제, 테스트 predict.test.ts)
 - 솔로 로컬은 `hitstop: 'none'` + 화면 전체 멈춤(승인 데모와 같은 방식, motion.md 3장)을 유지. 둘을 함께 쓰면 두 번 멈춘다
 
 ---

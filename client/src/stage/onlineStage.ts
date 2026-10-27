@@ -227,7 +227,7 @@ export class OnlineStage {
     hitPackage(this.fx, def?.fx?.grade ?? 'light', e?.view ?? { flash: 0 }, { x: sx + ax * facing, y: sy + ay, numberX: sx, numberY: sy - fx.number.above }, h.damage);
     if (def?.sfx?.hit) sfx.play(def.sfx.hit);
     // 히트스톱 동기화: 내 공격이면 예측 중인 내 행동도 서버와 같은 시간(근접 역경직 포함) 멈춤 (몬스터·다른 사람은 서버 데이터가 이미 멈춰 있다)
-    if (h.attacker === this.conn.myId) this.local.predictor?.stop(h.recoil);
+    if (h.attacker === this.conn.myId) this.local.predictor?.stop(h.recoil, h.act, h.actT);
   }
 
   private dustAt(x: number, y: number, kind: typeof fx.dust.down): void {

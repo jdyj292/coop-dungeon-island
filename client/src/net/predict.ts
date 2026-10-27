@@ -2,7 +2,7 @@
 // lastInputSeq 이하를 지우고 서버 상태에서 남은 입력을 다시 적용 → 화면 위치와의 차이를 무시·부드럽게·즉시 보정
 // 이동 입력은 "바뀔 때 + 20Hz"로 보내므로 서버가 한 입력을 적용한 틱 수가 2~3틱 다를 수 있다 (보정 규칙이 흡수)
 import {
-  mergePresses, NET, newPlayerState, stepPlayerState,
+  mergePresses, NET, newPlayerState, stepPlayerState, TICK,
   type Bounds, type PlayerInput, type PlayerState, type PlayerStep, type Vec2, type WeaponDef,
 } from '@game/shared';
 
@@ -13,8 +13,13 @@ interface Pending {
   actionSeq: number | null;
   input: PlayerInput;
   speedMul: number;
-  /** 히트스톱으로 멈춘 틱 (다시 적용할 때도 움직이지 않음) */
+  /** 화면에서 히트스톱으로 멈춘 틱 (적중 소식을 늦게 받아 지금 멈춤. 서버는 이때 움직이고 있었다) */
   frozen: boolean;
+  /** 서버가 히트스톱으로 멈춘 틱 (적중 틱 바로 뒤, 다시 적용할 때 움직이지 않음) */
+  serverFrozen: boolean;
+  /** 이 틱 뒤 내 행동 id와 진행 시간 (적중 틱 찾기) */
+  act: string;
+  actT: number;
 }
 
 export type Correction = 'none' | 'ignore' | 'smooth' | 'snap';
@@ -57,8 +62,11 @@ export class Predictor {
   /** 1/60초 한 틱 예측. seq = 지금까지 보낸 마지막 seq */
   tick(input: PlayerInput, dt: number, seq: number, actionSeq: number | null = null, speedMul = 1): PlayerStep {
     const frozen = this.stopLeft > 0;
-    this.pending.push({ seq, actionSeq, input, speedMul, frozen });
+    const entry: Pending = { seq, actionSeq, input, speedMul, frozen, serverFrozen: false, act: '', actT: -1 };
+    this.pending.push(entry);
+    const mark = () => Object.assign(entry, { act: this.state.fighter.run?.def.id ?? '', actT: this.state.fighter.run?.t ?? -1 });
     if (frozen) {
+      mark();
       this.stopLeft = Math.max(0, this.stopLeft - dt);
       this.held = mergePresses(this.held, input);
       this.decayOffset(dt);
@@ -67,6 +75,7 @@ export class Predictor {
     if (this.held) input = { ...mergePresses(this.held, input)!, x: input.x, y: input.y, run: input.run };
     this.held = null;
     const res = stepPlayerState(this.state, this.weapon, input, dt, this.bounds, speedMul);
+    mark();
     if (res.events.some((e) => e.type === 'start')) {
       this.runStamp++;
       this.runSeq = actionSeq;
@@ -76,9 +85,18 @@ export class Predictor {
     return res;
   }
 
-  /** 내 공격 적중 연출 때 (hit 이벤트의 hitstop 초) */
-  stop(sec: number): void {
+  /**
+   * 내 공격 적중 (hit 이벤트의 recoil 초, 맞힌 행동 id·진행 시간).
+   * 서버는 적중 틱 바로 뒤를 멈췄으므로 예측 기록의 같은 틱 뒤를 serverFrozen으로 표시해 다시 계산이 서버와 같게 하고,
+   * 화면은 지금부터 같은 시간 멈춘다 (늦게 안 만큼 앞서 간 것을 제자리에서 기다려 맞춤, 뒤로 당기지 않음)
+   */
+  stop(sec: number, act = '', actT = -1): void {
     this.stopLeft = Math.max(this.stopLeft, sec);
+    if (actT < 0) return;
+    const i = this.pending.findIndex((p) => !p.frozen && p.act === act && p.actT >= actT - 1e-6);
+    if (i < 0) return;
+    const n = Math.ceil(sec / TICK - 1e-9);
+    for (const p of this.pending.slice(i + 1, i + 1 + n)) p.serverFrozen = true;
   }
 
   /** 부드러운 보정: 남은 차이를 smoothMs 동안 줄인다 */
@@ -98,7 +116,7 @@ export class Predictor {
     const sim = clone(server);
     let held: PlayerInput | null = null;
     for (const p of this.pending) {
-      if (p.frozen) {
+      if (p.serverFrozen) {
         held = mergePresses(held, p.input);
         continue;
       }
@@ -117,6 +135,8 @@ export class Predictor {
     const shown = this.display;
     const error = Math.hypot(sim.pos.x - shown.x, sim.pos.y - shown.y);
     if (error <= NET.correctIgnorePx) return { mode: 'ignore', error };
+    // 화면이 히트스톱으로 기다리는 동안은 위치를 당기지 않는다 (기다림이 끝나면 서버 쪽이 따라와 차이가 사라짐)
+    if (this.stopLeft > 0 && error <= NET.correctSnapPx) return { mode: 'ignore', error };
     // 다시 계산한 상태로 바꾸되, 화면은 지금 자리에서 출발 (smooth) 또는 바로 이동 (snap)
     s.pos = sim.pos;
     s.backstep = sim.backstep;

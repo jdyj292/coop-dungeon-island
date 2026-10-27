@@ -278,7 +278,9 @@ export class RoomSim {
       const sec = gradeTiming(def.fx?.grade ?? 'light').hitstop;
       // 근접 역경직: 근접 무기는 공격자만 더 오래 멈춘다 (weapons.json recoilMul, combat.md 5장)
       const recoil = sec * (sp.weapon.recoilMul ?? 1);
-      events.push({ type: 'hit', pid: sp.pid, m: h.m, def, damage: h.damage, recoil });
+      // actT = 맞힌 틱의 내 행동 진행 시간 (클라이언트가 예측 기록에서 같은 틱을 찾아 멈춤을 맞춘다, network.md 9장)
+      const run = sp.state.fighter.run;
+      events.push({ type: 'hit', pid: sp.pid, m: h.m, def, damage: h.damage, recoil, act: run?.def.id ?? '', actT: run?.t ?? -1 });
       if (h.ko) events.push({ type: 'ko', pid: sp.pid, m: h.m });
       recordGroggyHit(h.m, sp.pid, (this.opts.partySize ?? 1) >= 2);
       if (this.opts.hitstop === 'entity') {
