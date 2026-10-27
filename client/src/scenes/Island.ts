@@ -11,8 +11,9 @@ import { koText } from '../ui/koText';
 import { islandScreenSize, IslandWorld } from '../view/islandWorld';
 import { HUD_HEIGHT, project } from '../view/layout';
 
-/** 카메라: 내 캐릭터가 화면 가운데에서 이만큼 벗어나면 따라감 */
-const DEADZONE = { x: 40, y: 24 };
+/** 카메라: 내 캐릭터 몸 가운데(발에서 BODY_LIFT 위)가 화면 가운데에서 이만큼 벗어나면 따라감 (art.md 1장) */
+const DEADZONE = { x: 40, y: 12 };
+const BODY_LIFT = 10;
 const NOTICE_MS = 2000;
 /** 구매 실패 이유 → 알림 */
 const BUY_FAIL: Record<string, string> = { money: '코인이 모자랍니다', treasury: '공동 금고가 모자랍니다', unknown: '살 수 없는 품목입니다' };
@@ -210,7 +211,7 @@ export class Island extends Phaser.Scene {
   /** 데드존 안에서는 가만히, 섬 경계에서 멈춤 (가로·세로). screen = p가 이미 화면 좌표 (배치 커서) */
   private follow(p: { x: number; y: number }, viewW: number, viewH: number, screen = false): void {
     const { w, h } = islandScreenSize();
-    const pr = project(p.x, p.y), target = screen ? { x: p.x, y: p.y } : { x: pr.sx, y: pr.sy };
+    const pr = project(p.x, p.y), target = screen ? { x: p.x, y: p.y } : { x: pr.sx, y: pr.sy - BODY_LIFT };
     for (const axis of ['x', 'y'] as const) {
       const d = DEADZONE[axis];
       if (target[axis] > this.cam[axis] + d) this.cam[axis] = target[axis] - d;
