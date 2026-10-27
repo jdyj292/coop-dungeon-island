@@ -7,6 +7,7 @@ export type Pixel = [x: number, y: number, ch: string];
  * start에서 dir 방향으로 프로필을 편다. 뒤에 오는 파츠가 앞 파츠를 덮는다.
  * width: 홀수는 가운데 정렬(대각선이면 수직 대각선 방향), 짝수는 기본선 + 한쪽(대각선이면 가로 이웃을 한 칸 더)
  * block: 끝에 붙는 정사각 덩어리. 방향이 음수인 축은 반대쪽으로 붙는다
+ * diagFrom: 대각선이면 이 칸 뒤로는 거리를 1/√2로 줄여 곧은 방향과 같은 길이로 보이게 한다 (대검 날)
  */
 export function weaponPixels(profile: WeaponProfile, start: Point, dir: Point): Pixel[] {
   const [dx, dy] = dir;
@@ -14,11 +15,13 @@ export function weaponPixels(profile: WeaponProfile, start: Point, dir: Point): 
   const perp: Point = diag ? [1, -dx * dy] : [-dy, dx];
   const side: Point = diag ? [1, 0] : [-dy, dx];
   const out: Pixel[] = [];
+  const df = diag ? profile.diagFrom : undefined;
+  const step = (k: number) => (df === undefined || k <= df ? k : df + Math.round((k - df) / Math.SQRT2));
 
   for (const part of profile.parts ?? []) {
     const ks: number[] = [];
-    if (part.at !== undefined) ks.push(part.at);
-    else for (let k = part.from!; k <= part.to!; k++) ks.push(k);
+    if (part.at !== undefined) ks.push(step(part.at));
+    else for (let k = part.from!; k <= part.to!; k++) if (!ks.includes(step(k))) ks.push(step(k));
 
     for (const k of ks) {
       const x = start[0] + dx * k;

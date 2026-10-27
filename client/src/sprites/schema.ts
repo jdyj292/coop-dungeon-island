@@ -116,6 +116,7 @@ export const weaponsSchema = z.object({
       .object({
         type: z.string(),
         parts: z.array(weaponPart).optional(),
+        diagFrom: z.number().int().optional(),
         gauntlet: z.object({ mat: z.string().length(1), size: z.number().int().positive() }).optional(),
       })
       .passthrough(),

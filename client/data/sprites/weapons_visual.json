@@ -3,6 +3,7 @@
   "profiles": {
     "greatsword_basic": {
       "type": "greatsword",
+      "diagFrom": 2,
       "parts": [
         {
           "at": -1,

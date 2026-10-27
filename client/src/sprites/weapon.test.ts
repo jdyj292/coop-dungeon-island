@@ -24,6 +24,11 @@ describe('weaponPixels', () => {
     const p = weaponPixels({ type: 't', parts: [{ at: -1, mat: 'y' }, { from: 1, to: 2, mat: 'w' }] }, [5, 5], [0, -1]);
     expect(fmt(p)).toEqual(['5,6y', '5,4w', '5,3w']);
   });
+  it('diagFrom: 대각선만 그 뒤 거리를 1/√2로 줄인다', () => {
+    const profile = { type: 't', diagFrom: 2, parts: [{ from: 1, to: 6, mat: 'm' }] };
+    expect(fmt(weaponPixels(profile, [0, 0], [1, -1]))).toEqual(['1,-1m', '2,-2m', '3,-3m', '4,-4m', '5,-5m']);
+    expect(weaponPixels(profile, [0, 0], [1, 0])).toHaveLength(6);
+  });
   it('block: 음수 방향 축은 반대쪽으로', () => {
     const p = weaponPixels({ type: 't', parts: [{ at: 1, mat: 'o', block: 2 }] }, [0, 0], [1, -1]);
     expect(fmt(p)).toEqual(['1,-2o', '2,-2o', '1,-1o', '2,-1o']);
