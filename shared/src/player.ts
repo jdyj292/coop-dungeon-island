@@ -91,7 +91,7 @@ export function stepPlayerState(
       moveX(p, p.pos.x + push.v * t, bounds);
       push.left -= t;
     }
-    stepRun(p.run, 0, dt);
+    stepRun(p.run, 0, 0, dt);
     return out;
   }
 
@@ -112,18 +112,19 @@ export function stepPlayerState(
     p.pos = moveBox(p.pos, to, playerHalf(), bounds);
     p.backstep.t = t0 + dt;
     if (p.backstep.t >= bs.sec) p.backstep = null;
-    stepRun(p.run, 0, dt);
+    stepRun(p.run, 0, 0, dt);
     return out;
   }
 
   // 지구력이 바닥나면 달리기 입력을 뗄 때까지 걷기 (다시 달리려면 두 번 누르기)
-  const wantRun = stepRun(p.run, input.x, dt, input.run);
+  const wantRun = stepRun(p.run, input.x, input.y, dt, input.run);
   if (!wantRun) p.tired = false;
   if (p.tired) p.run.running = false;
   const running = wantRun && !p.tired && !p.fighter.run;
   const skill = input.skill && skillReady(p, input.skill) ? input.skill : null;
   const before = p.fighter.run && { run: p.fighter.run, t: p.fighter.run.t };
-  out.events = stepFighter(p.fighter, weapon, { attack: input.attack, skill, dashing: running }, dt);
+  // 대시 공격은 좌우를 누르며 달릴 때만 (위아래만 누르며 달리면 평타, combat.md 1장)
+  out.events = stepFighter(p.fighter, weapon, { attack: input.attack, skill, dashing: running && input.x !== 0 }, dt);
   for (const e of out.events) {
     // 쿨타임은 windup 진입 시점부터 (balance.md 2장)
     if (e.type === 'start' && e.run.kind === 'skill') {

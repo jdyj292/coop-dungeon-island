@@ -24,12 +24,13 @@ describe('FixedStep (1/60초)', () => {
 });
 
 describe('달리기 (두 번 누르기)', () => {
-  const run = (taps: [x: number, ticks: number][]) => {
+  const run = (taps: [x: number, ticks: number, y?: number][]) => {
     const s = newRunState();
     let r = false;
-    for (const [x, n] of taps) for (let i = 0; i < n; i++) r = stepRun(s, x, TICK);
+    for (const [x, n, y = 0] of taps) for (let i = 0; i < n; i++) r = stepRun(s, x, y, TICK);
     return r;
   };
+  const dash: [number, number][] = [[1, 4], [0, 4], [1, 10]];
   it('0.25초 안에 같은 방향 두 번 → 달림', () => {
     expect(run([[1, 4], [0, 4], [1, 2]])).toBe(true);
   });
@@ -38,8 +39,23 @@ describe('달리기 (두 번 누르기)', () => {
     expect(run([[1, 4], [0, 4], [-1, 2]])).toBe(false);
     expect(run([[1, 60]])).toBe(false);
   });
-  it('좌우를 떼면 해제', () => {
-    expect(run([[1, 4], [0, 4], [1, 10], [0, 1]])).toBe(false);
+  it('방향키를 모두 떼면 해제', () => {
+    expect(run([...dash, [0, 1]])).toBe(false);
+  });
+  it('달리다 위아래만 누르면 유지, 다시 같은 쪽 좌우를 눌러도 유지', () => {
+    expect(run([...dash, [0, 10, -1]])).toBe(true);
+    expect(run([...dash, [0, 10, 1], [1, 5, 1], [1, 5]])).toBe(true);
+  });
+  it('위아래만 누르다 반대쪽 좌우 또는 모두 떼면 해제', () => {
+    expect(run([...dash, [0, 5, -1], [-1, 1, -1]])).toBe(false);
+    expect(run([...dash, [0, 5, -1], [0, 1]])).toBe(false);
+  });
+  it('네트워크 입력(run 강제)도 위아래만 누르면 유지', () => {
+    const s = newRunState();
+    stepRun(s, 1, 0, TICK, true);
+    expect(stepRun(s, 0, 1, TICK, true)).toBe(true);
+    expect(s.dir).toBe(1);
+    expect(stepRun(s, 0, 0, TICK, true)).toBe(false);
   });
   it('속도는 기본 × 무기 배율', () => {
     expect(moveSpeed(true, 0.9)).toEqual({ x: PLAYER_MOVE.run.x * 0.9, y: PLAYER_MOVE.run.y * 0.9 });

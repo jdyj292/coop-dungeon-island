@@ -36,6 +36,15 @@ describe('대시 공격', () => {
     const q = newPlayerState({ x: 100, y: 50 });
     expect(ticks(q, 1, { attack: true }, { x: 1 })).toEqual(['start:gs_b1']);
   });
+  it('달리다 위아래만 누르면 계속 달리지만 J는 1타 (대시는 좌우를 누를 때만)', () => {
+    const p = newPlayerState({ x: 100, y: 50 });
+    ticks(p, 3, {}, { x: 1 });
+    ticks(p, 3);
+    ticks(p, 10, {}, { x: 1 });
+    ticks(p, 5, {}, { y: -1 });
+    expect(p.run.running).toBe(true);
+    expect(ticks(p, 1, { attack: true }, { y: -1 })).toEqual(['start:gs_b1']);
+  });
 });
 
 describe('백스텝 (combat.md 1장)', () => {

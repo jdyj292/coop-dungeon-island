@@ -59,15 +59,15 @@ export const newRunState = (): RunState => ({ running: false, dir: 0, prevX: 0, 
 
 /**
  * 좌우를 같은 방향으로 runDoubleTap초 안에 두 번 누르면(떼었다 다시) 달리기.
- * 좌우를 떼거나 반대로 누르면 해제 (combat.md 1장 조작)
+ * 방향키를 하나라도(위아래만이어도) 누르고 있으면 유지, 모두 떼거나 달리던 반대쪽 좌우를 누르면 해제 (combat.md 1장 조작)
  */
-export function stepRun(s: RunState, inputX: number, dt: number, forced?: boolean): boolean {
+export function stepRun(s: RunState, inputX: number, inputY: number, dt: number, forced?: boolean): boolean {
   s.time += dt;
-  const x = Math.sign(inputX);
+  const x = Math.sign(inputX), held = x !== 0 || inputY !== 0;
   // 네트워크 입력: 클라이언트가 두 번 누르기를 판정해 run으로 보낸다 (지연 때문에 서버에서 간격을 재지 않음, network.md 4장)
   if (forced !== undefined) {
-    s.running = forced && x !== 0;
-    s.dir = s.running ? x : 0;
+    s.running = forced && held;
+    s.dir = s.running ? x || s.dir : 0;
     s.prevX = x;
     return s.running;
   }
@@ -79,7 +79,7 @@ export function stepRun(s: RunState, inputX: number, dt: number, forced?: boolea
     s.lastTapDir = x;
     s.lastTapAt = s.time;
   }
-  if (s.running && x !== s.dir) s.running = false;
+  if (s.running && (!held || x === -s.dir)) s.running = false;
   s.prevX = x;
   return s.running;
 }

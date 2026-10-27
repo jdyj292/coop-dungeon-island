@@ -38,7 +38,7 @@ export class InputSender {
   update(k: KeyInput, dt: number, me: PlayerState | null): Sent {
     const c = this.conn, t = c.clock.serverNow();
     const mx = Math.sign(k.x) as -1 | 0 | 1, my = Math.sign(k.y) as -1 | 0 | 1;
-    const running = stepRun(this.run, mx, dt);
+    const running = stepRun(this.run, mx, my, dt);
     const changed = mx !== this.last.mx || my !== this.last.my || running !== this.last.run;
     this.sinceSend += dt * 1000;
     if (changed || ((mx || my) && this.sinceSend >= 1000 / NET.inputRate)) {
@@ -59,7 +59,7 @@ export class InputSender {
       actionSeq = this.lastSeq = c.nextSeq();
       c.send('action', { seq: actionSeq, t, kind, ...(skillId ? { skillId } : {}), ...at });
     };
-    if (press.attack) action(running ? 'dash' : 'basic');
+    if (press.attack) action(running && mx ? 'dash' : 'basic');
     if (press.skill) action('skill', press.skill.id);
     if (press.backstep) action('backstep');
     if (press.potion) {

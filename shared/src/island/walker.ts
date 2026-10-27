@@ -22,7 +22,7 @@ export const cloneWalker = (w: Walker): Walker => ({ ...w, pos: { ...w.pos }, ru
 
 /** 한 틱 */
 export function stepWalker(w: Walker, input: WalkInput, dt: number, bounds: Bounds): void {
-  const running = stepRun(w.run, input.mx, dt, input.run);
+  const running = stepRun(w.run, input.mx, input.my, dt, input.run);
   const before = w.pos;
   w.pos = stepMove(w.pos, { x: input.mx, y: input.my, run: running }, dt, moveSpeed(running), bounds);
   if (input.mx) w.facing = Math.sign(input.mx);
