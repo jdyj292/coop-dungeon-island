@@ -76,6 +76,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | poseSet | poses.json 세트 |
 | basicAdvance | `{ speed, stopBefore }` 평타 중 바라보는 방향 키를 누르고 있으면 전진하는 속도 px/s, 각 타 끝 stopBefore초 전부터는 전진 안 함 (생략 = 전진 없음, 대검 20·0.15) |
 | recoilMul | 근접 역경직 배율: 내 공격이 맞으면 나만 히트스톱 × 이 값 (생략 = 1, 원거리 무기는 생략, combat.md 5장) |
+| basicTurn | false면 평타 콤보 중 방향 전환 불가 (생략 = 평타 단계 사이 turnWindow 동안 가능, 대검 false) |
 | backstepStyle | 생략 = 기본 백스텝, "teleport" = 스태프 순간이동 (성능 동일) |
 | trait | 무기 고유 특성. charge(대검) / cast(스태프, 설명용) / backAttack(쌍검) / null |
 | comboWindow | recovery가 끝난 뒤 다음 평타 입력을 받아주는 시간. 넘기면 1타로 돌아감 |
@@ -186,7 +187,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | potions | `hp { heal(최대 HP 비율), cooldown, carry }`, `mp { amount, cooldown, carry }` (balance.md 6장, carry = 반입 한도) |
 | ultimate | `{ max, onHit, onHurt, onTeamMilestone }` 필살기 게이지 최대·적중 1회·피격 1회·팀 콤보 단계 달성 시 전원 증가량 (balance.md 8장) |
 | hurtbox | 플레이어 피격 판정 크기 `{ width, height, depth }` (몬스터 공격·투사체) |
-| backstep | `{ distance, sec, invuln, cooldown }` 회피 거리(px)·시간·앞쪽 무적 시간·쿨. 행동 중에는 후딜레이에서만 회피 (combat.md 1장) |
+| backstep | `{ distance, sec, invuln, cooldown, depthDistance }` 회피 좌우 거리(px)·시간·앞쪽 무적 시간·쿨·위아래(깊이) 거리(px). 행동 중에는 후딜레이에서만 회피 (combat.md 1장) |
 | stamina | `{ max, dodge, runPerSec, regen, regenDelay }` 지구력 최대·회피 1회 소모·달리기 초당 소모·초당 회복·회복 시작 대기(초) (combat.md 1장) |
 
 - 이동 계산은 shared/src/movement.ts (클라이언트·서버 공용): 축마다 따로 움직이고 대각선도 정규화하지 않는다. 행동 중 이동(move)은 actions.ts actionMoveDelta, 판정 모양은 shapes.ts
@@ -205,7 +206,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | gravity, launchVz, airHitVz, airGravityMul, maxAirHits, bounceVz | 높이(z)·공중 콤보 보정 |
 | downSec, downSlide, getupSec, wallStunSec | 다운 시간·다운 미끄러짐(px)·기상 무적·벽꿍 추가 경직 |
 | pushRate | 밀림이 남은 거리를 줄이는 속도 (초당 비율, 클수록 짧고 세게 밀림) |
-| turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 |
+| turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 (무기 basicTurn false면 없음) |
 | cooldownScale | 전역 쿨타임 배율 (balance.md 2장). 실제 쿨 = 기준 쿨 × 이 값 |
 | stunExitSec | 기절(체력 0) 뒤 퇴장까지 시간 |
 | stun.{light,medium,heavy} | `{ time, push }` 경직 시간·밀림 거리 |

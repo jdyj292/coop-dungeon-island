@@ -79,14 +79,22 @@ describe('포즈·방향 전환', () => {
     stepFighter(f, gs, press, 0.01);
     expect(fighterPose(f)).toBe(b1.poses!.windup);
   });
-  it('방향 전환은 recovery 진입 직후 0.1초만', () => {
+  it('방향 전환은 recovery 진입 직후 0.1초만 (basicTurn 생략 무기: 스태프)', () => {
+    const st = weaponDef('staff'), s1 = st.basic[0]!;
     const f = newFighter();
-    expect(canTurn(f)).toBe(true);
+    expect(canTurn(f, st)).toBe(true);
+    stepFighter(f, st, press, 0.01);
+    expect(canTurn(f, st)).toBe(false);
+    stepFighter(f, st, idle, s1.phases.windup + s1.phases.active);
+    expect(canTurn(f, st)).toBe(true);
+    stepFighter(f, st, idle, 0.15);
+    expect(canTurn(f, st)).toBe(false);
+  });
+  it('대검(basicTurn false)은 평타 중 방향 전환 불가', () => {
+    const f = newFighter();
+    expect(canTurn(f, gs)).toBe(true);
     stepFighter(f, gs, press, 0.01);
-    expect(canTurn(f)).toBe(false);
     stepFighter(f, gs, idle, b1.phases.windup + b1.phases.active);
-    expect(canTurn(f)).toBe(true);
-    stepFighter(f, gs, idle, 0.15);
-    expect(canTurn(f)).toBe(false);
+    expect(canTurn(f, gs)).toBe(false);
   });
 });

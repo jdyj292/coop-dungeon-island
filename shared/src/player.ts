@@ -14,8 +14,8 @@ export interface PlayerState extends Vitals {
   facing: number;
   fighter: Fighter;
   run: RunState;
-  /** 회피 중이면 경과 시간과 이동 방향 (1 = 오른쪽, -1 = 왼쪽) */
-  backstep: { t: number; dir: number } | null;
+  /** 회피 중이면 경과 시간과 이동 방향: dir 좌우 (1 = 오른쪽, -1 = 왼쪽, 0 = 좌우 이동 없음), dy 깊이 (1 = 아래, -1 = 위, 0 = 없음) */
+  backstep: { t: number; dir: number; dy: number } | null;
   backstepCd: number;
   /** 지구력 (회피·달리기에 씀), 회복까지 남은 대기 시간 */
   stamina: number;
@@ -95,18 +95,21 @@ export function stepPlayerState(
     return out;
   }
 
-  // 회피: 지구력 소모. 좌우 입력 방향(없으면 바라보는 반대쪽)으로 고르게 이동하고 그동안 다른 입력은 무시.
+  // 회피: 지구력 소모. 누른 방향키 쪽(위아래·대각선 포함, 없으면 바라보는 반대쪽)으로 고르게 이동하고 그동안 다른 입력은 무시.
   // 바라보는 방향은 그대로. 행동 중에는 후딜레이에서만 받아 바로 행동을 끊는다 (선딜·판정 중 누름은 무시)
   if (!p.backstep && input.backstep && canDodge(p)) {
     p.fighter = newFighter();
-    p.backstep = { t: 0, dir: Math.sign(input.x) || -p.facing };
+    const dir = Math.sign(input.x), dy = Math.sign(input.y);
+    p.backstep = { t: 0, dir: dir || dy ? dir : -p.facing, dy };
     p.backstepCd = bs.cooldown;
     spendStamina(p, st.dodge);
     out.backstepStarted = true;
   }
   if (p.backstep) {
     const t0 = p.backstep.t, t1 = Math.min(bs.sec, t0 + dt);
-    moveX(p, p.pos.x + p.backstep.dir * (bs.distance * (t1 - t0)) / bs.sec, bounds);
+    const k = (t1 - t0) / bs.sec;
+    const to = { x: p.pos.x + p.backstep.dir * bs.distance * k, y: p.pos.y + p.backstep.dy * bs.depthDistance * k };
+    p.pos = moveBox(p.pos, to, playerHalf(), bounds);
     p.backstep.t = t0 + dt;
     if (p.backstep.t >= bs.sec) p.backstep = null;
     stepRun(p.run, 0, dt);
@@ -128,7 +131,7 @@ export function stepPlayerState(
       p.mp -= e.run.def.mp ?? 0;
     }
   }
-  if (input.x && canTurn(p.fighter)) p.facing = Math.sign(input.x);
+  if (input.x && canTurn(p.fighter, weapon)) p.facing = Math.sign(input.x);
   // 평타 중 바라보는 쪽 키를 누르고 있으면 조금씩 전진, 각 타 끝 stopBefore초 전부터는 멈춤 (weapons.json basicAdvance, combat.md 2장)
   const adv = weapon.basicAdvance, br = p.fighter.run;
   if (adv && br?.kind === 'basic' && Math.sign(input.x) === p.facing && br.t < phaseRange(br.def, 'recovery')[1] - adv.stopBefore) {

@@ -103,9 +103,9 @@ describe('기절 → 퇴장', () => {
 });
 
 describe('회피 방향', () => {
-  const dodge = (x: number) => {
+  const dodge = (x: number, y = 0) => {
     const p = newPlayerState({ x: 500, y: 50 });
-    ticks(p, Math.ceil(PLAYER.backstep.sec / TICK) + 1, { backstep: true, x });
+    ticks(p, Math.ceil(PLAYER.backstep.sec / TICK) + 1, { backstep: true, x, y });
     return p;
   };
   it('바라보는 쪽 방향키 → 앞으로, 바라보는 방향은 그대로', () => {
@@ -116,6 +116,15 @@ describe('회피 방향', () => {
   it('반대쪽 방향키 → 뒤로, 방향키 없음 → 바라보는 반대쪽', () => {
     expect(dodge(-1).pos.x).toBeCloseTo(500 - PLAYER.backstep.distance);
     expect(dodge(0).pos.x).toBeCloseTo(500 - PLAYER.backstep.distance);
+  });
+  it('위아래 방향키 → 깊이로 depthDistance, 좌우와 같이 누르면 대각선', () => {
+    const bs = PLAYER.backstep;
+    const up = dodge(0, -1);
+    expect(up.pos).toEqual({ x: 500, y: expect.closeTo(50 - bs.depthDistance) });
+    expect(dodge(0, 1).pos.y).toBeCloseTo(50 + bs.depthDistance);
+    const diag = dodge(1, 1);
+    expect(diag.pos.x).toBeCloseTo(500 + bs.distance);
+    expect(diag.pos.y).toBeCloseTo(50 + bs.depthDistance);
   });
 });
 
@@ -152,10 +161,13 @@ describe('대검 평타 전진 (weapons.json basicAdvance)', () => {
   it('바라보는 쪽 키를 누르면 초당 speed로 전진, 안 누르면 제자리', () => {
     expect(swing(1)).toBeCloseTo(adv.speed * (len - adv.stopBefore), 0);
     expect(swing(0)).toBe(0);
-    // 반대쪽 키: 돌아설 수 있는 구간(canTurn)에서 돌아선 뒤에만 그쪽으로 전진 → 끝까지 누른 것보다 짧음
-    const back = swing(-1);
-    expect(back).toBeLessThan(0);
-    expect(back).toBeGreaterThan(-adv.speed * (len - adv.stopBefore));
+  });
+  it('반대쪽 키: 대검은 평타 중 돌아서지 않아 제자리', () => {
+    const p = newPlayerState({ x: 500, y: 50 });
+    ticks(p, Math.floor(len / TICK) - 1, { attack: true }, { x: -1 });
+    expect(p.fighter.run).not.toBeNull();
+    expect(p.facing).toBe(1);
+    expect(p.pos.x).toBe(500);
   });
   it('각 타 끝 stopBefore초 전부터는 키를 눌러도 멈춤', () => {
     const p = newPlayerState({ x: 500, y: 50 });

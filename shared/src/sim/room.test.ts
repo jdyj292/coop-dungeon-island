@@ -37,6 +37,17 @@ describe('active 구간 판정', () => {
     for (let i = 0; i < 120; i++) sim.tick(TICK, none);
     expect(sim.alive).toHaveLength(0);
   });
+  it('대검 3타는 몬스터를 띄움', () => {
+    const sim = room();
+    const [m] = sim.spawn([{ kind: 'mushroom', x: 114, y: 50 }]);
+    m!.hp = m!.maxHp = 9999;
+    let state = '';
+    for (let i = 0; i < 150 && !state; i++) {
+      const ev = sim.tick(TICK, { ...none, attack: i % 4 === 0 }).events;
+      if (ev.some((e) => e.type === 'hit' && e.def.id === 'gs_b3')) state = m!.body.state;
+    }
+    expect(state).toBe('air');
+  });
   it('데미지는 숙련도 ATK를 따름: 평타 계수 200 → Lv1 20, Lv20 39', () => {
     const sim = room();
     sim.player.atk = atkFor(20);

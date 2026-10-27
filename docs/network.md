@@ -99,7 +99,7 @@ DungeonState
 PlayerState
   id, name, look            look = 외형 키 "의상:머리 번호:머리색 번호:플레이어 색" (예: beginner:1:2:0, 섬 출발 파티 정보에서)
   weapon, x, y, facing      x·y는 정수 px
-  dodgeDir                  회피 이동 방향 (1/−1, 회피 아니면 0). 앞회피면 facing과 같음
+  dodgeDir, dodgeDy         회피 이동 방향 좌우 (1/−1/0)·깊이 (1 아래/−1 위/0). 회피 아니면 둘 다 0. 앞회피면 dodgeDir = facing
   state                     idle / walk / run / action / backstep / hitstun / down / knocked / disconnected (기상 무적은 연출만)
   actionId, actionStart     진행 중 행동과 시작 서버 시각 (구간은 데이터로 계산)
   hp, maxHp, ultGauge

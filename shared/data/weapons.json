@@ -5,6 +5,7 @@
     "moveMul": 0.9,
     "recoilMul": 2,
     "basicAdvance": { "speed": 20, "stopBefore": 0.15 },
+    "basicTurn": false,
     "visual": "greatsword_basic",
     "poseSet": "greatsword",
     "trait": {
@@ -81,6 +82,7 @@
         },
         "strength": "heavy",
         "flags": [
+          "launch",
           "knockback"
         ],
         "poses": {

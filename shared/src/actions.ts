@@ -121,9 +121,10 @@ export function fighterPose(f: Fighter): string | null {
 
 export const fighterPhase = (f: Fighter): Phase | null => (f.run ? phaseAt(f.run.def, f.run.t) : null);
 
-/** 방향 전환 가능: 행동 중이 아니거나, 평타 recovery 진입 직후 (combat.md 1장 "공격 중 제약") */
-export function canTurn(f: Fighter): boolean {
+/** 방향 전환 가능: 행동 중이 아니거나, 평타 recovery 진입 직후 (무기 basicTurn false면 불가, combat.md 1장 "공격 중 제약") */
+export function canTurn(f: Fighter, weapon: WeaponDef): boolean {
   if (!f.run) return true;
+  if (weapon.basicTurn === false) return false;
   const { windup, active } = f.run.def.phases;
   const since = f.run.t - windup - active;
   return f.run.kind === 'basic' && since >= 0 && since < COMBAT.turnWindow;

@@ -115,6 +115,8 @@ export const weapon = z.object({
   recoilMul: pos.optional(),
   // 평타 중 바라보는 방향 키를 누르고 있으면 전진하는 속도 px/s, 각 타 끝 stopBefore초 전부터는 전진 안 함 (없으면 전진 없음)
   basicAdvance: z.object({ speed: pos, stopBefore: sec }).strict().optional(),
+  // false면 평타 콤보 중 방향 전환 불가 (없으면 평타 단계 사이 turnWindow 동안 가능, 대검 false)
+  basicTurn: z.boolean().optional(),
   visual: z.string(),
   poseSet: z.string(),
   backstepStyle: z.literal('teleport').optional(),
@@ -187,7 +189,7 @@ export const player = z.object({
   }).strict(),
   level: z.object({ expBase: pos, expPow: pos }).strict(),
   hurtbox: z.object({ width: pos, height: pos, depth: pos }).strict(),
-  backstep: z.object({ distance: pos, sec: pos, invuln: sec, cooldown: sec }).strict(),
+  backstep: z.object({ distance: pos, sec: pos, invuln: sec, cooldown: sec, depthDistance: pos }).strict(),
   stamina: z.object({ max: pos, dodge: sec, runPerSec: sec, regen: sec, regenDelay: sec }).strict(),
 }).strict();
 

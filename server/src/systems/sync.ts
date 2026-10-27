@@ -13,6 +13,7 @@ export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: nu
   s.y = int(p.pos.y);
   s.facing = p.facing;
   s.dodgeDir = p.backstep?.dir ?? 0;
+  s.dodgeDy = p.backstep?.dy ?? 0;
   s.state = sp.away ? 'disconnected' : playerStateName(p, moved);
   const actionId = run ? run.def.id : '';
   // 같은 행동이 이어지면 시작 시각을 다시 쓰지 않는다 (평타 연속은 id가 바뀜)

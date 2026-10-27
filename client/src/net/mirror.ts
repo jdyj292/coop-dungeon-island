@@ -28,7 +28,10 @@ export function mirrorPlayer(s: PlayerSnap, t: number, weaponId: string, priv?: 
   if (act) p.fighter.run = { ...act, t: sec(t - s.actionStart) };
   p.run.running = s.state === 'run';
   // 회피 방향은 서버 값 (본인 예측을 다시 계산할 때 앞회피가 뒤로 계산되지 않게)
-  if (s.state === 'backstep') p.backstep = { t: Math.min(el, PLAYER.backstep.sec), dir: s.dodgeDir || -s.facing };
+  if (s.state === 'backstep') {
+    const dy = s.dodgeDy ?? 0;
+    p.backstep = { t: Math.min(el, PLAYER.backstep.sec), dir: s.dodgeDir || dy ? s.dodgeDir : -s.facing, dy };
+  }
   if (s.state === 'hitstun') p.hurt = { kind: 'stun', left: Math.max(0, PLAYER.hurt.stunSec - el) };
   if (s.state === 'down') p.hurt = { kind: 'down', left: Math.max(0, PLAYER.hurt.downSec - el) };
   p.downed = s.state === 'knocked';
