@@ -56,9 +56,9 @@
         },
         "strength": "light",
         "poses": {
-          "windup": "ready",
-          "active": "slash",
-          "recovery": "slash"
+          "windup": "draw",
+          "active": "sweep",
+          "recovery": "sweep"
         },
         "fx": {
           "grade": "light"
@@ -84,9 +84,9 @@
           "knockback"
         ],
         "poses": {
-          "windup": "ready",
-          "active": "slash",
-          "recovery": "slash"
+          "windup": "heave",
+          "active": "rise",
+          "recovery": "rise"
         },
         "fx": {
           "grade": "heavy"

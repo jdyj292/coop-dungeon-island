@@ -152,6 +152,132 @@
         ],
         "detached": true
       }
+    },
+    "draw": {
+      "front": {
+        "hand": [
+          7,
+          10
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            0
+          ],
+          "behind": true
+        }
+      ]
+    },
+    "sweep": {
+      "body": {
+        "legs": "walkA"
+      },
+      "front": {
+        "hand": [
+          12,
+          12
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            0
+          ]
+        }
+      ],
+      "fx": {
+        "type": "smear",
+        "pivot": [
+          9,
+          12
+        ],
+        "r": [
+          8,
+          13
+        ],
+        "arc": [
+          -0.5,
+          0.5
+        ],
+        "reverse": true
+      }
+    },
+    "heave": {
+      "body": {
+        "bob": 2,
+        "legs": "walkA"
+      },
+      "front": {
+        "hand": [
+          7,
+          13
+        ]
+      },
+      "back": {
+        "hand": [
+          8,
+          13
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            0
+          ],
+          "behind": true
+        }
+      ]
+    },
+    "rise": {
+      "body": {
+        "legs": "walkA"
+      },
+      "front": {
+        "hand": [
+          11,
+          8
+        ]
+      },
+      "back": {
+        "hand": [
+          10,
+          9
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            -1
+          ]
+        }
+      ],
+      "fx": {
+        "type": "smear",
+        "pivot": [
+          9,
+          11
+        ],
+        "r": [
+          10,
+          16
+        ],
+        "arc": [
+          -1.7,
+          0.9
+        ],
+        "reverse": true
+      }
     }
   },
   "staff": {
