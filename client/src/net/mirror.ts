@@ -30,7 +30,9 @@ export function mirrorPlayer(s: PlayerSnap, t: number, weaponId: string, priv?: 
   // 회피 방향은 서버 값 (본인 예측을 다시 계산할 때 앞회피가 뒤로 계산되지 않게)
   if (s.state === 'backstep') {
     const dy = s.dodgeDy ?? 0;
-    p.backstep = { t: Math.min(el, PLAYER.backstep.sec), dir: s.dodgeDir || dy ? s.dodgeDir : -s.facing, dy };
+    // 진행 시간은 서버가 보낸 시작 시각으로 (받은 시각 since는 최대 한 패치 늦어 다시 계산한 회피가 더 물러났다가 끝에 앞으로 당겨짐)
+    const bt = s.dodgeStart ? sec(t - s.dodgeStart) : el;
+    p.backstep = { t: Math.min(bt, PLAYER.backstep.sec), dir: s.dodgeDir || dy ? s.dodgeDir : -s.facing, dy };
   }
   if (s.state === 'hitstun') p.hurt = { kind: 'stun', left: Math.max(0, PLAYER.hurt.stunSec - el) };
   if (s.state === 'down') p.hurt = { kind: 'down', left: Math.max(0, PLAYER.hurt.downSec - el) };

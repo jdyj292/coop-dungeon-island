@@ -13,6 +13,8 @@ export interface PlayerSnap extends Pos {
   /** 회피 이동 방향: 좌우·깊이 (회피 아니면 둘 다 0) */
   dodgeDir: number;
   dodgeDy: number;
+  /** 회피 시작 서버 시각 (회피 아니면 0) */
+  dodgeStart: number;
   state: string;
   /** 지금 state가 시작된 서버 시각 (백스텝·피격 진행 계산용) */
   since: number;
@@ -260,7 +262,7 @@ export class Connection {
     const since = (prev: { state: string; since: number } | undefined, state: string) => (prev && prev.state === state ? prev.since : t);
     const players = new Map<string, PlayerSnap>();
     s.players.forEach((p, id) => players.set(id, {
-      id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, dodgeDir: p.dodgeDir ?? 0, dodgeDy: p.dodgeDy ?? 0, state: p.state, since: since(prevP?.get(id), p.state),
+      id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, dodgeDir: p.dodgeDir ?? 0, dodgeDy: p.dodgeDy ?? 0, dodgeStart: p.dodgeStart ?? 0, state: p.state, since: since(prevP?.get(id), p.state),
       actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0, look: p.look ?? '', weapon: p.weapon || 'greatsword',
     }));
     const monsters = new Map<string, MonsterSnap>();

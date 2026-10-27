@@ -100,8 +100,9 @@ PlayerState
   id, name, look            look = 외형 키 "의상:머리 번호:머리색 번호:플레이어 색" (예: beginner:1:2:0, 섬 출발 파티 정보에서)
   weapon, x, y, facing      x·y는 정수 px
   dodgeDir, dodgeDy         회피 이동 방향 좌우 (1/−1/0)·깊이 (1 아래/−1 위/0). 회피 아니면 둘 다 0. 앞회피면 dodgeDir = facing
+  dodgeStart                회피 시작 서버 시각 (회피 아니면 0). 본인 예측 재계산의 회피 진행 시간 (state 바뀐 걸 받은 시각은 최대 한 패치 늦어 회피 끝에 앞으로 당겨짐)
   state                     idle / walk / run / action / backstep / hitstun / down / knocked / disconnected (기상 무적은 연출만)
-  actionId, actionStart     진행 중 행동과 시작 서버 시각 (구간은 데이터로 계산)
+  actionId, actionStart     진행 중 행동과 시작 서버 시각 (구간은 데이터로 계산). 1ms 이상 바뀌면 갱신 (히트스톱으로 멈춘 동안만 바뀜. 20ms로 두면 본인 예측 재계산이 대시를 약 5px 앞서 계산했다가 뒤로 당겨짐)
   hp, maxHp, ultGauge
   reviveProgress            쓰러진 동안 동료 부활 진행도 (0~255)
   lastInputSeq              서버가 처리한 마지막 입력 번호 (본인 보정용, 작아서 전원에게 보냄)

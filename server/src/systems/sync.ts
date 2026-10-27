@@ -5,6 +5,11 @@ import { MonsterState, ZoneState, type DungeonState, type PlayerState } from '..
 const int = (n: number) => Math.round(n);
 /** 시각 값(쿨타임 끝·행동 시작)은 이만큼 이상 달라질 때만 갱신 (매 틱 바뀌는 값 전송 방지) */
 const TIME_EPS_MS = 20;
+/**
+ * 플레이어 행동·회피 시작 시각은 본인 예측을 다시 계산하는 기준이라 거의 정확히 (히트스톱으로 멈춘 동안만 바뀐다).
+ * 20ms로 두면 대시처럼 빠른 이동은 약 5px 앞서 계산됐다가 뒤로 당겨짐 (network.md 5장)
+ */
+const PLAYER_TIME_EPS_MS = 1;
 
 /** moved = 이번 틱에 걸은 거리 (걷기·달리기 구분) */
 export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: number): void {
@@ -14,10 +19,12 @@ export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: nu
   s.facing = p.facing;
   s.dodgeDir = p.backstep?.dir ?? 0;
   s.dodgeDy = p.backstep?.dy ?? 0;
+  const dodgeStart = p.backstep ? now - p.backstep.t * 1000 : 0;
+  if (!dodgeStart || !s.dodgeStart || Math.abs(dodgeStart - s.dodgeStart) > PLAYER_TIME_EPS_MS) s.dodgeStart = dodgeStart;
   s.state = sp.away ? 'disconnected' : playerStateName(p, moved);
   const actionId = run ? run.def.id : '';
   // 같은 행동이 이어지면 시작 시각을 다시 쓰지 않는다 (평타 연속은 id가 바뀜)
-  if (actionId !== s.actionId || (run && Math.abs(now - run.t * 1000 - s.actionStart) > TIME_EPS_MS)) {
+  if (actionId !== s.actionId || (run && Math.abs(now - run.t * 1000 - s.actionStart) > PLAYER_TIME_EPS_MS)) {
     s.actionId = actionId;
     s.actionStart = run ? now - run.t * 1000 : 0;
   }

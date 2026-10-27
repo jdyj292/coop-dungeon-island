@@ -37,6 +37,8 @@ export class PlayerState extends Schema {
   @type('int8') dodgeDir = 0;
   /** 회피 중 깊이 방향 (1 아래, -1 위, 0 = 없음) */
   @type('int8') dodgeDy = 0;
+  /** 회피 시작 서버 시각 (회피 아니면 0). 본인 예측을 다시 계산할 때 회피 진행 시간을 정확히 (패치 받은 시각으로 추정하면 최대 한 패치만큼 늦음) */
+  @type('float64') dodgeStart = 0;
   /** idle / walk / run / action / backstep / hitstun / down / knocked */
   @type('string') state = 'idle';
   /** 진행 중 행동 id와 시작 서버 시각 (구간은 클라이언트가 데이터로 계산) */
