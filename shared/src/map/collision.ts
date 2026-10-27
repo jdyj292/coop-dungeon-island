@@ -32,7 +32,8 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 /** from → to 이동. 방 경계로 자르고, 장애물에 막힌 축은 제자리 (x 먼저, 그다음 y) */
 export function moveBox(from: Vec2, to: Vec2, half: Half, b: Bounds): Vec2 {
   const x = clamp(to.x, b.minX, b.maxX), y = clamp(to.y, b.minY, b.maxY);
-  if (!b.blocks?.length) return { x, y };
+  // 이미 장애물에 겹쳐 있으면(겹침 풀기에 밀려 들어감 등) 빠져나갈 수 있게 막지 않는다
+  if (!b.blocks?.length || hitsBlock(from, half, b)) return { x, y };
   const nx = hitsBlock({ x, y: from.y }, half, b) ? from.x : x;
   const ny = hitsBlock({ x: nx, y }, half, b) ? from.y : y;
   return { x: nx, y: ny };

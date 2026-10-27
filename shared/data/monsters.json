@@ -17,7 +17,7 @@
       "y": 28,
       "style": "hop"
     },
-    "detectRange": 80,
+    "detectRange": 999,
     "usesToken": true,
     "superArmor": "none",
     "ai": {
@@ -37,14 +37,14 @@
         },
         "damage": 60,
         "hitbox": {
-          "forward": 8,
+          "forward": 12,
           "width": 13,
           "depth": 15,
           "z": "ground"
         },
         "strength": "light",
         "move": {
-          "distance": 16,
+          "distance": 28,
           "during": "active"
         },
         "telegraph": {
@@ -61,7 +61,7 @@
           "attack": "mushroom_slam",
           "range": [
             0,
-            20
+            34
           ]
         }
       ]
@@ -92,7 +92,7 @@
       "y": 35,
       "style": "walk"
     },
-    "detectRange": 96,
+    "detectRange": 999,
     "usesToken": true,
     "superArmor": "none",
     "ai": {
@@ -170,7 +170,7 @@
       "depth": 8
     },
     "move": null,
-    "detectRange": 112,
+    "detectRange": 224,
     "usesToken": true,
     "superArmor": "none",
     "ai": {
@@ -187,8 +187,8 @@
         "damage": 50,
         "projectile": {
           "speed": 60,
-          "range": 112,
-          "radius": 3,
+          "range": 224,
+          "radius": 5,
           "pierce": false,
           "reflectable": true
         },
@@ -210,9 +210,9 @@
           "attack": "spore_shot",
           "range": [
             0,
-            112
+            224
           ],
-          "alignDepth": 10
+          "alignDepth": 16
         }
       ]
     },
@@ -242,7 +242,7 @@
       "y": 28,
       "style": "walk"
     },
-    "detectRange": 96,
+    "detectRange": 999,
     "usesToken": false,
     "superArmor": "attack",
     "ai": {

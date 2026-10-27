@@ -30,7 +30,12 @@ describe('접속 끊김 (network.md 10장)', () => {
     const m = g.sim.alive[0]!;
     m.hp = m.maxHp / 2;
     g.disconnect('b');
-    ticks(g, 31);
+    // 몬스터가 바로 덤벼드므로 a가 전멸하지 않게 (판이 끝나면 이탈 정산이 아님)
+    const a = g.sim.players.get('a')!.state;
+    for (let i = 0; i < 31 * 60; i++) {
+      a.hp = a.maxHp;
+      g.tick();
+    }
     expect(g.state.players.has('b')).toBe(false);
     expect(g.state.partySize).toBe(1);
     expect([m.maxHp, m.hp]).toEqual([60, 30]);

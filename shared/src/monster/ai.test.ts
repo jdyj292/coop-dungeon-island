@@ -31,12 +31,13 @@ describe('통통버섯 (melee, hop)', () => {
     expect(types(ev)).toContain('playerHit');
     expect(Math.abs(m!.body.y - 56)).toBeLessThanOrEqual(5);
   });
-  it('감지 거리 밖이면 가만히', () => {
+  it('감지 거리 밖이면 가만히 (포자꽃 224px), 버섯은 방에 들어오면 바로 다가옴', () => {
     const sim = room(600);
-    const [m] = sim.spawn([{ kind: 'mushroom', x: 400, y: 56 }]);
+    const [spore, m] = sim.spawn([{ kind: 'sporeflower', x: 400, y: 56 }, { kind: 'mushroom', x: 400, y: 30 }]);
     run(sim, 2);
-    expect(m!.aware).toBe(false);
-    expect(m!.body.x).toBe(400);
+    expect(spore!.aware).toBe(false);
+    expect(m!.aware).toBe(true);
+    expect(m!.body.x).toBeLessThan(400);
   });
   it('예고(windup) 중 맞으면 공격이 끊기고 토큰 반납', () => {
     const sim = room();

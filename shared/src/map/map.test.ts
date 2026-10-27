@@ -20,6 +20,8 @@ describe('장애물 충돌', () => {
     expect(moveBox({ x: 90, y: 30 }, { x: 92, y: 33 }, half, b)).toEqual({ x: 92, y: 33 });
     expect(moveBox({ x: 10, y: 5 }, { x: 0, y: -3 }, half, b)).toEqual({ x: 8, y: 0 });
     expect(hitsBlock({ x: 96, y: 48 }, half, b)).toBe(true);
+    // 이미 박혀 있으면 빠져나가는 이동은 막지 않음 (멈춘 채 갇히지 않게)
+    expect(moveBox({ x: 108, y: 48 }, { x: 120, y: 48 }, half, b)).toEqual({ x: 120, y: 48 });
   });
   it('투사체는 장애물에 닿으면 사라짐', () => {
     const def = MONSTERS.sporeflower!.attacks.find((a) => a.projectile)!;

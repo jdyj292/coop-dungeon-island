@@ -5,7 +5,7 @@ import type { MonsterAttack } from '../data/schema';
 import { actionHits } from '../shapes';
 import { endAttack, startAttack, stepAttack, type AiContext, type MonsterEvent } from './attack';
 import { hasArmor, monsterBounds, monsterHalf, stepBodyIn, type Monster } from './state';
-import { aimable, aimDy, spreadGoal } from './spacing';
+import { aimable, aimDy, spreadGoal, waitGoal } from './spacing';
 import { moveBox } from '../map/collision';
 
 export type { AiContext, MonsterEvent };
@@ -49,14 +49,13 @@ function decide(m: Monster, ctx: AiContext): { def?: MonsterAttack; goal?: { x: 
   if (usable.length) return { def: attacks.get(usable[Math.floor(ctx.rng() * usable.length)]!.attack) };
   const ai = COMBAT.ai, rule = pat.rules[0]!;
   if (m.def.ai.type === 'turret') return {};
-  if (m.def.ai.type === 'charger') return { goal: { x: p.x + side * ai.chargerDistance, y: p.y } };
+  if (m.def.ai.type === 'charger') {
+    // 돌진 거리를 벌릴 자리가 벽 너머면 반대편으로 돌아간다 (벽에 끼어 돌진을 못 하지 않게)
+    const b = monsterBounds(m, ctx.bounds), want = p.x + side * ai.chargerDistance;
+    const x = want < b.minX || want > b.maxX ? p.x - side * ai.chargerDistance : want;
+    return { goal: { x, y: p.y } };
+  }
   return { goal: { x: p.x + side * (rule.range[0] + rule.range[1]) / 2, y: p.y } };
-}
-
-/** 토큰이 없으면 거리를 두고 맴돈다 (dungeon.md 3장) */
-function orbitGoal(m: Monster, ctx: AiContext) {
-  const ai = COMBAT.ai;
-  return { x: ctx.player.x + sideOf(m, ctx.player.x) * ai.orbitDistance, y: ctx.player.y + (m.id % 2 ? ai.orbitDepth : -ai.orbitDepth) };
 }
 
 function moveToward(m: Monster, goal: { x: number; y: number }, dt: number, ctx: AiContext): void {
@@ -116,8 +115,8 @@ export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEv
     ev.push(startAttack(m, def, ctx));
     return ev;
   }
-  const to = free ? goal : orbitGoal(m, ctx);
-  // 앞자리를 동료가 차지했으면 반대편·옆 줄로 (spacing.ts)
-  if (to) moveToward(m, spreadGoal(m, to, ctx.player, ctx.others), dt, ctx);
+  // 공격 차례(토큰)면 다가가되 앞자리를 동료가 차지했으면 반대편·옆 줄로, 아니면 둘레의 제 자리에서 기다림 (spacing.ts)
+  const to = !free ? waitGoal(m, ctx.player, monsterBounds(m, ctx.bounds)) : goal ? spreadGoal(m, goal, ctx.player, ctx.others) : null;
+  if (to) moveToward(m, to, dt, ctx);
   return ev;
 }

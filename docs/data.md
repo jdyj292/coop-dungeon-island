@@ -219,7 +219,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | exit | `{ halfWidth, depth }` 출구 앞 구역: 문 앞 바닥에서 좌우 ±halfWidth, 깊이 depth px까지 (dungeon.md 2장 방 진행) |
 | combo | `{ windowSec, teamMilestones, soloMilestones, coinBonus }` 콤보가 이어지는 시간 (dungeon.md 3장), 팀·개인 콤보 단계와 단계별 코인 보너스 (balance.md 7장) |
 | tokens | 공격 토큰 수 (인원 1~4 순서, balance.md·dungeon.md 3장) |
-| ai | 몬스터 AI 공통: hopSec·hopMove(튀기 박자·이동 비율), orbitDistance·orbitDepth(토큰 없을 때 맴도는 거리), chargerDistance(돌진형이 거리 두는 위치), separation(겹침 풀기 여유 px), aimDepth(대각선 조준 최대 깊이 px), spread { x, y, lane }(퍼지기: 자리 겹침 판정 좌우·깊이 px, 옆 줄 간격 px) (combat.md 6장) |
+| ai | 몬스터 AI 공통: hopSec·hopMove(튀기 박자·이동 비율), orbitDistance·orbitDepth(토큰 없을 때 기다리는 타원의 좌우·깊이 반지름, combat.md 6장), chargerDistance(돌진형이 거리 두는 위치), separation(겹침 풀기 여유 px), aimDepth(대각선 조준 최대 깊이 px), spread { x, y, lane }(퍼지기: 자리 겹침 판정 좌우·깊이 px, 옆 줄 간격 px) (combat.md 6장) |
 
 - 행동 진행은 shared/src/actions.ts, 판정·데미지는 hit.ts, 피격 반응·높이는 body.ts (클라이언트·서버 공용)
 - 연출 값(번쩍임 프레임, 섬광, 숫자, 스미어 모양, 리듬 오프셋)은 client/data/fx.json (docs/motion.md)

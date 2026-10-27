@@ -26,13 +26,16 @@ async function main(): Promise<void> {
   // A: 가장 가까운 몬스터 왼쪽 14px로 다가가 평타, B: 제자리 핑·채팅·장착 안 한 스킬(거절 확인)
   let seq = 1;
   const sa = a.state as unknown as { players: Map<string, any>; monsters: Map<string, any> };
-  for (let i = 0; i < 100; i++) {
+  // 최대 10초: 몬스터가 바로 덤벼들어 봇이 맞고 경직되는 동안에도 한 대는 맞히게
+  for (let i = 0; i < 200; i++) {
     const me = sa.players.get(a.sessionId)!;
-    const near = [...sa.monsters.values()].sort((p, q) => Math.abs(p.x - me.x) - Math.abs(q.x - me.x))[0];
-    const dx = near ? near.x - 14 - me.x : 0, dy = near ? near.y - me.y : 0;
+    const near = [...sa.monsters.values()].sort((p, q) => Math.hypot(p.x - me.x, p.y - me.y) - Math.hypot(q.x - me.x, q.y - me.y))[0];
+    // 몬스터가 둘러싸므로 가까운 쪽 옆에 서서 그쪽을 보고 친다
+    const side = near && near.x < me.x ? -1 : 1;
+    const dx = near ? near.x - side * 14 - me.x : 0, dy = near ? near.y - me.y : 0;
     const sign = (n: number) => (Math.abs(n) <= 2 ? 0 : Math.sign(n));
-    a.send('input', { seq: seq++, t: i * 50, mx: sign(dx), my: sign(dy), run: false });
-    if (near && Math.abs(dx) < 8 && Math.abs(dy) < 4 && i % 4 === 0) a.send('action', { seq: seq++, t: i * 50, kind: 'basic', x: me.x, y: me.y, facing: 1 });
+    a.send('input', { seq: seq++, t: i * 50, mx: Math.abs(dx) <= 2 ? side : sign(dx), my: sign(dy), run: false });
+    if (near && Math.abs(dx) < 8 && Math.abs(dy) < 4 && i % 4 === 0) a.send('action', { seq: seq++, t: i * 50, kind: 'basic', x: me.x, y: me.y, facing: side });
     if ((ta.get('hit') ?? 0) >= 3) break;
     await sleep(50);
   }
