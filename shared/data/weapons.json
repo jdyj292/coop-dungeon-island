@@ -4,6 +4,7 @@
     "name": "대검",
     "moveMul": 0.9,
     "recoilMul": 2,
+    "basicAdvance": 20,
     "visual": "greatsword_basic",
     "poseSet": "greatsword",
     "trait": {
@@ -98,7 +99,7 @@
       "phases": {
         "windup": 0.12,
         "active": 0.12,
-        "recovery": 0.35
+        "recovery": 0.55
       },
       "coef": 420,
       "hitbox": {

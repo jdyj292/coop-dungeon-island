@@ -16,6 +16,8 @@ export interface PlayerState extends Vitals {
   run: RunState;
   /** 회피 중이면 경과 시간과 이동 방향 (1 = 오른쪽, -1 = 왼쪽) */
   backstep: { t: number; dir: number } | null;
+  /** 공격 중에 누른 회피: left초 뒤 공격을 끊고 dir로 회피 (player.json backstep.cancelDelay) */
+  dodgeQueued: { left: number; dir: number } | null;
   backstepCd: number;
   /** 지구력 (회피·달리기에 씀), 회복까지 남은 대기 시간 */
   stamina: number;
@@ -27,7 +29,7 @@ export interface PlayerState extends Vitals {
 }
 
 export const newPlayerState = (pos: Vec2): PlayerState => ({
-  pos, facing: 1, fighter: newFighter(), run: newRunState(), backstep: null, backstepCd: 0, stamina: PLAYER.stamina.max, staminaWait: 0, tired: false, cooldowns: {}, ...newVitals(),
+  pos, facing: 1, fighter: newFighter(), run: newRunState(), backstep: null, dodgeQueued: null, backstepCd: 0, stamina: PLAYER.stamina.max, staminaWait: 0, tired: false, cooldowns: {}, ...newVitals(),
 });
 
 export interface PlayerInput {
@@ -94,13 +96,28 @@ export function stepPlayerState(
     return out;
   }
 
-  // 회피: 공격 중(어느 구간이든) 불가, 지구력 소모. 좌우 입력 방향(없으면 바라보는 반대쪽)으로 고르게 이동하고
-  // 그동안 다른 입력은 무시. 바라보는 방향은 그대로
-  if (!p.backstep && input.backstep && !p.fighter.run && canDodge(p)) {
-    p.backstep = { t: 0, dir: Math.sign(input.x) || -p.facing };
+  // 회피: 지구력 소모. 좌우 입력 방향(없으면 바라보는 반대쪽)으로 고르게 이동하고 그동안 다른 입력은 무시.
+  // 바라보는 방향은 그대로. 공격 중에 누르면 cancelDelay 뒤 공격을 끊고 회피 (그동안 공격은 이어짐)
+  const dodge = (dir: number) => {
+    p.backstep = { t: 0, dir };
     p.backstepCd = bs.cooldown;
     spendStamina(p, st.dodge);
     out.backstepStarted = true;
+  };
+  if (!p.backstep && !p.dodgeQueued && input.backstep && canDodge(p)) {
+    const dir = Math.sign(input.x) || -p.facing;
+    if (p.fighter.run) p.dodgeQueued = { left: bs.cancelDelay, dir };
+    else dodge(dir);
+  }
+  if (p.dodgeQueued) {
+    p.dodgeQueued.left -= dt;
+    // 기다리는 동안 공격이 먼저 끝났으면 바로
+    if (p.dodgeQueued.left <= 1e-9 || !p.fighter.run) {
+      const { dir } = p.dodgeQueued;
+      p.dodgeQueued = null;
+      p.fighter = newFighter();
+      dodge(dir);
+    }
   }
   if (p.backstep) {
     const t0 = p.backstep.t, t1 = Math.min(bs.sec, t0 + dt);
@@ -127,6 +144,10 @@ export function stepPlayerState(
     }
   }
   if (input.x && canTurn(p.fighter)) p.facing = Math.sign(input.x);
+  // 평타 중 바라보는 쪽 키를 누르고 있으면 조금씩 전진 (weapons.json basicAdvance, combat.md 2장)
+  if (weapon.basicAdvance && p.fighter.run?.kind === 'basic' && Math.sign(input.x) === p.facing) {
+    moveX(p, p.pos.x + p.facing * weapon.basicAdvance * speedMul * dt, bounds);
+  }
   const started = out.events.flatMap((e) => (e.type === 'start' ? [e.run] : []));
   const act = actionMoved(before, started);
   if (act) moveX(p, p.pos.x + act * p.facing, bounds);

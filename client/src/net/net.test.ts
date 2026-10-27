@@ -45,7 +45,7 @@ describe('SnapshotBuffer (network.md 8장)', () => {
 
 describe('mirror: 스냅샷 → 그리기 객체', () => {
   const ps: PlayerSnap = {
-    id: 'a', name: 'A', x: 50, y: 40, z: 0, facing: -1, state: 'action', since: 900, actionId: 'gs_b2', actionStart: 1000, hp: 800, maxHp: 1000, ult: 3, lastInputSeq: 0, reviveProgress: 0, color: 0, look: '', weapon: 'greatsword',
+    id: 'a', name: 'A', x: 50, y: 40, z: 0, facing: -1, dodgeDir: 0, state: 'action', since: 900, actionId: 'gs_b2', actionStart: 1000, hp: 800, maxHp: 1000, ult: 3, lastInputSeq: 0, reviveProgress: 0, color: 0, look: '', weapon: 'greatsword',
   };
   it('행동 id → 평타 단계·대시·스킬', () => {
     const w = weaponDef('greatsword');
@@ -62,6 +62,9 @@ describe('mirror: 스냅샷 → 그리기 객체', () => {
   });
   it('플레이어: 백스텝·다운·쓰러짐', () => {
     expect(mirrorPlayer({ ...ps, state: 'backstep', actionId: '' }, 1000, 'greatsword').backstep!.t).toBeCloseTo(0.1);
+    // 회피 방향은 서버 값: 앞회피(바라보는 쪽 −1)를 뒤로 다시 계산하지 않게
+    expect(mirrorPlayer({ ...ps, state: 'backstep', actionId: '', dodgeDir: -1 }, 1000, 'greatsword').backstep!.dir).toBe(-1);
+    expect(mirrorPlayer({ ...ps, state: 'backstep', actionId: '', dodgeDir: 1 }, 1000, 'greatsword').backstep!.dir).toBe(1);
     expect(mirrorPlayer({ ...ps, state: 'down' }, 1400, 'greatsword').hurt).toEqual({ kind: 'down', left: PLAYER.hurt.downSec - 0.5 });
     expect(mirrorPlayer({ ...ps, state: 'knocked' }, 1000, 'greatsword').downed).toBe(true);
   });

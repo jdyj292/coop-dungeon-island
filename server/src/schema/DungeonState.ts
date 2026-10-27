@@ -33,6 +33,8 @@ export class PlayerState extends Schema {
   @type('int16') y = 0;
   /** 백스텝 높이 등은 클라이언트 연출. 지상 판정만 */
   @type('int8') facing = 1;
+  /** 회피 중 이동 방향 (1 오른쪽, -1 왼쪽, 0 = 회피 아님). 앞으로 회피하면 facing과 같다 */
+  @type('int8') dodgeDir = 0;
   /** idle / walk / run / action / backstep / hitstun / down / knocked */
   @type('string') state = 'idle';
   /** 진행 중 행동 id와 시작 서버 시각 (구간은 클라이언트가 데이터로 계산) */

@@ -4,7 +4,7 @@ import { applyHit, newBody, stepBody } from './body';
 import { TICK } from './constants';
 import { COMBAT, PLAYER } from './data/load';
 import { canDodge, newPlayerState, skillReady, stepPlayerState, type PlayerInput, type PlayerState } from './player';
-import { isInvulnerable } from './playerHurt';
+import { hurtPlayer, isInvulnerable } from './playerHurt';
 
 const gs = weaponDef('greatsword');
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
@@ -115,6 +115,43 @@ describe('회피 방향', () => {
   it('반대쪽 방향키 → 뒤로, 방향키 없음 → 바라보는 반대쪽', () => {
     expect(dodge(-1).pos.x).toBeCloseTo(500 - PLAYER.backstep.distance);
     expect(dodge(0).pos.x).toBeCloseTo(500 - PLAYER.backstep.distance);
+  });
+});
+
+describe('회피로 공격 끊기', () => {
+  it('공격 중에 누르면 cancelDelay 동안 공격이 이어지고, 그 뒤 공격을 끊고 회피', () => {
+    const p = newPlayerState({ x: 500, y: 50 });
+    ticks(p, 1, { attack: true });
+    expect(p.fighter.run).not.toBeNull();
+    const delay = Math.round(PLAYER.backstep.cancelDelay / TICK);
+    expect(ticks(p, delay - 1, { backstep: true })).not.toContain('backstep');
+    expect(p.fighter.run).not.toBeNull();
+    expect(ticks(p, 1)).toEqual(['backstep']);
+    expect(p.fighter.run).toBeNull();
+    expect(p.stamina).toBeCloseTo(PLAYER.stamina.max - PLAYER.stamina.dodge, 0);
+  });
+  it('기다리는 중에 맞으면 회피 취소', () => {
+    const p = newPlayerState({ x: 500, y: 50 });
+    ticks(p, 1, { attack: true });
+    ticks(p, 1, { backstep: true });
+    hurtPlayer(p, 10, 'light');
+    expect(p.dodgeQueued).toBeNull();
+  });
+});
+
+describe('대검 평타 전진 (weapons.json basicAdvance)', () => {
+  const swing = (x: number) => {
+    const p = newPlayerState({ x: 500, y: 50 });
+    ticks(p, 30, { attack: true }, { x });
+    return p.pos.x - 500;
+  };
+  it('바라보는 쪽 키를 누르면 초당 basicAdvance로 전진, 안 누르면 제자리', () => {
+    expect(swing(1)).toBeCloseTo(gs.basicAdvance! * 30 * TICK, 0);
+    expect(swing(0)).toBe(0);
+    // 반대쪽 키: 돌아설 수 있는 구간(canTurn)에서 돌아선 뒤에만 그쪽으로 전진 → 끝까지 누른 것보다 짧음
+    const back = swing(-1);
+    expect(back).toBeLessThan(0);
+    expect(back).toBeGreaterThan(-gs.basicAdvance! * 30 * TICK);
   });
 });
 
