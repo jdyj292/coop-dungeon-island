@@ -19,7 +19,8 @@ export interface Vitals {
   potions: Record<PotionKind, number>;
   potionCd: Record<PotionKind, number>;
   /** 경직(stun)·다운(down) 남은 시간 */
-  hurt: { kind: 'stun' | 'down'; left: number } | null;
+  /** push = 맞아서 밀려나는 중 (v = 좌우 속도 px/s, left = 남은 초) */
+  hurt: { kind: 'stun' | 'down'; left: number; push?: { v: number; left: number } } | null;
   /** 기상·부활 무적 남은 시간 */
   invuln: number;
   /** 부활의 깃털 (솔로, 판마다 지급) */
@@ -43,8 +44,8 @@ export function isInvulnerable(p: PlayerState): boolean {
   return (!!p.backstep && p.backstep.t < PLAYER.backstep.invuln) || p.invuln > 0 || p.hurt?.kind === 'down' || p.downed;
 }
 
-/** 몬스터 공격 적중. 약·중 → 경직, 강 → 다운. 하던 행동은 끊긴다 */
-export function hurtPlayer(p: PlayerState, damage: number, strength: Strength = 'light'): HurtEvent[] {
+/** 몬스터 공격 적중. 약·중 → 경직, 강 → 다운. 하던 행동은 끊긴다. pushDir = 밀려날 방향 (1 오른쪽, -1 왼쪽, 0 = 밀리지 않음) */
+export function hurtPlayer(p: PlayerState, damage: number, strength: Strength = 'light', pushDir = 0): HurtEvent[] {
   if (isInvulnerable(p)) return [];
   p.hp = Math.max(0, p.hp - damage);
   p.fighter = newFighter();
@@ -64,6 +65,8 @@ export function hurtPlayer(p: PlayerState, damage: number, strength: Strength = 
   }
   const h = PLAYER.hurt;
   p.hurt = strength === 'heavy' ? { kind: 'down', left: h.downSec } : { kind: 'stun', left: h.stunSec };
+  // 넉백: 세기별 거리를 pushSec 동안 고르게 (combat.md 4장)
+  if (pushDir) p.hurt.push = { v: (Math.sign(pushDir) * h.push[strength]) / h.pushSec, left: h.pushSec };
   return [p.hurt.kind];
 }
 

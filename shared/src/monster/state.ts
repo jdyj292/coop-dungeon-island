@@ -13,6 +13,8 @@ export interface AttackRun {
   t: number;
   /** 공격 방향 (시작할 때 고정) */
   dir: number;
+  /** 대각선 조준: 판정을 깊이로 옮기는 px (시작할 때 플레이어 쪽으로 고정, 최대 ai.aimDepth, 없으면 0) */
+  dy: number;
   /** 이번 공격에 이미 맞은 플레이어 id (한 공격에 한 사람은 한 번) */
   struck: string[];
 }

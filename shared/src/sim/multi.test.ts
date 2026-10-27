@@ -72,7 +72,7 @@ describe('대상 선택 chooseTarget (dungeon.md 3장)', () => {
     expect(chooseTarget(m, [down], undefined)).toBe('a');
   });
   it('공격 중에는 대상을 바꾸지 않음', () => {
-    const atk = { ...m, attack: { def: m.def.attacks[0]!, t: 0, dir: 1, struck: [] } };
+    const atk = { ...m, attack: { def: m.def.attacks[0]!, t: 0, dir: 1, dy: 0, struck: [] } };
     expect(chooseTarget(atk, [a, b], 'b')).toBe('b');
     expect(chooseTarget(m, [a, b], 'b')).toBe('a');
   });

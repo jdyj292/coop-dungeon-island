@@ -37,5 +37,5 @@
   "returnSec": 3,
   "resultDelaySec": 2,
   "settle": { "treasury": 0.3, "wipeCoinLoss": 0.5 },
-  "ai": { "hopSec": 0.6, "hopMove": 0.5, "orbitDistance": 48, "orbitDepth": 14, "chargerDistance": 64, "separation": 2 }
+  "ai": { "hopSec": 0.6, "hopMove": 0.5, "orbitDistance": 48, "orbitDepth": 14, "chargerDistance": 64, "separation": 2, "aimDepth": 16, "spread": { "x": 24, "y": 12, "lane": 14 } }
 }

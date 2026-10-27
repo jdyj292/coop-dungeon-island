@@ -1,7 +1,7 @@
 // 바닥 예고·투사체·장판 그리기 (art.md 7장 "적 공격 예고": 위험색 타원 테두리 + 안쪽이 체크무늬로 차오름)
 // 상태는 RoomSim이 갖고, 여기서는 매 프레임 다시 그린다
 import type Phaser from 'phaser';
-import { areaCenter, attackPhase, DEPTH_RATIO, type RoomSim } from '@game/shared';
+import { areaCenter, attackOrigin, attackPhase, DEPTH_RATIO, type RoomSim } from '@game/shared';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
 import { project } from '../view/layout';
@@ -52,7 +52,8 @@ export class HazardLayer {
       const atk = m.attack, tel = atk?.def.telegraph;
       if (!atk || !tel || attackPhase(m) !== 'windup') continue;
       const k = Math.min(1, atk.t / atk.def.phases.windup);
-      const origin = { x: m.body.x, y: m.body.y, facing: atk.dir };
+      // 대각선 조준이면 예고도 조준 깊이로 (서버 판정과 같은 기준점)
+      const origin = attackOrigin(m);
       if (tel.type === 'area' && atk.def.area) {
         const c = areaCenter(origin, atk.def.area.at), { sx, sy } = project(c.x, c.y);
         const r = atk.def.area.radius ?? atk.def.area.width! / 2;

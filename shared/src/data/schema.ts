@@ -170,7 +170,10 @@ export const player = z.object({
   _note: z.string().optional(), move: z.object({ walk: speed, run: speed }).strict(), runDoubleTap: pos,
   hp: z.object({ base: pos, perLevel: sec }).strict(),
   mp: z.object({ max: pos, regen: sec, onHit: sec }).strict(),
-  hurt: z.object({ stunSec: sec, downSec: sec, getupInvuln: sec }).strict(),
+  hurt: z.object({
+    stunSec: sec, downSec: sec, getupInvuln: sec,
+    push: z.object({ light: sec, medium: sec, heavy: sec }).strict(), pushSec: pos,
+  }).strict(),
   potions: z.object({
     hp: z.object({ heal: z.number().min(0).max(1), cooldown: sec, carry: z.number().int().nonnegative() }).strict(),
     mp: z.object({ amount: pos, cooldown: sec, carry: z.number().int().nonnegative() }).strict(),
@@ -209,6 +212,7 @@ export const combat = z.object({
   settle: z.object({ treasury: z.number().min(0).max(1), wipeCoinLoss: z.number().min(0).max(1) }).strict(),
   ai: z.object({
     hopSec: pos, hopMove: z.number().min(0).max(1), orbitDistance: pos, orbitDepth: sec, chargerDistance: pos, separation: sec,
+    aimDepth: sec, spread: z.object({ x: pos, y: pos, lane: pos }).strict(),
   }).strict(),
 }).strict();
 

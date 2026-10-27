@@ -5,6 +5,7 @@ import type { MonsterAttack } from '../data/schema';
 import { actionHits } from '../shapes';
 import { endAttack, startAttack, stepAttack, type AiContext, type MonsterEvent } from './attack';
 import { hasArmor, monsterBounds, monsterHalf, stepBodyIn, type Monster } from './state';
+import { aimable, aimDy, spreadGoal } from './spacing';
 import { moveBox } from '../map/collision';
 
 export type { AiContext, MonsterEvent };
@@ -18,7 +19,7 @@ function canReach(m: Monster, def: MonsterAttack, ctx: AiContext): boolean {
   const mv = def.move;
   if (mv && 'speed' in mv) return Math.abs(dy) <= (def.hitbox?.depth ?? 0) / 2 && Math.abs(dx) <= mv.maxDistance;
   const target = ctx.target ?? { x: p.x, y: p.y, airborne: false, hurtbox: { width: 1, depth: 1 } };
-  return actionHits({ x: m.body.x, y: m.body.y, facing: dx < 0 ? -1 : 1 }, def, target);
+  return actionHits({ x: m.body.x, y: m.body.y + aimDy(m, def, p), facing: dx < 0 ? -1 : 1 }, def, target);
 }
 
 /** 쓸 공격과 (못 쓰면) 가고 싶은 자리 */
@@ -41,7 +42,8 @@ function decide(m: Monster, ctx: AiContext): { def?: MonsterAttack; goal?: { x: 
   }
   const usable = pat.rules.filter((r) => {
     const def = attacks.get(r.attack)!;
-    const depthOk = dy <= (r.alignDepth ?? (def.hitbox?.depth ?? def.area?.radius ?? 8) / 2);
+    // 대각선 조준이 되는 공격은 aimDepth만큼 더 비껴 있어도 친다
+    const depthOk = dy <= (r.alignDepth ?? (def.hitbox?.depth ?? def.area?.radius ?? 8) / 2) + (aimable(def) ? COMBAT.ai.aimDepth : 0);
     return ready(r.attack) && dx >= r.range[0] && dx <= r.range[1] && depthOk;
   });
   if (usable.length) return { def: attacks.get(usable[Math.floor(ctx.rng() * usable.length)]!.attack) };
@@ -115,6 +117,7 @@ export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEv
     return ev;
   }
   const to = free ? goal : orbitGoal(m, ctx);
-  if (to) moveToward(m, to, dt, ctx);
+  // 앞자리를 동료가 차지했으면 반대편·옆 줄로 (spacing.ts)
+  if (to) moveToward(m, spreadGoal(m, to, ctx.player, ctx.others), dt, ctx);
   return ev;
 }

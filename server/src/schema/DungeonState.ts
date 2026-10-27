@@ -62,6 +62,8 @@ export class MonsterState extends Schema {
   @type('string') state = 'idle';
   @type('string') actionId = '';
   @type('float64') actionStart = 0;
+  /** 공격의 대각선 조준 깊이 px (공격 중만, 예고 위치용) */
+  @type('int8') aimY = 0;
   /** 체력 비율 0~255 */
   @type('uint8') hpRatio = 255;
   @type('boolean') superArmor = false;

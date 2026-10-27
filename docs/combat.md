@@ -168,7 +168,9 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 - HP 바와 데미지 숫자 사용 (수치는 balance.md, 데이터 shared/data/player.json hp·hurt·revive, 계산 shared/src/playerHurt.ts)
 - 약·중 공격은 경직, 강 공격만 다운. 맞으면 하던 행동(공격·회피)이 끊긴다. 다운 중에는 맞지 않는다 (downhit 공격 없음)
 - 약 공격: 경직 0.2초 / 강 공격(몬스터 데이터에 표시): 다운 1.0초
-- 다운 후 기상 시 1.0초 무적 (공용 패시브 "기상 회피"로 기상 즉시 백스텝 가능)
+- 넉백: 맞으면 공격한 몬스터 반대쪽으로 밀림 (같은 x면 몬스터가 보는 쪽, 투사체는 날아온 방향). 약 6px · 중 12px · 강(다운) 24px를 0.15초 동안 고르게, 벽·장애물에 막힘. 서버 판정, 클라이언트는 서버 위치로 보정 (player.json hurt push·pushSec)
+- 회피 소급 무적으로 피격이 취소되면 밀린 위치도 되돌린다 (sim/hitLog.ts)
+- 다운 후 기상 시 1.0초 무적 (공용 패시브 "기상 회피"로 기상 즉시 회피 가능)
 - 경직 중 연속 피격 가능. 포위당하면 위험하다는 것이 의도
 - HP 0 → 쓰러짐. 동료가 E를 2초 누르면 HP 30%로 부활 (솔로는 부활의 깃털, dungeon.md)
   - 가까이(combat.json interactRange 20px) 누르고 있는 동안만 진행, 떼거나 멀어지면 0부터. 부활 무적은 깃털과 같은 2초 (player.json revive partyHpRatio·holdSec, server/src/systems/runFlow.ts)
@@ -202,7 +204,9 @@ idle → chase → attack(windup/active/recovery) → hitstun → airborne → b
 - 모든 몬스터 공격은 예고(windup)가 보여야 한다. 강 공격은 예고를 더 길게
 - 상태: 대기(감지 전) → 추적·위치 잡기 / 토큰 없으면 맴돌기 → 공격 → (벽 충돌) 어지러움·그로기. 피격 반응 중에는 행동을 멈춤
 - 판정: 몬스터 공격도 active 동안 매 틱, 한 공격에 플레이어는 한 번. 투사체는 날아가며 판정
-- 구현: shared/src/monster/ (state·ai·attack·tokens·hazards), 방 한 틱은 shared/src/sim/room.ts (클라이언트 로컬·서버 공용). AI 값은 combat.json ai (data.md 7장)
+- **대각선 조준**: 근접 타격(통통버섯 박치기·기사 내려찍기·이끼곰 앞발)은 windup 시작 때 플레이어 깊이 쪽으로 최대 16px(combat.json ai.aimDepth) 틀어 고정. 제자리 공격은 판정·바닥 예고가 그만큼 옮겨지고, 전진 박치기는 비스듬히 전진. 그래서 그만큼 비껴 서 있어도 공격을 시작한다. 돌진·구르기(줄 예고)·투사체·장판은 똑바로
+- **퍼지기**: 가려는 자리(좌우 ±24px, 깊이 ±12px 안)에 플레이어에 더 가까운 동료가 있으면 플레이어 반대편 → 위·아래 줄(±14px) → 반대편 위·아래 줄 순으로 빈 자리를 고르고, 다 막히면 한 칸 뒤에서 기다림 (combat.json ai.spread). 한 번 휘두르기에 여러 마리가 같이 맞지 않게 하는 것이 목적
+- 구현: shared/src/monster/ (state·ai·attack·spacing·tokens·hazards), 방 한 틱은 shared/src/sim/room.ts (클라이언트 로컬·서버 공용). AI 값은 combat.json ai (data.md 7장)
 
 ---
 

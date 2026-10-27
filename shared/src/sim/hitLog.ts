@@ -3,7 +3,7 @@
 import { NET } from '../constants';
 import type { PlayerState } from '../player';
 
-type Saved = Pick<PlayerState, 'hp' | 'hurt' | 'downed' | 'feathers' | 'invuln' | 'ult' | 'fighter' | 'backstep'> & { running: boolean };
+type Saved = Pick<PlayerState, 'pos' | 'hp' | 'hurt' | 'downed' | 'feathers' | 'invuln' | 'ult' | 'fighter' | 'backstep'> & { running: boolean };
 
 export class HitLog {
   private list: { t: number; before: Saved }[] = [];
@@ -12,7 +12,7 @@ export class HitLog {
   save(t: number, p: PlayerState): void {
     const f = p.fighter;
     this.list.push({ t, before: {
-      hp: p.hp, hurt: p.hurt && { ...p.hurt }, downed: p.downed, feathers: p.feathers, invuln: p.invuln, ult: p.ult,
+      pos: { ...p.pos }, hp: p.hp, hurt: p.hurt && { ...p.hurt, push: p.hurt.push && { ...p.hurt.push } }, downed: p.downed, feathers: p.feathers, invuln: p.invuln, ult: p.ult,
       fighter: { ...f, run: f.run && { ...f.run } }, backstep: p.backstep && { ...p.backstep }, running: p.run.running,
     } });
     const keep = t - NET.historyMs / 1000;

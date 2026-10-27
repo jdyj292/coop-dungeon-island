@@ -121,3 +121,29 @@ describe('콤보·필살기 게이지', () => {
     expect(sim.combo.best).toBe(2);
   });
 });
+
+describe('넉백 (combat.md 4장)', () => {
+  const pushed = (strength: 'light' | 'medium' | 'heavy', dir: number, x = 500) => {
+    const p = newPlayerState({ x, y: 50 });
+    hurtPlayer(p, 10, strength, dir);
+    step(p, PLAYER.hurt.pushSec + 0.05);
+    return p.pos.x - x;
+  };
+  it('세기별 거리만큼 pushSec 동안 밀림, 방향 0이면 안 밀림', () => {
+    expect(pushed('light', 1)).toBeCloseTo(PLAYER.hurt.push.light);
+    expect(pushed('medium', -1)).toBeCloseTo(-PLAYER.hurt.push.medium);
+    expect(pushed('heavy', 1)).toBeCloseTo(PLAYER.hurt.push.heavy);
+    expect(pushed('heavy', 0)).toBe(0);
+  });
+  it('벽에 막힘', () => {
+    expect(pushed('heavy', -1, 10)).toBeCloseTo(-10); // 경계 x = 0에서 멈춤 (24px 다 못 밀림)
+  });
+  it('몬스터에게 맞으면 몬스터 반대쪽으로', () => {
+    const sim = new RoomSim(gs, { minX: 8, maxX: 312, minY: 0, maxY: 112 }, { x: 100, y: 56 }, { rng: () => 0 });
+    sim.spawn([{ kind: 'mushroom', x: 115, y: 56 }]);
+    let x = -1;
+    for (let t = 0; t < 2 && x < 0; t += TICK) if (sim.tick(TICK, none).events.some((e) => e.type === 'playerHit')) x = sim.player.pos.x;
+    for (let t = 0; t < PLAYER.hurt.pushSec + 0.05; t += TICK) sim.tick(TICK, none);
+    expect(sim.player.pos.x).toBeLessThan(x);
+  });
+});

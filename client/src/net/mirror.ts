@@ -58,7 +58,7 @@ export function mirrorMonster(s: MonsterSnap, t: number, prev?: Monster): Monste
   m.facing = s.facing;
   m.mode = s.state === 'action' ? 'attack' : s.state === 'dizzy' ? 'selfStun' : s.state === 'groggy' ? 'groggy' : 'idle';
   const def = s.actionId ? m.def.attacks.find((a) => a.id === s.actionId) : undefined;
-  m.attack = def ? { def, t: sec(t - s.actionStart), dir: s.facing, struck: [] } : null;
+  m.attack = def ? { def, t: sec(t - s.actionStart), dir: s.facing, dy: s.aimY, struck: [] } : null;
   m.moving = s.state === 'chase';
   m.frozen = s.state === 'frozen' ? 1 : 0;
   m.hopT = m.moving ? el : 0;

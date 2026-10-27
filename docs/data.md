@@ -181,7 +181,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | mp | `{ max, regen, onHit }` 최대 MP·초당 회복·적중 1회당 회복 (balance.md 6장) |
 | revive | `{ feathers, hpRatio, invuln, partyHpRatio, holdSec }` 솔로 부활의 깃털 수·깃털 부활 HP 비율·부활 무적, 동료 부활 HP 비율·E 누르는 시간 (combat.md 4장) |
 | level | `{ expBase, expPow }` 숙련도 필요 경험치 = expBase × 레벨^expPow (balance.md 7장) |
-| hurt | `{ stunSec, downSec, getupInvuln }` 약·중 공격 경직, 강 공격 다운, 기상 무적 (combat.md 4장) |
+| hurt | `{ stunSec, downSec, getupInvuln, push { light, medium, heavy }, pushSec }` 약·중 공격 경직, 강 공격 다운, 기상 무적, 세기별 넉백 거리(px)와 밀리는 시간 (combat.md 4장) |
 | potions | `hp { heal(최대 HP 비율), cooldown, carry }`, `mp { amount, cooldown, carry }` (balance.md 6장, carry = 반입 한도) |
 | ultimate | `{ max, onHit, onHurt, onTeamMilestone }` 필살기 게이지 최대·적중 1회·피격 1회·팀 콤보 단계 달성 시 전원 증가량 (balance.md 8장) |
 | hurtbox | 플레이어 피격 판정 크기 `{ width, height, depth }` (몬스터 공격·투사체) |
@@ -219,7 +219,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | exit | `{ halfWidth, depth }` 출구 앞 구역: 문 앞 바닥에서 좌우 ±halfWidth, 깊이 depth px까지 (dungeon.md 2장 방 진행) |
 | combo | `{ windowSec, teamMilestones, soloMilestones, coinBonus }` 콤보가 이어지는 시간 (dungeon.md 3장), 팀·개인 콤보 단계와 단계별 코인 보너스 (balance.md 7장) |
 | tokens | 공격 토큰 수 (인원 1~4 순서, balance.md·dungeon.md 3장) |
-| ai | 몬스터 AI 공통: hopSec·hopMove(튀기 박자·이동 비율), orbitDistance·orbitDepth(토큰 없을 때 맴도는 거리), chargerDistance(돌진형이 거리 두는 위치), separation(겹침 풀기 여유 px) |
+| ai | 몬스터 AI 공통: hopSec·hopMove(튀기 박자·이동 비율), orbitDistance·orbitDepth(토큰 없을 때 맴도는 거리), chargerDistance(돌진형이 거리 두는 위치), separation(겹침 풀기 여유 px), aimDepth(대각선 조준 최대 깊이 px), spread { x, y, lane }(퍼지기: 자리 겹침 판정 좌우·깊이 px, 옆 줄 간격 px) (combat.md 6장) |
 
 - 행동 진행은 shared/src/actions.ts, 판정·데미지는 hit.ts, 피격 반응·높이는 body.ts (클라이언트·서버 공용)
 - 연출 값(번쩍임 프레임, 섬광, 숫자, 스미어 모양, 리듬 오프셋)은 client/data/fx.json (docs/motion.md)

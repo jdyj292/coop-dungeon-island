@@ -62,7 +62,7 @@ describe('빙결', () => {
     m!.frozen = 1.5;
     applyHit(m!.body, { dir: 1, strength: 'medium', flags: ['launch'] });
     stepMonsterAi(m!, TICK, {
-      player: { x: 100, y: 50 }, target: null, targets: [], tokens: new AttackTokens(1), bounds, eliteBusy: () => false, rng: () => 0,
+      player: { x: 100, y: 50 }, target: null, targets: [], tokens: new AttackTokens(1), bounds, eliteBusy: () => false, others: [], rng: () => 0,
     });
     expect(m!.frozen).toBe(0);
   });

@@ -161,6 +161,7 @@ export class RoomSim {
         player: { x: aimed.state.pos.x, y: aimed.state.pos.y }, target: targets.find((t) => t.pid === aimed.pid) ?? null,
         targets, tokens: this.tokens, bounds: b,
         eliteBusy: (self) => this.alive.some((o) => o !== self && o.def.rank === 'elite' && o.mode === 'attack'),
+        others: this.alive,
         rng: this.opts.rng ?? Math.random,
       };
       const evs: MonsterEvent[] = this.opts.ai === false
@@ -169,7 +170,7 @@ export class RoomSim {
       if (this.opts.ai === false && m.body.state === 'idle') m.facing = aimed.state.pos.x < m.body.x ? -1 : 1;
       for (const e of evs) {
         events.push({ type: 'monster', m, e });
-        if (e.type === 'playerHit') this.hitPlayer(events, e.pid, m, e.def, e.damage);
+        if (e.type === 'playerHit') this.hitPlayer(events, e.pid, m, e.def, e.damage, this.awayFrom(m, e.pid));
         if (e.type === 'shoot') this.projectiles.push(spawnProjectile(this.ids++, m.id, e.def, m.body.x, m.body.y, m.attack?.dir ?? m.facing));
         if (e.type === 'zone') this.zones.push(spawnZone(this.ids++, e.def, { x: m.body.x, y: m.body.y, facing: m.facing }));
       }
@@ -177,7 +178,7 @@ export class RoomSim {
     // 2. 투사체·장판
     for (const pr of this.projectiles) {
       for (const pid of stepProjectile(pr, dt, b, this.playerTargets())) {
-        this.hitPlayer(events, pid, this.monsters.find((m) => m.id === pr.ownerId), pr.def, pr.def.damage);
+        this.hitPlayer(events, pid, this.monsters.find((m) => m.id === pr.ownerId), pr.def, pr.def.damage, pr.dir);
       }
     }
     this.projectiles = this.projectiles.filter((pr) => !pr.done);
@@ -288,12 +289,18 @@ export class RoomSim {
     return hits.length;
   }
 
-  /** 몬스터 공격 적중 → HP·경직·다운 (무적이면 무시) */
-  private hitPlayer(events: SimEvent[], pid: string, from: Monster | undefined, def: MonsterAttack, damage: number): void {
+  /** 몬스터에서 멀어지는 방향 (같은 x면 몬스터가 바라보는 쪽) */
+  private awayFrom(m: Monster, pid: string): number {
+    const p = this.players.get(pid)?.state;
+    return (p && Math.sign(p.pos.x - m.body.x)) || m.facing;
+  }
+
+  /** 몬스터 공격 적중 → HP·경직·다운·넉백 (무적이면 무시). pushDir = 밀려날 방향 */
+  private hitPlayer(events: SimEvent[], pid: string, from: Monster | undefined, def: MonsterAttack, damage: number, pushDir: number): void {
     const sp = this.players.get(pid), p = sp?.state;
     if (!sp || !p || sp.away) return;
     if (!isInvulnerable(p)) sp.hits.save(this.time, p);
-    const hurt = hurtPlayer(p, damage, def.strength);
+    const hurt = hurtPlayer(p, damage, def.strength, pushDir);
     if (!hurt.length) return;
     events.push({ type: 'playerHit', pid, from, def, damage });
     gainUlt(p, PLAYER.ultimate.onHurt);

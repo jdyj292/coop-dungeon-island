@@ -83,6 +83,13 @@ export function stepPlayerState(
   if (p.downed) return out;
   if (input.potion && usePotion(p, input.potion)) out.potion = input.potion;
   if (p.hurt) {
+    // 맞아서 밀려남 (벽·장애물에 막힘)
+    const push = p.hurt.push;
+    if (push && push.left > 0) {
+      const t = Math.min(dt, push.left);
+      moveX(p, p.pos.x + push.v * t, bounds);
+      push.left -= t;
+    }
     stepRun(p.run, 0, dt);
     return out;
   }

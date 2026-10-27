@@ -14,6 +14,7 @@ export * from './monster/state';
 export * from './monster/tokens';
 export * from './monster/hazards';
 export * from './monster/ai';
+export * from './monster/spacing';
 export * from './sim/room';
 export * from './data/load';
 export * from './data/crossCheck';

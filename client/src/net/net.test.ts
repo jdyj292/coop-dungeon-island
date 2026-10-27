@@ -66,7 +66,7 @@ describe('mirror: 스냅샷 → 그리기 객체', () => {
     expect(mirrorPlayer({ ...ps, state: 'knocked' }, 1000, 'greatsword').downed).toBe(true);
   });
   const ms: MonsterSnap = {
-    id: '3', type: 'mushroom', x: 100, y: 50, z: 8, facing: -1, state: 'airborne', since: 0, actionId: '', actionStart: 0, hpRatio: 128, superArmor: false,
+    id: '3', type: 'mushroom', x: 100, y: 50, z: 8, facing: -1, state: 'airborne', since: 0, actionId: '', actionStart: 0, aimY: 0, hpRatio: 128, superArmor: false,
   };
   it('몬스터: 공중·기절 타이머·공격 구간·체력, 같은 객체 재사용', () => {
     const m = mirrorMonster(ms, 100);

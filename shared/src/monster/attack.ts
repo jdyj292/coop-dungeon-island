@@ -7,6 +7,7 @@ import { actionHits, type HitTarget, type PlayerTarget } from '../shapes';
 import { attackPhase, monsterBounds, monsterHalf, type Monster } from './state';
 import { moveBox } from '../map/collision';
 import { enterGroggy } from './groggy';
+import { aimDy, attackOrigin } from './spacing';
 import type { AttackTokens } from './tokens';
 
 export interface AiContext {
@@ -20,6 +21,8 @@ export interface AiContext {
   bounds: Bounds;
   /** 다른 정예가 공격 중인가 (정예는 동시에 1마리만, dungeon.md 3장) */
   eliteBusy: (self: Monster) => boolean;
+  /** 방의 살아 있는 몬스터 (퍼지기, spacing.ts) */
+  others: readonly Monster[];
   rng: () => number;
 }
 
@@ -36,7 +39,7 @@ export type MonsterEvent =
 export function startAttack(m: Monster, def: MonsterAttack, ctx: AiContext): MonsterEvent {
   if (m.def.usesToken) ctx.tokens.tryTake(m.id);
   m.hasToken = m.def.usesToken;
-  m.attack = { def, t: 0, dir: m.facing, struck: [] };
+  m.attack = { def, t: 0, dir: m.facing, dy: aimDy(m, def, ctx.player), struck: [] };
   m.mode = 'attack';
   return { type: 'attackStart', def };
 }
@@ -68,7 +71,11 @@ export function stepAttack(m: Monster, dt: number, ctx: AiContext): MonsterEvent
   const mv = actionMoveDelta(def, t0, a.t);
   if (mv) {
     const want = m.body.x + a.dir * mv;
-    m.body.x = moveBox(m.body, { x: want, y: m.body.y }, monsterHalf(m), monsterBounds(m, ctx.bounds)).x;
+    // 대각선 박치기: 전진 거리에 맞춰 조준 깊이만큼 비스듬히
+    const wantY = a.dy && def.move && 'distance' in def.move ? m.body.y + (a.dy * mv) / def.move.distance : m.body.y;
+    const moved = moveBox(m.body, { x: want, y: wantY }, monsterHalf(m), monsterBounds(m, ctx.bounds));
+    m.body.x = moved.x;
+    m.body.y = moved.y;
     // 방 벽이나 장애물(그루터기)에 막힘 → onWallHit (dungeon.md 5장)
     const blocked = m.body.x !== want;
     if (blocked && def.move && 'speed' in def.move && def.move.stopOnWall) {
@@ -93,7 +100,7 @@ export function stepAttack(m: Monster, dt: number, ctx: AiContext): MonsterEvent
   const activeNow = after === 'active' || (before === 'windup' && after !== 'windup');
   if (activeNow && def.damage > 0) {
     for (const t of ctx.targets) {
-      if (a.struck.includes(t.pid) || !actionHits({ x: m.body.x, y: m.body.y, facing: a.dir }, def, t)) continue;
+      if (a.struck.includes(t.pid) || !actionHits(attackOrigin(m), def, t)) continue;
       a.struck.push(t.pid);
       ev.push({ type: 'playerHit', pid: t.pid, def, damage: def.damage });
     }

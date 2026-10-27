@@ -61,6 +61,7 @@ export function syncMonster(s: MonsterState, m: Monster, now: number): void {
     s.actionId = id;
     s.actionStart = m.attack ? now - m.attack.t * 1000 : 0;
   }
+  s.aimY = int(m.attack?.dy ?? 0);
   s.hpRatio = Math.ceil((255 * m.hp) / m.maxHp);
   s.superArmor = hasArmor(m);
 }

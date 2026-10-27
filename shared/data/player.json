@@ -7,7 +7,7 @@
   "runDoubleTap": 0.25,
   "hp": { "base": 1000, "perLevel": 0.04 },
   "mp": { "max": 100, "regen": 1, "onHit": 1 },
-  "hurt": { "stunSec": 0.2, "downSec": 1.0, "getupInvuln": 1.0 },
+  "hurt": { "stunSec": 0.2, "downSec": 1.0, "getupInvuln": 1.0, "push": { "light": 6, "medium": 12, "heavy": 24 }, "pushSec": 0.15 },
   "potions": {
     "hp": { "heal": 0.3, "cooldown": 5, "carry": 5 },
     "mp": { "amount": 50, "cooldown": 5, "carry": 5 }
