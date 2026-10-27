@@ -42,7 +42,7 @@ describe('Tiled 맵 (dungeon.md 10장)', () => {
   });
   it('출현: 포자꽃은 back 지점, 보스는 boss 지점', () => {
     const m3 = roomMap('floor1/room3');
-    const s = mapSpawns(m3, 1, { sporeflower: 2, mushroom: 3, boar: 1 });
+    const s = mapSpawns(m3, 1, { sporeflower: 3, mushroom: 7, boar: 3 });
     const backs = m3.spawns.filter((p) => p.wave === 1 && p.role === 'back');
     expect(s.filter((x) => x.kind === 'sporeflower').map((x) => [x.x, x.y])).toEqual(backs.map((p) => [p.x, p.y]));
     const boss = mapSpawns(roomMap('floor1/boss'), 1, { mossbear: 1 })[0]!;
@@ -56,7 +56,7 @@ describe('Tiled 맵 (dungeon.md 10장)', () => {
     };
     const msgs = checkMaps(ROOMS, MONSTERS, broken).map((i) => i.message);
     expect(msgs).toContain('door_out 없음 (보스 방 말고는 필요)');
-    expect(msgs.some((t) => t.startsWith('웨이브 1 출현 지점 3개'))).toBe(true);
+    expect(msgs.some((t) => t.startsWith('웨이브 1 출현 지점 9개'))).toBe(true);
   });
 });
 

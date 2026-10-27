@@ -576,7 +576,7 @@
             {
               "name": "wave",
               "type": "int",
-              "value": 2
+              "value": 1
             },
             {
               "name": "role",
@@ -600,7 +600,7 @@
             {
               "name": "wave",
               "type": "int",
-              "value": 2
+              "value": 1
             },
             {
               "name": "role",
@@ -624,7 +624,7 @@
             {
               "name": "wave",
               "type": "int",
-              "value": 2
+              "value": 1
             },
             {
               "name": "role",
@@ -648,7 +648,7 @@
             {
               "name": "wave",
               "type": "int",
-              "value": 3
+              "value": 1
             },
             {
               "name": "role",
@@ -672,7 +672,7 @@
             {
               "name": "wave",
               "type": "int",
-              "value": 3
+              "value": 1
             },
             {
               "name": "role",
@@ -696,7 +696,7 @@
             {
               "name": "wave",
               "type": "int",
-              "value": 3
+              "value": 1
             },
             {
               "name": "role",

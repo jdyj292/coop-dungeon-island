@@ -22,17 +22,7 @@
         "waves": [
           {
             "monsters": {
-              "mushroom": 4
-            }
-          },
-          {
-            "monsters": {
-              "mushroom": 3
-            }
-          },
-          {
-            "monsters": {
-              "mushroom": 3
+              "mushroom": 10
             }
           }
         ]
@@ -48,19 +38,8 @@
         "waves": [
           {
             "monsters": {
-              "boar": 2,
-              "mushroom": 2
-            }
-          },
-          {
-            "monsters": {
-              "mushroom": 3,
-              "boar": 1
-            }
-          },
-          {
-            "monsters": {
-              "boar": 2
+              "boar": 5,
+              "mushroom": 5
             }
           }
         ]
@@ -76,16 +55,9 @@
         "waves": [
           {
             "monsters": {
-              "sporeflower": 2,
-              "mushroom": 3,
-              "boar": 1
-            }
-          },
-          {
-            "monsters": {
-              "sporeflower": 1,
-              "mushroom": 4,
-              "boar": 2
+              "sporeflower": 3,
+              "mushroom": 7,
+              "boar": 3
             }
           }
         ],
@@ -106,19 +78,9 @@
           {
             "monsters": {
               "capknight": 1,
-              "mushroom": 2
-            }
-          },
-          {
-            "monsters": {
+              "mushroom": 7,
               "sporeflower": 1,
-              "mushroom": 3
-            }
-          },
-          {
-            "monsters": {
-              "boar": 2,
-              "mushroom": 2
+              "boar": 2
             }
           }
         ]
@@ -134,22 +96,10 @@
         "waves": [
           {
             "monsters": {
-              "mushroom": 3,
-              "boar": 1,
-              "sporeflower": 1
-            }
-          },
-          {
-            "monsters": {
-              "mushroom": 3,
-              "boar": 2
-            }
-          },
-          {
-            "monsters": {
-              "capknight": 1,
-              "boar": 2,
-              "sporeflower": 1
+              "mushroom": 6,
+              "boar": 5,
+              "sporeflower": 2,
+              "capknight": 1
             }
           }
         ]

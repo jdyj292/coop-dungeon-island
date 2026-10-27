@@ -71,8 +71,18 @@ describe('히트스톱 동기화 (entity)', () => {
     let hitAt = -1;
     for (let i = 0; i < 40 && hitAt < 0; i++) if (sim.tick(TICK, { ...none, attack: i === 0 }).events.some((e) => e.type === 'hit')) hitAt = i;
     sim.tick(TICK, { ...none, attack: true }); // 멈춘 동안 누름
-    run(sim, Math.ceil(gradeTiming('light').hitstop / TICK) + 1);
+    run(sim, Math.ceil((gradeTiming('light').hitstop * (gs.recoilMul ?? 1)) / TICK) + 1); // 근접 역경직만큼
     expect(sim.player.fighter.queued).toBe(true);
+  });
+  it('근접 역경직: 대검은 공격자만 히트스톱 × recoilMul', () => {
+    const sim = room('entity');
+    sim.spawn([{ kind: 'mushroom', x: 114, y: 50 }]);
+    let hit: { recoil: number } | undefined;
+    for (let i = 0; i < 40 && !hit; i++) hit = sim.tick(TICK, { ...none, attack: i === 0 }).events.find((e) => e.type === 'hit');
+    const sec = gradeTiming('light').hitstop;
+    expect(gs.recoilMul).toBeGreaterThan(1);
+    expect(hit!.recoil).toBeCloseTo(sec * gs.recoilMul!);
+    expect(sim.players.get(SOLO_PID)!.stop).toBeGreaterThan(sec);
   });
 });
 

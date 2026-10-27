@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TICK } from './constants';
 import { actionMoveDelta, weaponDef } from './actions';
-import { moveSpeed, newRunState, stepRun } from './movement';
+import { moveSpeed, newRunState, PLAYER_MOVE, stepRun } from './movement';
 import { FixedStep } from './tick';
 
 describe('FixedStep (1/60초)', () => {
@@ -42,8 +42,8 @@ describe('달리기 (두 번 누르기)', () => {
     expect(run([[1, 4], [0, 4], [1, 10], [0, 1]])).toBe(false);
   });
   it('속도는 기본 × 무기 배율', () => {
-    expect(moveSpeed(true, 0.9)).toEqual({ x: 108, y: 67.5 });
-    expect(moveSpeed(false)).toEqual({ x: 60, y: 40 });
+    expect(moveSpeed(true, 0.9)).toEqual({ x: PLAYER_MOVE.run.x * 0.9, y: PLAYER_MOVE.run.y * 0.9 });
+    expect(moveSpeed(false)).toEqual(PLAYER_MOVE.walk);
   });
 });
 

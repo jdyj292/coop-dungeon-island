@@ -20,13 +20,13 @@ const run = (g: DungeonGame, n: number) => { for (let i = 0; i < n; i++) g.tick(
 const input = (seq: number, mx: number, run = false) => ({ seq, t: 0, mx, my: 0, run });
 
 describe('DungeonGame (서버 진행)', () => {
-  it('입장: 이름 정리·기본 이름, 깊이를 나눠 섬, 1번 방 버섯 4마리', () => {
+  it('입장: 이름 정리·기본 이름, 깊이를 나눠 섬, 1번 방 버섯 10마리 한 번에', () => {
     const { g } = setup();
     const a = g.state.players.get('a')!, b = g.state.players.get('b')!;
     expect([a.name, b.name]).toEqual(['앨리스', '모험가2']);
     expect(a.x).toBe(48);
     expect(a.y).not.toBe(b.y);
-    expect(g.state.monsters.size).toBe(4);
+    expect(g.state.monsters.size).toBe(10);
   });
   it('입력은 각자, 처리한 seq를 lastInputSeq로', () => {
     const { g } = setup();
@@ -88,17 +88,11 @@ describe('DungeonGame (서버 진행)', () => {
     expect(pong).toMatchObject({ to: 'b', type: 'pong', msg: { t: 123 } });
     expect((pong.msg as S2C['pong']).server).toBeCloseTo(100);
   });
-  it('모두 기절 → 다음 웨이브, 마지막이면 roomClear·doorOpen', () => {
+  it('모두 기절 → roomClear·doorOpen (한 방 = 웨이브 하나)', () => {
     const { g, sent } = setup(4);
     expect(g.state.wave).toBe(1);
     for (const m of g.sim.monsters) m.body.gone = true;
     run(g, 1);
-    expect(g.state.wave).toBe(2);
-    // 남은 웨이브도 모두
-    for (let w = 0; w < 5 && !g.state.doorOpen; w++) {
-      for (const m of g.sim.monsters) m.body.gone = true;
-      run(g, 1);
-    }
     expect(g.state.doorOpen).toBe(true);
     expect(sent.some((s) => s.type === 'roomClear')).toBe(true);
     expect(g.state.monsters.size).toBe(0);
@@ -137,6 +131,8 @@ describe('DungeonGame (서버 진행)', () => {
     g.sim.team.count = 19;
     g.sim.team.left = 1;
     const m = g.sim.alive[0]!;
+    // 한 마리만 맞게 나머지는 멀리
+    for (const o of g.sim.alive.slice(1)) o.body.x = 2000;
     g.sim.players.get('a')!.state.pos = { x: m.body.x - 14, y: m.body.y };
     g.onMessage('a', 'action', { seq: 1, t: 0, kind: 'basic', x: 0, y: 0, facing: 1 });
     run(g, 30);
@@ -177,7 +173,7 @@ describe('방 진행 (dungeon.md 2장)', () => {
     const a2 = g.sim.players.get('a')!.state;
     expect([a2.hp, a2.potions.hp, a2.pos.x]).toEqual([700, 3, 48]);
     expect(g.state.doorOpen).toBe(false);
-    expect([...g.state.monsters.values()].map((m) => m.type).sort()).toEqual(['boar', 'boar', 'mushroom', 'mushroom']);
+    expect([...g.state.monsters.values()].map((m) => m.type).sort()).toEqual([...Array<string>(5).fill('boar'), ...Array<string>(5).fill('mushroom')]);
   });
   it('쓰러진 사람은 빼고 센다', () => {
     const { g } = setup(1);

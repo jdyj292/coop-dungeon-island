@@ -59,7 +59,7 @@ export function parseC2S<K extends C2SType>(type: K, raw: unknown): C2SMessage<K
 
 /** 던전: 서버 → 클라이언트 이벤트 (순간 사건만, 계속되는 것은 상태) */
 export interface S2C {
-  hit: { attacker: string; target: number; damage: number; strength: string; flags: string[]; hitstop: number; x: number; y: number; z: number; t: number };
+  hit: { attacker: string; target: number; damage: number; strength: string; flags: string[]; hitstop: number; recoil: number; x: number; y: number; z: number; t: number };
   playerHit: { pid: string; damage: number; strength: string; from: number | null };
   rejected: { seq: number; reason: 'cooldown' | 'mp' | 'stamina' | 'state' | 'rate' };
   combo: { pid: string; count: number; milestone?: number };

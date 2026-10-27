@@ -74,6 +74,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | moveMul | 이동 속도 배율 (combat.md 기본 속도에 곱함) |
 | visual | weapons_visual.json 프로필 |
 | poseSet | poses.json 세트 |
+| recoilMul | 근접 역경직 배율: 내 공격이 맞으면 나만 히트스톱 × 이 값 (생략 = 1, 원거리 무기는 생략, combat.md 5장) |
 | backstepStyle | 생략 = 기본 백스텝, "teleport" = 스태프 순간이동 (성능 동일) |
 | trait | 무기 고유 특성. charge(대검) / cast(스태프, 설명용) / backAttack(쌍검) / null |
 | comboWindow | recovery가 끝난 뒤 다음 평타 입력을 받아주는 시간. 넘기면 1타로 돌아감 |
@@ -170,7 +171,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 ## 6. player.json
 
 ```json
-{ "move": { "walk": { "x": 60, "y": 40 }, "run": { "x": 120, "y": 75 } }, "runDoubleTap": 0.25 }
+{ "move": { "walk": { "x": 48, "y": 32 }, "run": { "x": 96, "y": 60 } }, "runDoubleTap": 0.25 }
 ```
 | 필드 | 설명 |
 |---|---|

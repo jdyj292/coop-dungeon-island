@@ -3,6 +3,7 @@
   "greatsword": {
     "name": "대검",
     "moveMul": 0.9,
+    "recoilMul": 2,
     "visual": "greatsword_basic",
     "poseSet": "greatsword",
     "trait": {
@@ -266,6 +267,7 @@
   "fist": {
     "name": "주먹",
     "moveMul": 1.1,
+    "recoilMul": 2,
     "visual": "gauntlet_basic",
     "poseSet": "fist",
     "trait": null,
@@ -410,6 +412,7 @@
   "dual": {
     "name": "쌍검",
     "moveMul": 1.15,
+    "recoilMul": 2,
     "visual": "dagger_basic",
     "poseSet": "dual",
     "trait": {

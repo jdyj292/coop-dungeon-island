@@ -274,12 +274,14 @@ export class RoomSim {
   /** 적중 사건·기절·보스 졸음 연장(파티: 서로 다른 2명, 솔로: 15히트)·히트스톱. 적중 수 */
   private landHits(sp: SimPlayer, def: ActionDef, hits: StrikeHit[], events: SimEvent[]): number {
     for (const h of hits) {
-      events.push({ type: 'hit', pid: sp.pid, m: h.m, def, damage: h.damage });
+      const sec = gradeTiming(def.fx?.grade ?? 'light').hitstop;
+      // 근접 역경직: 근접 무기는 공격자만 더 오래 멈춘다 (weapons.json recoilMul, combat.md 5장)
+      const recoil = sec * (sp.weapon.recoilMul ?? 1);
+      events.push({ type: 'hit', pid: sp.pid, m: h.m, def, damage: h.damage, recoil });
       if (h.ko) events.push({ type: 'ko', pid: sp.pid, m: h.m });
       recordGroggyHit(h.m, sp.pid, (this.opts.partySize ?? 1) >= 2);
       if (this.opts.hitstop === 'entity') {
-        const sec = gradeTiming(def.fx?.grade ?? 'light').hitstop;
-        sp.stop = Math.max(sp.stop, sec);
+        sp.stop = Math.max(sp.stop, recoil);
         this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, sec));
       }
     }

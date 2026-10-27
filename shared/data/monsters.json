@@ -13,8 +13,8 @@
       "depth": 8
     },
     "move": {
-      "x": 30,
-      "y": 20,
+      "x": 42,
+      "y": 28,
       "style": "hop"
     },
     "detectRange": 80,
@@ -37,9 +37,9 @@
         },
         "damage": 60,
         "hitbox": {
-          "forward": 6,
-          "width": 10,
-          "depth": 10,
+          "forward": 8,
+          "width": 13,
+          "depth": 15,
           "z": "ground"
         },
         "strength": "light",
@@ -88,8 +88,8 @@
       "depth": 10
     },
     "move": {
-      "x": 40,
-      "y": 25,
+      "x": 56,
+      "y": 35,
       "style": "walk"
     },
     "detectRange": 96,
@@ -113,8 +113,8 @@
         "damage": 120,
         "hitbox": {
           "forward": 0,
-          "width": 14,
-          "depth": 12,
+          "width": 18,
+          "depth": 18,
           "z": "ground"
         },
         "strength": "heavy",
@@ -238,8 +238,8 @@
       "depth": 12
     },
     "move": {
-      "x": 30,
-      "y": 20,
+      "x": 42,
+      "y": 28,
       "style": "walk"
     },
     "detectRange": 96,
@@ -267,7 +267,7 @@
             20,
             0
           ],
-          "radius": 24,
+          "radius": 30,
           "z": "ground"
         },
         "strength": "heavy",
@@ -311,8 +311,8 @@
       "depth": 24
     },
     "move": {
-      "x": 28,
-      "y": 18,
+      "x": 39,
+      "y": 25,
       "style": "walk"
     },
     "detectRange": 999,
@@ -340,7 +340,7 @@
             24,
             0
           ],
-          "radius": 28,
+          "radius": 35,
           "z": "ground"
         },
         "strength": "heavy",

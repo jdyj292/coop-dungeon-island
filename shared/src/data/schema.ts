@@ -111,6 +111,8 @@ export const monsterAttack = z.object({
 export const weapon = z.object({
   name: z.string(),
   moveMul: pos,
+  // 근접 역경직: 내 공격이 맞으면 나만 히트스톱 × 이 값 (없으면 1, 원거리 무기는 생략)
+  recoilMul: pos.optional(),
   visual: z.string(),
   poseSet: z.string(),
   backstepStyle: z.literal('teleport').optional(),

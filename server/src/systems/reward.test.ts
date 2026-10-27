@@ -47,13 +47,13 @@ describe('DungeonGame 보상', () => {
     g.onMessage('a', 'dev', { cmd: 'clear' });
     g.tick();
     const rewards = sent.filter((s) => s.type === 'reward');
-    expect(rewards.filter((s) => s.to === 'a')).toHaveLength(4);
-    expect(rewards.filter((s) => s.to === 'b')).toHaveLength(4);
-    // 1번 방 첫 웨이브 버섯 4마리, 난수 0 → 최소 코인·재료 1개씩
+    expect(rewards.filter((s) => s.to === 'a')).toHaveLength(10);
+    expect(rewards.filter((s) => s.to === 'b')).toHaveLength(10);
+    // 1번 방 버섯 10마리, 난수 0 → 최소 코인·재료 1개씩
     const mr = MONSTERS.mushroom!.reward;
-    expect(g.state.players.get('b')!.priv.coins).toBe(4 * mr.coins[0]);
-    expect(g.state.players.get('b')!.priv.materials).toBe(4);
-    expect(g.state.players.get('b')!.priv.exp).toBe(4 * mr.exp);
+    expect(g.state.players.get('b')!.priv.coins).toBe(10 * mr.coins[0]);
+    expect(g.state.players.get('b')!.priv.materials).toBe(10);
+    expect(g.state.players.get('b')!.priv.exp).toBe(10 * mr.exp);
   });
   it('보물상자: 클리어 뒤 가까이서 한 번만, 파티원 모두 코인 15 + 버섯 1', () => {
     const { g, sent } = game(3);
