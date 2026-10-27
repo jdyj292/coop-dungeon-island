@@ -29,6 +29,13 @@
       "when": 1792714532125,
       "tag": "0003_suspend",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793019425014,
+      "tag": "0004_weapon",
+      "breakpoints": true
     }
   ]
 }

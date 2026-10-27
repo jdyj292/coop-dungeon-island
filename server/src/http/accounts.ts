@@ -172,7 +172,7 @@ export class Accounts {
     if (!row) return null;
     const { users: u, islands: i } = row;
     return {
-      id: u.id, nickname: u.nickname, wallet: u.wallet, hairStyle: u.hairStyle, hairColor: u.hairColor,
+      id: u.id, nickname: u.nickname, wallet: u.wallet, hairStyle: u.hairStyle, hairColor: u.hairColor, weapon: u.weapon,
       island: { id: i.id, name: i.name, treasury: i.treasury, inviteCode: i.inviteCode },
     };
   }

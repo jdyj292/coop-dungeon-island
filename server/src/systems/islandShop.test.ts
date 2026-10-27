@@ -97,6 +97,20 @@ describe('게시판·채팅', () => {
     expect(db.select({ h: users.hairStyle, c: users.hairColor }).from(users).where(eq(users.id, Number(a))).get()).toEqual({ h: 2, c: 3 });
   });
 
+  it('무기: 저장·주민 상태·me(그 무기 숙련도), 출발 카운트다운 중인 대기자는 못 바꿈', () => {
+    const a = user('a'), g = game();
+    enter(g, a);
+    g.onMessage(a, 'weapon', { id: 'staff' });
+    g.onMessage(a, 'weapon', { id: 'fist' });
+    expect(g.state.residents.get(a)!.weapon).toBe('staff');
+    expect(db.select({ w: users.weapon }).from(users).where(eq(users.id, Number(a))).get()).toEqual({ w: 'staff' });
+    expect(last<{ level: number }>(a, 'me')?.level).toBe(1);
+    g.state.well.members.push(a);
+    g.state.well.departAt = 1;
+    g.onMessage(a, 'weapon', { id: 'greatsword' });
+    expect(g.state.residents.get(a)!.weapon).toBe('staff');
+  });
+
   it('개발 코인은 개발 모드에서만', () => {
     const a = user('a'), g = game(false);
     enter(g, a);

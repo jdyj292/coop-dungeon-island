@@ -18,12 +18,17 @@ export class ShopStore {
     return this.db.select({ w: users.wallet }).from(users).where(eq(users.id, userId)).get()?.w ?? 0;
   }
 
+  /** 무기 저장 (우물 패널) */
+  setWeapon(userId: number, weapon: string): void {
+    this.db.update(users).set({ weapon }).where(eq(users.id, userId)).run();
+  }
+
   /** 외형 저장 (설정 외형 탭) */
   setLook(userId: number, hair: number, hairColor: number): void {
     this.db.update(users).set({ hairStyle: hair, hairColor }).where(eq(users.id, userId)).run();
   }
 
-  /** 숙련도 레벨 (섬 HUD LV) */
+  /** 숙련도 레벨 (섬 HUD LV, 고른 무기) */
   level(userId: number): number {
     return mastery(this.db, userId).level;
   }

@@ -1,5 +1,5 @@
 // 던전 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 백스텝 · U 올려베기 · I 대지가르기 · Z/X 물약 · E 상호작용 (combat.md 1장)
-// 기본은 서버 없이 로컬 (방 하나 전투 테스트). ?online=1&party=2면 서버 던전 방에 접속해 ?room부터 보스 방까지 한 판 (roadmap 3-3), ?weapon=staff면 스태프
+// 기본은 서버 없이 로컬 (방 하나 전투 테스트). ?online=1&party=2면 서버 던전 방에 접속해 ?room부터 보스 방까지 한 판 (roadmap 3-3), ?weapon=staff면 스태프 (섬에서 출발하면 우물에서 고른 무기, registry weapon)
 // 서버 방 번호가 바뀌면 같은 접속으로 씬을 다시 시작해 방 화면(배경·소품·장애물)을 새로 만든다
 import Phaser from 'phaser';
 import { ChatBar } from '../stage/chatBar';
@@ -48,7 +48,7 @@ export class Dungeon extends Phaser.Scene {
   private params = new URLSearchParams(location.search);
   private room = floorRoom('floor1', Number(this.params.get('room') ?? 1));
   private onlineMode = this.params.get('online') === '1';
-  private weapon: string = MVP_WEAPONS.find((w) => w === this.params.get('weapon')) ?? 'greatsword';
+  private weapon = 'greatsword';
   /** 섬 우물에서 출발한 던전 방 번호 (registry dungeonRoom, 정산 뒤 섬으로) */
   private islandRoom: string | null = null;
   /** 다시 시작해도 이어 쓰는 접속 (방 진행) */
@@ -88,9 +88,9 @@ export class Dungeon extends Phaser.Scene {
     this.stage = null;
     this.online = null;
     this.result = null;
-    this.awaitingKey = false;
-    this.keepConn = false;
+    this.awaitingKey = this.keepConn = false;
     this.islandRoom = (this.registry.get('dungeonRoom') as string | undefined) ?? null;
+    this.weapon = MVP_WEAPONS.find((w) => w === (this.params.get('weapon') ?? this.registry.get('weapon'))) ?? 'greatsword';
     this.onlineMode ||= !!this.islandRoom;
     this.cameras.main.setBackgroundColor(color(`floors.${FLOOR}.env.void`));
     // HUD는 카메라 흔들림과 무관하게 화면에 고정 (hud.md 1·3장)

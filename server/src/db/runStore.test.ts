@@ -1,5 +1,6 @@
 // 던전 정산 저장: 지갑·금고·재료·쓴 물약·숙련도·기록 (한 트랜잭션), 가져갈 물약 한도
 import { PLAYER } from '@game/shared';
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from './client';
 import { IslandStore } from './islandStore';
@@ -39,5 +40,14 @@ describe('던전 정산 저장', () => {
   it('숙련도 기록이 없으면 Lv1', () => {
     expect(mastery(db, uid)).toEqual({ level: 1, exp: 0 });
     expect(carryPotions(db, uid)).toEqual({ hp: 0, mp: 0 });
+  });
+
+  it('숙련도는 무기마다: 스태프 판은 스태프 숙련도만, 기본 조회는 고른 무기 (users.weapon)', () => {
+    saveRun(db, islandId, uid, 'clear', line({}), { hp: 0, mp: 0 }, 1, 125, 'staff');
+    expect(mastery(db, uid, 'staff')).toEqual({ level: 2, exp: 10 });
+    expect(mastery(db, uid, 'greatsword')).toEqual({ level: 1, exp: 0 });
+    expect(mastery(db, uid)).toEqual({ level: 1, exp: 0 });
+    db.update(users).set({ weapon: 'staff' }).where(eq(users.id, uid)).run();
+    expect(mastery(db, uid)).toEqual({ level: 2, exp: 10 });
   });
 });

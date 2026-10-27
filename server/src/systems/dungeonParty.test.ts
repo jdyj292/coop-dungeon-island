@@ -44,11 +44,12 @@ describe('섬 파티 던전', () => {
     expect(g.sim.players.get('a')!.state.atk).toBe(atkFor(1));
   });
 
-  it('개발 방 무기 옵션: MVP 무기만 (그 밖은 대검), 섬 파티는 무시', () => {
-    const g = new DungeonGame({ partySize: 3 }, { broadcast: () => {}, send: () => {} });
+  it('무기: 섬 파티는 파티 정보, 개발 방은 접속 옵션 (MVP 무기만, 그 밖은 대검)', () => {
+    const g = new DungeonGame({ partySize: 4 }, { broadcast: () => {}, send: () => {} });
     g.join('a', '봇', undefined, 'staff');
     g.join('b', '봇', undefined, 'fist');
     g.join('c', '', member({}), 'staff');
-    expect(['a', 'b', 'c'].map((p) => [g.state.players.get(p)!.weapon, g.sim.players.get(p)!.weapon.name])).toEqual([['staff', '스태프'], ['greatsword', '대검'], ['greatsword', '대검']]);
+    g.join('d', '', member({ userId: '4', weapon: 'staff' }), 'greatsword');
+    expect(['a', 'b', 'c', 'd'].map((p) => [g.state.players.get(p)!.weapon, g.sim.players.get(p)!.weapon.name])).toEqual([['staff', '스태프'], ['greatsword', '대검'], ['greatsword', '대검'], ['staff', '스태프']]);
   });
 });

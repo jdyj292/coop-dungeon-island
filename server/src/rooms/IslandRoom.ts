@@ -32,7 +32,7 @@ export class IslandRoom extends Room<IslandState> {
     this.islandId = Number(options?.islandId);
     const row = loadIsland(services().db, this.islandId);
     if (!row) throw new Error(`섬 ${this.islandId} 없음`);
-    this.game = new IslandGame(row.name, row.treasury, row.residents.map((r, i) => ({ id: String(r.id), name: r.nickname, color: i, hair: r.hairStyle, hairColor: r.hairColor })), {
+    this.game = new IslandGame(row.name, row.treasury, row.residents.map((r, i) => ({ id: String(r.id), name: r.nickname, color: i, hair: r.hairStyle, hairColor: r.hairColor, weapon: r.weapon })), {
       send: (id, type, msg) => this.clientOf(id)?.send(type, msg),
       broadcast: (type, msg) => this.broadcast(type, msg),
     }, {
@@ -47,7 +47,7 @@ export class IslandRoom extends Room<IslandState> {
     this.setSimulationInterval((ms) => {
       for (let n = this.ticks.advance(ms / 1000); n > 0; n--) this.game.tick();
     }, TICK * 1000);
-    for (const type of ['input', 'ping', 'place', 'move', 'remove', 'give', 'giveCoins', 'buy', 'board', 'memo', 'chat', 'emote', 'look', 'well']) {
+    for (const type of ['input', 'ping', 'place', 'move', 'remove', 'give', 'giveCoins', 'buy', 'board', 'memo', 'chat', 'emote', 'look', 'weapon', 'well']) {
       this.onMessage(type, (client, raw) => {
         if (this.game.onMessage(this.userOf(client), type, raw) === 'kick') client.leave(KICK_CODE);
       });
@@ -71,7 +71,7 @@ export class IslandRoom extends Room<IslandState> {
     // 같은 계정의 이전 연결은 끊는다
     for (const c of this.clients) if (c !== client && this.userOf(c) === id) c.leave(REPLACED_CODE);
     // 방이 생긴 뒤 가입한 주민
-    this.game.addResident({ id, name: me.nickname, color: this.game.state.residents.size, hair: me.hairStyle, hairColor: me.hairColor });
+    this.game.addResident({ id, name: me.nickname, color: this.game.state.residents.size, hair: me.hairStyle, hairColor: me.hairColor, weapon: me.weapon });
     this.game.join(id);
   }
 
@@ -89,8 +89,8 @@ export class IslandRoom extends Room<IslandState> {
   private async depart(ids: string[], floor: string): Promise<void> {
     const db = services().db;
     const members: PartyMember[] = ids.map((id) => {
-      const r = this.game.state.residents.get(id), m = mastery(db, Number(id));
-      return { userId: id, name: r?.name ?? '?', color: r?.color ?? 0, hair: r?.hair ?? 0, hairColor: r?.hairColor ?? 0, level: m.level, levelExp: m.exp, potions: carryPotions(db, Number(id)) };
+      const r = this.game.state.residents.get(id), weapon = r?.weapon || 'greatsword', m = mastery(db, Number(id), weapon);
+      return { userId: id, name: r?.name ?? '?', color: r?.color ?? 0, hair: r?.hair ?? 0, hairColor: r?.hairColor ?? 0, weapon, level: m.level, levelExp: m.exp, potions: carryPotions(db, Number(id)) };
     });
     islandBus.departed(this.islandId, ids, floor);
     try {

@@ -67,6 +67,16 @@ export class IslandShop {
         }
         return true;
       }
+      case 'weapon': {
+        // 출발 카운트다운 중인 대기자는 못 바꿈 (파티 정보가 이미 정해짐)
+        const m = parseC2S('weapon', raw), r = this.state.residents.get(userId), w = this.state.well;
+        if (m && r && !(w.departAt && w.members.includes(userId))) {
+          this.store.setWeapon(uid, m.id);
+          r.weapon = m.id;
+          this.sendMe(userId);
+        }
+        return true;
+      }
       case 'emote': {
         const m = parseC2S('emote', raw);
         if (m) this.out.broadcast('emote', { player: userId, id: m.id });

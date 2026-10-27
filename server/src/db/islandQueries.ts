@@ -7,12 +7,12 @@ export interface IslandRow {
   name: string;
   treasury: number;
   /** 가입 순서대로 */
-  residents: { id: number; nickname: string; hairStyle: number; hairColor: number }[];
+  residents: { id: number; nickname: string; hairStyle: number; hairColor: number; weapon: string }[];
 }
 
 export function loadIsland(db: Db, islandId: number): IslandRow | null {
   const isl = db.select().from(islands).where(eq(islands.id, islandId)).get();
   if (!isl) return null;
-  const residents = db.select({ id: users.id, nickname: users.nickname, hairStyle: users.hairStyle, hairColor: users.hairColor }).from(users).where(eq(users.islandId, islandId)).orderBy(asc(users.id)).all();
+  const residents = db.select({ id: users.id, nickname: users.nickname, hairStyle: users.hairStyle, hairColor: users.hairColor, weapon: users.weapon }).from(users).where(eq(users.islandId, islandId)).orderBy(asc(users.id)).all();
   return { name: isl.name, treasury: isl.treasury, residents };
 }

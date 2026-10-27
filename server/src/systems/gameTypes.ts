@@ -21,6 +21,8 @@ export interface PartyMember {
   /** 머리 모양·머리색 번호 (없으면 0) */
   hair?: number;
   hairColor?: number;
+  /** 무기 (users.weapon, 없으면 대검) */
+  weapon?: string;
   /** 숙련도 (정산 전) */
   level: number;
   levelExp: number;

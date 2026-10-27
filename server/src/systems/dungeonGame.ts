@@ -74,8 +74,9 @@ export class DungeonGame {
   /** party = 섬에서 출발한 파티원 정보 (이름·색·숙련도(최대 HP·ATK)·가져온 물약). 없으면 개발용 (Lv1, 물약 한도만큼) */
   join(pid: string, name: unknown, party?: PartyMember, devWeapon?: unknown): void {
     const index = this.joined++;
-    // 무기: 개발 방은 접속 옵션 weapon (MVP 무기만), 없으면 대검 (섬 파티는 MVP 보충 ST-4)
-    const weapon = !party && (MVP_WEAPONS as readonly unknown[]).includes(devWeapon) ? devWeapon as string : 'greatsword';
+    // 무기: 섬 파티는 파티 정보(users.weapon), 개발 방은 접속 옵션 weapon (MVP 무기만), 없으면 대검
+    const want = party ? party.weapon : devWeapon;
+    const weapon = (MVP_WEAPONS as readonly unknown[]).includes(want) ? want as string : 'greatsword';
     const sp = this.sim.addPlayer(pid, entryPos(this.room, index % 4), weaponDef(weapon));
     // 부활의 깃털은 솔로만 (dungeon.md 3장). 파티는 동료 부활
     if (this.state.partySize > 1) sp.state.feathers = 0;

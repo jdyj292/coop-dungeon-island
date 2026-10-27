@@ -5,7 +5,7 @@ MVP 열: O = MVP에 포함, — = MVP 이후.
 
 | 테이블 | 컬럼 | MVP | 관련 문서 |
 |---|---|---|---|
-| users | id, nickname, nickname_key(중복 검사용: NFC + 소문자), password_hash, recovery_hash, failed_logins, locked_until, suspended_until(관리자 정지, 0 = 정상), island_id, wallet, hair_style, hair_color, created_at | O | security, art |
+| users | id, nickname, nickname_key(중복 검사용: NFC + 소문자), password_hash, recovery_hash, failed_logins, locked_until, suspended_until(관리자 정지, 0 = 정상), island_id, wallet, hair_style, hair_color, weapon(고른 무기, 기본 greatsword, 0004_weapon), created_at | O | security, art |
 | sessions | token_hash, user_id, created_at, expires_at, last_seen_at | O | security |
 | auth_log | user_id(null 가능), ip, event, created_at (30일 보관) | O | security |
 | islands | id, name, invite_code, treasury | O | island |

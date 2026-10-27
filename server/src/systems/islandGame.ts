@@ -16,6 +16,7 @@ export interface ResidentInfo {
   color: number;
   hair?: number;
   hairColor?: number;
+  weapon?: string;
 }
 
 export interface IslandOut {
@@ -34,7 +35,7 @@ const islandRules = (): Record<string, readonly [number, number]> => {
   const l = NET.limits;
   const island = [1000, l.island] as const;
   return {
-    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], emote: island, look: island,
+    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], emote: island, look: island, weapon: island,
     place: island, move: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island, well: island,
   };
 };
@@ -81,7 +82,7 @@ export class IslandGame {
     if (this.state.residents.has(info.id)) return;
     const r = new Resident();
     const floor = islandBus.floorOf(info.id);
-    Object.assign(r, { id: info.id, name: info.name, color: info.color, hair: info.hair ?? 0, hairColor: info.hairColor ?? 0, status: floor ? dungeonStatus(floor) : 'away' });
+    Object.assign(r, { id: info.id, name: info.name, color: info.color, hair: info.hair ?? 0, hairColor: info.hairColor ?? 0, weapon: info.weapon ?? 'greatsword', status: floor ? dungeonStatus(floor) : 'away' });
     this.state.residents.set(info.id, r);
   }
 

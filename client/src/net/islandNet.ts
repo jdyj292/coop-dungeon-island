@@ -13,6 +13,8 @@ export interface ResidentSnap extends Pos {
   /** 머리 모양·머리색 번호 (view/look.ts) */
   hair: number;
   hairColor: number;
+  /** 고른 무기 (우물 패널) */
+  weapon: string;
   online: boolean;
   status: string;
   facing: number;
@@ -156,7 +158,7 @@ export class IslandConnection {
     const items = new Map<string, ResidentSnap>();
     for (const [id, r] of s.residents) {
       items.set(id, {
-        id, name: r.name, color: r.color ?? 0, hair: r.hair ?? 0, hairColor: r.hairColor ?? 0, online: !!r.online, status: r.status ?? 'away', x: r.x ?? 0, y: r.y ?? 0, z: 0,
+        id, name: r.name, color: r.color ?? 0, hair: r.hair ?? 0, hairColor: r.hairColor ?? 0, weapon: r.weapon || 'greatsword', online: !!r.online, status: r.status ?? 'away', x: r.x ?? 0, y: r.y ?? 0, z: 0,
         facing: r.facing ?? 1, state: r.state ?? 'idle', lastInputSeq: r.lastInputSeq ?? 0,
       });
     }

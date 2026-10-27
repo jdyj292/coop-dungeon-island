@@ -58,6 +58,7 @@ export interface MeRes {
   wallet: number;
   hairStyle: number;
   hairColor: number;
+  weapon: string;
   island: { id: number; name: string; treasury: number; inviteCode: string };
 }
 

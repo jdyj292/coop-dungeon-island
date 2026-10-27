@@ -86,6 +86,7 @@ export class Island extends Phaser.Scene {
       // 우물 출발: 섬 방을 나가 던전 방으로 (network.md 3장), 정산 뒤 Dungeon 씬이 섬으로 돌려보냄
       conn.onDepart = (m) => {
         this.registry.set('dungeonRoom', m.roomId);
+        this.registry.set('weapon', conn.residents.latest?.items.get(String(this.me.id))?.weapon ?? 'greatsword');
         this.scene.start('Dungeon');
       };
       conn.onBuy = (m) => {

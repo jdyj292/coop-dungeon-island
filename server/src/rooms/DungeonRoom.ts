@@ -72,7 +72,7 @@ export class DungeonRoom extends Room<DungeonState> {
   onJoin(client: Client, options: { name?: unknown; weapon?: unknown }, auth?: PartyMember | true): void {
     const m = auth === true ? undefined : auth;
     if (m) this.who.set(client.sessionId, m);
-    // 무기 옵션은 개발 방만 (섬 파티는 파티 정보로, MVP 보충 ST-4)
+    // 무기 옵션은 개발 방만 (섬 파티는 파티 정보로)
     this.game.join(client.sessionId, options?.name, m, m ? undefined : options?.weapon);
   }
 
@@ -99,7 +99,7 @@ export class DungeonRoom extends Room<DungeonState> {
       if (!m || !this.pending.has(m.userId)) continue;
       const rest = left[line.pid] ?? { hp: 0, mp: 0 };
       const used = { hp: Math.max(0, m.potions.hp - rest.hp), mp: Math.max(0, m.potions.mp - rest.mp) };
-      saveRun(services().db, party.islandId, Number(m.userId), result.kind, line, used, floor, now);
+      saveRun(services().db, party.islandId, Number(m.userId), result.kind, line, used, floor, now, m.weapon);
       this.pending.delete(m.userId);
       done.push(m.userId);
     }

@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `weapon` text DEFAULT 'greatsword' NOT NULL;

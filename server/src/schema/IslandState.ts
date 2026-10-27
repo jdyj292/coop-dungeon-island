@@ -10,6 +10,8 @@ export class Resident extends Schema {
   /** 머리 모양·머리색 번호 (users.hair_style·hair_color, 설정 외형 탭) */
   @type('uint8') hair = 0;
   @type('uint8') hairColor = 0;
+  /** 고른 무기 (users.weapon, 우물 패널) */
+  @type('string') weapon = 'greatsword';
   /** 섬에 접속해 있음 */
   @type('boolean') online = false;
   /** "island" | "away" (접속 안 함) | "dungeon:<층>" (4-8) */

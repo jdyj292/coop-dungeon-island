@@ -8,17 +8,20 @@ import { activityLog, inventory, islands, users, weaponMastery } from './schema'
 export type ResultLine = S2C['result']['lines'][number];
 export interface Potions { hp: number; mp: number }
 
-/** 지금 쓰는 무기 (MVP는 대검 고정, 숙련도는 무기마다) */
-export const WEAPON = 'greatsword';
 const POTION_ITEM: Record<keyof Potions, string> = { hp: 'hpPotion', mp: 'mpPotion' };
 
 /** 층 재료 id (items.json materials의 floor) */
 export const materialOf = (floor: number): string | undefined => Object.entries(ITEMS.materials).find(([, m]) => m.floor === floor)?.[0];
 
-export function mastery(db: Db, userId: number): { level: number; exp: number } {
-  const r = db.select().from(weaponMastery).where(and(eq(weaponMastery.userId, userId), eq(weaponMastery.weapon, WEAPON))).get();
+/** 무기 숙련도 (없으면 Lv1). weapon 생략 = 그 사람이 고른 무기 (users.weapon) */
+export function mastery(db: Db, userId: number, weapon = weaponOf(db, userId)): { level: number; exp: number } {
+  const r = db.select().from(weaponMastery).where(and(eq(weaponMastery.userId, userId), eq(weaponMastery.weapon, weapon))).get();
   return { level: r?.level ?? 1, exp: r?.exp ?? 0 };
 }
+
+/** 고른 무기 (users.weapon) */
+export const weaponOf = (db: Db, userId: number): string =>
+  db.select({ w: users.weapon }).from(users).where(eq(users.id, userId)).get()?.w ?? 'greatsword';
 
 /** 가방의 물약 중 던전에 가져갈 개수 (한도 player.json potions.*.carry) */
 export function carryPotions(db: Db, userId: number): Potions {
@@ -27,8 +30,8 @@ export function carryPotions(db: Db, userId: number): Potions {
   return { hp: Math.min(have('hp'), PLAYER.potions.hp.carry), mp: Math.min(have('mp'), PLAYER.potions.mp.carry) };
 }
 
-/** 한 사람의 정산 저장. used = 이번 판에 쓴 물약 */
-export function saveRun(db: Db, islandId: number, userId: number, kind: S2C['result']['kind'], line: ResultLine, used: Potions, floor: number, now: number): void {
+/** 한 사람의 정산 저장. used = 이번 판에 쓴 물약, weapon = 이번 판 무기 (그 무기 숙련도로) */
+export function saveRun(db: Db, islandId: number, userId: number, kind: S2C['result']['kind'], line: ResultLine, used: Potions, floor: number, now: number, weapon = 'greatsword'): void {
   db.transaction((tx) => {
     tx.update(users).set({ wallet: sql`${users.wallet} + ${line.wallet}` }).where(eq(users.id, userId)).run();
     tx.update(islands).set({ treasury: sql`${islands.treasury} + ${line.treasury}` }).where(eq(islands.id, islandId)).run();
@@ -41,7 +44,7 @@ export function saveRun(db: Db, islandId: number, userId: number, kind: S2C['res
     if (mat) add(mat, line.materials);
     add(POTION_ITEM.hp, -used.hp);
     add(POTION_ITEM.mp, -used.mp);
-    tx.insert(weaponMastery).values({ userId, weapon: WEAPON, level: line.levelAfter, exp: line.levelExp })
+    tx.insert(weaponMastery).values({ userId, weapon, level: line.levelAfter, exp: line.levelExp })
       .onConflictDoUpdate({ target: [weaponMastery.userId, weaponMastery.weapon], set: { level: line.levelAfter, exp: line.levelExp } }).run();
     tx.insert(activityLog).values({ islandId, userId, action: `dungeon:${kind}`, itemId: null, createdAt: now }).run();
   });

@@ -1,6 +1,6 @@
 // 클라이언트 ↔ 서버 메시지 (docs/network.md 4·6장). 클라이언트 → 서버는 zod로 서버가 검사
 import { z } from 'zod';
-import { LOOK, NET } from './constants';
+import { LOOK, MVP_WEAPONS, NET } from './constants';
 
 const seq = z.number().int().nonnegative();
 /** 서버 기준 시각(추정, ms) */
@@ -42,6 +42,8 @@ export const C2S = {
   /** 우물 (island.md 6장): 대기 합류·나가기, 대기 시작자의 출발 */
   well: z.object({ op: z.enum(['join', 'leave', 'depart']), floor: z.string().max(16).optional() }).strict(),
   memo: z.object({ text: lineText(NET.memoMaxLen) }).strict(),
+  /** 무기 고르기 (섬 우물 패널, MVP 보충 ST-4) */
+  weapon: z.object({ id: z.enum(MVP_WEAPONS) }).strict(),
   /** 외형 바꾸기 (섬에서, 설정 외형 탭) */
   look: z.object({ hair: z.number().int().min(0).max(LOOK.hairStyles - 1), hairColor: z.number().int().min(0).max(LOOK.hairColors - 1) }).strict(),
 } as const;

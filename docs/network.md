@@ -33,7 +33,7 @@
 
 1. 로그인 → 세션 쿠키 발급 (HTTP, docs/security.md)
 2. IslandRoom 입장 (토큰 + islandId). 섬 주민만 입장 가능
-3. 우물에서 출발 → IslandRoom이 파티 정보(파티원 userId·닉네임·플레이어 색·숙련도·가져갈 물약)로 DungeonRoom을 만들고(비공개) 파티원마다 `depart { roomId, floor }` → 클라이언트는 섬 방을 나가 그 방에 joinById (DungeonRoom.onAuth가 세션 쿠키로 그 파티원인지 확인)
+3. 우물에서 출발 → IslandRoom이 파티 정보(파티원 userId·닉네임·플레이어 색·머리·무기·그 무기 숙련도·가져갈 물약)로 DungeonRoom을 만들고(비공개) 파티원마다 `depart { roomId, floor }` → 클라이언트는 섬 방을 나가 그 방에 joinById (DungeonRoom.onAuth가 세션 쿠키로 그 파티원인지 확인)
 4. 던전 종료(정산·이탈) → 사람마다 정산을 DB에 저장(db/runStore.ts) → 섬 방에 "돌아옴" 알림 → 클라이언트는 정산 화면 뒤 아무 키로 섬 씬(IslandRoom 다시 입장, 우물 앞)
 - 던전 중에는 섬 연결을 끊는다. 대신 서버가 "탐험 중"을 들고 있다 (systems/islandBus.ts: 같은 서버 프로세스 안 섬 방 ↔ 던전 방 알림, 섬 방이 새로 만들어져도 이 표로 상태를 채움). 주민 목록은 검 아이콘 + 층
 - 개발용 `?online=1` 던전 방(joinOrCreate, 로그인 없이)은 그대로: 저장·알림 없음
@@ -70,6 +70,7 @@
 | well | `{ op: "join" | "leave" | "depart", floor? }` |
 | memo | `{ text }` 1줄 1~40자 (NET.memoMaxLen, 제어 문자·줄바꿈은 공백으로). 저장 후 `board` 다시 보냄 |
 | look | `{ hair: 0~2, hairColor: 0~3 }` (shared LOOK) 외형 바꾸기 → users.hair_style·hair_color 저장, 주민 상태 hair·hairColor |
+| weapon | `{ id }` (shared MVP_WEAPONS) 무기 고르기 → users.weapon 저장, 주민 상태 weapon, `me` 다시 보냄(그 무기 숙련도). 출발 카운트다운 중인 대기자는 무시 |
 - chat·emote는 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }`·`emote { player, id }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
 | loadout | 무기 교체·스킬 장착·의상 장착 (MVP 이후 의상) |
 
@@ -134,7 +135,7 @@ ZoneState
 ```
 IslandState
   serverTime, name, treasury
-  residents: Map<userId, Resident> id, name, color(가입 순서 0~3 = 플레이어 색), hair·hairColor(외형 번호), online, status("island" | "away" | "dungeon:<층>"),
+  residents: Map<userId, Resident> id, name, color(가입 순서 0~3 = 플레이어 색), hair·hairColor(외형 번호), weapon(고른 무기), online, status("island" | "away" | "dungeon:<층>"),
                                    x, y, facing, state(idle/walk/run), lastInputSeq
   placements: Map<id, Placement>   id, itemId, x, y, rot, placedBy, communal (칸 좌표)
   storage: Map<itemId, count>      공용 창고
