@@ -55,10 +55,10 @@ describe('mirror: 스냅샷 → 그리기 객체', () => {
     expect(playerAction(w, 'nope')).toBeNull();
   });
   it('플레이어: 행동 진행 시간, 본인 전용 값(쿨타임은 지금 기준 남은 초)', () => {
-    const p = mirrorPlayer(ps, 1100, 'greatsword', { mp: 70, cooldowns: new Map([['gs_launch', 3000]]), potionHp: 2, potionMp: 1, feathers: 0 }, 1500);
+    const p = mirrorPlayer(ps, 1100, 'greatsword', { mp: 70, stamina: 40, tired: true, cooldowns: new Map([['gs_launch', 3000]]), potionHp: 2, potionMp: 1, feathers: 0 }, 1500);
     expect(p.fighter.run).toMatchObject({ kind: 'basic', step: 1 });
     expect(p.fighter.run!.t).toBeCloseTo(0.1);
-    expect([p.facing, p.hp, p.mp, p.potions.hp, p.cooldowns.gs_launch]).toEqual([-1, 800, 70, 2, 1.5]);
+    expect([p.facing, p.hp, p.mp, p.stamina, p.tired, p.potions.hp, p.cooldowns.gs_launch]).toEqual([-1, 800, 70, 40, true, 2, 1.5]);
   });
   it('플레이어: 백스텝·다운·쓰러짐', () => {
     expect(mirrorPlayer({ ...ps, state: 'backstep', actionId: '' }, 1000, 'greatsword').backstep!.t).toBeCloseTo(0.1);

@@ -27,13 +27,16 @@ export function mirrorPlayer(s: PlayerSnap, t: number, weaponId: string, priv?: 
   const act = s.actionId ? playerAction(weaponDef(weaponId), s.actionId) : null;
   if (act) p.fighter.run = { ...act, t: sec(t - s.actionStart) };
   p.run.running = s.state === 'run';
-  if (s.state === 'backstep') p.backstep = { t: Math.min(el, PLAYER.backstep.sec) };
+  // 회피 방향은 보내지 않는다 (위치는 스냅샷, 그림은 방향과 무관)
+  if (s.state === 'backstep') p.backstep = { t: Math.min(el, PLAYER.backstep.sec), dir: -s.facing };
   if (s.state === 'hitstun') p.hurt = { kind: 'stun', left: Math.max(0, PLAYER.hurt.stunSec - el) };
   if (s.state === 'down') p.hurt = { kind: 'down', left: Math.max(0, PLAYER.hurt.downSec - el) };
   p.downed = s.state === 'knocked';
   Object.assign(p, { hp: s.hp, maxHp: s.maxHp, ult: s.ult });
   if (priv) {
     p.mp = priv.mp;
+    p.stamina = priv.stamina;
+    p.tired = priv.tired;
     p.potions = { hp: priv.potionHp, mp: priv.potionMp };
     p.feathers = priv.feathers;
     priv.cooldowns.forEach((end, id) => { p.cooldowns[id] = sec(end - now); });

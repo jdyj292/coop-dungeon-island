@@ -2,9 +2,12 @@
 import { filter, MapSchema, Schema, type } from '@colyseus/schema';
 import type { Client } from 'colyseus';
 
-/** 본인에게만 보내는 값 (쿨타임·MP·물약·깃털) */
+/** 본인에게만 보내는 값 (쿨타임·MP·지구력·물약·깃털) */
 export class PlayerPrivate extends Schema {
   @type('uint16') mp = 0;
+  @type('uint8') stamina = 0;
+  /** 달리다 지구력이 바닥나 걷는 중 (예측이 다시 달리지 않게) */
+  @type('boolean') tired = false;
   /** 스킬 id → 쿨타임이 끝나는 서버 시각(ms) */
   @type({ map: 'float64' }) cooldowns = new MapSchema<number>();
   @type('uint8') potionHp = 0;

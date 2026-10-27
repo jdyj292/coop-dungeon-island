@@ -181,6 +181,7 @@ export const player = z.object({
   level: z.object({ expBase: pos, expPow: pos }).strict(),
   hurtbox: z.object({ width: pos, height: pos, depth: pos }).strict(),
   backstep: z.object({ distance: pos, sec: pos, invuln: sec, cooldown: sec }).strict(),
+  stamina: z.object({ max: pos, dodge: sec, runPerSec: sec, regen: sec, regenDelay: sec }).strict(),
 }).strict();
 
 const stun = z.object({ time: sec, push: sec }).strict();

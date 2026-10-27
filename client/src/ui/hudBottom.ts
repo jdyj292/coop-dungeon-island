@@ -1,5 +1,5 @@
 // 아래 HUD 띠 (hud.md 1장, 위치는 승인 데모 floor1_room_hud_mockup.html hudBottom과 같음. y는 띠 위 = 140 기준)
-// 얼굴·깃털 / HP·MP 막대·LV / 슬롯 J U I O P / 필살기 L / 물약 Z X / 이번 판 코인·재료
+// 얼굴·깃털 / HP·MP·지구력 막대·LV / 슬롯 J U I O P / 필살기 L / 물약 Z X / 이번 판 코인·재료
 import type Phaser from 'phaser';
 import { COMBAT, PLAYER, type ActionDef, type PlayerState } from '@game/shared';
 import icons from '../../data/sprites/hud_icons.json';
@@ -66,6 +66,7 @@ export class HudBottom {
   private face: Phaser.GameObjects.Image;
   private hp = new Trail();
   private mp = new Trail();
+  private stamina = new Trail();
   private coinPop = new Pop();
   private matPop = new Pop();
   private wasReady = new Map<string, boolean>();
@@ -92,10 +93,11 @@ export class HudBottom {
     setFace(this.scene, this.face, !!(p.hurt || p.downed), st.colorIndex ?? 0, 5, Y(146), st.hair);
     if (p.feathers > 0) icon(g, 'feather', 15, Y(153));
 
-    // HP·MP·LV
-    const hpF = p.hp / p.maxHp, mpF = p.mp / PLAYER.mp.max;
+    // HP·MP·지구력·LV
+    const hpF = p.hp / p.maxHp, mpF = p.mp / PLAYER.mp.max, stF = p.stamina / PLAYER.stamina.max;
     bar(g, 23, Y(145), 52, 4, hpF, 'global.ui.hp', 'global.ui.hpDark', this.hp.update(hpF, dt));
-    bar(g, 23, Y(152), 52, 3, mpF, 'global.ui.mp', 'global.ui.mpDark', this.mp.update(mpF, dt));
+    bar(g, 23, Y(150), 52, 3, mpF, 'global.ui.mp', 'global.ui.mpDark', this.mp.update(mpF, dt));
+    bar(g, 23, Y(154), 52, 2, stF, 'global.ui.stamina', 'global.ui.staminaDark', this.stamina.update(stF, dt));
     drawText(g, `LV${st.level}`, 23, Y(157), { color: 'global.ui.textDim', outline: 'none' });
 
     // 슬롯

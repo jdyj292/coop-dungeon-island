@@ -9,7 +9,7 @@ import { newMonster, stepBodyIn, type Monster } from '../monster/state';
 import { recordGroggyHit } from '../monster/groggy';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
-import { mergePresses, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
+import { canDodge, mergePresses, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
 import { gainUlt, hurtPlayer, isInvulnerable } from '../playerHurt';
 import { comboHit, milestoneHit, newCombo, stepCombo, teamComboHit, type Combo } from '../combo';
 import type { PlayerTarget } from '../shapes';
@@ -210,10 +210,10 @@ export class RoomSim {
     events.push({ type: 'teamMilestone', count: milestone });
   }
 
-  /** 백스텝 소급 무적: 입력 시각(초) 뒤 짧은 시간 안의 피격 취소 (쿨타임 중이면 안 함). 취소한 피격 수 */
+  /** 회피 소급 무적: 입력 시각(초) 뒤 짧은 시간 안의 피격 취소 (쿨타임 중·지구력 부족이면 안 함). 취소한 피격 수 */
   cancelHitsSince(pid: string, inputT: number): number {
     const sp = this.players.get(pid);
-    if (!sp || sp.state.backstepCd > 0) return 0;
+    if (!sp || !canDodge(sp.state)) return 0;
     return sp.hits.cancelSince(sp.state, inputT);
   }
 

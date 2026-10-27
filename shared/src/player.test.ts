@@ -3,7 +3,7 @@ import { skillDef, weaponDef } from './actions';
 import { applyHit, newBody, stepBody } from './body';
 import { TICK } from './constants';
 import { COMBAT, PLAYER } from './data/load';
-import { newPlayerState, skillReady, stepPlayerState, type PlayerInput, type PlayerState } from './player';
+import { canDodge, newPlayerState, skillReady, stepPlayerState, type PlayerInput, type PlayerState } from './player';
 import { isInvulnerable } from './playerHurt';
 
 const gs = weaponDef('greatsword');
@@ -98,5 +98,56 @@ describe('기절 → 퇴장', () => {
     const ev: string[] = [];
     for (let t = 0; t < 3; t += TICK) ev.push(...stepBody(b, TICK, 0, 1000));
     expect(ev).toEqual(['bounce', 'down', 'stunned', 'exit']);
+  });
+});
+
+describe('회피 방향', () => {
+  const dodge = (x: number) => {
+    const p = newPlayerState({ x: 500, y: 50 });
+    ticks(p, Math.ceil(PLAYER.backstep.sec / TICK) + 1, { backstep: true, x });
+    return p;
+  };
+  it('바라보는 쪽 방향키 → 앞으로, 바라보는 방향은 그대로', () => {
+    const p = dodge(1);
+    expect(p.pos.x).toBeCloseTo(500 + PLAYER.backstep.distance);
+    expect(p.facing).toBe(1);
+  });
+  it('반대쪽 방향키 → 뒤로, 방향키 없음 → 바라보는 반대쪽', () => {
+    expect(dodge(-1).pos.x).toBeCloseTo(500 - PLAYER.backstep.distance);
+    expect(dodge(0).pos.x).toBeCloseTo(500 - PLAYER.backstep.distance);
+  });
+});
+
+describe('지구력', () => {
+  const st = PLAYER.stamina;
+  it('회피 1회 소모, 1회분이 안 되면 회피 불가', () => {
+    const p = newPlayerState({ x: 500, y: 50 });
+    ticks(p, 1, { backstep: true });
+    expect(p.stamina).toBeCloseTo(st.max - st.dodge);
+    const q = newPlayerState({ x: 500, y: 50 });
+    q.stamina = st.dodge - 1;
+    expect(canDodge(q)).toBe(false);
+    expect(ticks(q, 1, { backstep: true })).toEqual([]);
+  });
+  it('달리면 초당 소모, 쓰고 regenDelay 뒤부터 회복', () => {
+    const p = newPlayerState({ x: 100, y: 50 });
+    ticks(p, 60, {}, { x: 1, run: true });
+    expect(p.stamina).toBeCloseTo(st.max - st.runPerSec, 0);
+    const left = p.stamina;
+    ticks(p, Math.floor(st.regenDelay / TICK) - 1);
+    expect(p.stamina).toBeCloseTo(left);
+    ticks(p, 32);
+    expect(p.stamina).toBeGreaterThan(left + st.regen * 0.4);
+  });
+  it('바닥나면 걷기, 달리기 입력을 뗐다 다시 해야 달림', () => {
+    const p = newPlayerState({ x: 100, y: 50 });
+    p.stamina = 1;
+    ticks(p, 10, {}, { x: 1, run: true });
+    expect([p.tired, p.run.running]).toEqual([true, false]);
+    ticks(p, 1, {}, { x: 1, run: false });
+    expect(p.tired).toBe(false);
+    ticks(p, 60);
+    ticks(p, 2, {}, { x: 1, run: true });
+    expect([p.tired, p.run.running]).toEqual([false, true]);
   });
 });

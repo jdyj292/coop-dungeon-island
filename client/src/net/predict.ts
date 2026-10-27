@@ -91,7 +91,7 @@ export class Predictor {
 
   /**
    * 서버 패치: server = 그 시각의 내 서버 상태(mirror), lastSeq = 서버가 처리한 마지막 입력.
-   * 서버 쪽 자원(HP·MP·물약)은 그대로 받고, 쿨타임은 예측과 서버 중 긴 쪽 (먼저 누른 것을 다시 못 누르게)
+   * 서버 쪽 자원(HP·MP·지구력·물약)은 그대로 받고, 쿨타임은 예측과 서버 중 긴 쪽 (먼저 누른 것을 다시 못 누르게)
    */
   reconcile(server: PlayerState, lastSeq: number, dt: number): { mode: Correction; error: number } {
     this.pending = this.pending.filter((p) => p.seq > lastSeq);
@@ -107,7 +107,7 @@ export class Predictor {
       stepPlayerState(sim, this.weapon, input, dt, this.bounds, p.speedMul);
     }
     const s = this.state;
-    Object.assign(s, { hp: sim.hp, maxHp: sim.maxHp, mp: sim.mp, potions: sim.potions, ult: sim.ult, feathers: sim.feathers });
+    Object.assign(s, { hp: sim.hp, maxHp: sim.maxHp, mp: sim.mp, stamina: sim.stamina, staminaWait: sim.staminaWait, tired: sim.tired, potions: sim.potions, ult: sim.ult, feathers: sim.feathers });
     for (const [id, left] of Object.entries(sim.cooldowns)) s.cooldowns[id] = Math.max(s.cooldowns[id] ?? 0, left);
     // 맞는 것(경직·다운·쓰러짐)은 예측하지 않는다: 서버를 따른다
     s.hurt = sim.hurt;

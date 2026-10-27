@@ -24,6 +24,8 @@ export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: nu
   s.ultGauge = int(p.ult);
   const v = s.priv;
   v.mp = int(p.mp);
+  v.stamina = int(p.stamina);
+  v.tired = p.tired;
   v.potionHp = p.potions.hp;
   v.potionMp = p.potions.mp;
   v.feathers = p.feathers;

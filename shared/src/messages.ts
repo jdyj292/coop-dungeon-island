@@ -61,7 +61,7 @@ export function parseC2S<K extends C2SType>(type: K, raw: unknown): C2SMessage<K
 export interface S2C {
   hit: { attacker: string; target: number; damage: number; strength: string; flags: string[]; hitstop: number; x: number; y: number; z: number; t: number };
   playerHit: { pid: string; damage: number; strength: string; from: number | null };
-  rejected: { seq: number; reason: 'cooldown' | 'mp' | 'state' | 'rate' };
+  rejected: { seq: number; reason: 'cooldown' | 'mp' | 'stamina' | 'state' | 'rate' };
   combo: { pid: string; count: number; milestone?: number };
   emote: { player: string; id: number };
   chat: { player: string; text: string; t: number };

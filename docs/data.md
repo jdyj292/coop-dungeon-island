@@ -184,7 +184,8 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | potions | `hp { heal(최대 HP 비율), cooldown, carry }`, `mp { amount, cooldown, carry }` (balance.md 6장, carry = 반입 한도) |
 | ultimate | `{ max, onHit, onHurt, onTeamMilestone }` 필살기 게이지 최대·적중 1회·피격 1회·팀 콤보 단계 달성 시 전원 증가량 (balance.md 8장) |
 | hurtbox | 플레이어 피격 판정 크기 `{ width, height, depth }` (몬스터 공격·투사체) |
-| backstep | `{ distance, sec, invuln, cooldown }` 백스텝 거리(px)·시간·앞쪽 무적 시간·쿨 (combat.md 1장) |
+| backstep | `{ distance, sec, invuln, cooldown }` 회피 거리(px)·시간·앞쪽 무적 시간·쿨 (combat.md 1장) |
+| stamina | `{ max, dodge, runPerSec, regen, regenDelay }` 지구력 최대·회피 1회 소모·달리기 초당 소모·초당 회복·회복 시작 대기(초) (combat.md 1장) |
 
 - 이동 계산은 shared/src/movement.ts (클라이언트·서버 공용): 축마다 따로 움직이고 대각선도 정규화하지 않는다. 행동 중 이동(move)은 actions.ts actionMoveDelta, 판정 모양은 shapes.ts
 - 모든 진행은 1/60초 고정 틱 (shared/src/tick.ts, docs/network.md 12장)

@@ -1,6 +1,6 @@
 // 메시지 → 틱 입력 (docs/network.md 4·7장). 이동은 마지막 값 유지, 누름(행동·물약)은 다음 틱에 한 번
 // 받을 때 검사해서 안 되는 행동은 거절 사유를 돌려준다 (클라이언트는 예측을 취소)
-import { skillDef, skillReady, type ActionDef, type C2SMessage, type PlayerInput, type PlayerState, type PotionKind, type S2C, type WeaponDef } from '@game/shared';
+import { canDodge, skillDef, skillReady, type ActionDef, type C2SMessage, type PlayerInput, type PlayerState, type PotionKind, type S2C, type WeaponDef } from '@game/shared';
 
 type Reason = S2C['rejected']['reason'];
 
@@ -39,6 +39,7 @@ export class InputQueue {
       }
       case 'backstep':
         if (p.backstepCd > 0) return 'cooldown';
+        if (!canDodge(p)) return 'stamina';
         this.backstep = true;
         return null;
       default:

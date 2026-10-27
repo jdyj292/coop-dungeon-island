@@ -88,7 +88,7 @@ describe('포자꽃 (turret, 투사체)', () => {
   it('백스텝 무적이면 맞지 않음', () => {
     const sim = room();
     sim.spawn([{ kind: 'sporeflower', x: 120, y: 56 }]);
-    sim.player.backstep = { t: 0 };
+    sim.player.backstep = { t: 0, dir: -1 };
     const ev = run(sim, 0.15);
     expect(ev.some((e) => e.type === 'playerHit')).toBe(false);
   });

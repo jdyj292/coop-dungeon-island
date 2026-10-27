@@ -44,6 +44,8 @@ export interface MonsterSnap extends Pos {
 
 /** 본인 전용 값 (보간 없이 최신) */
 export interface PrivateView {
+  stamina: number;
+  tired: boolean;
   mp: number;
   coins?: number;
   materials?: number;

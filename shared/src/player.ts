@@ -1,4 +1,4 @@
-// 플레이어 한 틱 (클라이언트 예측·서버 판정 공용): 행동·대시·백스텝·스킬 쿨타임·걷기·달리기 (docs/combat.md 1·2장)
+// 플레이어 한 틱 (클라이언트 예측·서버 판정 공용): 행동·대시·회피(코드 이름 backstep)·지구력·스킬 쿨타임·걷기·달리기 (docs/combat.md 1·2장)
 import {
   actionMoveDelta, canTurn, newFighter, stepFighter,
   type ActionDef, type ActionRun, type Fighter, type FighterEvent, type WeaponDef,
@@ -14,15 +14,20 @@ export interface PlayerState extends Vitals {
   facing: number;
   fighter: Fighter;
   run: RunState;
-  /** 백스텝 중이면 경과 시간 */
-  backstep: { t: number } | null;
+  /** 회피 중이면 경과 시간과 이동 방향 (1 = 오른쪽, -1 = 왼쪽) */
+  backstep: { t: number; dir: number } | null;
   backstepCd: number;
+  /** 지구력 (회피·달리기에 씀), 회복까지 남은 대기 시간 */
+  stamina: number;
+  staminaWait: number;
+  /** 달리다 지구력이 바닥남: 달리기 입력을 뗄 때까지 걷기 */
+  tired: boolean;
   /** 스킬 id → 남은 쿨타임 (실제 쿨 = 기준 쿨 × cooldownScale) */
   cooldowns: Record<string, number>;
 }
 
 export const newPlayerState = (pos: Vec2): PlayerState => ({
-  pos, facing: 1, fighter: newFighter(), run: newRunState(), backstep: null, backstepCd: 0, cooldowns: {}, ...newVitals(),
+  pos, facing: 1, fighter: newFighter(), run: newRunState(), backstep: null, backstepCd: 0, stamina: PLAYER.stamina.max, staminaWait: 0, tired: false, cooldowns: {}, ...newVitals(),
 });
 
 export interface PlayerInput {
@@ -53,16 +58,26 @@ export interface PlayerStep {
 export const skillReady = (p: PlayerState, skill: ActionDef): boolean =>
   (p.cooldowns[skill.id] ?? 0) <= 0 && p.mp >= (skill.mp ?? 0);
 
-/** 행동·백스텝의 좌우 이동 (방 경계·장애물에 막힘) */
+/** 회피 가능: 쿨타임이 끝났고 지구력이 1회분 이상 (공격 중 여부는 stepPlayerState가 본다) */
+export const canDodge = (p: PlayerState): boolean => p.backstepCd <= 0 && p.stamina >= PLAYER.stamina.dodge;
+
+function spendStamina(p: PlayerState, n: number): void {
+  p.stamina = Math.max(0, p.stamina - n);
+  p.staminaWait = PLAYER.stamina.regenDelay;
+}
+
+/** 행동·회피의 좌우 이동 (방 경계·장애물에 막힘) */
 const moveX = (p: PlayerState, x: number, b: Bounds) => { p.pos = moveBox(p.pos, { x, y: p.pos.y }, playerHalf(), b); };
 
 /** speedMul: 장판 감속 등 이동 속도 배율 */
 export function stepPlayerState(
   p: PlayerState, weapon: WeaponDef, input: PlayerInput, dt: number, bounds: Bounds, speedMul = 1,
 ): PlayerStep {
-  const bs = PLAYER.backstep;
+  const bs = PLAYER.backstep, st = PLAYER.stamina;
   for (const id of Object.keys(p.cooldowns)) p.cooldowns[id] = Math.max(0, p.cooldowns[id]! - dt);
   p.backstepCd = Math.max(0, p.backstepCd - dt);
+  p.staminaWait = Math.max(0, p.staminaWait - dt);
+  if (p.staminaWait <= 0) p.stamina = Math.min(st.max, p.stamina + st.regen * dt);
   const out: PlayerStep = { events: [], moved: 0, running: false, backstepStarted: false, hurt: stepVitals(p, dt), potion: null };
   // 쓰러짐·경직·다운 중에는 조작 불가 (물약도 다운 중 불가, playerHurt.usePotion)
   if (p.downed) return out;
@@ -72,22 +87,28 @@ export function stepPlayerState(
     return out;
   }
 
-  // 백스텝: 공격 중(어느 구간이든) 불가, 쿨 2초. 바라보는 반대쪽으로 고르게 이동하고 그동안 다른 입력은 무시
-  if (!p.backstep && input.backstep && !p.fighter.run && p.backstepCd <= 0) {
-    p.backstep = { t: 0 };
+  // 회피: 공격 중(어느 구간이든) 불가, 지구력 소모. 좌우 입력 방향(없으면 바라보는 반대쪽)으로 고르게 이동하고
+  // 그동안 다른 입력은 무시. 바라보는 방향은 그대로
+  if (!p.backstep && input.backstep && !p.fighter.run && canDodge(p)) {
+    p.backstep = { t: 0, dir: Math.sign(input.x) || -p.facing };
     p.backstepCd = bs.cooldown;
+    spendStamina(p, st.dodge);
     out.backstepStarted = true;
   }
   if (p.backstep) {
     const t0 = p.backstep.t, t1 = Math.min(bs.sec, t0 + dt);
-    moveX(p, p.pos.x - p.facing * (bs.distance * (t1 - t0)) / bs.sec, bounds);
+    moveX(p, p.pos.x + p.backstep.dir * (bs.distance * (t1 - t0)) / bs.sec, bounds);
     p.backstep.t = t0 + dt;
     if (p.backstep.t >= bs.sec) p.backstep = null;
     stepRun(p.run, 0, dt);
     return out;
   }
 
-  const running = stepRun(p.run, input.x, dt, input.run) && !p.fighter.run;
+  // 지구력이 바닥나면 달리기 입력을 뗄 때까지 걷기 (다시 달리려면 두 번 누르기)
+  const wantRun = stepRun(p.run, input.x, dt, input.run);
+  if (!wantRun) p.tired = false;
+  if (p.tired) p.run.running = false;
+  const running = wantRun && !p.tired && !p.fighter.run;
   const skill = input.skill && skillReady(p, input.skill) ? input.skill : null;
   const before = p.fighter.run && { run: p.fighter.run, t: p.fighter.run.t };
   out.events = stepFighter(p.fighter, weapon, { attack: input.attack, skill, dashing: running }, dt);
@@ -106,6 +127,10 @@ export function stepPlayerState(
     const next = stepMove(p.pos, input, dt, moveSpeed(running, weapon.moveMul * speedMul), bounds);
     out.moved = Math.hypot(next.x - p.pos.x, next.y - p.pos.y);
     p.pos = next;
+    if (running && out.moved > 0) {
+      spendStamina(p, st.runPerSec * dt);
+      if (p.stamina <= 0) p.tired = true;
+    }
   }
   out.running = running && !p.fighter.run;
   return out;

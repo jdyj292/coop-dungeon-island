@@ -77,7 +77,7 @@
 ### 검증과 제한
 - 모든 메시지는 서버에서 형식 검사 (shared/src/messages.ts의 zod 스키마)
 - 횟수 제한: input 초당 30, action 초당 10, 섬 메시지 초당 5, chat 3초에 3회. 넘으면 무시, 계속되면 연결 종료
-- 서버가 거절한 행동은 `rejected { seq, reason }`으로 알린다 (쿨타임, MP 부족, 상태 불가). 받을 때 검사: 장착하지 않은 스킬·필살기·충전(MVP 이후)은 state
+- 서버가 거절한 행동은 `rejected { seq, reason }`으로 알린다 (쿨타임, MP 부족, 지구력 부족 stamina, 상태 불가). 받을 때 검사: 장착하지 않은 스킬·필살기·충전(MVP 이후)은 state
 - 형식이 틀린 메시지도 횟수에 든다. 5초 안에 30개를 버리면 연결 종료 (NET.limits)
 - 구현: server/src/systems/ (dungeonGame = 진행, inputs = 입력 대기열·거절, rateLimit, sync = 상태 반영, events = 이벤트). rooms/DungeonRoom은 연결·전송만
 
@@ -107,7 +107,7 @@ PlayerState
   priv: PlayerPrivate       @filter로 본인에게만
 
 PlayerPrivate (본인에게만 필터링해서 전송)
-  mp, cooldowns (skillId → 끝나는 서버 시각 ms, 20ms 이상 바뀔 때만 갱신), potionHp, potionMp, feathers, coins, materials, exp, bonusPct (이번 판 보상)
+  mp, stamina, tired (달리다 지구력이 바닥나 걷는 중), cooldowns (skillId → 끝나는 서버 시각 ms, 20ms 이상 바뀔 때만 갱신), potionHp, potionMp, feathers, coins, materials, exp, bonusPct (이번 판 보상)
 
 MonsterState
   id, type, x, y, z, facing
@@ -183,7 +183,7 @@ IslandState
 
 - 구현: client/src/net/predict.ts (Predictor). 틱마다 (보낸 마지막 seq, 입력)을 보관하고, 패치가 오면 서버 상태(mirror)에서 남은 입력을 다시 적용
 - 이동 입력은 "바뀔 때 + 20Hz"로 보내므로 서버가 한 입력을 적용한 틱 수가 2~3틱 다를 수 있다 (걷기 1~3px, 위 보정 규칙이 흡수)
-- 보정할 때 바꾸는 것: 위치·백스텝, 행동이 서로 다르면 행동. HP·MP·물약은 서버 값, 쿨타임은 예측과 서버 중 긴 쪽
+- 보정할 때 바꾸는 것: 위치·백스텝, 행동이 서로 다르면 행동. HP·MP·지구력·물약은 서버 값, 쿨타임은 예측과 서버 중 긴 쪽
 - 상태 이름(idle·walk·action 등)은 shared playerStateName으로 서버·클라이언트가 같게
 - 개발용 지연: `?lag=왕복ms` (보낼 때·받을 때 절반씩). 흔들림·손실 조정 패널은 roadmap 2-6
 
@@ -225,7 +225,7 @@ IslandState
 ### 내 회피 판정
 - 백스텝 무적은 입력 시각(t) 기준으로 소급 적용: 서버가 백스텝 입력을 받기 전에 처리한 피격이라도, 피격 시각이 t 이후이고 100ms 이내면 그 피격을 취소
 - 그래서 내 화면에서 피했으면 대부분 피한 것으로 처리된다
-- 구현: shared/src/sim/hitLog.ts (피격 직전 HP·경직·다운·쓰러짐·깃털·무적·행동 기록, 300ms) → 가장 이른 취소 피격 직전으로 되돌린 뒤 백스텝. 백스텝 쿨타임 중이면 취소하지 않음
+- 구현: shared/src/sim/hitLog.ts (피격 직전 HP·경직·다운·쓰러짐·깃털·무적·행동 기록, 300ms) → 가장 이른 취소 피격 직전으로 되돌린 뒤 백스텝. 회피 쿨타임 중이거나 지구력이 모자라면 취소하지 않음
 
 ### 히트스톱 동기화
 - 서버: 적중 시 공격자와 대상만 hitstop 시간만큼 정지 (월드는 계속 진행)
@@ -287,7 +287,7 @@ IslandState
 | actions.ts | 행동 구간 계산, 행동 중 이동 |
 | shapes.ts | 판정 모양 (hitbox · area circle/rect/fan · projectile · zone) |
 | tick.ts | 고정 1/60초 틱 누적기 (FixedStep) |
-| player.ts | 플레이어 한 틱 (행동·대시·백스텝·쿨타임·이동) |
+| player.ts | 플레이어 한 틱 (행동·대시·회피·지구력·쿨타임·이동) |
 | monster/ | 몬스터 상태·AI·공격·토큰·투사체·장판 |
 | sim/room.ts | 방 한 틱 (RoomSim): 몬스터 → 투사체·장판 → 플레이어 → 겹침 풀기. 플레이어 여럿(pid), `step(dt, 입력 Map)`. 솔로는 `tick(dt, 입력)`. 서버 DungeonRoom이 그대로 돌린다 |
 | sim/aim.ts · sim/strike.ts | 몬스터 대상 선택 (dungeon.md 3장) · 플레이어 행동 적중 |

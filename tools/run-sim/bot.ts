@@ -1,6 +1,6 @@
 // run-sim 봇: 서버 DungeonGame에 메시지를 보내는 단순한 플레이어 (사람보다 덜 피하고 덜 똑똑함 → 시간은 참고값)
 // 가까운 몬스터 옆으로 가서 평타, 쿨이 되면 스킬, 예고를 보면 백스텝, HP 40% 아래면 물약, 쓰러진 동료 부활, 클리어 뒤 상자·출구
-import { attackPhase, mapOf, skillDef, skillReady, weaponDef, type Monster, type RoomDef } from '../../shared/src';
+import { attackPhase, canDodge, mapOf, skillDef, skillReady, weaponDef, type Monster, type RoomDef } from '../../shared/src';
 import type { DungeonGame } from '../../server/src/systems/dungeonGame';
 
 /** 행동 메시지 간격 (서버 제한 초당 10회 안) */
@@ -147,7 +147,7 @@ export class Bot {
     const reachY = Math.max(0, (13 + m.def.hurtbox.depth) / 2 - 3), ty = b.y + (p.pos.y < b.y ? -1 : 1) * Math.min(OFFSET_Y, reachY);
     const dist = Math.hypot(b.x - p.pos.x, b.y - p.pos.y);
     // 예고를 보면 물러남
-    if (attackPhase(m) === 'windup' && dist < DODGE_PX + m.def.hurtbox.width / 2 && p.backstepCd <= 0 && !p.fighter.run) {
+    if (attackPhase(m) === 'windup' && dist < DODGE_PX + m.def.hurtbox.width / 2 && canDodge(p) && !p.fighter.run) {
       if ((b.x > p.pos.x) === (p.facing > 0)) this.act('backstep');
       else this.move(b.x > p.pos.x ? 1 : -1, 0, false);
       return;
