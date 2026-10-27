@@ -16,6 +16,19 @@ export function panel(g: G, x: number, y: number, w: number, h: number): void {
   dot(g, x + 2, y + 2, C('global.ui.panel'), w - 4, h - 4);
 }
 
+/** 아래 끝에 붙는 묶음 판 (hud.md 1장): 반투명 판, 위·옆 테두리, 위 모서리 1px 깎음, 위쪽 1px 그림자, 안쪽 윗줄 광택. bottom = 화면 아래 */
+export function cluster(g: G, x: number, y: number, w: number, bottom: number): void {
+  const h = fx.hud, border = C('global.ui.panelBorder');
+  dot(g, x + 2, y - 1, C('global.ui.cover'), w - 4, 1, h.clusterShadowAlpha);
+  dot(g, x + 1, y + 1, C('global.ui.panel'), w - 2, bottom - y - 1, h.clusterAlpha);
+  dot(g, x + 2, y, border, w - 4, 1);
+  dot(g, x + 1, y + 1, border);
+  dot(g, x + w - 2, y + 1, border);
+  dot(g, x, y + 2, border, 1, bottom - y - 2);
+  dot(g, x + w - 1, y + 2, border, 1, bottom - y - 2);
+  dot(g, x + 2, y + 1, C('global.fx.flash'), w - 4, 1, h.clusterSheenAlpha);
+}
+
 /** 코인 아이콘 5×5 (승인 데모 아래 띠) */
 export function coinIcon(g: G, x: number, y: number): void {
   dot(g, x, y, C('global.ui.coin'), 5, 5);
@@ -29,8 +42,13 @@ export function materialIcon(g: G, x: number, y: number): void {
   dot(g, x + 1, y + 3, C('floors.1.monster.mushroomStem'), 3, 2);
 }
 
-/** 막대: 위 절반 밝은색·아래 절반 어두운색. trail = 줄어든 부분을 흰색으로 남길 비율 (hud.md 1장) */
-export function bar(g: G, x: number, y: number, w: number, h: number, f: number, light: string, dark: string, trail = f): void {
+/** 막대: 위 절반 밝은색·아래 절반 어두운색. trail = 줄어든 부분을 흰색으로 남길 비율, ticks = 1/ticks마다 눈금 (hud.md 1장) */
+export function bar(g: G, x: number, y: number, w: number, h: number, f: number, light: string, dark: string, trail = f, ticks = 0): void {
+  drawBar(g, x, y, w, h, f, light, dark, trail);
+  for (let k = 1; k < ticks; k++) dot(g, x + Math.round(w * k / ticks), y, C('global.ui.panel'), 1, h, fx.hud.tickAlpha);
+}
+
+function drawBar(g: G, x: number, y: number, w: number, h: number, f: number, light: string, dark: string, trail: number): void {
   dot(g, x - 1, y - 1, C('global.ui.panelInner'), w + 2, h + 2);
   dot(g, x, y, C('global.ui.barTrack'), w, h);
   const tw = Math.round(w * Math.max(0, Math.min(1, trail)));
@@ -85,4 +103,14 @@ export function slot(g: G, x: number, y: number, s: SlotLook): void {
   if (s.cover) dot(g, x + 2, y + 2, C('global.ui.cover'), 14, Math.round(14 * Math.min(1, s.cover)), h.coverAlpha);
   if (s.dim) dot(g, x + 2, y + 2, C('global.ui.panel'), 14, 14, h.dimAlpha);
   drawText(g, s.key, x + 2, y + 2, { color: 'global.ui.keyLabel', outline: 'none' });
+}
+
+/** 장착 안 된 18×18 슬롯: 모서리 깎은 흐린 테두리와 키 글자만 (hud.md 1장) */
+export function emptySlot(g: G, x: number, y: number, key: string): void {
+  const c = C('global.ui.panelBorder'), a = fx.hud.emptySlotAlpha;
+  dot(g, x + 1, y, c, 16, 1, a);
+  dot(g, x + 1, y + 17, c, 16, 1, a);
+  dot(g, x, y + 1, c, 1, 16, a);
+  dot(g, x + 17, y + 1, c, 1, 16, a);
+  drawText(g, key, x + 2, y + 2, { color: 'global.ui.panelBorder', outline: 'none' });
 }

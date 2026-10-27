@@ -39,7 +39,7 @@
     "zone": { "bear_yawn": { "fill": "floors.1.monster.sleepCloud", "alpha": 0.45 } },
     "telegraphDash": 2
   },
-  "hud": { "trailSec": 0.4, "readyFlashSec": 0.2, "clearSec": 0.8, "ultBlinkSec": 0.15, "countPopSec": 0.15, "coverAlpha": 0.6, "dimAlpha": 0.6, "ultFillAlpha": 0.35, "bannerAlpha": 0.75, "bonusSec": 1.5, "resultStepSec": 0.35, "resultBlinkSec": 0.4, "bossLines": 12 },
+  "hud": { "trailSec": 0.4, "readyFlashSec": 0.2, "clearSec": 0.8, "ultBlinkSec": 0.15, "countPopSec": 0.15, "coverAlpha": 0.6, "dimAlpha": 0.6, "ultFillAlpha": 0.35, "clusterAlpha": 0.78, "clusterShadowAlpha": 0.4, "clusterSheenAlpha": 0.07, "emptySlotAlpha": 0.75, "tickAlpha": 0.6, "lootDimAlpha": 0.45, "bannerAlpha": 0.75, "bonusSec": 1.5, "resultStepSec": 0.35, "resultBlinkSec": 0.4, "bossLines": 12 },
   "bossIntro": { "panSec": 0.8, "holdSec": 1.2, "backSec": 0.6 },
   "playerMotion": { "breatheSec": 0.6, "turnSec": 0.05, "getupSec": 0.3, "backstepLand": 0.7, "runCycle": ["run1", "run2", "run3", "run4"], "starRadius": [5, 2], "starAbove": 20, "starSpeed": 4 },
   "monster": { "walkFrameSec": 0.15, "shakeSec": 0.033, "spinSec": 0.125, "armorBlink": 0.1 },

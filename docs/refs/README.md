@@ -17,7 +17,8 @@
 ## demos/ — 원본 데모 (HTML, 브라우저로 열어 움직임 확인)
 | 파일 | 내용 |
 |---|---|
-| floor1_room_hud_mockup.html | 1층 방 + HUD (전투 중 / 보스전 HUD / 방 클리어 전환) |
+| floor1_room_hud_mockup.html | 1층 방 + HUD (전투 중 / 보스전 HUD / 방 클리어 전환). 아래 띠는 예전 통짜 띠 |
+| hud_bottom_cluster.html | 던전 아래 HUD 묶음형 (현재 vs 묶음형 비교, 기준 = hudBottomDraft) |
 | island_screen_hud_mockup.html | 섬 기본 화면 / 배치 모드 |
 | character_expressions.html, character_outfit_layers.html, character_weapon_poses.html | 캐릭터 |
 | floor1_monster_animations.html | 몬스터 동작 |
