@@ -31,7 +31,7 @@
       {
         "id": "mushroom_slam",
         "phases": {
-          "windup": 0.6,
+          "windup": 0.8,
           "active": 0.15,
           "recovery": 0.5
         },
