@@ -27,6 +27,8 @@ export class Bot {
   private skills = weaponDef('greatsword').baseSkills;
   private lastPos = { x: 0, y: 0, at: 0 };
   private sidestep: { dir: number; until: number } | null = null;
+  /** 비켜 가는 방향을 번갈아 (방 가운데 쪽이 막혔으면 다음엔 반대쪽) */
+  private sideFlip = 1;
 
   constructor(private g: DungeonGame, readonly pid: string) {}
 
@@ -52,7 +54,8 @@ export class Bot {
     if (Math.hypot(p.x - this.lastPos.x, p.y - this.lastPos.y) > 1) this.lastPos = { x: p.x, y: p.y, at: g.now };
     else if (!this.sidestep && !this.me.fighter.run && g.now - this.lastPos.at > STUCK_MS) {
       const mid = (g.sim.bounds.minY + g.sim.bounds.maxY) / 2;
-      this.sidestep = { dir: p.y < mid ? 1 : -1, until: g.now + SIDESTEP_MS };
+      this.sidestep = { dir: (p.y < mid ? 1 : -1) * this.sideFlip, until: g.now + SIDESTEP_MS };
+      this.sideFlip = -this.sideFlip;
     }
     if (this.sidestep && g.now < this.sidestep.until) {
       this.move(0, this.sidestep.dir, false);
