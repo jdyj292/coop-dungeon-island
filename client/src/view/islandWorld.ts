@@ -1,4 +1,4 @@
-// 섬 월드 그리기 (docs/art.md 6장 섬): 바닥(물 2프레임) + 고정 시설·가장자리 나무 + 상호작용 [E] + 나비
+// 섬 월드 그리기 (docs/art.md 6장 섬): 바닥(물 2프레임) + 구름 그림자 + 고정 시설·가장자리 나무 + 상호작용 [E] + 나비
 // 투영은 던전과 같다 (layout.project: 깊이 0 = 화면 FLOOR_TOP). 사물·캐릭터 깊이 정렬 = 로직 y
 import type Phaser from 'phaser';
 import { footOf, ISLAND, TILE, type Vec2 } from '@game/shared';
@@ -8,6 +8,7 @@ import { islandObjects, islandView } from '../sprites/island';
 import { islandTexture } from '../sprites/textures';
 import { drawText } from '../ui/pixelFont';
 import { paintGround } from './islandGround';
+import { IslandSky } from './islandSky';
 import { FLOOR_TOP, project } from './layout';
 
 /** 화면에서 한 칸 깊이 (16 × 10/16) */
@@ -45,6 +46,7 @@ export class IslandWorld {
   private ground: Phaser.GameObjects.Image;
   private prompt: Phaser.GameObjects.Graphics;
   private butterflies: Phaser.GameObjects.Graphics;
+  private sky: IslandSky;
   /** 시설 id → 발밑 화면 좌표 ([E] 위치) */
   private feet = new Map<string, { sx: number; sy: number }>();
 
@@ -55,6 +57,8 @@ export class IslandWorld {
     for (const s of ISLAND.scenery) this.addObject(s.id, { x: (s.x + 0.5) * TILE, y: (s.y + 1) * TILE - 1 }, s.ground);
     this.prompt = scene.add.graphics().setDepth(5000);
     this.butterflies = scene.add.graphics().setDepth(4000);
+    const { w, h } = islandScreenSize();
+    this.sky = new IslandSky(scene, w, h);
   }
 
   /** 사물 하나 (첫 회전 모습). ground면 바닥 바로 위 (깊이 정렬 없이 캐릭터 아래). 반환: 발밑 화면 좌표 */
@@ -81,6 +85,7 @@ export class IslandWorld {
       drawText(g, 'E', x + 3, y + 2, { color: 'global.outline', outline: 'none' });
     }
     this.drawButterflies(timeMs);
+    this.sky.update(timeMs);
   }
 
   /** 나비 3마리 (승인 데모: 날개 두 점 + 몸 두 점, 색 하늘·노랑·흰): 천천히 맴돌며 날갯짓 */

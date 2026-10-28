@@ -24,7 +24,7 @@ export const groundHeight = (grassH: number) => grassH + SHORE.sand + SHORE.clif
 const DOTS = 420 / (288 * 108), TUFTS = 55 / (288 * 100);
 
 /** 데모의 파크-밀러 난수 (같은 씨앗 → 같은 흩뿌림) */
-function lcg(seed: number): () => number {
+export function lcg(seed: number): () => number {
   let s = seed;
   return () => {
     s = (s * 16807) % 2147483647;
@@ -40,7 +40,7 @@ function hash01(i: number, j: number, seed: number): number {
 }
 
 /** 부드러운 값 노이즈 (칸 cw×ch px, 모서리 값을 smoothstep으로 보간) */
-function valueNoise(x: number, y: number, cw: number, ch: number, seed: number): number {
+export function valueNoise(x: number, y: number, cw: number, ch: number, seed: number): number {
   const gx = x / cw, gy = y / ch, i = Math.floor(gx), j = Math.floor(gy);
   const s = (t: number) => t * t * (3 - 2 * t), u = s(gx - i), v = s(gy - j);
   const a = hash01(i, j, seed), b = hash01(i + 1, j, seed), c = hash01(i, j + 1, seed), d = hash01(i + 1, j + 1, seed);

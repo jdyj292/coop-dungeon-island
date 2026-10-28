@@ -63,5 +63,9 @@
     "popSec": 0.55, "popPeak": 14, "popWindowSec": 1.5,
     "glow": { "count": 6, "sec": 0.6, "spread": 12, "rise": [14, 32] },
     "dropFrom": 110, "landSec": 0.2
+  },
+  "_islandSky": "섬 구름 그림자 (art.md 6장 섬 분위기). clouds: count개가 speed px/초로 가로로만 흐름(위아래 움직임 없음, 반대편에서 다시 들어올 때 새 깊이), 크기 w×h 범위. 모양 = 가운데 타원 몸통 + 둘레에 둥근 혹 lobes개(반지름 = 가로 × lobeR) 합침 + (값 노이즈 − 0.5) × noise로 살짝 흐트림, cut보다 크면 그림자(cut + edge까지는 바둑판), 진하기 alpha",
+  "islandSky": {
+    "clouds": { "count": 3, "w": [280, 400], "h": [100, 150], "lobes": [9, 13], "lobeR": [0.08, 0.17], "noise": 0.35, "cut": 0.12, "edge": 0.06, "speed": 3, "alpha": 0.24 }
   }
 }
