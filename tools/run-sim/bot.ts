@@ -26,7 +26,8 @@ export class Bot {
   private nextAction = 0;
   private skills = weaponDef('greatsword').baseSkills;
   private lastPos = { x: 0, y: 0, at: 0 };
-  private sidestep: { dir: number; until: number } | null = null;
+  /** 막혔을 때: until까지 깊이 방향으로 비킨 뒤, passUntil까지는 가로로만 (비스듬히 가다 같은 장애물에 다시 걸리지 않게) */
+  private sidestep: { dir: number; until: number; passUntil: number } | null = null;
 
   constructor(private g: DungeonGame, readonly pid: string) {}
 
@@ -52,10 +53,14 @@ export class Bot {
     if (Math.hypot(p.x - this.lastPos.x, p.y - this.lastPos.y) > 1) this.lastPos = { x: p.x, y: p.y, at: g.now };
     else if (!this.sidestep && !this.me.fighter.run && g.now - this.lastPos.at > STUCK_MS) {
       const mid = (g.sim.bounds.minY + g.sim.bounds.maxY) / 2;
-      this.sidestep = { dir: p.y < mid ? 1 : -1, until: g.now + SIDESTEP_MS };
+      this.sidestep = { dir: p.y < mid ? 1 : -1, until: g.now + SIDESTEP_MS, passUntil: g.now + SIDESTEP_MS * 2 };
     }
     if (this.sidestep && g.now < this.sidestep.until) {
       this.move(0, this.sidestep.dir, false);
+      return false;
+    }
+    if (this.sidestep && g.now < this.sidestep.passUntil && Math.abs(dx) > tol) {
+      this.move(dx, 0, false);
       return false;
     }
     this.sidestep = null;
@@ -144,7 +149,9 @@ export class Bot {
     const reach = 10 + m.def.hurtbox.width / 2;
     const side = p.pos.x < b.x ? -1 : 1, tx = b.x + side * reach;
     // 깊이를 살짝 비껴서 친다: 평타 판정(깊이 13 + 몬스터 깊이)의 안쪽, 돌진 정렬(멧돼지 6px)의 바깥
-    const reachY = Math.max(0, (13 + m.def.hurtbox.depth) / 2 - 3), ty = b.y + (p.pos.y < b.y ? -1 : 1) * Math.min(OFFSET_Y, reachY);
+    // 방 끝에 붙은 몬스터도 칠 수 있게 목표 깊이는 방 안으로 (밖이면 영영 줄을 못 맞춤)
+    const reachY = Math.max(0, (13 + m.def.hurtbox.depth) / 2 - 3), bd = this.g.sim.bounds;
+    const ty = Math.min(bd.maxY, Math.max(bd.minY, b.y + (p.pos.y < b.y ? -1 : 1) * Math.min(OFFSET_Y, reachY)));
     const dist = Math.hypot(b.x - p.pos.x, b.y - p.pos.y);
     // 예고를 보면 물러남
     if (attackPhase(m) === 'windup' && dist < DODGE_PX + m.def.hurtbox.width / 2 && canDodge(p) && !p.fighter.run) {

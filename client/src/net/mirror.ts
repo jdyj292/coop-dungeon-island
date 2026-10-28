@@ -37,6 +37,8 @@ export function mirrorPlayer(s: PlayerSnap, t: number, weaponId: string, priv?: 
   if (s.state === 'hitstun') p.hurt = { kind: 'stun', left: Math.max(0, PLAYER.hurt.stunSec - el) };
   if (s.state === 'down') p.hurt = { kind: 'down', left: Math.max(0, PLAYER.hurt.downSec - el) };
   p.downed = s.state === 'knocked';
+  // 우물에서 떨어지는 중: 그 상태가 시작된 뒤 흐른 시간으로 남은 시간 (본인 예측도 입력을 받지 않게)
+  if (s.state === 'arrive') p.arrive = Math.max(0, COMBAT.arriveSec - el);
   Object.assign(p, { hp: s.hp, maxHp: s.maxHp, ult: s.ult });
   if (priv) {
     p.mp = priv.mp;
@@ -66,6 +68,7 @@ export function mirrorMonster(s: MonsterSnap, t: number, prev?: Monster): Monste
   m.attack = def ? { def, t: sec(t - s.actionStart), dir: s.facing, dy: s.aimY, struck: [] } : null;
   m.moving = s.state === 'chase';
   m.frozen = s.state === 'frozen' ? 1 : 0;
+  m.sleep = s.state === 'sleep' ? 1 : 0;
   m.hopT = m.moving ? el : 0;
   m.hp = Math.round((s.hpRatio / 255) * m.maxHp);
   return m;

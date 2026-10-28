@@ -72,9 +72,10 @@
 - 방향 전환: 돌아서는 프레임 0.05초 + 발밑 먼지
 - 백스텝: 2프레임 + 잔상 (5장), 착지 때 찌그러짐 1회
 - 피격·다운·기상: 4장 피격 반응과 같은 규칙을 플레이어에도 적용. 모션 그림은 art.md 4장 (hurt·down·getup·knocked), 기상·부활 무적 = 깜빡임
-- 모션 고르는 순서: 쓰러짐 > 다운 > 피격 > 기상 > 백스텝 > 공격 포즈 > 방향 전환 > 달리기 > 걷기 > 숨쉬기 (client/src/view/playerView.ts)
+- 모션 고르는 순서: 쓰러짐 > 우물에서 떨어짐·착지 웅크림 > 다운 > 피격 > 기상 > 백스텝 > 공격 포즈 > 방향 전환 > 달리기 > 걷기 > 숨쉬기 (client/src/view/playerView.ts)
 - 점프는 없다 (combat.md). 뛰어오름은 스킬 연출과 우물 입장·복귀로만
 - 우물 뛰어들기 (섬, island.md 6장): 0.45초. 앞 70%는 구멍 위까지 포물선(최고 16px, 모션 backstepAir, 우물 앞에 그림), 나머지는 12px 가라앉으며(backstepLand, 우물 뒤에 그려 테두리가 가림) 사라지고 구멍에서 버섯빛 점 6개가 올라옴. 이름표 숨김
+- 우물에서 떨어져 착지 (던전 층 첫 방): combat.json arriveSec(0.5초) 동안 110px 위에서 가만히 놓은 물체처럼 점점 빨라지며 떨어짐(backstepAir, 그림자는 높이에 따라 작게), 착지하면 0.2초 웅크림(backstepLand) + 먼지(다운과 같은 양)·흔들림·wellLand. 다른 사람의 착지는 먼지만 (client/src/fx/wellArrival.ts dropZ, view/playerView.ts)
 - 우물에서 튀어나오기 (섬 복귀): 0.55초. 뛰어들기를 거꾸로 — 구멍 속에서 솟아(빛 점) 포물선(최고 14px)으로 착지 자리에. 값 fx.json wellHop, 구현 client/src/fx/wellHop.ts
 
 ## 7. 스킬 모션
@@ -89,6 +90,7 @@
 - 예고(windup)는 몸으로 분명하게: 웅크림·떨림·부위 치켜듦. 강 공격일수록 길게
 - 공격 순간은 늘어난 프레임 1장 + 스미어나 돌진 먼지
 - 이동에도 리듬: 버섯은 튀어오름-착지 찌그러짐, 멧돼지는 2프레임 걷기
+- 잠 (층 첫 방, dungeon.md 2장): 대기 그림 + 머리 위 3×3 도트 z 두 개가 번갈아 떠오름(palette floors.1.monster.sleepCloud). 깨어나는 순간 피격 반응으로 움찔 + monWake (같은 순간 여럿이면 소리 하나로 합쳐짐, client/src/fx/wellArrival.ts SleepMarks)
 - 구현 (client/src/view/monsterView.ts): 피격 반응 > 어지러움·그로기 > 공격 구간(states `구간:공격id`) > 이동(move) > 대기 순으로 프레임 선택. 프레임의 shake는 좌우 1px 떨림, spin은 90°씩 회전, 슈퍼아머 중 외곽선 금색 깜빡임. 값은 fx.json monster
 
 ## 9. 모션 확인 도구 (tools/motion-preview)

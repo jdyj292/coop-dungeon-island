@@ -52,6 +52,7 @@ function monsterStateName(m: Monster): string {
   const b = m.body;
   if (b.state === 'air') return 'airborne';
   if (b.state !== 'idle') return b.state;
+  if (m.sleep > 0) return 'sleep';
   if (m.frozen > 0) return 'frozen';
   if (m.mode === 'attack') return 'action';
   if (m.mode === 'selfStun') return 'dizzy';

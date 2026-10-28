@@ -48,6 +48,8 @@ export interface Monster {
   groggyExtended?: number;
   /** 빙결 남은 시간 (combat.md 3장): 움직이지도 공격하지도 않음, 맞으면 피해·경직은 그대로, 띄워지거나 다운되면 풀림 */
   frozen: number;
+  /** 잠든 채 남은 시간 (첫 방 rooms.json wakeSec, dungeon.md 5장): 움직이지도 공격하지도 않음, 맞으면 바로 깨어남. 줄이는 건 RoomSim (누군가 착지한 뒤부터) */
+  sleep: number;
 }
 
 /** 빙결 (얼음 장판 등 status freeze). 더 긴 쪽으로 */
@@ -60,7 +62,7 @@ export function newMonster(id: number, kind: string, x: number, y: number, hpMul
   const def = MONSTERS[kind];
   if (!def) throw new Error(`몬스터 '${kind}' 없음`);
   return {
-    id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0, frozen: 0,
+    id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0, frozen: 0, sleep: 0,
     attack: null, hasToken: false, cooldowns: {}, aware: false, moving: false, hopT: 0, loop: { phase: 0, index: 0 },
   };
 }

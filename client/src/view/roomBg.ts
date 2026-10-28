@@ -1,7 +1,6 @@
 // 던전 방 배경 (docs/art.md 6장 "바닥과 벽"). 승인 데모 floor1_room_hud_mockup.html의 그리기를 월드 좌표로 옮김
 import { TILE, type RoomDef } from '@game/shared';
 import { color, paletteNumber } from '../palette';
-import { draftsOn } from '../sprites/data';
 import { ramp } from '../sprites/shade';
 import { drawCeiling, wellHole } from './roomCeiling';
 import { FIELD_BOTTOM, FLOOR_TOP, WALL_TOP } from './layout';
@@ -23,8 +22,8 @@ function rng(seed: number): () => number {
   };
 }
 
-/** floor: 1층. wellRoom = 첫 방이면 그 방 (초안, ?drafts=1에서만 천장·우물 구멍) */
-export function drawRoomBg(floor: number, roomW: number, depthTiles: number, height: number, wellRoom?: RoomDef): HTMLCanvasElement {
+/** floor: 1층. room?.wellDrop이면 입장 지점 위 천장에 우물 구멍·밧줄·빛줄기 */
+export function drawRoomBg(floor: number, roomW: number, depthTiles: number, height: number, room?: RoomDef): HTMLCanvasElement {
   const c = (k: string) => color(`floors.${floor}.${k}`);
   const RF = ramp(c('bg.floor')), RA = ramp(c('bg.floorAlt')), RW = ramp(c('bg.wall')), RD = ramp(c('bg.wallDark'));
   const RP = ramp(c('bg.prop')), RMS = ramp(c('env.moss')), RL = ramp(c('env.leaf'));
@@ -132,6 +131,7 @@ export function drawRoomBg(floor: number, roomW: number, depthTiles: number, hei
       if (d > 0.4 && (x + y) % 2 === 0) col = voidC;
       P(x, y, col);
     }
-  if (draftsOn()) drawCeiling(b, floor, roomW, wellRoom && wellHole(wellRoom));
+  // 땅 밑 숲: 위쪽 흙 천장·늘어진 뿌리 (art.md 6장)
+  drawCeiling(b, floor, roomW, room?.wellDrop ? wellHole(room) : undefined);
   return canvas;
 }

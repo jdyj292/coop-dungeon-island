@@ -219,6 +219,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | resultDelaySec | 전멸·보스 처치 뒤 결과 화면까지 |
 | settle | `{ treasury, wipeCoinLoss }` 정산: 코인 중 공동 금고 비율, 전멸 시 코인 손실 비율 (CLAUDE.md 핵심 규칙) |
 | exit | `{ halfWidth, depth }` 출구 앞 구역: 문 앞 바닥에서 좌우 ±halfWidth, 깊이 depth px까지 (dungeon.md 2장 방 진행) |
+| arriveSec | rooms.json wellDrop 방에서 우물로 떨어지는 시간: 조작 불가·맞지 않음 (dungeon.md 2장). 화면의 떨어지는 높이·웅크림은 client fx.json wellHop |
 | combo | `{ windowSec, teamMilestones, soloMilestones, coinBonus }` 콤보가 이어지는 시간 (dungeon.md 3장), 팀·개인 콤보 단계와 단계별 코인 보너스 (balance.md 7장) |
 | tokens | 공격 토큰 수 (인원 1~4 순서, balance.md·dungeon.md 3장) |
 | tokenGap | 토큰 하나를 내준 뒤 다음 토큰까지 초 (인원 1~4 순서, 0 = 간격 없음) |

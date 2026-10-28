@@ -1,8 +1,8 @@
 // 로컬 전투 무대: RoomSim(shared)을 1/60초 틱으로 돌리고, 이벤트로 연출을 붙이고, 그린다. 던전 씬과 tools/motion-preview가 같이 쓴다
 import type Phaser from 'phaser';
 import {
-  FixedStep, RoomSim, TICK, weaponDef,
-  type ActionDef, type Bounds, type Monster, type PlayerState, type PotionKind, type SimEvent, type SimOptions, type Spawn,
+  arriveSecOf, FixedStep, RoomSim, TICK, weaponDef,
+  type ActionDef, type Bounds, type Monster, type PlayerState, type PotionKind, type RoomDef, type SimEvent, type SimOptions, type Spawn,
   type Vec2, type WeaponDef,
 } from '@game/shared';
 import fx from '../../data/fx.json';
@@ -17,11 +17,11 @@ import { hitPackage, type FxContext } from '../fx/hitPackage';
 import { FxLayer } from '../fx/layer';
 import { dust, ring } from '../fx/particles';
 import { Rhythm } from '../fx/rhythm';
-import { ArrivalDraft } from '../fx/wellArrival';
+import { SleepMarks } from '../fx/wellArrival';
 import { boltFizzle, boltHit, teleportPuff } from '../fx/spell';
 import { castActive, castStart } from '../fx/spellCast';
 import { HitStop, Shake } from '../fx/timing';
-import { draftsOn, spriteData } from '../sprites/data';
+import { spriteData } from '../sprites/data';
 import { PlayerView } from '../view/playerView';
 import { project } from '../view/layout';
 import { MonsterView, placeMonster } from '../view/monsterView';
@@ -66,8 +66,8 @@ export class CombatStage {
   private wasRunning = false;
   private wasBackstep = false;
   private bolts: BoltLayer;
-  /** 초안 (?drafts=1, 첫 방): 위에서 떨어져 착지, 잠든 몬스터 */
-  arrival: ArrivalDraft | null = null;
+  /** 잠든 몬스터 Zzz (층 첫 방) */
+  private sleepMarks: SleepMarks;
 
   constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, spawns: Spawn[], readonly opts: SimOptions = {}, readonly weapon: WeaponDef = weaponDef('greatsword')) {
     this.sim = new RoomSim(this.weapon, bounds, player, opts);
@@ -79,6 +79,13 @@ export class CombatStage {
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.hazards = new HazardLayer(scene);
     this.ghosts = new Afterimages(scene);
+    this.sleepMarks = new SleepMarks(scene, FX_DEPTH);
+  }
+
+  /** 방 규칙 (rooms.json): 층 첫 방은 우물에서 떨어져 들어오고 몬스터는 잠든 채 (dungeon.md 2·5장, 서버 dungeonGame과 같음) */
+  enterRoom(room: RoomDef): void {
+    this.player.arrive = arriveSecOf(room);
+    if (room.wakeSec) this.sim.sleepAll(room.wakeSec);
   }
 
   get player(): PlayerState {
@@ -111,7 +118,6 @@ export class CombatStage {
 
   /** realDt = 실제 경과 시간 (슬로우는 호출하는 쪽에서 곱함). 1/60초 틱으로 나눠 진행하고 한 번 그린다 */
   update(realDt: number, input: StageInput): void {
-    if (this.arrival) input = this.stepArrival(this.arrival, realDt, input);
     this.pending.attack ||= input.attack;
     this.pending.skill ??= input.skill;
     this.pending.backstep ||= input.backstep;
@@ -123,35 +129,6 @@ export class CombatStage {
       this.pending = { ...NO_PRESS };
     }
     this.draw(n > 0 ? moved : null);
-  }
-
-  /** 초안 (?drafts=1일 때만): 첫 방은 우물에서 떨어져 착지, 몬스터는 잠든 채 시작 */
-  arriveFromWell(depth: number): void {
-    if (!draftsOn()) return;
-    const arrival = (this.arrival = new ArrivalDraft(this.scene, depth));
-    this.scene.events.once('shutdown', () => arrival.destroy());
-    this.scene.cameras.main.fadeIn(fx.wellHop.fadeSec * 1000);
-  }
-
-  /** 초안: 떨어지는 동안 입력 막고, 착지 먼지·흔들림, 잠든 동안 몬스터 AI 끔, 깨어나면 움찔 */
-  private stepArrival(a: ArrivalDraft, dt: number, input: StageInput): StageInput {
-    const r = a.step(dt);
-    this.playerView.lift = r.z;
-    this.playerView.motionOverride = r.motion;
-    if (r.justLanded) {
-      const { sx, sy } = project(this.player.pos.x, this.player.pos.y);
-      dust(sx, sy, fx.dust.down).forEach((d) => this.fx.layer.add(d));
-      this.fx.shake.start(fx.downShake.sec, fx.downShake.px);
-      this.sound('wellLand');
-    }
-    if (r.justWoke) this.wakeAll();
-    this.opts.ai = a.awake;
-    return r.locked ? NO_INPUT : input;
-  }
-
-  private wakeAll(): void {
-    this.sim.alive.forEach((m) => { this.view(m).hurt = fx.reaction.hurtSec; });
-    this.sound('monWake');
   }
 
   /** 한 틱. 히트스톱 중에는 게임 시간이 멈추고 흔들림만 진행 (motion.md 3장). 반환 = 걸은 거리 */
@@ -166,6 +143,13 @@ export class CombatStage {
     if (this.playerView.update(this.player, dt)) {
       const { sx, sy } = project(this.player.pos.x, this.player.pos.y);
       dust(sx, sy, fx.dust.bounce).forEach((d) => this.fx.layer.add(d));
+    }
+    // 우물에서 떨어져 착지: 먼지·흔들림·쿵
+    if (this.playerView.justLanded) {
+      const { sx, sy } = project(this.player.pos.x, this.player.pos.y);
+      dust(sx, sy, fx.dust.down).forEach((d) => this.fx.layer.add(d));
+      this.fx.shake.start(fx.downShake.sec, fx.downShake.px);
+      this.sound('wellLand');
     }
     events.forEach((e) => this.onEvent(e));
     // 효과음은 이벤트 순간 바로 (히트스톱과 무관, audio.md 4장)
@@ -205,7 +189,6 @@ export class CombatStage {
       const [ax, ay] = fx.star.at as [number, number];
       const v = this.view(e.m);
       v.hurt = b.armor ? 0 : fx.reaction.hurtSec;
-      if (this.arrival?.wake()) this.wakeAll();
       hitPackage(this.fx, e.def.fx?.grade ?? 'light', v, {
         x: sx + ax * facing, y: sy + ay, numberX: sx, numberY: sy - fx.number.above,
       }, e.damage, e.def.fx?.shake);
@@ -267,10 +250,7 @@ export class CombatStage {
     this.drawDt = 0;
 
     this.sim.alive.forEach((m, i) => placeMonster(this.scene, this.view(m), data, m, this.clock, i));
-    this.arrival?.draw(this.sim.alive.map((m) => {
-      const img = this.view(m).view.img;
-      return { x: Math.round(img.x), y: Math.round(img.y - img.displayHeight * img.originY) };
-    }), this.clock);
+    if (this.sleepMarks.draw(this.sim.alive.map((m) => ({ m, v: this.view(m) })), this.clock)) this.sound('monWake');
     this.hazards.draw(this.sim);
     this.fx.layer.draw();
   }

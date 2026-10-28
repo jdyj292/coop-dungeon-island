@@ -23,6 +23,8 @@ export interface Vitals {
   hurt: { kind: 'stun' | 'down'; left: number; push?: { v: number; left: number } } | null;
   /** 기상·부활 무적 남은 시간 */
   invuln: number;
+  /** 우물에서 떨어지는 중 남은 시간 (조작 불가·맞지 않음, 깜빡이지 않음. dungeon.md 2장) */
+  arrive: number;
   /** 부활의 깃털 (솔로, 판마다 지급) */
   feathers: number;
   /** 깃털 없이 HP 0 → 전멸 */
@@ -35,13 +37,13 @@ export function newVitals(level = 1): Vitals {
   const maxHp = maxHpFor(level), pt = PLAYER.potions;
   return {
     hp: maxHp, maxHp, atk: atkFor(level), mp: PLAYER.mp.max, potions: { hp: pt.hp.carry, mp: pt.mp.carry }, potionCd: { hp: 0, mp: 0 },
-    hurt: null, invuln: 0, feathers: PLAYER.revive.feathers, downed: false, ult: 0,
+    hurt: null, invuln: 0, arrive: 0, feathers: PLAYER.revive.feathers, downed: false, ult: 0,
   };
 }
 
-/** 맞지 않는 상태: 백스텝 앞부분, 기상·부활 무적, 다운 중(downhit 없음), 쓰러짐 */
+/** 맞지 않는 상태: 백스텝 앞부분, 기상·부활 무적, 우물에서 떨어지는 중, 다운 중(downhit 없음), 쓰러짐 */
 export function isInvulnerable(p: PlayerState): boolean {
-  return (!!p.backstep && p.backstep.t < PLAYER.backstep.invuln) || p.invuln > 0 || p.hurt?.kind === 'down' || p.downed;
+  return (!!p.backstep && p.backstep.t < PLAYER.backstep.invuln) || p.invuln > 0 || p.arrive > 0 || p.hurt?.kind === 'down' || p.downed;
 }
 
 /** 몬스터 공격 적중. 약·중 → 경직, 강 → 다운. 하던 행동은 끊긴다. pushDir = 밀려날 방향 (1 오른쪽, -1 왼쪽, 0 = 밀리지 않음) */
@@ -77,6 +79,7 @@ export function stepVitals(p: PlayerState, dt: number): HurtEvent[] {
   p.potionCd.hp = Math.max(0, p.potionCd.hp - dt);
   p.potionCd.mp = Math.max(0, p.potionCd.mp - dt);
   p.invuln = Math.max(0, p.invuln - dt);
+  p.arrive = Math.max(0, p.arrive - dt);
   if (!p.hurt) return [];
   p.hurt.left -= dt;
   if (p.hurt.left > 0) return [];

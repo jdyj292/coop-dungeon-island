@@ -1,7 +1,7 @@
 // 던전 한 판의 진행 (Colyseus 없이 테스트 가능): 방마다 RoomSim + 웨이브 + 방 진행 + 입력 대기열 + 상태 반영 + 이벤트
 // DungeonRoom(rooms/)은 연결·전송만 맡는다. 흐름은 docs/network.md 3~6장
 import {
-  atkFor, COMBAT, entryPos, mapOf, maxHpFor, MVP_WEAPONS, parseC2S, ROOMS, RoomSim, TICK, WaveRunner, weaponDef,
+  arriveSecOf, atkFor, COMBAT, entryPos, mapOf, maxHpFor, MVP_WEAPONS, parseC2S, ROOMS, RoomSim, TICK, WaveRunner, weaponDef,
   type C2SType, type RoomDef, type PlayerInput, type Projectile, type S2C, type SimOptions, type SimPlayer,
 } from '@game/shared';
 import { DungeonState, PlayerState } from '../schema/DungeonState';
@@ -56,6 +56,7 @@ export class DungeonGame {
     this.state.monsters.clear();
     this.state.zones.clear();
     this.sim.spawn(this.waves.next());
+    if (this.room.wakeSec) this.sim.sleepAll(this.room.wakeSec);
     this.state.assign({ roomIndex: index, wave: this.waves.wave, doorOpen: false, exitAt: 0, exitNeed: 0, chestOpen: false });
     syncWorld(this.state, this.sim, this.now);
   }
@@ -80,6 +81,7 @@ export class DungeonGame {
     const sp = this.sim.addPlayer(pid, entryPos(this.room, index % 4), weaponDef(weapon));
     // 부활의 깃털은 솔로만 (dungeon.md 3장). 파티는 동료 부활
     if (this.state.partySize > 1) sp.state.feathers = 0;
+    sp.state.arrive = arriveSecOf(this.room); // 층 첫 방은 우물에서 떨어져 들어옴 (dungeon.md 2장)
     const level = party?.level ?? 1;
     if (party) Object.assign(sp.state, { maxHp: maxHpFor(level), hp: maxHpFor(level), atk: atkFor(level), potions: { ...party.potions } });
     const raw = party?.name ?? name;

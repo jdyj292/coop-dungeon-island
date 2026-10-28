@@ -23,6 +23,8 @@ const current: PosOf = (m) => ({ x: m.body.x, y: m.body.y, airborne: m.body.stat
 /** 한 몬스터에 적중: 반응(경직·띄우기), 피해(내 ATK × 계수), 체력 0이면 기절, 상태 이상(빙결), MP·필살기 게이지. dir = 밀려나는 방향 */
 export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: number): StrikeHit {
   applyHit(m.body, { dir, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });
+  // 잠든 몬스터는 맞으면 바로 깨어남 (그 몬스터만, dungeon.md 5장)
+  m.sleep = 0;
   const damage = damageOf(def.coef, p.atk);
   const ko = m.hp > 0 && m.hp - damage <= 0;
   m.hp = Math.max(0, m.hp - damage);

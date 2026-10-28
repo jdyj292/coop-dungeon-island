@@ -1,6 +1,6 @@
 // 방·웨이브 → 출현 위치, 웨이브 진행. 위치는 Tiled 맵(maps/<map>.json), 종류·수·웨이브는 rooms.json (docs/dungeon.md 10장)
 // 클라이언트 로컬 던전과 서버 DungeonRoom이 같이 쓴다
-import { MONSTERS, ROOMS } from '../data/load';
+import { COMBAT, MONSTERS, ROOMS } from '../data/load';
 import { roomMap } from '../map/maps';
 import type { RoomMap, SpawnPoint } from '../map/tiled';
 import { TILE } from '../constants';
@@ -22,6 +22,9 @@ export function roomBounds(room: RoomDef): { width: number; depth: number; bound
   const m = mapOf(room);
   return { width: m.width, depth: m.depth, bounds: { minX: TILE / 2, maxX: m.width - TILE / 2, minY: 0, maxY: m.depth, blocks: m.blocks } };
 }
+
+/** 들어온 플레이어가 우물에서 떨어지는 시간: wellDrop 방(층 첫 방)만, 아니면 0 (dungeon.md 2장) */
+export const arriveSecOf = (room: RoomDef): number => (room.wellDrop ? COMBAT.arriveSec : 0);
 
 /** 입장 위치: 맵 player_start (입장 순서). 모자라면 왼쪽 3타일 가운데 */
 export function entryPos(room: RoomDef, index: number): Vec2 {

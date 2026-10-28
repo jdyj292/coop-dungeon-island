@@ -211,6 +211,8 @@ export const combat = z.object({
   }).strict(),
   partyHpMul: z.array(pos).length(4),
   exit: z.object({ halfWidth: pos, depth: pos }).strict(),
+  /** 우물에서 떨어지는 시간: 그동안 조작 불가·맞지 않음 (rooms.json wellDrop, combat.md 4장) */
+  arriveSec: pos,
   interactRange: pos,
   returnSec: pos,
   resultDelaySec: pos,
@@ -232,6 +234,10 @@ export const rooms = z.record(z.object({
     /** Tiled 맵 경로 (maps/ 아래, 확장자 없이) */
     map: z.string(),
     boss: z.string().optional(),
+    /** 우물에서 떨어져 들어오는 방 (층 첫 방): 들어온 플레이어는 combat.json arriveSec 동안 떨어짐 (dungeon.md 2장) */
+    wellDrop: z.boolean().optional(),
+    /** 몬스터가 잠든 채 시작: 누군가 착지한 뒤 이 초가 지나거나 맞으면 깨어남 (dungeon.md 5장) */
+    wakeSec: pos.optional(),
     waves: z.array(z.object({ monsters: z.record(z.number().int().positive()) }).strict()).min(1),
     onClear: z.array(z.string()).optional(),
   }).strict()).min(1),

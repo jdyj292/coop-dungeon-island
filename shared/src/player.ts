@@ -82,6 +82,8 @@ export function stepPlayerState(
   const out: PlayerStep = { events: [], moved: 0, running: false, backstepStarted: false, hurt: stepVitals(p, dt), potion: null };
   // 쓰러짐·경직·다운 중에는 조작 불가 (물약도 다운 중 불가, playerHurt.usePotion)
   if (p.downed) return out;
+  // 우물에서 떨어지는 중: 아무 입력도 받지 않음 (dungeon.md 2장)
+  if (p.arrive > 0) return out;
   if (input.potion && usePotion(p, input.potion)) out.potion = input.potion;
   if (p.hurt) {
     // 맞아서 밀려남 (벽·장애물에 막힘)
@@ -164,6 +166,7 @@ function actionMoved(before: { run: ActionRun; t: number } | null, started: Acti
 /** 상태 이름 (서버 상태 스키마·클라이언트 예측 공용, network.md 5장). moved = 이번 틱에 걸은 거리 */
 export function playerStateName(p: PlayerState, moved: number): string {
   if (p.downed) return 'knocked';
+  if (p.arrive > 0) return 'arrive';
   if (p.hurt) return p.hurt.kind === 'down' ? 'down' : 'hitstun';
   if (p.backstep) return 'backstep';
   if (p.fighter.run) return 'action';

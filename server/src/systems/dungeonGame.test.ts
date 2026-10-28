@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { Reflection } from '@colyseus/schema';
-import type { S2C } from '@game/shared';
+import { COMBAT, TICK, type S2C } from '@game/shared';
 import { DungeonGame, type Outbox } from './dungeonGame';
 import { DungeonState } from '../schema/DungeonState';
 
 type Sent = { to: string; type: keyof S2C; msg: unknown };
-function setup(room = 1, partySize = 2) {
+/** land = 1번 방 우물에서 떨어지는 시간을 미리 흘려 보냄 (조작 테스트용) */
+function setup(room = 1, partySize = 2, land = true) {
   const sent: Sent[] = [];
   const out: Outbox = {
     broadcast: (type, msg) => { sent.push({ to: '*', type, msg }); },
@@ -14,10 +15,36 @@ function setup(room = 1, partySize = 2) {
   const g = new DungeonGame({ room, partySize, rng: () => 0 }, out);
   g.join('a', '앨리스');
   g.join('b', '  ');
+  if (land) for (let i = 0; i < Math.ceil(COMBAT.arriveSec / TICK); i++) g.tick();
+  sent.length = 0;
   return { g, sent };
 }
 const run = (g: DungeonGame, n: number) => { for (let i = 0; i < n; i++) g.tick(); };
 const input = (seq: number, mx: number, run = false) => ({ seq, t: 0, mx, my: 0, run });
+
+describe('DungeonGame 우물 입장 (dungeon.md 2·5장)', () => {
+  it('1번 방: 떨어지는 동안 arrive·입력 무시, 버섯은 잠든 채 → 착지 뒤 wakeSec 지나면 깨어남', () => {
+    const { g } = setup(1, 2, false);
+    const a = g.state.players.get('a')!, x0 = a.x;
+    expect(a.state).toBe('arrive');
+    expect([...g.state.monsters.values()].every((m) => m.state === 'sleep')).toBe(true);
+    g.onMessage('a', 'input', input(1, 1));
+    run(g, Math.ceil(COMBAT.arriveSec / TICK) - 2);
+    expect([a.state, a.x]).toEqual(['arrive', x0]);
+    run(g, 3);
+    expect(a.state).not.toBe('arrive');
+    run(g, Math.floor(1.4 / TICK));
+    expect([...g.state.monsters.values()].every((m) => m.state === 'sleep')).toBe(true);
+    run(g, Math.ceil(0.2 / TICK));
+    expect([...g.state.monsters.values()].some((m) => m.state === 'sleep')).toBe(false);
+  });
+
+  it('다른 방은 떨어지지 않고 몬스터도 깨어 있음', () => {
+    const { g } = setup(2, 2, false);
+    expect(g.state.players.get('a')!.state).toBe('idle');
+    expect([...g.state.monsters.values()].some((m) => m.state === 'sleep')).toBe(false);
+  });
+});
 
 describe('DungeonGame (서버 진행)', () => {
   it('입장: 이름 정리·기본 이름, 깊이를 나눠 섬, 1번 방 버섯 10마리 한 번에', () => {
@@ -81,7 +108,7 @@ describe('DungeonGame (서버 진행)', () => {
     expect(res.at(-1)).toBe('kick');
   });
   it('ping → 본인에게 pong (서버 시각)', () => {
-    const { g, sent } = setup();
+    const { g, sent } = setup(1, 2, false);
     run(g, 6);
     g.onMessage('b', 'ping', { t: 123 });
     const pong = sent.at(-1)!;
@@ -102,7 +129,7 @@ describe('DungeonGame (서버 진행)', () => {
     expect(() => run(g, 10)).not.toThrow();
   });
   it('지연 보정: 되감기 = 지금 − (t − 100ms), 최대 150ms. 공격자 위치는 12px 안이면 클라이언트 값', () => {
-    const { g } = setup();
+    const { g } = setup(1, 2, false);
     run(g, 60); // 1000ms
     const sp = g.sim.players.get('a')!;
     g.onMessage('a', 'action', { seq: 1, t: 1000 - 20, x: 50, y: sp.state.pos.y, facing: 1, kind: 'basic' });

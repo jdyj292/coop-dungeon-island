@@ -56,3 +56,30 @@ describe('active 구간 판정', () => {
     expect(m!.hp).toBe(60 - 39);
   });
 });
+
+describe('우물 입장: 착지·잠 (dungeon.md 2·5장)', () => {
+  it('떨어지는 동안은 입력을 받지 않고 맞지 않음, 잠은 누군가 착지한 뒤부터 줄어듦', () => {
+    const sim = new RoomSim(gs, bounds, { x: 100, y: 50 });
+    sim.spawn([{ kind: 'mushroom', x: 300, y: 50 }]);
+    sim.sleepAll(1);
+    sim.player.arrive = 0.5;
+    const x0 = sim.player.pos.x;
+    for (let i = 0; i < 20; i++) sim.tick(TICK, { ...none, x: 1 });
+    expect(sim.player.pos.x).toBe(x0);
+    expect(sim.playerTargets()).toEqual([]);
+    expect(sim.alive[0]!.sleep).toBe(1);
+    for (let i = 0; i < 20; i++) sim.tick(TICK, none);
+    expect(sim.player.arrive).toBe(0);
+    expect(sim.alive[0]!.sleep).toBeLessThan(1);
+  });
+
+  it('잠든 몬스터는 움직이지 않고, 맞은 몬스터만 깨어남', () => {
+    const sim = new RoomSim(gs, bounds, { x: 100, y: 50 });
+    const [near, far] = sim.spawn([{ kind: 'mushroom', x: 114, y: 50 }, { kind: 'mushroom', x: 400, y: 50 }]);
+    sim.sleepAll(5);
+    for (let i = 0; i < 40; i++) sim.tick(TICK, { ...none, attack: i === 0 });
+    expect(near!.sleep).toBe(0);
+    expect(far!.sleep).toBeGreaterThan(0);
+    expect(far!.body.x).toBe(400);
+  });
+});

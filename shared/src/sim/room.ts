@@ -116,6 +116,11 @@ export class RoomSim {
     return made;
   }
 
+  /** 지금 있는 몬스터를 잠든 채로 (rooms.json wakeSec, dungeon.md 5장) */
+  sleepAll(sec: number): void {
+    for (const m of this.alive) m.sleep = sec;
+  }
+
   /** 퇴장하지 않은 몬스터 */
   get alive(): Monster[] {
     return this.monsters.filter((m) => !m.body.gone);
@@ -144,8 +149,11 @@ export class RoomSim {
     for (const sp of this.players.values()) stepCombo(sp.combo, dt);
     stepCombo(this.team, dt);
     this.tokens.step(dt);
+    // 잠은 누군가 우물에서 떨어져 착지한 뒤부터 줄어든다
+    const landed = [...this.players.values()].some((sp) => !sp.away && sp.state.arrive <= 0);
     // 1. 몬스터 먼저: 이번 틱에 맞은 번쩍임·경직이 같은 틱에 깎이지 않게
     for (const m of this.alive) {
+      if (m.sleep > 0 && landed) m.sleep = Math.max(0, m.sleep - dt);
       // 히트스톱 중인 몬스터는 그대로 멈춤
       const stop = this.monsterStop.get(m.id) ?? 0;
       if (stop > 0) {

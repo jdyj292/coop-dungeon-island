@@ -57,11 +57,11 @@
     "frozen": { "shards": [[-4, -14], [1, -16], [5, -13]] },
     "teleport": { "sec": 0.22, "count": 6, "spread": 7, "visibleStart": 0.15, "visibleEnd": 0.8 }
   },
-  "_wellHop": "우물 입장·복귀 연출 (art.md 0장, motion.md 7장). 뛰어들기: jumpSec 동안 앞 sinkAt 비율은 포물선(최고 jumpPeak)으로 구멍(시설 발밑에서 holeUp px 위) 위까지, 나머지는 sinkPx만큼 가라앉으며 사라짐 → fadeSec 동안 어두워짐. 튀어나오기: popSec 동안 반대로, 들어온 지 popWindowSec 안에 처음 보일 때만. 던전 첫 방: dropFrom px 위에서 dropSec 동안 떨어지고 landSec 웅크림",
+  "_wellHop": "우물 입장·복귀 연출 (art.md 0장, motion.md 6장). 뛰어들기: jumpSec 동안 앞 sinkAt 비율은 포물선(최고 jumpPeak)으로 구멍(시설 발밑에서 holeUp px 위) 위까지, 나머지는 sinkPx만큼 가라앉으며 사라짐 → fadeSec 동안 어두워짐. 튀어나오기: popSec 동안 반대로, 들어온 지 popWindowSec 안에 처음 보일 때만. 던전 첫 방: dropFrom px 위에서 shared combat.json arriveSec 동안 떨어지고(서버 판정) landSec 웅크림",
   "wellHop": {
     "jumpSec": 0.45, "jumpPeak": 16, "sinkAt": 0.7, "sinkPx": 12, "holeUp": 12, "fadeSec": 0.6,
     "popSec": 0.55, "popPeak": 14, "popWindowSec": 1.5,
     "glow": { "count": 6, "sec": 0.6, "spread": 12, "rise": [14, 32] },
-    "dropSec": 0.5, "dropFrom": 110, "landSec": 0.2
+    "dropFrom": 110, "landSec": 0.2
   }
 }

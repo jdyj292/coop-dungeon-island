@@ -91,6 +91,8 @@ export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEv
     if (m.body.state === 'air' || m.body.state === 'down') m.frozen = 0;
     return ev;
   }
+  // 잠: 아무것도 하지 않음 (맞으면 strike.ts가 깨움)
+  if (m.sleep > 0) return ev;
   // 빙결: 하던 공격은 취소, 움직이지 않음
   if (m.frozen > 0) {
     if (m.attack) endAttack(m, ctx);

@@ -1,5 +1,4 @@
-// 초안 (?drafts=1): 1층 위쪽 흙 천장·늘어진 뿌리, 첫 방은 우물 구멍에서 내려오는 밧줄과 빛줄기 (우물 입장 연출 계획)
-// 승인되면 roomBg.ts로 합친다
+// 던전 방 위쪽 (docs/art.md 6장 "땅 밑 숲"): 흙 천장·늘어진 뿌리, 우물에서 떨어지는 방(rooms.json wellDrop)은 입장 지점 위 구멍에서 내려오는 밧줄과 빛줄기
 import { color } from '../palette';
 import { ramp } from '../sprites/shade';
 import { entryPos, type RoomDef } from '@game/shared';

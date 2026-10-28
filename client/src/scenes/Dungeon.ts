@@ -24,6 +24,7 @@ import { BossIntro } from '../view/bossIntro';
 import { ResultPanel } from '../ui/resultPanel';
 import { PropLayer } from '../view/props';
 import { drawRoomBg } from '../view/roomBg';
+import { enterFadeMs } from '../fx/wellArrival';
 
 const FLOOR = 1;
 const floorRooms = () => ROOMS.floor1!.rooms;
@@ -35,8 +36,6 @@ const BG_EXTRA = 200;
 /** 전멸 뒤 방을 다시 시작하기까지 (정산·섬 복귀는 M3·M4) */
 const WIPE_RESTART_MS = 2000;
 const HUD_DEPTH = 10000;
-/** 방에 들어갈 때 화면이 밝아지는 시간 */
-const ROOM_FADE_MS = 300;
 /** 부활: E를 누르고 있는 동안 서버에 알리는 간격 (서버는 300ms 안에 다시 오면 계속 누른 것으로) */
 const REVIVE_SEND_MS = 150;
 /** 스킬 슬롯 U·I = 무기 기본 스킬 2개 (임시 고정 장착, 슬롯 UI는 MVP 이후) */
@@ -106,7 +105,7 @@ export class Dungeon extends Phaser.Scene {
       const { bounds } = this.buildRoom(this.room);
       const stage = (this.stage = new CombatStage(this, bounds, entryPos(this.room, 0), this.waves.next(), {}, weaponDef(this.weapon)));
       stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
-      if (floorRooms().indexOf(this.room) === 0) stage.arriveFromWell(HUD_DEPTH - 2); // 초안 (?drafts=1)
+      stage.enterRoom(this.room); // 층 첫 방: 우물에서 떨어져 들어오고 몬스터는 잠든 채 (dungeon.md 2·5장)
     } else if (this.conn) this.setupOnline(this.conn);
     else this.connect();
 
@@ -124,8 +123,9 @@ export class Dungeon extends Phaser.Scene {
     const { width, bounds } = roomBounds(room);
     this.roomW = width;
     const key = `room-bg-${room.id}`;
-    if (!this.textures.exists(key)) this.textures.addCanvas(key, drawRoomBg(FLOOR, width, room.size[1]!, FIELD_BOTTOM + BG_EXTRA, floorRooms().indexOf(room) === 0 ? room : undefined));
+    if (!this.textures.exists(key)) this.textures.addCanvas(key, drawRoomBg(FLOOR, width, room.size[1]!, FIELD_BOTTOM + BG_EXTRA, room));
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(-1000);
+    this.cameras.main.fadeIn(enterFadeMs(room));
     this.props = new PropLayer(this, mapOf(room));
     // BGM: 방 1~5 = 층 곡 (방을 옮겨도 이어서), 보스 방 = 보스 곡 첫 마디부터 (audio.md 5장)
     const bgm = ROOMS.floor1!.bgm;
@@ -138,7 +138,6 @@ export class Dungeon extends Phaser.Scene {
   private setupOnline(conn: Connection): void {
     this.conn = conn;
     const { bounds } = this.buildRoom(floorRoom('floor1', conn.progress.roomIndex + 1));
-    this.cameras.main.fadeIn(ROOM_FADE_MS);
     const online = (this.online = new OnlineStage(this, conn, bounds));
     if (import.meta.env.DEV) {
       const panel = new LagPanel(conn, online);

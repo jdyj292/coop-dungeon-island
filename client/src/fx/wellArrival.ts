@@ -1,50 +1,49 @@
-// 던전 첫 방 도착 (?drafts=1 초안, 3단계에서 서버 판정으로): 위에서 떨어져 착지, 잠든 몬스터 Zzz → 깨어남. 그림 값 fx.json wellHop
+// 던전 첫 방 도착 연출 (docs/dungeon.md 2·5장, motion.md 6장): 우물에서 떨어지는 높이, 잠든 몬스터 Zzz와 깨어남. 판정은 서버(shared) — 여기는 그리기만
+import { COMBAT, type Monster, type RoomDef } from '@game/shared';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
+import type { MonsterView } from '../view/monsterView';
 import { dot } from './layer';
 
-/** 초안 판정 값 (3단계에서 shared/data로): 첫 착지부터 몬스터가 깨어나기까지 */
-const WAKE_SEC = 1.5;
+/** 방에 들어갈 때 화면이 밝아지는 시간 */
+const ROOM_FADE_MS = 300;
 
-/** 입장 후 t초 → 높이, 모션 (공중: 다리 접기, 착지 직후: 웅크림) */
-export function dropAt(t: number): { z: number; motion: string | undefined; landed: boolean } {
-  const { dropSec, dropFrom, landSec } = fx.wellHop;
-  if (t < dropSec) return { z: Math.round(dropFrom * (1 - (t / dropSec) ** 2)), motion: 'backstepAir', landed: false };
-  return { z: 0, motion: t < dropSec + landSec ? 'backstepLand' : undefined, landed: true };
+/** 방 입장 밝아지기: 우물에서 떨어지는 방은 섬에서 어두워진 만큼 천천히 (art.md 0장) */
+export const enterFadeMs = (room: RoomDef): number => (room.wellDrop ? fx.wellHop.fadeSec * 1000 : ROOM_FADE_MS);
+
+/** 떨어지는 중 높이: arrive = 남은 시간 (COMBAT.arriveSec → 0). 가만히 놓은 물체처럼 점점 빨라짐 */
+export function dropZ(arrive: number): number {
+  const T = COMBAT.arriveSec, t = Math.min(T, Math.max(0, T - arrive));
+  return Math.round(fx.wellHop.dropFrom * (1 - (t / T) ** 2));
 }
 
-/** 첫 방 도착 (로컬 전투): 떨어지는 동안 입력 막힘, 첫 착지부터 WAKE_SEC 뒤(또는 맞으면) 몬스터가 깨어남 */
-export class ArrivalDraft {
-  t = 0;
-  awake = false;
-  private landed = false;
+/** 잠든 몬스터 머리 위 Zzz. 잠에서 깨는 순간을 알려 준다 (움찔·효과음) */
+export class SleepMarks {
   private g: Phaser.GameObjects.Graphics;
+  private asleep = new Set<number>();
 
   constructor(scene: Phaser.Scene, depth: number) {
     this.g = scene.add.graphics().setDepth(depth);
   }
 
-  /** 프레임마다. justLanded = 이번 프레임에 착지 */
-  step(dt: number): { z: number; motion: string | undefined; locked: boolean; justLanded: boolean; justWoke: boolean } {
-    this.t += dt;
-    const d = dropAt(this.t), justLanded = d.landed && !this.landed;
-    this.landed = d.landed;
-    const wake = !this.awake && this.t >= fx.wellHop.dropSec + WAKE_SEC;
-    if (wake) this.awake = true;
-    return { z: d.z, motion: d.motion, locked: !d.landed, justLanded, justWoke: wake };
-  }
-
-  /** 맞으면 바로 깨어남. 이번에 깨었으면 true */
-  wake(): boolean {
-    if (this.awake) return false;
-    this.awake = true;
-    return true;
-  }
-
-  /** heads = 잠든 몬스터 머리 위 화면 좌표 */
-  draw(heads: { x: number; y: number }[], clock: number): void {
+  /** 그린 뒤 부른다 (머리 위치 = 그려진 그림 위 끝). 이번에 깨어난 몬스터 수 */
+  draw(list: { m: Monster; v: MonsterView }[], clock: number): number {
     this.g.clear();
-    if (!this.awake) heads.forEach((h, i) => drawZzz(this.g, h.x, h.y, clock + i * 0.37));
+    let woke = 0;
+    const now = new Set<number>();
+    list.forEach(({ m, v }, i) => {
+      if (m.sleep > 0) {
+        now.add(m.id);
+        const img = v.view.img;
+        drawZzz(this.g, Math.round(img.x), Math.round(img.y - img.displayHeight * img.originY), clock + i * 0.37);
+      } else if (this.asleep.has(m.id)) {
+        // 깨어나는 순간: 움찔 (피격 반응 그림)
+        v.hurt = fx.reaction.hurtSec;
+        woke++;
+      }
+    });
+    this.asleep = now;
+    return woke;
   }
 
   destroy(): void {
@@ -52,8 +51,8 @@ export class ArrivalDraft {
   }
 }
 
-/** 잠든 몬스터 머리 위 z 글자 (3×3 도트, 두 개가 번갈아 떠오름) */
-export function drawZzz(g: Phaser.GameObjects.Graphics, x: number, y: number, clock: number): void {
+/** z 글자 (3×3 도트, 두 개가 번갈아 떠오름) */
+function drawZzz(g: Phaser.GameObjects.Graphics, x: number, y: number, clock: number): void {
   const col = colorInt('floors.1.monster.sleepCloud');
   for (let i = 0; i < 2; i++) {
     const k = (clock * 0.8 + i * 0.5) % 1, zx = x + 2 + i * 3 + Math.round(k * 2), zy = y - Math.round(k * 6) - i * 2;

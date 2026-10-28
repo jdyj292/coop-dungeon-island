@@ -131,9 +131,10 @@ export class Predictor {
     const s = this.state;
     Object.assign(s, { hp: sim.hp, maxHp: sim.maxHp, mp: sim.mp, stamina: sim.stamina, staminaWait: sim.staminaWait, tired: sim.tired, potions: sim.potions, ult: sim.ult, feathers: sim.feathers });
     for (const [id, left] of Object.entries(sim.cooldowns)) s.cooldowns[id] = Math.max(s.cooldowns[id] ?? 0, left);
-    // 맞는 것(경직·다운·쓰러짐)은 예측하지 않는다: 서버를 따른다
+    // 맞는 것(경직·다운·쓰러짐)과 우물에서 떨어지는 중은 예측하지 않는다: 서버를 따른다
     s.hurt = sim.hurt;
     s.downed = sim.downed;
+    s.arrive = sim.arrive;
     if (sim.hurt || sim.downed) s.fighter.run = null;
 
     const shown = this.display;

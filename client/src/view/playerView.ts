@@ -1,9 +1,10 @@
 // 플레이어 그리기: 상태 → 이동·상태 모션 (art.md 4장, motion.md 6장, 데이터 poses.json motions, 시간 fx.json playerMotion)
-// 우선순위: 쓰러짐 > 다운 > 피격 > 기상 > 백스텝 > (공격 중이면 공격 포즈) > 방향 전환 > 달리기 > 걷기 > 대기 숨쉬기
+// 우선순위: 쓰러짐 > 우물에서 떨어짐·착지 > 다운 > 피격 > 기상 > 백스텝 > (공격 중이면 공격 포즈) > 방향 전환 > 달리기 > 걷기 > 대기 숨쉬기
 import type Phaser from 'phaser';
 import { fighterPose, PLAYER, type PlayerState } from '@game/shared';
 import fx from '../../data/fx.json';
 import { dot } from '../fx/layer';
+import { dropZ } from '../fx/wellArrival';
 import { colorInt } from '../palette';
 import { walkStep, type CharacterLook } from '../sprites/compose';
 import { spriteData } from '../sprites/data';
@@ -22,17 +23,21 @@ export class PlayerView {
   weaponVisual = 'greatsword_basic';
   /** 순간이동 백스텝 (스태프 backstepStyle teleport): 뛰지 않고 가운데 구간은 안 보임 (combat.md 1장, 성능은 같음) */
   teleport = false;
-  /** 입장 연출 (fx/wellHop.ts): 더할 높이, 덮어쓸 모션, 숨김 */
+  /** 섬 우물 연출 (stage/wellHops.ts): 더할 높이, 덮어쓸 모션, 숨김, 그림 깊이 */
   lift = 0;
   motionOverride: string | undefined;
   hidden = false;
   depthOverride: number | undefined;
+  /** 던전 첫 방: 이번 틱에 우물에서 떨어져 착지 (먼지·흔들림·효과음은 무대가) */
+  justLanded = false;
   private stars: Phaser.GameObjects.Graphics;
   private beat = 0;
   private moving = false;
   private facing = 1;
   private turnLeft = 0;
   private getupLeft = 0;
+  private arriving = false;
+  private landLeft = 0;
 
   /** colorIndex = 플레이어 색 번호 (palette global.playerColors, 여럿일 때 구분), armed = 무기를 든 모습 (섬에서는 빈손) */
   constructor(private scene: Phaser.Scene, depth: number, private colorIndex = 0, private armed = true) {
@@ -56,6 +61,10 @@ export class PlayerView {
     this.flash = Math.max(0, this.flash - dt);
     this.turnLeft = Math.max(0, this.turnLeft - dt);
     this.getupLeft = Math.max(0, this.getupLeft - dt);
+    this.landLeft = Math.max(0, this.landLeft - dt);
+    this.justLanded = this.arriving && p.arrive <= 0;
+    if (this.justLanded) this.landLeft = fx.wellHop.landSec;
+    this.arriving = p.arrive > 0;
     const turned = p.facing !== this.facing && !p.fighter.run && !p.hurt && !p.backstep;
     this.facing = p.facing;
     if (turned) this.turnLeft = fx.playerMotion.turnSec;
@@ -67,6 +76,9 @@ export class PlayerView {
     const m = fx.playerMotion;
     if (this.motionOverride) return this.motionOverride;
     if (p.downed) return 'knocked';
+    // 우물에서 떨어지는 중: 다리 접기, 착지 직후: 웅크림
+    if (p.arrive > 0) return 'backstepAir';
+    if (this.landLeft > 0) return 'backstepLand';
     if (p.hurt?.kind === 'down') return 'down';
     if (p.hurt) return 'hurt';
     if (this.getupLeft > 0) return 'getup';
@@ -102,7 +114,7 @@ export class PlayerView {
     const hop = p.backstep && !this.teleport ? Math.round(Math.sin(bk * Math.PI) * fx.backstepHop) : 0;
     const vanished = !!p.backstep && this.teleport && bk > tp.visibleStart && bk < tp.visibleEnd;
     place(this.actor, tex, {
-      x: p.pos.x + offsetX * p.facing, y: p.pos.y, z: hop + this.lift, facing: p.facing, flash: this.flash > 0,
+      x: p.pos.x + offsetX * p.facing, y: p.pos.y, z: hop + this.lift + (p.arrive > 0 ? dropZ(p.arrive) : 0), facing: p.facing, flash: this.flash > 0,
       angle: lying ? -90 * p.facing : 0,
     });
     // 기상·부활 무적: 깜빡임 (motion.md 4장)

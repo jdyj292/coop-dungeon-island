@@ -13,7 +13,9 @@
     "rooms": [
       {
         "id": "f1_r1",
-        "name": "숲 입구",
+        "name": "우물 밑 숲",
+        "wellDrop": true,
+        "wakeSec": 1.5,
         "size": [
           20,
           7

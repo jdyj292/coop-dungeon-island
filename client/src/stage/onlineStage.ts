@@ -17,6 +17,7 @@ import { hitPackage, type FxContext } from '../fx/hitPackage';
 import { FxLayer } from '../fx/layer';
 import { dust } from '../fx/particles';
 import { HitStop, Shake } from '../fx/timing';
+import { SleepMarks } from '../fx/wellArrival';
 import type { Connection } from '../net/connection';
 import type { KeyInput } from '../net/inputSender';
 import { LocalPlayer } from '../net/localPlayer';
@@ -66,6 +67,8 @@ export class OnlineStage {
   readonly local: LocalPlayer;
   private zones: ZoneArea[] = [];
   private reviveG: Phaser.GameObjects.Graphics;
+  /** 잠든 몬스터 Zzz (층 첫 방) */
+  private sleepMarks: SleepMarks;
 
   constructor(private scene: Phaser.Scene, readonly conn: Connection, bounds: Bounds) {
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
@@ -73,6 +76,7 @@ export class OnlineStage {
     this.hazards = new HazardLayer(scene);
     this.boltLayer = new BoltLayer(scene);
     this.reviveG = scene.add.graphics().setDepth(FX_DEPTH + 1);
+    this.sleepMarks = new SleepMarks(scene, FX_DEPTH);
     conn.onEvent = (type, msg) => this.onEvent(type, msg);
     conn.onSnapshot = () => this.local.reconcile();
   }
@@ -166,6 +170,14 @@ export class OnlineStage {
       const p = mine ? { ...this.local.predictor!.state, pos: this.local.predictor!.display } : mirrorPlayer(s, t, s.weapon, undefined, now);
       if (mine) this.me = this.local.predictor!.state;
       if (r.view.update(p, realDt)) this.dustAt(p.pos.x, p.pos.y, fx.dust.bounce);
+      // 우물에서 떨어져 착지: 먼지, 나면 흔들림·쿵
+      if (r.view.justLanded) {
+        this.dustAt(p.pos.x, p.pos.y, fx.dust.down);
+        if (mine) {
+          this.fx.shake.start(fx.downShake.sec, fx.downShake.px);
+          sfx.play('wellLand');
+        }
+      }
       const cues = mine
         ? this.cues.player(id, p, playerStateName(p, myMoved ?? 0), this.local.predictor!.runStamp)
         : this.cues.player(id, p, s.state, s.actionStart);
@@ -249,6 +261,7 @@ export class OnlineStage {
   private drawWorld(t: number, dt: number): void {
     const data = spriteData(), alive = [...this.monsters.values()];
     alive.forEach((e, i) => placeMonster(this.scene, e.view, data, e.m, this.clock, i));
+    if (this.sleepMarks.draw(alive.map((e) => ({ m: e.m, v: e.view })), this.clock)) sfx.play('monWake');
     const shots = this.shots.at(t, this.fx.layer);
     this.boltLayer.draw(shots.bolts);
     this.hazards.draw({ zones: this.zones, alive: alive.map((e) => e.m), projectiles: shots.projectiles });
