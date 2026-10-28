@@ -121,10 +121,12 @@ export class IslandStage {
       // 나: 틱이 안 돈 프레임은 걷기 박자 유지 (화면 주사율 > 60Hz에서 박자가 0으로 돌아가 다리가 떨리지 않게)
       this.draw(id, r, mine ? { ...this.predictor.display, facing: w.facing, running: w.run.running } : { x: r.x, y: r.y, facing: r.facing, running: r.state === 'run' }, dt, mine && ticks === 0);
     }
-    // 뛰어드는 주민은 서버 목록에서 빠져도 끝까지 그린다
+    // 뛰어드는 주민은 서버 목록에서 빠져도 끝까지 그린다.
+    // 아직 목록에 있는 주민(던전으로 넘어가는 중인 본인)은 지우지 않는다: 지우면 뛰어들기 전 자리에 다시 보인다
     for (const [id, r, from] of this.hops.leftover()) {
+      if (seen.has(id)) continue;
       this.hops.forget(id);
-      if (seen.has(id) || !this.hops.has(id)) continue;
+      if (!this.hops.has(id)) continue;
       seen.add(id);
       this.draw(id, r, { ...from, facing: r.facing, running: false }, dt);
     }
