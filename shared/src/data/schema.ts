@@ -204,6 +204,7 @@ export const combat = z.object({
     Record<(typeof GRADES)[number], z.ZodObject<{ hitstop: typeof sec; shake: typeof sec }>>).strict(),
   shakeAfterHitstop: sec,
   tokens: z.array(z.number().int().positive()).min(1),
+  tokenGap: z.array(z.number().min(0)).min(1),
   combo: z.object({
     windowSec: pos, teamMilestones: z.array(z.number().int().positive()), soloMilestones: z.array(z.number().int().positive()),
     coinBonus: z.array(pos),

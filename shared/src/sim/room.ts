@@ -143,6 +143,7 @@ export class RoomSim {
     const b = this.bounds, targets = this.playerTargets();
     for (const sp of this.players.values()) stepCombo(sp.combo, dt);
     stepCombo(this.team, dt);
+    this.tokens.step(dt);
     // 1. 몬스터 먼저: 이번 틱에 맞은 번쩍임·경직이 같은 틱에 깎이지 않게
     for (const m of this.alive) {
       // 히트스톱 중인 몬스터는 그대로 멈춤
@@ -276,7 +277,7 @@ export class RoomSim {
   private landHits(sp: SimPlayer, def: ActionDef, hits: StrikeHit[], events: SimEvent[]): number {
     for (const h of hits) {
       const sec = gradeTiming(def.fx?.grade ?? 'light').hitstop;
-      // 근접 역경직: 근접 무기는 공격자만 더 오래 멈춘다 (weapons.json recoilMul, combat.md 5장)
+      // 근접 역경직: 근접 무기는 더 오래 멈추고, 맞은 몬스터도 같은 시간 멈춘다 (weapons.json recoilMul, combat.md 5장)
       const recoil = sec * (sp.weapon.recoilMul ?? 1);
       // actT = 맞힌 틱의 내 행동 진행 시간 (클라이언트가 예측 기록에서 같은 틱을 찾아 멈춤을 맞춘다, network.md 9장)
       const run = sp.state.fighter.run;
@@ -285,7 +286,7 @@ export class RoomSim {
       recordGroggyHit(h.m, sp.pid, (this.opts.partySize ?? 1) >= 2);
       if (this.opts.hitstop === 'entity') {
         sp.stop = Math.max(sp.stop, recoil);
-        this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, sec));
+        this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, recoil));
       }
     }
     return hits.length;

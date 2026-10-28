@@ -161,8 +161,9 @@
 | 인원 | 1명 | 2명 | 3명 | 4명 |
 |---|---|---|---|---|
 | 토큰 | 2 | 3 | 4 | 5 |
+| 토큰 간격(초) | 0.6 | 0 | 0 | 0 |
 
-- 데이터: shared/data/combat.json tokens (인원 1~4 순서)
+- 데이터: shared/data/combat.json tokens·tokenGap (인원 1~4 순서). 간격 = 토큰 하나를 내준 뒤 다음 몬스터가 받을 수 있을 때까지 (dungeon.md 3장)
 
 - 인원 보정: 1명 ×1.0 / 2명 ×1.5 / 3명 ×2.0 / 4명 ×2.5 (협동 시 콤보 시너지로 실제 처치는 더 빠름 = 같이 하는 보상). 데이터 combat.json partyHpMul, 출현할 때 적용 (Monster.maxHp)
 
