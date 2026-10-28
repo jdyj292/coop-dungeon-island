@@ -3,6 +3,7 @@ import { Boot } from './scenes/Boot';
 import { Dungeon } from './scenes/Dungeon';
 import { Island } from './scenes/Island';
 import { Title } from './scenes/Title';
+import { sfx } from './audio/player';
 import { computeView } from './scale';
 import { setUseDrafts } from './sprites/data';
 
@@ -32,6 +33,9 @@ const game = new Phaser.Game({
 });
 
 window.addEventListener('resize', () => applyView(game));
+
+// 첫 키·클릭에서 오디오 시작 (로그인·섬부터 시작해도 섬 곡이 나오게, audio.md 4장)
+sfx.unlockOnFirstInput();
 
 // 개발 중 브라우저 콘솔에서 상태를 볼 수 있게
 if (import.meta.env.DEV) (window as unknown as { game: Phaser.Game }).game = game;

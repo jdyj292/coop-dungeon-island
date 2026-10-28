@@ -101,7 +101,6 @@ export class Dungeon extends Phaser.Scene {
     this.bossHud = new HudBoss(this, HUD_DEPTH);
     this.settings = SettingsPanel.forDungeon(this, HUD_DEPTH + 8, () => !this.result && !this.chat?.open);
     this.intro = null;
-    sfx.unlockOnFirstInput();
     this.events.once('shutdown', () => { if (!this.keepConn) this.conn?.leave(); });
     if (!this.onlineMode) {
       const { bounds } = this.buildRoom(this.room);
