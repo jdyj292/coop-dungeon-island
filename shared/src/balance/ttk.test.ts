@@ -9,9 +9,9 @@ describe('예상 처치 시간 (balance.md 5장)', () => {
   });
   it('초당 딜 = ATK × (평타 + 스킬 계수 ÷ 실제 쿨)', () => {
     const d = dpsParts(10, WEAPONS.greatsword!, [SKILLS.gs_launch!], 1.5);
-    expect(d.basic).toBeCloseTo(750 / 1.84); // 계수 합 ÷ 3연타 시간 (0.5 + 0.5 + 0.84초)
+    expect(d.basic).toBeCloseTo(375);
     expect(d.skills[0]!.perSec).toBeCloseTo(400 / 7.5);
-    expect(d.total).toBeCloseTo((750 / 1.84 + 400 / 7.5) / 10);
+    expect(d.total).toBeCloseTo((375 + 400 / 7.5) / 10);
   });
   it('처치 시간 = 체력 ÷ (딜 × 때리는 비율)', () => {
     expect(ttk(60, 50, 0.6)).toBeCloseTo(2);

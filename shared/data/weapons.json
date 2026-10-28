@@ -21,23 +21,23 @@
         "phases": {
           "windup": 0.12,
           "active": 0.08,
-          "recovery": 0.3
+          "recovery": 0.38
         },
         "coef": 200,
         "hitbox": {
-          "forward": 8,
-          "width": 24,
+          "forward": 2,
+          "width": 18,
           "depth": 13,
           "z": "both"
         },
-        "strength": "medium",
+        "strength": "light",
         "poses": {
           "windup": "ready",
           "active": "slash",
           "recovery": "slash"
         },
         "fx": {
-          "grade": "medium"
+          "grade": "light"
         },
         "sfx": { "active": "swing", "hit": "hitLight" }
       },
@@ -46,23 +46,23 @@
         "phases": {
           "windup": 0.12,
           "active": 0.08,
-          "recovery": 0.3
+          "recovery": 0.38
         },
         "coef": 200,
         "hitbox": {
-          "forward": 8,
-          "width": 24,
+          "forward": 2,
+          "width": 18,
           "depth": 13,
           "z": "both"
         },
-        "strength": "medium",
+        "strength": "light",
         "poses": {
           "windup": "draw",
           "active": "sweep",
           "recovery": "sweep"
         },
         "fx": {
-          "grade": "medium"
+          "grade": "light"
         },
         "sfx": { "active": "swing", "hit": "hitLight" }
       },
@@ -75,8 +75,8 @@
         },
         "coef": 350,
         "hitbox": {
-          "forward": 8,
-          "width": 26,
+          "forward": 2,
+          "width": 20,
           "depth": 13,
           "z": "both"
         },

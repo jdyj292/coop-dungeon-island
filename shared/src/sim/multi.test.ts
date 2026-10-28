@@ -98,7 +98,7 @@ describe('팀 콤보 (combat.md 7장)', () => {
     expect(ev.filter((e) => e.type === 'teamMilestone')).toEqual([{ type: 'teamMilestone', count: 20 }]);
     // 적중 +1씩 + 단계 +10
     expect(ps(sim, 'p2').ult).toBe(sim.players.get('p2')!.combo.count + 10);
-    run(sim, 3); // 선입력된 2·3타가 끝나고 1.5초
+    run(sim, 1.6);
     expect(sim.team.count).toBe(0);
   });
   it('솔로는 팀 콤보를 세지 않음', () => {

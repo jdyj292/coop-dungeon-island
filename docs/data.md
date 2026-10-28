@@ -15,7 +15,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
   "id": "gs_b3",
   "phases": { "windup": 0.24, "active": 0.10, "recovery": 0.50 },
   "coef": 350,
-  "hitbox": { "forward": 8, "width": 26, "depth": 13, "z": "both" },
+  "hitbox": { "forward": 2, "width": 20, "depth": 13, "z": "both" },
   "strength": "heavy",
   "flags": ["knockback"],
   "poses": { "windup": "ready", "active": "slash", "recovery": "slash" },
