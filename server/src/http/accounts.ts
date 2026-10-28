@@ -1,9 +1,9 @@
 // 계정 (docs/security.md 1·3장, island.md 7장): 가입·로그인·복구·비밀번호 변경·초대 코드 재발급. HTTP와 무관 (routes.ts가 감쌈)
 // 가입: 초대 코드가 있으면 그 섬에 합류(주민 4명까지), 없으면 새 섬. 가입 선물 장식은 가방에. 돈·재고 변경은 트랜잭션 (db.md)
-import { AUTH, ITEMS, nicknameKey, type AuthError, type LoginReq, type MeRes, type PasswordReq, type RecoverReq, type SignupReq } from '@game/shared';
+import { AUTH, ISLAND, ITEMS, nicknameKey, type AuthError, type LoginReq, type MeRes, type PasswordReq, type RecoverReq, type SignupReq } from '@game/shared';
 import { count, eq } from 'drizzle-orm';
 import type { Db } from '../db/client';
-import { activityLog, authLog, inventory, islands, users } from '../db/schema';
+import { activityLog, authLog, inventory, islands, placements, users } from '../db/schema';
 import { Limiter, LOCKS } from './limiter';
 import { burnVerify, hashSecret, newRecoveryCode, randomCode, verifySecret } from './secrets';
 import { Sessions } from './sessions';
@@ -67,6 +67,8 @@ export class Accounts {
         if (n >= AUTH.islandResidents) return fail('islandFull');
       } else {
         islandId = tx.insert(islands).values({ name: `${req.nickname}의 섬`, inviteCode: this.freshInvite() }).returning({ id: islands.id }).get().id;
+        // 섬 기본 장식 (island.json starterDecor): 공용, 놓은 사람 없음
+        for (const d of ISLAND.starterDecor) tx.insert(placements).values({ islandId, itemId: d.itemId, x: d.x, y: d.y, rotation: d.rot, communal: true, placedAt: now }).run();
       }
       const u = tx.insert(users).values({
         nickname: req.nickname, nicknameKey: nicknameKey(req.nickname), passwordHash, recoveryHash, islandId, createdAt: now,

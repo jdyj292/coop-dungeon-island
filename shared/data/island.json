@@ -16,13 +16,38 @@
     { "x": 20, "y": 17, "w": 1, "h": 10 }
   ],
   "scenery": [
-    { "id": "treeBig", "x": 1, "y": 1 }, { "id": "tree", "x": 4, "y": 1 }, { "id": "treeBig", "x": 8, "y": 0 },
-    { "id": "tree", "x": 13, "y": 1 }, { "id": "treeBig", "x": 26, "y": 0 }, { "id": "tree", "x": 31, "y": 1 },
-    { "id": "treeBig", "x": 35, "y": 1 }, { "id": "tree", "x": 38, "y": 1 },
-    { "id": "tree", "x": 0, "y": 8 }, { "id": "treeBig", "x": 0, "y": 15 }, { "id": "tree", "x": 0, "y": 22 },
-    { "id": "treeBig", "x": 39, "y": 7 }, { "id": "tree", "x": 39, "y": 14 }, { "id": "treeBig", "x": 39, "y": 21 }
+    { "id": "treeBig", "x": 0, "y": 0 }, { "id": "tree", "x": 2, "y": 0 }, { "id": "treeBig", "x": 4, "y": 0 }, { "id": "treeBig", "x": 6, "y": 0 },
+    { "id": "tree", "x": 8, "y": 0 }, { "id": "treeBig", "x": 10, "y": 0 }, { "id": "treeBig", "x": 12, "y": 0 }, { "id": "tree", "x": 14, "y": 0 },
+    { "id": "treeBig", "x": 16, "y": 0 }, { "id": "treeBig", "x": 18, "y": 0 }, { "id": "tree", "x": 20, "y": 0 }, { "id": "treeBig", "x": 22, "y": 0 },
+    { "id": "treeBig", "x": 24, "y": 0 }, { "id": "tree", "x": 26, "y": 0 }, { "id": "treeBig", "x": 28, "y": 0 }, { "id": "treeBig", "x": 30, "y": 0 },
+    { "id": "tree", "x": 32, "y": 0 }, { "id": "treeBig", "x": 34, "y": 0 }, { "id": "treeBig", "x": 36, "y": 0 }, { "id": "tree", "x": 38, "y": 0 },
+    { "id": "tree", "x": 1, "y": 1 }, { "id": "treeBig", "x": 5, "y": 1 }, { "id": "tree", "x": 7, "y": 1 }, { "id": "tree", "x": 9, "y": 1 },
+    { "id": "tree", "x": 11, "y": 1 }, { "id": "tree", "x": 13, "y": 1 }, { "id": "treeBig", "x": 15, "y": 1 }, { "id": "tree", "x": 19, "y": 1 },
+    { "id": "tree", "x": 21, "y": 1 }, { "id": "tree", "x": 23, "y": 1 }, { "id": "treeBig", "x": 25, "y": 1 }, { "id": "tree", "x": 27, "y": 1 },
+    { "id": "tree", "x": 29, "y": 1 }, { "id": "tree", "x": 33, "y": 1 }, { "id": "treeBig", "x": 35, "y": 1 }, { "id": "tree", "x": 37, "y": 1 },
+    { "id": "tree", "x": 39, "y": 1 }, { "id": "treeBig", "x": 0, "y": 2 }, { "id": "tree", "x": 39, "y": 2 }, { "id": "tree", "x": 0, "y": 4 },
+    { "id": "treeBig", "x": 39, "y": 4 }, { "id": "treeBig", "x": 0, "y": 6 }, { "id": "treeBig", "x": 39, "y": 6 }, { "id": "treeBig", "x": 0, "y": 8 },
+    { "id": "tree", "x": 39, "y": 8 }, { "id": "tree", "x": 0, "y": 10 }, { "id": "treeBig", "x": 39, "y": 10 }, { "id": "treeBig", "x": 0, "y": 12 },
+    { "id": "treeBig", "x": 39, "y": 12 }, { "id": "treeBig", "x": 0, "y": 14 }, { "id": "tree", "x": 39, "y": 14 }, { "id": "tree", "x": 0, "y": 16 },
+    { "id": "treeBig", "x": 39, "y": 16 }, { "id": "treeBig", "x": 0, "y": 18 }, { "id": "treeBig", "x": 39, "y": 18 }, { "id": "treeBig", "x": 0, "y": 20 },
+    { "id": "tree", "x": 39, "y": 20 }, { "id": "tree", "x": 0, "y": 22 }, { "id": "treeBig", "x": 39, "y": 22 }, { "id": "treeBig", "x": 0, "y": 24 },
+    { "id": "treeBig", "x": 39, "y": 24 }, { "id": "treeBig", "x": 0, "y": 26 }, { "id": "tree", "x": 39, "y": 26 }, { "id": "tree", "x": 1, "y": 3 },
+    { "id": "tree", "x": 38, "y": 4 }, { "id": "tree", "x": 1, "y": 6 }, { "id": "tree", "x": 38, "y": 7 }, { "id": "tree", "x": 1, "y": 9 },
+    { "id": "tree", "x": 38, "y": 10 }, { "id": "tree", "x": 1, "y": 12 }, { "id": "tree", "x": 38, "y": 13 }, { "id": "tree", "x": 1, "y": 15 },
+    { "id": "tree", "x": 38, "y": 16 }, { "id": "tree", "x": 1, "y": 18 }, { "id": "tree", "x": 38, "y": 19 }, { "id": "tree", "x": 1, "y": 21 },
+    { "id": "tree", "x": 38, "y": 22 }, { "id": "tree", "x": 1, "y": 24 }, { "id": "tree", "x": 38, "y": 25 },
+    { "id": "dock", "x": 20, "y": 26, "ground": true }
   ],
-  "spawn": { "x": 20, "y": 18 },
+  "spawn": { "login": { "x": 20, "y": 26 }, "return": { "x": 20, "y": 19 } },
+  "returnWindowSec": 120,
+  "starterDecor": [
+    { "itemId": "flowerBed", "x": 18, "y": 7, "rot": 0 }, { "itemId": "flowerBed", "x": 21, "y": 7, "rot": 1 },
+    { "itemId": "flowerBed", "x": 19, "y": 15, "rot": 1 }, { "itemId": "flowerBed", "x": 21, "y": 15, "rot": 0 },
+    { "itemId": "pot", "x": 15, "y": 13, "rot": 0 }, { "itemId": "pot", "x": 26, "y": 13, "rot": 0 },
+    { "itemId": "bench", "x": 14, "y": 17, "rot": 0 },
+    { "itemId": "lamp", "x": 19, "y": 21, "rot": 0 }, { "itemId": "lamp", "x": 21, "y": 21, "rot": 0 },
+    { "itemId": "flag", "x": 22, "y": 24, "rot": 0 }
+  ],
   "interactRange": 20,
   "well": { "countdownSec": 10, "maxParty": 4, "floors": ["floor1"] }
 }

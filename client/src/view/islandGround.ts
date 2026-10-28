@@ -12,6 +12,8 @@ export interface GroundSpec {
   seed: number;
   /** (x, y)가 길(돌길)인지 */
   path: (x: number, y: number) => boolean;
+  /** 잔디 두 색 깔기: checker = 승인 데모 (16×10 번갈아), patches = 둥근 얼룩 + 경계 디더 (섬 화면, art.md 6장) */
+  grass?: 'checker' | 'patches';
 }
 
 /** 모래·절벽·물 높이 (데모) */
@@ -30,6 +32,30 @@ function lcg(seed: number): () => number {
   };
 }
 
+/** 정수 해시 → 0~1 (칸 모서리 값) */
+function hash01(i: number, j: number, seed: number): number {
+  let n = (Math.imul(i, 374761393) + Math.imul(j, 668265263) + Math.imul(seed, 1442695041)) | 0;
+  n = Math.imul(n ^ (n >>> 13), 1274126177);
+  return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+}
+
+/** 부드러운 값 노이즈 (칸 cw×ch px, 모서리 값을 smoothstep으로 보간) */
+function valueNoise(x: number, y: number, cw: number, ch: number, seed: number): number {
+  const gx = x / cw, gy = y / ch, i = Math.floor(gx), j = Math.floor(gy);
+  const s = (t: number) => t * t * (3 - 2 * t), u = s(gx - i), v = s(gy - j);
+  const a = hash01(i, j, seed), b = hash01(i + 1, j, seed), c = hash01(i, j + 1, seed), d = hash01(i + 1, j + 1, seed);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+
+/** 얼룩 잔디: 큰 얼룩 + 작은 굴곡. 경계 0.04 폭은 한 칸 걸러 섞어(디더) 부드럽게 */
+const PATCH = { big: [44, 28], small: [15, 10], smallWeight: 0.3, cut: 0.56, dither: 0.04 } as const;
+function patchGrass(x: number, y: number, seed: number, base: string, alt: string): string {
+  const n = (1 - PATCH.smallWeight) * valueNoise(x, y, PATCH.big[0], PATCH.big[1], seed) + PATCH.smallWeight * valueNoise(x, y, PATCH.small[0], PATCH.small[1], seed + 1);
+  if (n > PATCH.cut + PATCH.dither) return alt;
+  if (n > PATCH.cut) return (x + y) % 2 ? alt : base;
+  return base;
+}
+
 /** 길 무늬 한 픽셀 (화면 월드 좌표): 흙길 색에 자갈 점. 돌길 장식도 같은 무늬를 칸에 깐다 */
 export function pathColor(x: number, y: number, RPA = ramp(color('island.path'))): string {
   return (x * 3 + y * 7) % 11 === 0 ? RPA[2] : (x + y * 5) % 13 === 0 ? RPA[0] : RPA[1];
@@ -43,8 +69,12 @@ export function paintGround(spec: GroundSpec, plot: (x: number, y: number, hex: 
   const r = (p: string) => ramp(color(`island.${p}`));
   const RG = r('grass'), RG2 = r('grassAlt'), RS = r('sand'), RPA = r('path'), RWA = r('water'), RFO = r('foliage'), RDIRT = r('dirt'), RST = r('stone');
   const W = spec.width, GH = spec.grassH, rnd = lcg(spec.seed);
-  // 잔디: 16×10 두 색을 아주 옅게 번갈아
-  for (let y = 0; y < GH; y++) for (let x = 0; x < W; x++) plot(x, y, (Math.floor(x / 16) + Math.floor(y / 10)) % 2 ? RG[1] : RG2[1]);
+  // 잔디: 두 색을 아주 옅게. checker = 16×10 번갈아 (데모), patches = 둥근 얼룩
+  for (let y = 0; y < GH; y++) {
+    for (let x = 0; x < W; x++) {
+      plot(x, y, spec.grass === 'patches' ? patchGrass(x, y, spec.seed, RG[1], RG2[1]) : (Math.floor(x / 16) + Math.floor(y / 10)) % 2 ? RG[1] : RG2[1]);
+    }
+  }
   // 밝은·어두운 점
   const dotsH = GH - 2, dots = Math.round(W * dotsH * DOTS);
   for (let k = 0; k < dots; k++) {

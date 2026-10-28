@@ -18,10 +18,14 @@ export const island = z.object({
   facilities: z.array(rect.extend({ id: z.string() })).min(1),
   /** 처음부터 깔린 흙길 (바닥 무늬, 걸을 수 있음. 장식을 놓을 수 있음) */
   paths: z.array(rect),
-  /** 배경 사물 (가장자리 나무, 걸을 수 없는 곳). 칸 = 발밑 */
-  scenery: z.array(z.object({ id: z.string(), x: cell, y: cell }).strict()),
-  /** 들어오는 자리 (칸) */
-  spawn: z.object({ x: cell, y: cell }).strict(),
+  /** 배경 사물 (가장자리 나무·선착장). 칸 = 발밑. ground = 바닥 높이 (캐릭터가 위를 걸음, 늘 캐릭터 아래에 그림) */
+  scenery: z.array(z.object({ id: z.string(), x: cell, y: cell, ground: z.boolean().optional() }).strict()),
+  /** 들어오는 자리 (칸): login = 접속 (남쪽 선착장), return = 던전에서 돌아옴 (우물 앞) */
+  spawn: z.object({ login: z.object({ x: cell, y: cell }).strict(), return: z.object({ x: cell, y: cell }).strict() }).strict(),
+  /** 던전에서 나온 뒤 이 초 안에 섬에 들어오면 return 자리 */
+  returnWindowSec: z.number().positive(),
+  /** 새 섬에 처음부터 놓인 공용 장식 (island.md 7장). 옮기고 치울 수 있음 (치우면 공용 창고) */
+  starterDecor: z.array(z.object({ itemId: z.string(), x: cell, y: cell, rot: z.number().int().min(0).max(3) }).strict()),
   /** 시설 상호작용 거리 (px, 시설 앞 가운데부터) */
   interactRange: z.number().positive(),
   /** 우물 출발 (island.md 6장): 카운트다운 초, 파티 최대, 갈 수 있는 층 (rooms.json 키) */

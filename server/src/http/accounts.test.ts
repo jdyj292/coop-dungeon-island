@@ -1,8 +1,8 @@
-import { AUTH, ITEMS, recoverReq, signupReq } from '@game/shared';
+import { AUTH, ISLAND, ITEMS, recoverReq, signupReq } from '@game/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
-import { activityLog, authLog, inventory, sessions, users } from '../db/schema';
+import { activityLog, authLog, inventory, placements, sessions, users } from '../db/schema';
 import { Accounts } from './accounts';
 import { LOCKS } from './limiter';
 
@@ -36,6 +36,10 @@ describe('가입', () => {
     expect(row.recoveryHash).toMatch(/^\$argon2id\$/);
     // 가입 선물
     expect(Object.fromEntries(db.select().from(inventory).all().map((r) => [r.itemId, r.count]))).toEqual(ITEMS.starter);
+    // 섬 기본 장식: 공용, 놓은 사람 없음
+    const decor = db.select().from(placements).all();
+    expect(decor.map((p) => [p.itemId, p.x, p.y, p.rotation])).toEqual(ISLAND.starterDecor.map((d) => [d.itemId, d.x, d.y, d.rot]));
+    expect(decor.every((p) => p.communal && p.placedBy === null)).toBe(true);
     // 토큰 원문은 DB에 없음
     expect(db.select().from(sessions).get()!.tokenHash).not.toBe(r.value.token);
   });
@@ -59,6 +63,8 @@ describe('가입', () => {
     expect(await signup('Ee', code)).toEqual({ ok: false, error: 'islandFull' });
     expect(await signup('Ff', 'ABCDEFGH')).toEqual({ ok: false, error: 'badInvite' });
     expect(db.select().from(activityLog).all().map((x) => x.action)).toEqual(['found', 'join', 'join', 'join']);
+    // 합류 가입은 기본 장식을 더 깔지 않음
+    expect(db.select().from(placements).all().length).toBe(ISLAND.starterDecor.length);
   });
 
   it('IP당 시간당 3회', async () => {

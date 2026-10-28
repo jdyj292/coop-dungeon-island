@@ -241,12 +241,14 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | place | 장식을 놓을 수 있는 영역 (약 30×22) |
 | facilities | `{ id, x, y, w, h }` 고정 시설: 그림 id(client/data/sprites/island.json)와 차지하는 칸. 걸어서 지나갈 수 없음 |
 | paths | 처음부터 깔린 흙길 (바닥 무늬만, 데모 길 무늬) |
-| scenery | `{ id, x, y }` 가장자리 배경 사물 (나무). 칸 = 발밑 |
-| spawn | 들어오는 자리 (우물 앞, 사람마다 옆으로 한 칸) |
+| scenery | `{ id, x, y, ground? }` 배경 사물 (가장자리 숲, 선착장). 칸 = 발밑. ground = 바닥 높이 (캐릭터가 위를 걸음, 늘 캐릭터 아래에 그림) |
+| spawn | `{ login, return }` 들어오는 자리 `{ x, y }`: login = 접속 (선착장), return = 던전 복귀 (우물 앞). 사람마다 옆으로 한 칸 (island.md 2장) |
+| returnWindowSec | 던전에서 나온 뒤 이 초 안에 들어오면 return 자리 |
+| starterDecor | `[{ itemId, x, y, rot }]` 새 섬에 처음부터 놓인 공용 장식 (island.md 7장) |
 | interactRange | 시설 [E] 거리 px (시설 앞 가운데부터, 넓은 시설은 폭 안이면 0) |
 | well | `{ countdownSec, maxParty, floors }` 우물 출발: 카운트다운 초, 파티 최대, 갈 수 있는 층 (rooms.json 키) |
 
-- data-validate: 그림 id가 섬 사물 그림에 있는지, 칸이 격자(물가 제외) 안인지
+- data-validate: 그림 id가 섬 사물 그림에 있는지, 칸이 격자(물가 제외) 안인지, starterDecor가 있는 장식인지. 기본 장식이 모두 놓을 수 있는 자리인지는 placement.test.ts
 
 ---
 

@@ -1,6 +1,6 @@
 // 섬 진행 (Colyseus 없이 테스트 가능, docs/network.md 3·5장): 주민 접속·이동, 장식 배치(islandPlacement.ts). 상점·우물은 4-7~4-8
 // 60Hz로 각 주민의 마지막 입력을 적용하고 상태(정수 위치)에 반영. 상태는 20Hz로 전송 (IslandRoom)
-import { islandBounds, NET, newWalker, parseC2S, placementBlocks, spawnPos, stepWalker, TICK, type WalkInput, type Walker } from '@game/shared';
+import { ISLAND, islandBounds, NET, newWalker, parseC2S, placementBlocks, spawnPos, stepWalker, TICK, type WalkInput, type Walker } from '@game/shared';
 import type { IslandStore } from '../db/islandStore';
 import type { ShopStore } from '../db/shopStore';
 import { IslandState, Resident } from '../schema/IslandState';
@@ -86,11 +86,11 @@ export class IslandGame {
     this.state.residents.set(info.id, r);
   }
 
-  /** 섬에 들어옴: 우물 앞 빈자리에 (접속한 사람 수로 옆으로) */
+  /** 섬에 들어옴: 던전에서 막 나왔으면 우물 앞, 아니면 선착장 (접속한 사람 수로 옆으로, island.md 2장) */
   join(id: string): void {
     const r = this.state.residents.get(id);
     if (!r) return;
-    const pos = spawnPos(this.live.size);
+    const pos = spawnPos(this.live.size, islandBus.takeReturn(id, ISLAND.returnWindowSec * 1000) ? 'return' : 'login');
     this.live.set(id, { walker: newWalker(pos), input: { mx: 0, my: 0, run: false, seq: 0 }, limit: new RateLimit(islandRules()) });
     Object.assign(r, { online: true, status: 'island', x: Math.round(pos.x), y: Math.round(pos.y), facing: 1, state: 'idle', lastInputSeq: 0 });
     this.placement?.sendInventory(id);

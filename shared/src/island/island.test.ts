@@ -9,13 +9,18 @@ import { footOf, islandBounds, nearFacility, spawnPos } from './world';
 describe('섬 공간', () => {
   const b = islandBounds();
 
-  it('입장 자리는 걷는 영역 안, 시설과 겹치지 않음', () => {
-    for (let i = 0; i < 4; i++) {
-      const p = spawnPos(i);
-      expect(p.x).toBeGreaterThanOrEqual(b.minX);
-      expect(p.x).toBeLessThanOrEqual(b.maxX);
-      expect(hitsBlock(p, playerHalf(), b)).toBe(false);
+  it('입장 자리(선착장·우물 앞)는 걷는 영역 안, 시설과 겹치지 않음', () => {
+    for (const kind of ['login', 'return'] as const) {
+      for (let i = 0; i < 4; i++) {
+        const p = spawnPos(i, kind);
+        expect(p.x).toBeGreaterThanOrEqual(b.minX);
+        expect(p.x).toBeLessThanOrEqual(b.maxX);
+        expect(p.y).toBeLessThanOrEqual(b.maxY);
+        expect(hitsBlock(p, playerHalf(), b)).toBe(false);
+      }
     }
+    // 선착장은 걷는 영역 맨 앞 줄 (물가 바로 위)
+    expect(ISLAND.spawn.login.y).toBe(ISLAND.walk.y + ISLAND.walk.h - 1);
   });
 
   it('시설은 놓는 영역 안, 서로 겹치지 않고 우물 주변 1칸 비움 (island.md 3장)', () => {
@@ -38,6 +43,7 @@ describe('섬 공간', () => {
     expect(w.pos.y).toBeGreaterThanOrEqual((well.y + well.h) * TILE);
     expect(nearFacility(w.pos)).toBe('well');
     expect(nearFacility(spawnPos(0))).toBe(null);
+    expect(nearFacility(spawnPos(0, 'return'))).toBe(null);
   });
 
   it('걷기: 방향, 달리기가 더 빠름, 경계에서 멈춤', () => {

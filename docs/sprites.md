@@ -233,7 +233,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 | rot | 회전 방향별 모습, 길이 1(대칭)·2·4 (art.md 6장 회전). `이름|flip` = 좌우 반전. 배열이면 순환 (모닥불·깃발·분수) |
 | animSec | 순환 한 프레임 길이 (초) |
 
-- 사물 id: 시설 well·shop·board·weaponRack·storage, 장식 flowerBed·stonePath(아래)·fence·pot·flag·mailbox·tree·bench·lamp·campfire·fountain, 배경 treeBig (섬 가장자리, 판매 안 함). 크기(칸)·가격은 shared/data/items.json (4-6)
+- 사물 id: 시설 well·shop·board·weaponRack·storage, 장식 flowerBed·stonePath(아래)·fence·pot·flag·mailbox·tree·bench·lamp·campfire·fountain, 배경 treeBig (섬 가장자리, 판매 안 함)·dock (선착장, 바닥 높이). 크기(칸)·가격은 shared/data/items.json (4-6)
 - 꽃밭은 회전하면 꽃 색이 바뀜 (분홍·노랑 ↔ 하늘·흰색, 데모의 두 꽃밭)
 - **돌길**은 그림이 아니라 바닥 무늬: 데모의 길 무늬(흙길 색 + 자갈 점)를 돌길이 놓인 칸에 월드 좌표로 깐다 → 이웃 돌길과 이어짐 (client/src/view/islandGround.ts)
 - **바닥** (islandGround.ts `paintGround`): 잔디(16×10 두 색 + 점·풀 포기, 씨앗 난수) → 모래 8 → 흙 절벽 10 → 물 12. 물은 2프레임 (반짝임·거품 위치), 프레임 0이 데모

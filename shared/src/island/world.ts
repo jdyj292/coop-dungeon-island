@@ -32,9 +32,11 @@ export function islandBounds(extra: Block[] = []): Bounds {
  */
 export const footOf = (r: CellRect): Vec2 => ({ x: (r.x + r.w / 2) * TILE, y: (r.y + r.h) * TILE - 1 });
 
-/** 입장 자리: 우물 앞, 사람마다 옆으로 한 칸씩 */
-export function spawnPos(index: number): Vec2 {
-  const s = ISLAND.spawn, side = [0, -1, 1, -2][index % 4]!;
+export type SpawnKind = 'login' | 'return';
+
+/** 입장 자리: 접속은 선착장, 던전 복귀는 우물 앞. 사람마다 옆으로 한 칸씩 */
+export function spawnPos(index: number, kind: SpawnKind = 'login'): Vec2 {
+  const s = ISLAND.spawn[kind], side = [0, -1, 1, -2][index % 4]!;
   return { x: (s.x + 0.5 + side) * TILE, y: (s.y + 0.5) * TILE };
 }
 

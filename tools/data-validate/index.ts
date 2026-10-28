@@ -47,6 +47,9 @@ if (!issues.length) {
   for (const id of Object.keys(itemsData.starter)) {
     if (!itemsData.decorations[id]) issues.push({ level: 'error', where: `items.json starter.${id}`, message: '없는 장식' });
   }
+  for (const d of isl.starterDecor) {
+    if (!itemsData.decorations[d.itemId]) issues.push({ level: 'error', where: `island.json starterDecor ${d.itemId}`, message: '없는 장식' });
+  }
   for (const r of [isl.walk, isl.place, ...isl.facilities, ...isl.paths]) {
     if (r.x + r.w > isl.grid.w || r.y + r.h > isl.grid.h - isl.shoreRows) issues.push({ level: 'error', where: `island.json (${r.x},${r.y})`, message: '섬 격자(물가 제외) 밖' });
   }

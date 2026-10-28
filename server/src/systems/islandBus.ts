@@ -4,6 +4,8 @@ import { EventEmitter } from 'node:events';
 
 /** users.id → 층 키 (floor1) */
 const inDungeon = new Map<string, string>();
+/** users.id → 던전에서 나온 시각 (Date.now). 섬 방이 없어졌다 새로 생겨도 남도록 여기에 둔다 */
+const returnedAt = new Map<string, number>();
 const bus = new EventEmitter();
 
 export const islandBus = {
@@ -13,13 +15,22 @@ export const islandBus = {
     bus.emit(`island:${islandId}`, { userIds, floor });
   },
   /** 던전에서 나옴 (정산·이탈) */
-  returned(islandId: number, userIds: string[]): void {
-    for (const id of userIds) inDungeon.delete(id);
+  returned(islandId: number, userIds: string[], now = Date.now()): void {
+    for (const id of userIds) {
+      inDungeon.delete(id);
+      returnedAt.set(id, now);
+    }
     bus.emit(`island:${islandId}`, { userIds, floor: null });
   },
   /** 지금 던전에 있는 층 (없으면 undefined) */
   floorOf(userId: string): string | undefined {
     return inDungeon.get(userId);
+  },
+  /** 던전에서 windowMs 안에 나왔는지 (한 번 물으면 지움: 다음 접속은 선착장) */
+  takeReturn(userId: string, windowMs: number, now = Date.now()): boolean {
+    const t = returnedAt.get(userId);
+    returnedAt.delete(userId);
+    return t !== undefined && now - t <= windowMs;
   },
   /** 섬 방이 구독 (floor null = 돌아옴). 해제 함수를 돌려준다 */
   watch(islandId: number, fn: (e: { userIds: string[]; floor: string | null }) => void): () => void {

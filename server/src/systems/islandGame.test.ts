@@ -1,5 +1,6 @@
-import { spawnPos } from '@game/shared';
+import { ISLAND, spawnPos } from '@game/shared';
 import { describe, expect, it } from 'vitest';
+import { islandBus } from './islandBus';
 import { IslandGame } from './islandGame';
 
 const make = () => {
@@ -11,7 +12,20 @@ const make = () => {
 };
 
 describe('IslandGame', () => {
-  it('주민은 접속 전엔 away, 들어오면 우물 앞 자리, 나가면 away', () => {
+  it('던전에서 막 나왔으면 우물 앞, 시간이 지났거나 다시 접속하면 선착장 (island.md 2장)', () => {
+    const { g } = make();
+    islandBus.returned(99, ['1']);
+    islandBus.returned(99, ['2'], Date.now() - ISLAND.returnWindowSec * 1000 - 1);
+    g.join('1');
+    g.join('2');
+    expect(g.state.residents.get('1')!.y).toBe(Math.round(spawnPos(0, 'return').y));
+    expect(g.state.residents.get('2')!.y).toBe(Math.round(spawnPos(1, 'login').y));
+    g.leave('1');
+    g.join('1');
+    expect(g.state.residents.get('1')!.y).toBe(Math.round(spawnPos(1, 'login').y));
+  });
+
+  it('주민은 접속 전엔 away, 들어오면 선착장 자리, 나가면 away', () => {
     const { g } = make();
     expect(g.state.residents.get('1')!.status).toBe('away');
     g.join('1');

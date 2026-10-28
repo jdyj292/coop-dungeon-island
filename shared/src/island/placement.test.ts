@@ -21,9 +21,17 @@ describe('장식 배치 규칙', () => {
     expect(canPlace('fence', well.x - 1, well.y, 0, [])).toBe('clearance');
     const shop = ISLAND.facilities.find((f) => f.id === 'shop')!;
     expect(canPlace('fence', shop.x, shop.y + shop.h, 0, [])).toBe('clearance');
-    expect(reservedCells().length).toBe(ISLAND.facilities.length + 1);
-    expect(canPlace('fence', ISLAND.spawn.x, ISLAND.spawn.y, 0, [])).toBe('clearance');
+    expect(reservedCells().length).toBe(ISLAND.facilities.length + 2);
+    expect(canPlace('fence', ISLAND.spawn.return.x, ISLAND.spawn.return.y, 0, [])).toBe('clearance');
     expect(canPlace('nope', free.x, free.y, 0, [])).toBe('unknown');
+  });
+
+  it('섬 기본 장식은 모두 놓을 수 있는 자리 (서로 겹치지 않음, island.md 7장)', () => {
+    const placed: Placed[] = [];
+    for (const [i, d] of ISLAND.starterDecor.entries()) {
+      expect([d.itemId, canPlace(d.itemId, d.x, d.y, d.rot, placed)]).toEqual([d.itemId, null]);
+      placed.push({ id: String(i), itemId: d.itemId, x: d.x, y: d.y, rot: d.rot });
+    }
   });
 
   it('다른 장식과 겹치면 안 됨, 옮기는 자기 자신은 무시', () => {

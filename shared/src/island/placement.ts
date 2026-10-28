@@ -25,12 +25,11 @@ export function footprint(itemId: string, x: number, y: number, rot: number): Ce
 
 const overlaps = (a: CellRect, b: CellRect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
-/** 비워 둘 칸: 우물 주변 1칸, 다른 시설은 입구(앞 줄) 1칸 (동선 보장), 들어오는 자리 줄 (spawnPos 4칸, 갇히지 않게) */
+/** 비워 둘 칸: 우물 주변 1칸, 다른 시설은 입구(앞 줄) 1칸 (동선 보장), 들어오는 자리 두 곳의 줄 (spawnPos 4칸, 갇히지 않게) */
 export function reservedCells(): CellRect[] {
-  const s = ISLAND.spawn;
   return [
     ...ISLAND.facilities.map((f) => (f.id === 'well' ? { x: f.x - 1, y: f.y - 1, w: f.w + 2, h: f.h + 2 } : { x: f.x, y: f.y + f.h, w: f.w, h: 1 })),
-    { x: s.x - 2, y: s.y, w: 4, h: 1 },
+    ...Object.values(ISLAND.spawn).map((s) => ({ x: s.x - 2, y: s.y, w: 4, h: 1 })),
   ];
 }
 

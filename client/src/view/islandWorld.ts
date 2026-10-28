@@ -21,6 +21,9 @@ export const islandScreenSize = (): { w: number; h: number } => ({
   w: ISLAND.grid.w * TILE, h: FLOOR_TOP + ISLAND.grid.h * ROW_PX,
 });
 
+/** 잔디 무늬: 얼룩 (개발 중 ?grass=checker로 예전 바둑판과 비교) */
+const GRASS = import.meta.env.DEV && new URLSearchParams(location.search).get('grass') === 'checker' ? 'checker' : 'patches';
+
 /** 길(칸 사각형) 위의 화면 픽셀인지 */
 function onPath(x: number, y: number): boolean {
   const cx = Math.floor(x / TILE), cy = Math.floor((y - FLOOR_TOP) / ROW_PX);
@@ -34,7 +37,7 @@ function groundCanvas(frame: number): HTMLCanvasElement {
   c.height = h;
   const g = c.getContext('2d')!;
   const grassH = h - ISLAND.shoreRows * ROW_PX;
-  paintGround({ width: w, grassH, seed: 3, path: onPath }, (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); }, frame);
+  paintGround({ width: w, grassH, seed: 3, path: onPath, grass: GRASS }, (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); }, frame);
   return c;
 }
 
@@ -49,19 +52,19 @@ export class IslandWorld {
     for (const f of [0, 1]) if (!scene.textures.exists(`islandGround${f}`)) scene.textures.addCanvas(`islandGround${f}`, groundCanvas(f));
     this.ground = scene.add.image(0, 0, 'islandGround0').setOrigin(0, 0).setDepth(-1000);
     for (const f of ISLAND.facilities) this.feet.set(f.id, this.addObject(f.id, footOf(f)));
-    for (const s of ISLAND.scenery) this.addObject(s.id, { x: (s.x + 0.5) * TILE, y: (s.y + 1) * TILE - 1 });
+    for (const s of ISLAND.scenery) this.addObject(s.id, { x: (s.x + 0.5) * TILE, y: (s.y + 1) * TILE - 1 }, s.ground);
     this.prompt = scene.add.graphics().setDepth(5000);
     this.butterflies = scene.add.graphics().setDepth(4000);
   }
 
-  /** 사물 하나 (첫 회전 모습). 반환: 발밑 화면 좌표 */
-  private addObject(id: string, foot: Vec2): { sx: number; sy: number } {
+  /** 사물 하나 (첫 회전 모습). ground면 바닥 바로 위 (깊이 정렬 없이 캐릭터 아래). 반환: 발밑 화면 좌표 */
+  private addObject(id: string, foot: Vec2, ground = false): { sx: number; sy: number } {
     const o = islandObjects()[id];
     if (!o) throw new Error(`섬 사물 '${id}' 없음 (client/data/sprites/island.json)`);
     const v = islandView(o, 0);
     const tex = islandTexture(this.scene, id, v.frame, v.flip);
     const { sx, sy } = project(foot.x, foot.y);
-    this.scene.add.image(sx - tex.foot[0], sy - tex.foot[1], tex.key).setOrigin(0, 0).setDepth(foot.y);
+    this.scene.add.image(sx - tex.foot[0], sy - tex.foot[1], tex.key).setOrigin(0, 0).setDepth(ground ? -999 : foot.y);
     return { sx, sy };
   }
 

@@ -966,5 +966,62 @@
     },
     "rot": [["a", "b"]],
     "animSec": 0.3
+  },
+  "dock": {
+    "_note": "선착장 (남쪽 길 끝, 접속하면 여기서 시작. 바닥 높이 배경 사물, 캐릭터 아래에 그림). 잔교 + 묶어 둔 작은 배",
+    "colors": {
+      "a": "island.wood:0",
+      "b": "island.wood",
+      "c": "island.woodDark",
+      "d": "island.wood:2",
+      "e": "island.waterDeep",
+      "r": "island.roof"
+    },
+    "frames": {
+      "front": {
+        "rows": [
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          "caaaaaaaaaaaac....................",
+          "cbbbbbbbbbbbbc....................",
+          "cddddddddddddc....................",
+          ".cceeeeeeeecc.......aaaaaaaaaaa...",
+          ".cc........cccccccabbbbbbbbbbbbba.",
+          ".cc........cc....abbrrrrrrrrrrrbba",
+          ".cc........cc.....bbbbbbbbbbbbbbb.",
+          ".cc........cc......ddddddddddddd..",
+          ".cc........cc.......ddddddddddd...",
+          ".cc........cc.....................",
+          ".cc........cc....................."
+        ],
+        "foot": [7, 9]
+      }
+    },
+    "rot": ["front"]
   }
 }
