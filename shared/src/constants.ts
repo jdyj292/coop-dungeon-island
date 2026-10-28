@@ -46,6 +46,8 @@ export const NET = {
   attackerTrustPx: 12,
   /** 백스텝 소급 무적: 입력 시각 뒤 이 시간 안의 피격 취소 */
   backstepGraceMs: 100,
+  /** 회피 보관: 히트스톱으로 서버 캐릭터가 아직 행동 중(후딜레이 전)이면 거절하지 않고 이 시간까지 기다렸다 실행 */
+  dodgeBufferMs: 500,
   /** 초당 횟수 제한 (넘으면 무시), chat은 chatWindowMs 안에 chatMax회. kickWindowMs 안에 kickDrops개를 버리면 연결 종료 */
   limits: { input: 30, action: 10, island: 5, chatMax: 3, chatWindowMs: 3000, kickDrops: 30, kickWindowMs: 5000 },
   /** 채팅 길이 (hud.md 4장) */

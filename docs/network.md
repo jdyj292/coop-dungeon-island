@@ -78,6 +78,7 @@
 - 모든 메시지는 서버에서 형식 검사 (shared/src/messages.ts의 zod 스키마)
 - 횟수 제한: input 초당 30, action 초당 10, 섬 메시지 초당 5, chat 3초에 3회. 넘으면 무시, 계속되면 연결 종료
 - 서버가 거절한 행동은 `rejected { seq, reason }`으로 알린다 (쿨타임, MP 부족, 지구력 부족 stamina, 상태 불가). 받을 때 검사: 장착하지 않은 스킬·필살기·충전(MVP 이후)은 state
+- 회피 보관: 회피는 쿨타임·지구력은 되는데 서버 캐릭터가 아직 후딜레이 전(적중 역경직으로 클라이언트보다 늦음)이면 거절하지 않고 보관했다가, 후딜레이에 들어가는 틱에 그때 누른 방향으로 실행한다. 보관 중에는 lastInputSeq를 회피 앞까지만 올린다. 보관 중 맞거나 NET.dodgeBufferMs(500ms)가 지나면 state로 거절하고, 보관 중 또 회피를 보내도 state로 거절한다. 클라이언트는 다시 적용할 때 회피 누름을 시작될 때까지 이어 눌러 서버와 맞춘다 (이전에는 거절되어 화면에서 살짝 떴다가 제자리로 돌아감)
 - 형식이 틀린 메시지도 횟수에 든다. 5초 안에 30개를 버리면 연결 종료 (NET.limits)
 - 구현: server/src/systems/ (dungeonGame = 진행, inputs = 입력 대기열·거절, rateLimit, sync = 상태 반영, events = 이벤트). rooms/DungeonRoom은 연결·전송만
 

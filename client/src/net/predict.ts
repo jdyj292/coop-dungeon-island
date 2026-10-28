@@ -115,6 +115,8 @@ export class Predictor {
     this.pending = this.pending.filter((p) => p.seq > lastSeq);
     const sim = clone(server);
     let held: PlayerInput | null = null;
+    // 회피 누름은 시작될 때까지 이어 누른다 (서버가 히트스톱 중 받은 회피를 보관했다 실행하는 것과 같게, server inputs.ts)
+    let dodge = false;
     for (const p of this.pending) {
       if (p.serverFrozen) {
         held = mergePresses(held, p.input);
@@ -122,7 +124,9 @@ export class Predictor {
       }
       const input = held ? { ...mergePresses(held, p.input)!, x: p.input.x, y: p.input.y, run: p.input.run } : p.input;
       held = null;
-      stepPlayerState(sim, this.weapon, input, dt, this.bounds, p.speedMul);
+      dodge ||= input.backstep;
+      stepPlayerState(sim, this.weapon, dodge ? { ...input, backstep: true } : input, dt, this.bounds, p.speedMul);
+      if (sim.backstep) dodge = false;
     }
     const s = this.state;
     Object.assign(s, { hp: sim.hp, maxHp: sim.maxHp, mp: sim.mp, stamina: sim.stamina, staminaWait: sim.staminaWait, tired: sim.tired, potions: sim.potions, ult: sim.ult, feathers: sim.feathers });

@@ -83,6 +83,17 @@ describe('Predictor (network.md 7장)', () => {
     for (let i = 0; i < 3; i++) pr.tick(idle, TICK, 2);
     expect(pr.state.fighter.queued).toBe(true);
   });
+  it('회피 누름은 다시 적용할 때 시작될 때까지 이어진다: 서버가 아직 판정 구간이어도 후딜레이에서 회피 (서버 보관과 같게)', () => {
+    const pr = new Predictor(gs, bounds, { x: 100, y: 50 });
+    pr.tick({ ...idle, attack: true }, TICK, 1, 1);
+    const server = structuredClone(pr.state);
+    for (let i = 0; i < 4; i++) pr.tick(idle, TICK, 1);
+    // 서버 기준으로는 아직 판정 구간인 틱에 아래 회피를 누름
+    pr.tick({ ...idle, y: 1, backstep: true }, TICK, 2, 2);
+    for (let i = 0; i < 20; i++) pr.tick({ ...idle, y: 1 }, TICK, 2);
+    pr.reconcile(server, 1, TICK);
+    expect(pr.state.pos.y).toBeGreaterThan(60);
+  });
   it('대시 적중 역경직: 지연이 있어도 화면이 뒤로 갔다 앞으로 가지 않고, 서버와 같은 자리에서 끝난다', () => {
     for (const oneWay of [1, 3, 6]) {
       const { xs, server } = dashInto(oneWay);

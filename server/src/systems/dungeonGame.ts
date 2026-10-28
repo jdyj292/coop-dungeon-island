@@ -257,6 +257,11 @@ export class DungeonGame {
     }
     const before = new Map<number, Projectile>(this.sim.projectiles.map((p) => [p.id, p]));
     const { events, moved } = this.sim.step(TICK, inputs);
+    for (const [pid, m] of this.members) {
+      const sp = this.sim.players.get(pid);
+      const dropped = sp ? m.inputs.settleDodge(sp.state, TICK) : null;
+      if (dropped !== null) this.out.send(pid, 'rejected', { seq: dropped, reason: 'state' });
+    }
     const combos = new Map([...this.sim.players.values()].map((sp) => [sp.pid, sp.combo.count]));
     const out: Outgoing[] = [...eventsFor(events, this.now, combos), ...projectileEvents(before, this.sim.projectiles, this.now)];
     // 보상: 기절 → 전원, 콤보 단계 → 보너스 (솔로 개인 / 파티 팀)
