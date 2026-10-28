@@ -22,7 +22,7 @@
 - 방 진행 (roadmap 3-3): 마지막 웨이브를 클리어하면 출구 문이 열리고, **살아 있는 파티원 전원**(쓰러진 사람 제외)이 출구 앞 구역(combat.json exit: 문 앞 바닥 좌우 ±24px, 깊이 20px까지)에 서면 다음 방
   - 다음 방: 위치는 맵 시작 지점, HP·MP·물약·쿨타임·필살기 게이지·깃털은 그대로, 콤보·몬스터는 새로. 보스 방에는 출구 없음
   - 서버 방 하나가 한 판 (1번 방 → 보스 방). 구현 server/src/systems/roomFlow.ts, dungeonGame.nextRoom
-- **우물 입장** (층 첫 방, rooms.json `wellDrop`): 섬 우물로 뛰어든 플레이어는 첫 방 입장 지점 위 천장 구멍(밧줄·빛줄기)에서 떨어져 들어온다. 떨어지는 combat.json arriveSec(0.5초) 동안 조작 불가·맞지 않음 (서버 판정, 상태 이름 arrive). 착지 때 먼지·흔들림·효과음 wellLand
+- **우물 입장** (층 첫 방, rooms.json `wellDrop`): 섬 우물로 뛰어든 플레이어는 첫 방 입장 지점 위 잎 덮개 구멍(빛줄기)에서 떨어져 들어온다. 떨어지는 combat.json arriveSec(0.5초) 동안 조작 불가·맞지 않음 (서버 판정, 상태 이름 arrive). 착지 때 먼지·흔들림·효과음 wellLand
 - **잠든 채 시작** (rooms.json `wakeSec`, 지금은 1번 방 1.5초): 첫 웨이브 몬스터가 잠든 채(Zzz) 있다가, 누군가 착지한 뒤 wakeSec가 지나면 모두 깨어나 덤빈다. 그 전에 맞은 몬스터는 그 몬스터만 바로 깨어남. 깰 때 움찔 + monWake. 구현 shared/src/sim/room.ts sleepAll·monster/ai.ts·sim/strike.ts, 상태 이름 sleep (2026-10, 우물 밑에 막 떨어졌는데 몬스터가 바로 덤벼 어디에 왔는지 볼 틈이 없던 문제)
 - 권장 숙련도는 balance.md
 - 각 층은 몬스터 3종 + 정예 1종 + 보스 1 + 환경 기믹 1
