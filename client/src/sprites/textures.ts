@@ -1,5 +1,8 @@
 // 합성 결과 → Phaser 텍스처 캐시 (docs/sprites.md 7장 5~6단계)
 import type Phaser from 'phaser';
+import fx from '../../data/fx.json';
+import { color } from '../palette';
+import { castShadow, type ShadowShape } from './castShadow';
 import type { CharacterLook } from './compose';
 import { spriteData } from './data';
 import { islandObjects, renderIslandFrame } from './island';
@@ -68,6 +71,30 @@ export function islandTexture(scene: Phaser.Scene, id: string, frame: string, fl
     const sprite = renderIslandFrame(o, frame, flip);
     scene.textures.addCanvas(key, paintCanvas(sprite));
     feet.set(key, sprite.foot);
+  }
+  return { key, foot: feet.get(key)! };
+}
+
+/** 땅 그림자 → 캔버스 (색 global.outline, 진하기 fx.json islandShadow.alpha를 미리 칠해 둠) */
+export function paintShadow(s: ShadowShape): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = s.width;
+  canvas.height = s.height;
+  const ctx = canvas.getContext('2d')!;
+  ctx.globalAlpha = fx.islandShadow.alpha;
+  ctx.fillStyle = color('global.outline');
+  s.cells.forEach((on, k) => on && ctx.fillRect(k % s.width, Math.floor(k / s.width), 1, 1));
+  return canvas;
+}
+
+/** 섬 사물 그림의 땅 그림자 (art.md 6장 섬). 사물 그림과 같은 발밑 */
+export function islandShadowTexture(scene: Phaser.Scene, id: string, frame: string, flip = false): CharacterTexture {
+  const key = ['islsh', id, frame, flip ? 'f' : '-'].join('|');
+  if (!scene.textures.exists(key)) {
+    const sp = renderIslandFrame(islandObjects()[id]!, frame, flip);
+    const s = castShadow(sp, fx.islandShadow.shear, fx.islandShadow.lift);
+    scene.textures.addCanvas(key, paintShadow(s));
+    feet.set(key, s.foot);
   }
   return { key, foot: feet.get(key)! };
 }

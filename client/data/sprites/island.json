@@ -1,5 +1,5 @@
 {
-  "_note": "섬 사물 (시설·장식·배경). 형식 docs/sprites.md 12장. 승인 데모 island_screen_hud_mockup.html과 픽셀 단위로 같음 (island.test.ts, 우물은 2026-10 우물 입장 개편으로 그림만 다름). 데모에 없던 사물·회전 모습은 4-4 초안 검토로 승인. 승인 전 그림은 drafts/island.json",
+  "_note": "섬 사물 (시설·장식·배경). 형식 docs/sprites.md 12장. 승인 데모 island_screen_hud_mockup.html과 픽셀 단위로 같음 (island.test.ts, 우물·잡화점은 2026-10에 그림만 바꿈). 데모에 없던 사물·회전 모습은 4-4 초안 검토로 승인. 승인 전 그림은 drafts/island.json",
   "well": {
     "_note": "우물 (시설 3×3, 던전 입구): 도르래 들보·밧줄, 버섯빛 구멍, 넝쿨·작은 버섯, 떠오르는 포자 2프레임 (2026-10 우물 입장 개편 승인, island.md 6장)",
     "colors": {
@@ -73,10 +73,7 @@
           "....n.mmmmnmmmmmnmmmmmnmmmmmnmmtmmnmmmmmnmmmm.....",
           ".......mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm......"
         ],
-        "foot": [
-          25,
-          46
-        ]
+        "foot": [25, 46]
       },
       "front2": {
         "rows": [
@@ -127,22 +124,14 @@
           "....n.mmmmnmmmmmnmmmmmnmmmmmnmmtmmnmmmmmnmmmm.....",
           ".......mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm......"
         ],
-        "foot": [
-          25,
-          46
-        ]
+        "foot": [25, 46]
       }
     },
-    "rot": [
-      [
-        "front",
-        "front2"
-      ]
-    ],
+    "rot": [["front", "front2"]],
     "animSec": 0.6
   },
   "shop": {
-    "_note": "잡화점 (시설 3×2)",
+    "_note": "잡화점 (시설 3×2) — 2026-10 입체감: 안쪽 뒷벽·선반·진열대 윗면·오른쪽 옆면",
     "colors": {
       "a": "island.awningALight",
       "b": "island.awningBLight",
@@ -162,7 +151,10 @@
       "p": "island.blue",
       "q": "island.yellow",
       "r": "island.pink",
-      "s": "island.paper"
+      "s": "island.paper",
+      "t": "island.woodDark",
+      "u": "island.woodDark:2",
+      "v": "island.awningB:2"
     },
     "frames": {
       "front": {
@@ -179,36 +171,36 @@
           "..ccccccddddddccccccddddddccccccddddddccccccdddd..",
           "..eeeeeeffffffeeeeeeffffffeeeeeeffffffeeeeeeffffff",
           "..geeee..ffff..eeee..ffff..eeee..ffff..eeee..ffff.",
-          "..ghh........................................iii..",
-          "..ghh........................................iii..",
-          "..ghh........................................iii..",
-          "..ghh........................................iii..",
-          "..ghh........................................iii..",
-          "..ghh........................................iii..",
-          "..ghh........................................iii..",
-          "..ghh........................................iii..",
-          "..ghh......j.....j.....j...........j....j....iii..",
-          "..ghh.....kkk...kkk...kkk.........kkk..kkk...iii..",
-          "..ghh.....klk...klk...klk...mnmm..klk..klk...iii..",
-          "..ghh.....kok...kpk...kok...mmmm..kqk..krk...iii..",
-          "..ghh.....kok...kpk...kok...mmmm..kqk..krk...iii..",
-          "..ghh.....kkk...kkk...kkk...mmmm..kkk..kkk...iii..",
-          "..ghssssssssssssssssssssssssssssssssssssssssssii..",
-          "..ghddddddddddddddddddddddddddddddddddddddddddii..",
-          "..ghddddddddddddddddddddddddddddddddddddddddddii..",
-          "..ghddddddddddddddddddddddddddddddddddddddddddii..",
-          "..ghggggggggggggggggggggggggggggggggggggggggggii..",
-          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
-          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
-          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
-          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
-          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhii..",
-          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
-          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
-          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
-          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
-          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhh....",
-          "....hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh....",
+          "..hiiuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu..",
+          "..hiiuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu..",
+          "..ghiuututututututuuututututututuuutututututuiii..",
+          "..ghiuttktktuttttttuttttttutttkttuttttktuktttiii..",
+          "..ghiuttptqtuttttttuttttttutttrttuttttotuptttiii..",
+          "..ghiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii..",
+          "..ghiuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuiii..",
+          "..ghiuttttttuttttttuttttttuttttttuttttttuttttiii..",
+          "..ghiutttttjuttttjtutttjttuttttttutjttttjttttiii..",
+          "..ghiuttttkkktttkkkuttkkktuttttttukkkttkkktttiii..",
+          "..ghiuttttklktttklkuttklktutmnmmtuklkttklktttiii..",
+          "..ghiuttttkoktttkpkuttkoktutmmmmtukqkttkrktttiii..",
+          "..ghiuttttkoktttkpkuttkoktutmmmmtukqkttkrktttiiiv.",
+          "..ghiuttttkkktttkkkuttkkktutmmmmtukkkttkkktttivvi.",
+          "..ghssssssssssssssssssssssssssssssssssssssssssiii.",
+          "..ghvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvviii.",
+          "..ghdididididididididididididididididididididiiiu.",
+          "..ghdddddddddddddddddddddddddddddddddddddddddduui.",
+          "..ghggggggggggggggggggggggggggggggggggggggggggiii.",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhiii.",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhiii.",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhiiu.",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhuui.",
+          "..ghhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhhhiii.",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhiiiii.",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhiiiii.",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhiiiiu.",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhiiuu..",
+          "....hhihhhhhhhihhhhhhhihhhhhhhihhhhhhhihhhhhii....",
+          "....hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhii....",
           "..................................................",
           ".................................................."
         ],
@@ -709,53 +701,57 @@
     "rot": ["front"]
   },
   "storage": {
-    "_note": "공용 창고 (시설 2×2, 작은 헛간)",
+    "_note": "공용 창고 (시설 2×2, 작은 헛간) — 2026-10 입체감: 오른쪽 옆벽·옆 지붕·처마 두께·들어간 문·주춧돌 윗면",
     "colors": {
-      "a": "island.roof:0",
-      "b": "island.roof",
-      "c": "island.roof:2",
-      "d": "island.wood:2",
-      "e": "island.wood:0",
-      "f": "island.wood",
-      "g": "global.materials.gold",
-      "h": "island.stone",
-      "i": "island.stone:2"
+      "A": "island.roof:0",
+      "B": "island.roof",
+      "C": "island.roof:2",
+      "D": "island.roof:3",
+      "E": "island.wood:0",
+      "F": "island.wood",
+      "G": "island.wood:2",
+      "H": "island.wood:3",
+      "I": "island.stone:0",
+      "J": "island.stone",
+      "K": "island.stone:2",
+      "L": "island.stone:3",
+      "g": "global.materials.gold"
     },
     "frames": {
       "front": {
         "rows": [
-          "........aaaaaaaaaaaaaaaaaa........",
-          "........bbbbbbbbbbbbbbbbbb........",
-          "........bbbbbbbbbbbbbbbbbb........",
-          "........bbbbbbbbbbbbbbbbbb........",
-          "...aacaaaacaaaacaaaacaaaacaaaac...",
-          "...aacaaaacaaaacaaaacaaaacaaaac...",
-          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
-          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
-          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
-          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
-          "...bbcbbbbcbbbbcbbbbcbbbbcbbbbc...",
-          ".cccccccccccccccccccccccccccccccc.",
-          ".cccccccccccccccccccccccccccccccc.",
-          "...dddddddddddddddddddddddddddd...",
-          "...efffdffffdffffdffffdffffdfff...",
-          "...efffdffffdffffdffffdffffdfff...",
-          "...efffdffffdffffdffffdffffdfff...",
-          "...efffdfffddddddddddddffffdfff...",
-          "...efffdfffdeffffffffedffffdfff...",
-          "...efffdfffdfeffffffefdffffdfff...",
-          "...efffdfffdffeffffeffdffffdfff...",
-          "...efffdfffdffffffffffdffffdfff...",
-          "...efffdfffdfffeffefffdffffdfff...",
-          "...efffdfffdffffggffffdffffdfff...",
-          "...efffdfffdffffggffffdffffdfff...",
-          "...efffdfffdfffeffefffdffffdfff...",
-          "...efffdfffdffffffffffdffffdfff...",
-          "...efffdfffdffeffffeffdffffdfff...",
-          "...efffdfffdfeffffffefdffffdfff...",
-          "...efffdfffdeffffffffedffffdfff...",
-          "..hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh..",
-          "..iiiiiiiiiiiiiiiiiiiiiiiiiiiiii.."
+          ".....AAAAAAAAAAAAAAAAAA...........",
+          "....BBBBCBBBBCBBBBCBBBBB..........",
+          "....CCCCCCCCCCCCCCCCCCCCC.........",
+          "...AAAAAAAAAAAAAAAAAAAAAACD.......",
+          "...BBCBBBBCBBBBCBBBBCBBBBCDD......",
+          "...CCCCCCCCCCCCCCCCCCCCCCCDDD.....",
+          "..AAAAAAAAAAAAAAAAAAAAAAAACDDDC...",
+          "..BBBBCBBBBCBBBBCBBBBCBBBBCDDDDC..",
+          "..CCCCCCCCCCCCCCCCCCCCCCCCCDDDDCC.",
+          ".AAAAAAAAAAAAAAAAAAAAAAAAAACDCCHH.",
+          ".BBCBBBBCBBBBCBBBBCBBBBCBBBCCHHHH.",
+          ".CCCCCCCCCCCCCCCCCCCCCCCCCCHHHH...",
+          ".GGGGGGGGGGGGGGGGGGGGGGGGGGHHGG...",
+          ".HHHHHHHHHHHHHHHHHHHHHHHHHHGGGG...",
+          "...HHHHHHHHHHHHHHHHHHHHHHHGGGHH...",
+          "...HGHGHGHGHGHGHGHGHGHGHGHGHHGG...",
+          "...EFFFFEEEEEEEEEEEGFFFGFHHGGGG...",
+          "...EFFFFEHHHHHHHHHHGFFFGFHGGGGG...",
+          "...EFFFFEHFFFFFFFFFGFFFGFHGGGHH...",
+          "...EFFFFEHEFFFFFFFEGFFFGFHGHHGG...",
+          "...EFFFFEHFEFFFFFEFGFFFGFHHGGGG...",
+          "...EFFFFEHFFEFFFEFFGFFFGFHGGGGG...",
+          "...EFFFFEHFFFEFEFFFGFFFGFHGGGHH...",
+          "...EFFFFEHFFFggFFFFGFFFGFHGHHGG...",
+          "...EFFFFEHFFFggEFFFGFFFGFHHGGGG...",
+          "...EFFFFEHFFEFFFEFFGFFFGFHGGGGG...",
+          "...EFFFFEHFEFFFFFEFGFFFGFHGGGJJJ..",
+          "...EFFFFEHFFFFFFFFFGFFFGFHGJJKKK..",
+          "...EFFFFEHFFFFFFFFFGFFFGFHJKKLLL..",
+          "..IIIIIIIIIIIIIIIIIIIIIIIIKLL.....",
+          "..JJJJJKJJJJJJKJJJJJJKJJJJL.......",
+          "..KKKKKKKKKKKKKKKKKKKKKKKK........"
         ],
         "foot": [17, 32]
       }

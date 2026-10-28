@@ -1,11 +1,12 @@
-// 놓인 장식 그리기 (docs/art.md 6장 섬): 서버 상태의 placements → 그림(회전 모습·순환 프레임), 돌길은 바닥 무늬 칸
+// 놓인 장식 그리기 (docs/art.md 6장 섬): 서버 상태의 placements → 그림(회전 모습·순환 프레임) + 땅 그림자, 돌길은 바닥 무늬 칸
 // 발밑 = 차지하는 칸의 가로 가운데·맨 앞 줄 (시설과 같은 footOf), 깊이 정렬 = 로직 y
 import type Phaser from 'phaser';
 import { footOf, footprint, ITEMS, TILE } from '@game/shared';
 import type { PlacementSnap } from '../net/islandNet';
 import { islandObjects, islandView } from '../sprites/island';
-import { islandTexture } from '../sprites/textures';
+import { islandShadowTexture, islandTexture } from '../sprites/textures';
 import { pathColor } from './islandGround';
+import { SHADOW_DEPTH } from './islandWorld';
 import { FLOOR_TOP, project } from './layout';
 
 const ROW_PX = 10;
@@ -75,10 +76,10 @@ export class DecorLayer {
       }
       return out;
     }
-    return [this.scene.add.image(0, 0, '__DEFAULT').setOrigin(0, 0)];
+    return [this.scene.add.image(0, 0, '__DEFAULT').setOrigin(0, 0), this.scene.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setDepth(SHADOW_DEPTH)];
   }
 
-  /** 지금 회전 모습·순환 프레임으로 */
+  /** 지금 회전 모습·순환 프레임으로 (그림자도 같은 프레임) */
   private animate(s: Shown, t: number): void {
     const o = islandObjects()[s.p.itemId];
     if (!o || ITEMS.decorations[s.p.itemId]?.ground) return;
@@ -86,6 +87,8 @@ export class DecorLayer {
     const foot = footOf(footprint(s.p.itemId, s.p.x, s.p.y, s.p.rot));
     const { sx, sy } = project(foot.x, foot.y);
     s.imgs[0]!.setTexture(tex.key).setPosition(sx - tex.foot[0], sy - tex.foot[1]).setDepth(foot.y);
+    const sh = islandShadowTexture(this.scene, s.p.itemId, v.frame, v.flip);
+    s.imgs[1]!.setTexture(sh.key).setPosition(sx - sh.foot[0], sy - sh.foot[1]);
   }
 
   destroy(): void {

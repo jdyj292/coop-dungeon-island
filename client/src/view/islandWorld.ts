@@ -1,11 +1,11 @@
-// 섬 월드 그리기 (docs/art.md 6장 섬): 바닥(물 2프레임) + 구름 그림자 + 고정 시설·가장자리 나무 + 상호작용 [E] + 나비
+// 섬 월드 그리기 (docs/art.md 6장 섬): 바닥(물 2프레임) + 구름 그림자 + 고정 시설(땅 그림자 포함)·가장자리 나무 + 상호작용 [E] + 나비
 // 투영은 던전과 같다 (layout.project: 깊이 0 = 화면 FLOOR_TOP). 사물·캐릭터 깊이 정렬 = 로직 y
 import type Phaser from 'phaser';
 import { footOf, ISLAND, TILE, type Vec2 } from '@game/shared';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { islandObjects, islandView } from '../sprites/island';
-import { islandTexture } from '../sprites/textures';
+import { islandShadowTexture, islandTexture } from '../sprites/textures';
 import { drawText } from '../ui/pixelFont';
 import { paintGround } from './islandGround';
 import { IslandSky } from './islandSky';
@@ -16,6 +16,8 @@ const ROW_PX = 10;
 const WATER_FRAME_MS = 500;
 /** 데모 [E] 상자 (승인 데모 render()의 우물): 발밑 x − 6, 발밑 y − 38. 모든 시설에 같은 자리 (낮은 시설은 그림 위로 뜸) */
 const PROMPT_DY = 38, PROMPT_DX = 6;
+/** 사물 땅 그림자 깊이: 바닥(−1000)·바닥 사물(−999)·구름 그림자(−998) 위, 사물·캐릭터 아래 */
+export const SHADOW_DEPTH = -997;
 
 /** 월드 화면 크기 (px) */
 export const islandScreenSize = (): { w: number; h: number } => ({
@@ -61,7 +63,7 @@ export class IslandWorld {
     this.sky = new IslandSky(scene, w, h);
   }
 
-  /** 사물 하나 (첫 회전 모습). ground면 바닥 바로 위 (깊이 정렬 없이 캐릭터 아래). 반환: 발밑 화면 좌표 */
+  /** 사물 하나 (첫 회전 모습) + 땅 그림자. ground면 바닥 바로 위 (깊이 정렬 없이 캐릭터 아래, 그림자 없음). 반환: 발밑 화면 좌표 */
   private addObject(id: string, foot: Vec2, ground = false): { sx: number; sy: number } {
     const o = islandObjects()[id];
     if (!o) throw new Error(`섬 사물 '${id}' 없음 (client/data/sprites/island.json)`);
@@ -69,6 +71,10 @@ export class IslandWorld {
     const tex = islandTexture(this.scene, id, v.frame, v.flip);
     const { sx, sy } = project(foot.x, foot.y);
     this.scene.add.image(sx - tex.foot[0], sy - tex.foot[1], tex.key).setOrigin(0, 0).setDepth(ground ? -999 : foot.y);
+    if (!ground) {
+      const sh = islandShadowTexture(this.scene, id, v.frame, v.flip);
+      this.scene.add.image(sx - sh.foot[0], sy - sh.foot[1], sh.key).setOrigin(0, 0).setDepth(SHADOW_DEPTH);
+    }
     return { sx, sy };
   }
 

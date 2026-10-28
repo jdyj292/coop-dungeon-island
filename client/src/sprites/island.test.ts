@@ -10,9 +10,9 @@ const html = readFileSync(new URL('../../../docs/refs/demos/island_screen_hud_mo
 const demo = runDemoScript([demoLines(html, 16, 21), demoLines(html, 42, 62)].join('\n'),
   ['WELL', 'SHOP', 'BOARD', 'FL1', 'FL2', 'FENCE', 'BENCH', 'LAMP', 'MAILBOX', 'T1', 'T2']) as Record<string, FakeCanvas>;
 
-// 우물은 2026-10 우물 입장 개편으로 그림이 바뀜 (데모와 크기·발밑만 같음, 아래 따로)
+// 우물(2026-10 우물 입장 개편)·잡화점(2026-10 입체감)은 그림이 바뀜 (데모와 크기·발밑만 같음, 아래 따로)
 const CASES: [string, string, string][] = [
-  ['shop', 'front', 'SHOP'], ['board', 'front', 'BOARD'],
+  ['board', 'front', 'BOARD'],
   ['flowerBed', 'pink', 'FL1'], ['flowerBed', 'blue', 'FL2'], ['fence', 'front', 'FENCE'], ['bench', 'front', 'BENCH'],
   ['lamp', 'front', 'LAMP'], ['mailbox', 'front', 'MAILBOX'], ['tree', 'front', 'T2'], ['treeBig', 'front', 'T1'],
 ];
@@ -41,6 +41,11 @@ describe('섬 사물 = 승인 데모', () => {
       expect([ours.width, ours.height, ...ours.foot]).toEqual([d.width, d.height, Math.floor(d.width / 2), d.height - 1]);
     }
     expect([islandView(o, 0, 0).frame, islandView(o, 0, o.animSec!).frame]).toEqual(['front', 'front2']);
+  });
+
+  it('잡화점: 새 그림도 데모와 같은 크기·발밑 (놓인 자리 그대로)', () => {
+    const ours = renderIslandFrame(objs.shop!, 'front'), d = demo.SHOP!;
+    expect([ours.width, ours.height, ...ours.foot]).toEqual([d.width, d.height, Math.floor(d.width / 2), d.height - 1]);
   });
 
   it('좌우 반전은 발밑도 반전, 회전·순환 프레임 고르기', () => {

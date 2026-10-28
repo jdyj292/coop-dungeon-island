@@ -1,9 +1,13 @@
-// 섬 탭 (sprites.md 12장): 섬 사물의 모든 방향·프레임, 승인 데모와 같은 배치의 장면 + 승인 캡처, 초안 배치
+// 섬 탭 (sprites.md 12장): 섬 사물의 모든 방향·프레임, 승인 데모와 같은 배치의 장면(사물 땅 그림자 포함) + 승인 캡처, 초안 배치
 import islandHudUrl from '../../../docs/refs/approved/island_hud.png?url';
+import fx from '../../../client/data/fx.json';
+import { castShadow } from '../../../client/src/sprites/castShadow';
 import { draftIslandFrames, islandObjects, islandView, renderIslandFrame } from '../../../client/src/sprites/island';
 import { draftsOn, setUseDrafts } from '../../../client/src/sprites/data';
-import { paintCanvas } from '../../../client/src/sprites/textures';
+import { paintCanvas, paintShadow } from '../../../client/src/sprites/textures';
 import { groundHeight, paintGround } from '../../../client/src/view/islandGround';
+import islandData from '../../../shared/data/island.json';
+import itemsData from '../../../shared/data/items.json';
 import { checkbox, el, slider } from './ui';
 
 /** 승인 데모 render()의 사물 위치 (발밑 x, 아래 줄 y) */
@@ -21,6 +25,14 @@ const DRAFT_SCENE: [string, number, number, number?][] = [
 
 type Placed = [id: string, x: number, y: number, rot?: number];
 
+/** 바닥 높이 사물 (땅 그림자 없음): 선착장·돌길 */
+const GROUND = new Set([
+  ...islandData.scenery.filter((s) => 'ground' in s && s.ground).map((s) => s.id),
+  ...Object.entries(itemsData.decorations).filter(([, d]) => 'ground' in d && d.ground).map(([id]) => id),
+]);
+/** 땅 그림자 캔버스 캐시 (사물|프레임|반전) */
+const shadows = new Map<string, { canvas: HTMLCanvasElement; foot: [number, number] }>();
+
 function scene(canvas: HTMLCanvasElement, items: Placed[], scale: number, t: number, path = demoPath): void {
   const W = 288, H = groundHeight(110);
   const off = document.createElement('canvas');
@@ -29,6 +41,17 @@ function scene(canvas: HTMLCanvasElement, items: Placed[], scale: number, t: num
   const g = off.getContext('2d')!;
   paintGround({ width: W, grassH: 110, seed: 3, path }, (x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); }, Math.floor(t / 500) % 2);
   const objs = islandObjects();
+  for (const [id, x, y, r] of items) {
+    const o = objs[id];
+    if (!o || GROUND.has(id)) continue;
+    const v = islandView(o, r ?? 0, t / 1000), key = [id, v.frame, v.flip, draftsOn()].join('|');
+    if (!shadows.has(key)) {
+      const sh = castShadow(renderIslandFrame(o, v.frame, v.flip), fx.islandShadow.shear, fx.islandShadow.lift);
+      shadows.set(key, { canvas: paintShadow(sh), foot: sh.foot });
+    }
+    const sh = shadows.get(key)!;
+    g.drawImage(sh.canvas, x - sh.foot[0], y - sh.foot[1]);
+  }
   for (const [id, x, y, r] of [...items].sort((a, b) => a[2] - b[2])) {
     const o = objs[id];
     if (!o) continue;
@@ -103,7 +126,7 @@ export function islandTab(): HTMLElement {
     slider('사물 배율', [1, 8, 1], s.cellScale, (v) => `${v}배`, on((v: number) => { s.cellScale = v; })),
   );
   return el('div', { className: 'tab' }, panel, el('div', { className: 'view' },
-    el('h3', { text: '장면: 승인 데모와 같은 배치 (바닥·사물만, 캐릭터·그림자·HUD 제외)' }), demoCanvas,
+    el('h3', { text: '장면: 승인 데모와 같은 배치 (바닥·사물·사물 땅 그림자, 캐릭터·HUD 제외)' }), demoCanvas,
     el('p', { className: 'info', text: '승인 캡처' }), img,
     draftBox,
     el('h3', { text: '사물 (모든 회전·프레임)' }), grid));
