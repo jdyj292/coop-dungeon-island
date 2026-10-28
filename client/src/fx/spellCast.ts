@@ -4,7 +4,9 @@ import { areaCenter, type ActionDef, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
 import type { FxLayer } from './layer';
-import { fireBurst, fireTarget, iceField, magicCircle, muzzle, spark } from './spell';
+import { magicCircle, muzzle, spark } from './spell';
+import { fireBurst, fireTarget } from './spellFire';
+import { iceField } from './spellIce';
 
 /** 시전자 (논리 좌표) */
 export interface Caster {
@@ -28,10 +30,10 @@ const isSpell = (weapon: WeaponDef, def: ActionDef, c: Caster) => {
   return t === 'bolt' || t === 'circle';
 };
 
-/** 준비 시작: 보석 반짝임, 지연 원형 마법이면 바닥 표적 (준비 시간 동안) */
+/** 준비 시작: 준비 시간 동안 보석으로 빛 모으기, 지연 원형 마법이면 바닥 표적 (준비 시간 동안) */
 export function castStart(layer: FxLayer, weapon: WeaponDef, def: ActionDef, c: Caster): void {
   const w = poseFx(weapon, def.poses?.windup, c);
-  if (w?.type === 'spark') layer.add(spark(w.x, w.y));
+  if (w?.type === 'spark') layer.add(spark(w.x, w.y, def.phases.windup));
   if (def.area?.shape === 'circle' && isSpell(weapon, def, c)) {
     const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y);
     layer.add(fireTarget(sx, sy, def.area.radius!, def.phases.windup));

@@ -35,7 +35,9 @@
       "smearEdge": "#C9A24A",
       "dustLight": "#D6CBB3",
       "dustDark": "#A59781",
-      "ring": "#E9DFC6"
+      "ring": "#E9DFC6",
+      "spellDeep": "#5BAEE6",
+      "fireDeep": "#F2A246"
     },
     "damageText": {
       "own": "#FFFFFF",
