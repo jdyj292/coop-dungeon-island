@@ -90,9 +90,9 @@ export class IslandGame {
   join(id: string): void {
     const r = this.state.residents.get(id);
     if (!r) return;
-    const pos = spawnPos(this.live.size, islandBus.takeReturn(id, ISLAND.returnWindowSec * 1000) ? 'return' : 'login');
+    const back = islandBus.takeReturn(id, ISLAND.returnWindowSec * 1000), pos = spawnPos(this.live.size, back ? 'return' : 'login');
     this.live.set(id, { walker: newWalker(pos), input: { mx: 0, my: 0, run: false, seq: 0 }, limit: new RateLimit(islandRules()) });
-    Object.assign(r, { online: true, status: 'island', x: Math.round(pos.x), y: Math.round(pos.y), facing: 1, state: 'idle', lastInputSeq: 0 });
+    Object.assign(r, { online: true, status: 'island', x: Math.round(pos.x), y: Math.round(pos.y), facing: 1, state: 'idle', lastInputSeq: 0, wellAt: back ? Math.max(1, this.now) : 0 });
     this.placement?.sendInventory(id);
     this.shop?.sendMe(id);
   }

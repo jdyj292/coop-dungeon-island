@@ -3,12 +3,14 @@ import refAction from '../reference-action.html?raw';
 import refClear from '../reference-clear.html?raw';
 import sfxData from '../../../client/data/sfx.json';
 import { compareBus } from '../../../client/src/audio/compareRef';
-import { busOf, SfxPlayer, soundNames } from '../../../client/src/audio/player';
+import { addDraftSounds, busOf, SfxPlayer, soundNames } from '../../../client/src/audio/player';
 import type { Layer } from '../../../client/src/audio/synth';
 import { el, slider } from '../../sprite-preview/src/ui';
 
 type Recipes = Record<'action' | 'clear', Record<string, Layer[]>>;
 const data = sfxData as unknown as Recipes & { combos: Record<string, [string, number][]> };
+/** 초안 효과음 (client/data/drafts/sfx.json): 목록에 "(초안)" */
+const DRAFTS = new Set(addDraftSounds());
 const ORIGINAL = structuredClone({ action: data.action, clear: data.clear });
 const player = new SfxPlayer();
 player.jitter = false;
@@ -79,7 +81,7 @@ function buildPanel(): void {
 /** 소리 버튼 목록 (누르면 재생 + 선택). 값을 바꾼 소리는 * 표시 */
 function renderList(): void {
   list.replaceChildren(...soundNames().map((name) => {
-    const b = button(`▶ ${busOf(name) === 'clear' ? '◇ ' : ''}${name}${changed(name) ? ' *' : ''}`, () => {
+    const b = button(`▶ ${busOf(name) === 'clear' ? '◇ ' : ''}${name}${DRAFTS.has(name) ? ' (초안)' : ''}${changed(name) ? ' *' : ''}`, () => {
       player.preview(name);
       if (selected !== name) {
         selected = name;

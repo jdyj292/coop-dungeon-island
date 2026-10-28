@@ -237,5 +237,6 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 - 꽃밭은 회전하면 꽃 색이 바뀜 (분홍·노랑 ↔ 하늘·흰색, 데모의 두 꽃밭)
 - **돌길**은 그림이 아니라 바닥 무늬: 데모의 길 무늬(흙길 색 + 자갈 점)를 돌길이 놓인 칸에 월드 좌표로 깐다 → 이웃 돌길과 이어짐 (client/src/view/islandGround.ts)
 - **바닥** (islandGround.ts `paintGround`): 잔디(16×10 두 색 + 점·풀 포기, 씨앗 난수) → 모래 8 → 흙 절벽 10 → 물 12. 물은 2프레임 (반짝임·거품 위치), 프레임 0이 데모
-- 검증: island.test.ts·islandGround.test.ts가 데모 그리기 코드를 가짜 캔버스로 돌려 **픽셀 단위로 비교** (사물 11개 프레임·바닥)
+- 검증: island.test.ts·islandGround.test.ts가 데모 그리기 코드를 가짜 캔버스로 돌려 **픽셀 단위로 비교** (사물 10개 프레임·바닥)
+- **우물**은 2026-10 우물 입장 개편으로 그림을 바꿨다 (지붕 → 도르래 들보, 물 → 버섯빛 구멍, 포자 2프레임 front·front2, art.md 6장). 데모와는 크기(외곽선 포함)·발밑만 같게 검사한다. 승인 캡처 island_hud.png·데모의 우물은 예전 그림 그대로 (refs는 수정 금지)
 - 코드: client/src/sprites/island.ts (`islandObjects`, `renderIslandFrame`, `islandView`), 보기: sprite-preview "섬" 탭 (데모와 같은 배치 장면 + 승인 캡처, 초안 배치, 모든 회전·프레임)

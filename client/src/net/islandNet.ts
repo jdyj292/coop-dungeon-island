@@ -20,6 +20,8 @@ export interface ResidentSnap extends Pos {
   facing: number;
   state: string;
   lastInputSeq: number;
+  /** 우물 앞으로 들어온 서버 시각 (ms, 0 = 선착장 입장) */
+  wellAt: number;
 }
 
 /** 놓인 장식 (상태 그대로, 보간 없음) */
@@ -159,7 +161,7 @@ export class IslandConnection {
     for (const [id, r] of s.residents) {
       items.set(id, {
         id, name: r.name, color: r.color ?? 0, hair: r.hair ?? 0, hairColor: r.hairColor ?? 0, weapon: r.weapon || 'greatsword', online: !!r.online, status: r.status ?? 'away', x: r.x ?? 0, y: r.y ?? 0, z: 0,
-        facing: r.facing ?? 1, state: r.state ?? 'idle', lastInputSeq: r.lastInputSeq ?? 0,
+        facing: r.facing ?? 1, state: r.state ?? 'idle', lastInputSeq: r.lastInputSeq ?? 0, wellAt: r.wellAt ?? 0,
       });
     }
     this.residents.push({ t: s.serverTime ?? 0, items });

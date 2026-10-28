@@ -106,6 +106,7 @@ export class Dungeon extends Phaser.Scene {
       const { bounds } = this.buildRoom(this.room);
       const stage = (this.stage = new CombatStage(this, bounds, entryPos(this.room, 0), this.waves.next(), {}, weaponDef(this.weapon)));
       stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
+      if (floorRooms().indexOf(this.room) === 0) stage.arriveFromWell(HUD_DEPTH - 2); // 초안 (?drafts=1)
     } else if (this.conn) this.setupOnline(this.conn);
     else this.connect();
 
@@ -123,7 +124,7 @@ export class Dungeon extends Phaser.Scene {
     const { width, bounds } = roomBounds(room);
     this.roomW = width;
     const key = `room-bg-${room.id}`;
-    if (!this.textures.exists(key)) this.textures.addCanvas(key, drawRoomBg(FLOOR, width, room.size[1]!, FIELD_BOTTOM + BG_EXTRA));
+    if (!this.textures.exists(key)) this.textures.addCanvas(key, drawRoomBg(FLOOR, width, room.size[1]!, FIELD_BOTTOM + BG_EXTRA, floorRooms().indexOf(room) === 0 ? room : undefined));
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(-1000);
     this.props = new PropLayer(this, mapOf(room));
     // BGM: 방 1~5 = 층 곡 (방을 옮겨도 이어서), 보스 방 = 보스 곡 첫 마디부터 (audio.md 5장)

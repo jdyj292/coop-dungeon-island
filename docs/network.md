@@ -139,7 +139,8 @@ ZoneState
 IslandState
   serverTime, name, treasury
   residents: Map<userId, Resident> id, name, color(가입 순서 0~3 = 플레이어 색), hair·hairColor(외형 번호), weapon(고른 무기), online, status("island" | "away" | "dungeon:<층>"),
-                                   x, y, facing, state(idle/walk/run), lastInputSeq
+                                   x, y, facing, state(idle/walk/run), lastInputSeq,
+                                   wellAt(던전에서 돌아와 우물 앞으로 들어온 서버 시각 ms, 선착장 입장은 0 — 우물에서 튀어나오는 연출, island.md 6장)
   placements: Map<id, Placement>   id, itemId, x, y, rot, placedBy, communal (칸 좌표)
   storage: Map<itemId, count>      공용 창고
   well: { members[], floor, countdownEnd } (4-8)

@@ -23,6 +23,8 @@ export class Resident extends Schema {
   @type('string') state = 'idle';
   /** 서버가 처리한 마지막 입력 (본인 예측 보정용) */
   @type('uint32') lastInputSeq = 0;
+  /** 던전에서 돌아와 우물 앞으로 들어온 서버 시각 (ms, 우물에서 튀어나오는 연출). 선착장 입장은 0 */
+  @type('float64') wellAt = 0;
 }
 
 /** 놓인 장식 (칸 좌표, island.md 3장) */

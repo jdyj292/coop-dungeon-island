@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { ITEMS, NET, nearFacility, type MeRes } from '@game/shared';
 import { music } from '../audio/bgm/music';
+import { sfx } from '../audio/player';
+import fx from '../../data/fx.json';
 import { api } from '../net/api';
 import { IslandConnection } from '../net/islandNet';
 import { colorInt } from '../palette';
@@ -88,7 +90,15 @@ export class Island extends Phaser.Scene {
       conn.onDepart = (m) => {
         this.registry.set('dungeonRoom', m.roomId);
         this.registry.set('weapon', conn.residents.latest?.items.get(String(this.me.id))?.weapon ?? 'greatsword');
-        this.scene.start('Dungeon');
+        if (!this.stage) return void this.scene.start('Dungeon');
+        // 우물로 뛰어들고 어두워진 뒤 던전으로 (art.md 0장)
+        this.stage.panels.close();
+        this.stage.hopIntoWell(String(this.me.id));
+        sfx.play('wellJump');
+        this.time.delayedCall(fx.wellHop.jumpSec * 1000, () => {
+          this.cameras.main.fadeOut(fx.wellHop.fadeSec * 1000, 0, 0, 0);
+          this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Dungeon'));
+        });
       };
       conn.onBuy = (m) => {
         const name = ITEMS.decorations[m.itemId]?.name ?? ITEMS.consumables[m.itemId]?.name ?? m.itemId;
@@ -118,6 +128,8 @@ export class Island extends Phaser.Scene {
     if (this.stage?.chat.open || (e.repeat && !/^(Arrow|Key[WASD]$)/.test(e.code))) return;
     if (this.settings.open) return this.settings.onKey(e.code);
     if (!s) return void (e.code === 'KeyL' && this.logout());
+    // 우물로 뛰어들거나 튀어나오는 중에는 단축키도 멈춤
+    if (s.busy) return;
     if (s.panels.open) {
       const toggle = { KeyI: 'bag', KeyM: 'board' }[e.code];
       return toggle === s.panels.open ? s.panels.close() : s.panels.onKey(e.code);
@@ -179,7 +191,7 @@ export class Island extends Phaser.Scene {
     const dt = Math.min(deltaMs / 1000, 0.1);
     const k = this.keys, s = this.stage;
     // 배치 모드·패널·설정·입력창 동안 캐릭터는 서 있음 (방향키는 커서·목록)
-    const walk = !s?.place.active && !s?.panels.open && !s?.chat.open && !this.settings.open;
+    const walk = !s?.place.active && !s?.panels.open && !s?.chat.open && !this.settings.open && !s?.busy;
     const x = walk ? (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0) : 0;
     const y = walk ? (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0) : 0;
     const { width, height } = this.scale.gameSize;
@@ -189,7 +201,7 @@ export class Island extends Phaser.Scene {
     }
     const pos = s?.myPos ?? null;
     const placing = !!s?.place.active;
-    this.world.update(time, pos && !placing && !s?.panels.open ? nearFacility(pos) : null);
+    this.world.update(time, pos && !placing && !s?.panels.open && !s?.busy ? nearFacility(pos) : null);
     const residents = s ? [...(s.conn.residents.latest?.items.values() ?? [])] : [];
     const mine = residents.find((r) => r.id === String(this.me.id));
     this.hud.draw({

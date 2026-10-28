@@ -20,9 +20,13 @@ describe('IslandGame', () => {
     g.join('2');
     expect(g.state.residents.get('1')!.y).toBe(Math.round(spawnPos(0, 'return').y));
     expect(g.state.residents.get('2')!.y).toBe(Math.round(spawnPos(1, 'login').y));
+    // 우물 앞으로 들어온 사람만 wellAt (우물에서 튀어나오는 연출, island.md 6장)
+    expect(g.state.residents.get('1')!.wellAt).toBeGreaterThan(0);
+    expect(g.state.residents.get('2')!.wellAt).toBe(0);
     g.leave('1');
     g.join('1');
     expect(g.state.residents.get('1')!.y).toBe(Math.round(spawnPos(1, 'login').y));
+    expect(g.state.residents.get('1')!.wellAt).toBe(0);
   });
 
   it('주민은 접속 전엔 away, 들어오면 선착장 자리, 나가면 away', () => {

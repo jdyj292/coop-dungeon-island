@@ -10,8 +10,9 @@ const html = readFileSync(new URL('../../../docs/refs/demos/island_screen_hud_mo
 const demo = runDemoScript([demoLines(html, 16, 21), demoLines(html, 42, 62)].join('\n'),
   ['WELL', 'SHOP', 'BOARD', 'FL1', 'FL2', 'FENCE', 'BENCH', 'LAMP', 'MAILBOX', 'T1', 'T2']) as Record<string, FakeCanvas>;
 
+// 우물은 2026-10 우물 입장 개편으로 그림이 바뀜 (데모와 크기·발밑만 같음, 아래 따로)
 const CASES: [string, string, string][] = [
-  ['well', 'front', 'WELL'], ['shop', 'front', 'SHOP'], ['board', 'front', 'BOARD'],
+  ['shop', 'front', 'SHOP'], ['board', 'front', 'BOARD'],
   ['flowerBed', 'pink', 'FL1'], ['flowerBed', 'blue', 'FL2'], ['fence', 'front', 'FENCE'], ['bench', 'front', 'BENCH'],
   ['lamp', 'front', 'LAMP'], ['mailbox', 'front', 'MAILBOX'], ['tree', 'front', 'T2'], ['treeBig', 'front', 'T1'],
 ];
@@ -31,6 +32,15 @@ describe('섬 사물 = 승인 데모', () => {
     expect(diff.slice(0, 5)).toEqual([]);
     // 데모 put(): 왼쪽 = 기준 x − floor(폭/2), 아래 줄 = 기준 y
     expect(ours.foot).toEqual([Math.floor(d.width / 2), d.height - 1]);
+  });
+
+  it('우물: 새 그림도 데모와 같은 크기·발밑 (놓인 자리 그대로), 포자 두 프레임 순환', () => {
+    const o = objs.well!, d = demo.WELL!;
+    for (const f of ['front', 'front2']) {
+      const ours = renderIslandFrame(o, f);
+      expect([ours.width, ours.height, ...ours.foot]).toEqual([d.width, d.height, Math.floor(d.width / 2), d.height - 1]);
+    }
+    expect([islandView(o, 0, 0).frame, islandView(o, 0, o.animSec!).frame]).toEqual(['front', 'front2']);
   });
 
   it('좌우 반전은 발밑도 반전, 회전·순환 프레임 고르기', () => {

@@ -1,0 +1,5 @@
+{
+  "_note": "효과음 초안 (sfx-preview 목록 \"(초안)\", 게임 ?drafts=1). sfx.json과 같은 형식 (action·clear → 이름 → 레이어). 승인되면 sfx.json으로 옮기고 여기서 지운다 (audio.md 7장)",
+  "action": {},
+  "clear": {}
+}

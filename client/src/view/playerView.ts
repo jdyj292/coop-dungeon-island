@@ -22,6 +22,11 @@ export class PlayerView {
   weaponVisual = 'greatsword_basic';
   /** 순간이동 백스텝 (스태프 backstepStyle teleport): 뛰지 않고 가운데 구간은 안 보임 (combat.md 1장, 성능은 같음) */
   teleport = false;
+  /** 입장 연출 (fx/wellHop.ts): 더할 높이, 덮어쓸 모션, 숨김 */
+  lift = 0;
+  motionOverride: string | undefined;
+  hidden = false;
+  depthOverride: number | undefined;
   private stars: Phaser.GameObjects.Graphics;
   private beat = 0;
   private moving = false;
@@ -60,6 +65,7 @@ export class PlayerView {
   /** 지금 모션 이름 (없으면 걷기·서기) */
   private motion(p: PlayerState, clock: number): string | undefined {
     const m = fx.playerMotion;
+    if (this.motionOverride) return this.motionOverride;
     if (p.downed) return 'knocked';
     if (p.hurt?.kind === 'down') return 'down';
     if (p.hurt) return 'hurt';
@@ -96,11 +102,13 @@ export class PlayerView {
     const hop = p.backstep && !this.teleport ? Math.round(Math.sin(bk * Math.PI) * fx.backstepHop) : 0;
     const vanished = !!p.backstep && this.teleport && bk > tp.visibleStart && bk < tp.visibleEnd;
     place(this.actor, tex, {
-      x: p.pos.x + offsetX * p.facing, y: p.pos.y, z: hop, facing: p.facing, flash: this.flash > 0,
+      x: p.pos.x + offsetX * p.facing, y: p.pos.y, z: hop + this.lift, facing: p.facing, flash: this.flash > 0,
       angle: lying ? -90 * p.facing : 0,
     });
     // 기상·부활 무적: 깜빡임 (motion.md 4장)
-    this.actor.img.setVisible(!vanished && !(p.invuln > 0 && Math.floor(clock / fx.reaction.stunBlink) % 2 === 1));
+    this.actor.img.setVisible(!this.hidden && !vanished && !(p.invuln > 0 && Math.floor(clock / fx.reaction.stunBlink) % 2 === 1));
+    this.actor.shadow.setVisible(!this.hidden);
+    if (this.depthOverride !== undefined) this.actor.img.setDepth(this.depthOverride);
     this.drawStars(p, clock);
   }
 

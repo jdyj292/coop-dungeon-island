@@ -12,6 +12,7 @@ import { PlayerView } from '../view/playerView';
 import { ChatBar } from './chatBar';
 import { IslandPanels } from './islandPanels';
 import { PlaceMode } from './placeMode';
+import { WellHops } from './wellHops';
 
 /** 이름표: 발밑 위로 (캐릭터 키 17 + 여유) */
 const NAME_ABOVE = 31;
@@ -38,6 +39,8 @@ export class IslandStage {
   private bubbles: SpeechBubbles;
   /** 걷기 장애물을 만든 장식 목록 (바뀌면 다시) */
   private blocksSig = '';
+  /** 우물로 뛰어들기·우물에서 튀어나오기 */
+  private hops: WellHops;
 
   /** writeMemo = 게시판 메모 입력창 열기 (Scene) */
   constructor(private scene: Phaser.Scene, readonly conn: IslandConnection, writeMemo: () => void) {
@@ -49,6 +52,7 @@ export class IslandStage {
     this.panels = new IslandPanels(scene, conn, 6500, writeMemo);
     this.chat = new ChatBar(scene, 6050, false);
     this.bubbles = new SpeechBubbles(scene, 4600);
+    this.hops = new WellHops(scene, 4400);
     conn.onChat = (m) => {
       const r = conn.residents.latest?.items.get(m.player);
       this.chat.push({ name: r?.name ?? '?', color: r?.color ?? 0, text: m.text }, this.clock);
@@ -77,6 +81,17 @@ export class IslandStage {
     return this.predictor.display;
   }
 
+  /** 우물로 뛰어들기 시작 (지금 보이는 자리에서, 출발 depart를 받은 본인) */
+  hopIntoWell(id: string): void {
+    const s = this.shown.get(id), r = this.conn.residents.latest?.items.get(id);
+    if (s && r) this.hops.jump(id, s.last, r);
+  }
+
+  /** 내가 뛰어들거나 튀어나오는 중 (걷기·상호작용 멈춤) */
+  get busy(): boolean {
+    return this.hops.has(this.conn.userId);
+  }
+
   private reconcile(): void {
     const me = this.conn.residents.latest?.items.get(this.conn.userId);
     if (me) this.predictor.reconcile({ x: me.x, y: me.y }, me.lastInputSeq, TICK);
@@ -94,13 +109,26 @@ export class IslandStage {
     const others = this.conn.residents.sample(this.conn.clock.serverNow() - NET.interpDelayMs);
     const seen = new Set<string>();
     for (const [id, r] of others) {
-      if (!r.online) continue;
+      if (!r.online) {
+        // 던전으로 떠난 주민: 보이던 자리에서 우물로 뛰어든다
+        const s = this.shown.get(id);
+        if (s && r.status.startsWith('dungeon:')) this.hops.jump(id, s.last, r);
+        continue;
+      }
       seen.add(id);
       const mine = id === this.conn.userId;
       const w = this.predictor.state;
       // 나: 틱이 안 돈 프레임은 걷기 박자 유지 (화면 주사율 > 60Hz에서 박자가 0으로 돌아가 다리가 떨리지 않게)
       this.draw(id, r, mine ? { ...this.predictor.display, facing: w.facing, running: w.run.running } : { x: r.x, y: r.y, facing: r.facing, running: r.state === 'run' }, dt, mine && ticks === 0);
     }
+    // 뛰어드는 주민은 서버 목록에서 빠져도 끝까지 그린다
+    for (const [id, r, from] of this.hops.leftover()) {
+      this.hops.forget(id);
+      if (seen.has(id) || !this.hops.has(id)) continue;
+      seen.add(id);
+      this.draw(id, r, { ...from, facing: r.facing, running: false }, dt);
+    }
+    this.hops.update(dt);
     for (const [id, s] of this.shown) {
       if (seen.has(id)) continue;
       this.bubbles.remove(id);
@@ -122,6 +150,10 @@ export class IslandStage {
   }
 
   private draw(id: string, r: ResidentSnap, at: Vec2 & { facing: number; running: boolean }, dt: number, holdBeat = false): void {
+    // 처음 보이는 주민이 방금 던전에서 돌아왔으면 우물에서 튀어나와 제자리에 착지
+    if (!this.shown.has(id)) this.hops.maybePop(id, r, at, this.conn.clock.serverNow());
+    const hop = this.hops.step(id, dt);
+    if (hop) at = { ...at, x: hop.x, y: hop.y, running: false };
     let s = this.shown.get(id);
     if (!s) {
       s = {
@@ -138,6 +170,12 @@ export class IslandStage {
     s.p.facing = at.facing;
     s.p.run.running = at.running;
     s.view.hair = { style: r.hair, color: r.hairColor };
+    // 공중이면 우물 앞에, 구멍 속이면 우물 뒤에 (구멍·앞 테두리가 가림)
+    s.view.lift = hop?.z ?? 0;
+    s.view.motionOverride = hop?.motion;
+    s.view.hidden = !!hop?.hidden;
+    s.view.depthOverride = hop?.depth;
+    s.name.setVisible(!hop);
     // dt를 넘겨야 돌아서기(turn) 같은 시간 모션이 끝난다 (0이면 돌아선 뒤 다리가 멈춤)
     s.view.update(s.p, dt);
     s.view.draw(s.p, moved, 0, this.clock);
@@ -157,6 +195,7 @@ export class IslandStage {
     this.panels.destroy();
     this.chat.destroy();
     this.bubbles.destroy();
+    this.hops.destroy();
     this.conn.leave();
   }
 }

@@ -49,9 +49,11 @@
 | 스킬 | skill_slash, skill_fireburst, skill_icefield (나머지는 스킬 추가 때) | |
 | 몬스터 | mon_mushroom_windup, mon_boar_charge, mon_spore_shot, mon_bear_roar | bearYawn |
 | 보상·UI | | coin, potion, levelup, roomClear, click, place |
+| 우물 입장 | wellJump (우물로 뛰어듦, 휘익 내려감), wellLand (던전 첫 방 착지, 쿵), monWake (잠든 몬스터가 깨어남, 뽀잉) — 2026-10 승인, 승인 원본 비교 대상 아님 | |
 
 - 데이터 연결: 행동(action) 데이터에 `sfx: { windup?, active?, hit? }` 키로 소리 이름 지정 (예: 대검 평타 active = swing, hit = hitLight). 이름은 두 버스에서 겹치지 않으므로 버스 없이 쓴다. data-validate가 sfx.json에 있는지 검사
 - 지금 연결 (데이터 sfx): 대검 1·2타 swing/hitLight, 3타 swingHeavy/hitHeavy, 대시 dash/hitHeavy, 올려베기 launch/hitLight, 대지가르기 skill_slash/hitHeavy, 버섯 박치기 예고 mon_mushroom_windup, 멧돼지 돌진 mon_boar_charge, 포자탄 mon_spore_shot, 이끼곰 하품 예고 bearYawn, 스태프 평타 bolt_cast/bolt_hit, 스태프 대시 dash/hitHeavy, 화염 폭발 준비 skill_fireburst(레시피 안 0.45초 뒤 폭발음 = 준비 0.5초 끝), 얼음 장판 skill_icefield/hitLight
+- 지금 연결 (화면 연출): 섬에서 우물로 뛰어들 때 wellJump (client/src/scenes/Island.ts). wellLand·monWake는 던전 첫 방 도착 (3단계 구현 전에는 ?drafts=1 로컬 전투에서만)
 - 지금 연결 (이벤트, client/src/audio/sfxEvents.ts): 달리기 시작 dash, 백스텝 backstep(순간이동 무기 = teleport), 몬스터 바운드 bounce·다운 down, 플레이어 피격 hitLight(강 공격이면 hitHeavy), 이끼곰 그로기 진입 mon_bear_roar, 물약 potion, 방 클리어 roomClear
 - 아직 연결 안 함 (기능이 생길 때): levelup, click, place, guard
 - 아직 없는 소리(멧돼지 벽 충돌, 포자탄 적중, 문 열림, 잡화점 구매, 채팅 알림, 오류 등)는 만들 때 같은 절차로 추가
@@ -140,4 +142,5 @@
 
 ## 7. 도구
 - tools/sfx-preview (완성, `pnpm sfx-preview`, 포트 5176): sfx.json을 게임과 같은 엔진으로 재생, 레이어 값 슬라이더 조정 → 바꾼 소리만 `{ "버스.이름": [레이어...] }` JSON 복사, 조합(combos) 재생, 승인 원본 두 개를 나란히 띄워 듣기 + 원본 자동 비교(✓/✗)
+- 새 효과음 초안: client/data/drafts/sfx.json (sfx.json과 같은 형식). sfx-preview 목록에 "(초안)"으로 나오고, 게임은 개발 모드 `?drafts=1`에서 재생된다 (client/src/audio/player.ts addDraftSounds). 승인되면 sfx.json으로 옮기고 초안 파일에서 지운다
 - tools/bgm-preview (완성): index.html = bgm.json 재생 / reference.html = 승인 원본 / engine.js = 합성 엔진

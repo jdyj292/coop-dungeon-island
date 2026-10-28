@@ -1,5 +1,6 @@
 // 효과음 재생 규칙 (docs/audio.md 4장): 음높이 무작위 ±4%(음악적 소리 제외), 같은 소리 동시 4개·50ms 안 합침,
 // 볼륨 설정(전체·효과음·음악, 로컬 저장), 첫 입력에서 오디오 시작
+import draftSfx from '../../data/drafts/sfx.json';
 import sfxData from '../../data/sfx.json';
 import { createBus, type Bus, type BusName } from './buses';
 import { soundLength, Synth, type Layer } from './synth';
@@ -27,6 +28,18 @@ export function busOf(name: string): BusName | null {
 }
 
 export const soundNames = (): string[] => [...Object.keys(recipes.action), ...Object.keys(recipes.clear)];
+
+/** 초안 효과음 (data/drafts/sfx.json)을 레시피에 더한다 (sfx-preview, 게임 ?drafts=1). 이름 목록을 돌려준다 */
+export function addDraftSounds(): string[] {
+  const names: string[] = [];
+  for (const bus of ['action', 'clear'] as const) {
+    for (const [name, layers] of Object.entries((draftSfx as unknown as Partial<Recipes>)[bus] ?? {})) {
+      recipes[bus][name] = layers;
+      names.push(name);
+    }
+  }
+  return names;
+}
 
 export function loadVolumes(): Volumes {
   try {

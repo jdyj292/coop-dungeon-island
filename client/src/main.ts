@@ -3,12 +3,15 @@ import { Boot } from './scenes/Boot';
 import { Dungeon } from './scenes/Dungeon';
 import { Island } from './scenes/Island';
 import { Title } from './scenes/Title';
-import { sfx } from './audio/player';
+import { addDraftSounds, sfx } from './audio/player';
 import { computeView } from './scale';
 import { setUseDrafts } from './sprites/data';
 
-// 개발 모드: ?drafts=1이면 검토 중인 그림 초안을 겹쳐 본다 (docs/sprites.md 10장)
-if (import.meta.env.DEV && new URLSearchParams(location.search).get('drafts') === '1') setUseDrafts(true);
+// 개발 모드: ?drafts=1이면 검토 중인 그림·효과음 초안을 겹쳐 본다 (docs/sprites.md 10장)
+if (import.meta.env.DEV && new URLSearchParams(location.search).get('drafts') === '1') {
+  setUseDrafts(true);
+  addDraftSounds();
+}
 
 const parent = document.getElementById('game')!;
 
