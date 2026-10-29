@@ -6,6 +6,7 @@ import { loadIsland } from '../db/islandQueries';
 import { IslandStore } from '../db/islandStore';
 import { carryPotions, mastery } from '../db/runStore';
 import { skillBuild } from '../db/skillStore';
+import { keepTestAccount } from '../db/testAccount';
 import { ShopStore } from '../db/shopStore';
 import { SESSION_COOKIE } from '../http/routes';
 import { IslandState } from '../schema/IslandState';
@@ -81,6 +82,7 @@ export class IslandRoom extends Room<IslandState> {
     client.userData = { id };
     // 같은 계정의 이전 연결은 끊는다
     for (const c of this.clients) if (c !== client && this.userOf(c) === id) c.leave(REPLACED_CODE);
+    keepTestAccount(services().db, me.id, me.nickname, CONFIG.testAccount);
     // 방이 생긴 뒤 들어온 주민
     this.addResident(me);
     this.game.join(id);

@@ -48,6 +48,7 @@ pnpm deploy-local
 | STATIC_DIR | (없음) | 빌드한 클라이언트 폴더. 있으면 게임 서버가 정적 파일도 줌 |
 | PUBLIC_ORIGIN | (없음) | 우리 사이트 주소 (https://game.example.com). WebSocket·/api Origin 제한, CSP connect-src, 매치메이킹 CORS (security.md 8장). **배포에서는 꼭 설정** |
 | COOKIE_SECURE | 켬 | 0이면 Secure 끔 (http로 시험할 때만) |
+| TEST_ACCOUNT | ADMIN | 개발용 테스트 계정 닉네임 (playtest.md 1장). production에서는 무시 |
 
 ## 5. 서버 설치·업데이트
 

@@ -120,7 +120,9 @@ export function addExp(level: number, carry: number, exp: number): { level: numb
   while (lv < MAX_LEVEL && e >= expToNext(lv)) e -= expToNext(lv++);
   return { level: lv, exp: e };
 }
-const MAX_LEVEL = 20;
+
+/** 숙련도 최대 레벨 (skills.md 1장) */
+export const MAX_LEVEL = 20;
 
 /** 필살기 게이지: 적중 1회 onHit, 피격 1회 onHurt (balance.md 8장) */
 export function gainUlt(p: PlayerState, amount: number): void {

@@ -17,4 +17,6 @@ export const CONFIG = {
   publicOrigin: env.PUBLIC_ORIGIN ?? '',
   /** 세션 쿠키 Secure (기본 켬, http로 로컬 시험할 때만 0) */
   secureCookie: env.COOKIE_SECURE !== '0',
+  /** 개발용 테스트 계정 (docs/playtest.md): 섬에 들어올 때마다 모든 MVP 무기 최대 레벨·지갑을 채움. production이면 없음 (누가 같은 닉네임으로 가입해도 안 됨) */
+  testAccount: env.NODE_ENV === 'production' ? null : { nickname: env.TEST_ACCOUNT ?? 'ADMIN', wallet: 99999 },
 } as const;
