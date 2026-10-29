@@ -2,7 +2,7 @@
   "name": "@game/server",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --include \"../shared/data/**/*.json\" --include \"../maps/**/*.json\" src/index.ts",
     "typecheck": "tsc -p .",
     "db:generate": "drizzle-kit generate",
     "admin": "tsx src/admin.ts"
