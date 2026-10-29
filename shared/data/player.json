@@ -1,8 +1,8 @@
 {
   "_note": "플레이어 공통 수치. 의미는 docs/combat.md 3장, 형식은 docs/data.md 6장. 무기별 배율(moveMul)은 weapons.json",
   "move": {
-    "walk": { "x": 48, "y": 32 },
-    "run": { "x": 96, "y": 60 }
+    "walk": { "x": 48, "y": 40 },
+    "run": { "x": 96, "y": 76 }
   },
   "runDoubleTap": 0.25,
   "hp": { "base": 1000, "perLevel": 0.04 },

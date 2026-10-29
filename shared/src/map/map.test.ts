@@ -35,10 +35,10 @@ describe('장애물 충돌', () => {
 describe('Tiled 맵 (dungeon.md 10장)', () => {
   it('2번 방: 크기, 그루터기 2칸, 시작 4곳(가운데 먼저), 출구', () => {
     const m = roomMap('floor1/room2');
-    expect([m.width, m.depth]).toEqual([22 * 16, 8 * 16]);
+    expect([m.width, m.depth]).toEqual([29 * 16, 13 * 16]);
     expect(m.blocks.map((k) => k.kind)).toEqual(['stump', 'stump']);
     expect(m.starts).toHaveLength(4);
-    expect(m.starts[0]!.y).toBe(64);
+    expect(m.starts[0]!.y).toBe(104);
     expect(m.doorOut).not.toBeNull();
     expect(roomBounds(floorRoom('floor1', 2)).bounds.blocks).toHaveLength(2);
   });

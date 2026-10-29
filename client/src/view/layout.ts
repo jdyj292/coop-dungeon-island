@@ -5,8 +5,8 @@ import { DEPTH_RATIO } from '@game/shared';
 export const WALL_TOP = 20;
 /** 바닥이 시작하는 줄 (= 깊이 0) */
 export const FLOOR_TOP = 50;
-/** 전투 영역이 끝나는 줄. 그 아래는 HUD 전용 띠 */
-export const FIELD_BOTTOM = 140;
+/** 전투 영역이 끝나는 줄 (최대 깊이 14타일). 그 아래는 HUD 전용 띠 */
+export const FIELD_BOTTOM = 190;
 /** 아래 HUD 띠 높이 (화면 맨 아래에 붙는다) */
 export const HUD_HEIGHT = 22;
 

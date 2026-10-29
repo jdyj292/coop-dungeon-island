@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TILE } from '@game/shared';
-import { FLOOR_TOP, followCamera, project } from './layout';
+import { FIELD_BOTTOM, FLOOR_TOP, followCamera, project } from './layout';
 
 describe('project', () => {
   it('깊이 1타일 = 화면 10px, 높이는 위로', () => {
@@ -8,8 +8,9 @@ describe('project', () => {
     expect(project(5, TILE)).toEqual({ sx: 5, sy: FLOOR_TOP + 10 });
     expect(project(5, TILE, 4)).toEqual({ sx: 5, sy: FLOOR_TOP + 6 });
   });
-  it('9타일 깊이가 바닥 90px (50~140)', () => {
-    expect(project(0, 9 * TILE).sy).toBe(140);
+  it('14타일 깊이가 바닥 140px (50~190)', () => {
+    expect(project(0, 14 * TILE).sy).toBe(FIELD_BOTTOM);
+    expect(FIELD_BOTTOM).toBe(190);
   });
   it('정수 픽셀', () => {
     expect(Number.isInteger(project(3.4, 7.3, 0.2).sy)).toBe(true);

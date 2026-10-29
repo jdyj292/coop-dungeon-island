@@ -15,6 +15,7 @@ import { CombatStage } from '../stage/combatStage';
 import { OnlineStage } from '../stage/onlineStage';
 import { SettingsPanel } from '../stage/settingsPanel';
 import { FIELD_BOTTOM, followCamera, HUD_HEIGHT } from '../view/layout';
+import { CROP_TOP } from '../scale';
 import { HudBottom } from '../ui/hudBottom';
 import { HudOverlay } from '../ui/hudOverlay';
 import { HudParty } from '../ui/hudParty';
@@ -295,6 +296,9 @@ export class Dungeon extends Phaser.Scene {
     const cam = followCamera(this.intro ? target : this.camCenter, target, this.intro ? 0 : DEADZONE, width, this.roomW);
     this.camCenter = cam.center;
     const shake = view.shake.offset();
-    this.cameras.main.setScroll(cam.scrollX - shake.x, -shake.y);
+    // 화면이 전투 구역보다 높으면 남는 세로를 위아래로 나누고, 낮으면 맨 위(나무 장식)부터 잘라 바닥 끝을 지킨다 (docs/art.md 1장)
+    const gap = height - HUD_HEIGHT - FIELD_BOTTOM;
+    const padY = gap >= 0 ? Math.floor(gap / 2) : Math.max(gap, -CROP_TOP);
+    this.cameras.main.setScroll(cam.scrollX - shake.x, -padY - shake.y);
   }
 }

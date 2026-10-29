@@ -4,8 +4,8 @@
 export const TILE = 16;
 
 /** 내부 해상도 (정수 배율로 확대) */
-export const VIEW_WIDTH = 288;
-export const VIEW_HEIGHT = 162;
+export const VIEW_WIDTH = 384;
+export const VIEW_HEIGHT = 216;
 
 /** 최소 배율 */
 export const MIN_SCALE = 2;

@@ -58,7 +58,7 @@ describe('DungeonGame 보상', () => {
   it('보물상자: 클리어 뒤 가까이서 한 번만, 파티원 모두 코인 15 + 버섯 1', () => {
     const { g, sent } = game(3);
     const a = g.sim.players.get('a')!.state;
-    a.pos = { x: 240, y: 36 };
+    a.pos = { x: 320, y: 60 };
     g.onMessage('a', 'interact', { targetId: 'chest' });
     expect(g.state.chestOpen).toBe(false); // 클리어 전
     clearRoom(g);
@@ -67,7 +67,7 @@ describe('DungeonGame 보상', () => {
     const before = g.state.players.get('b')!.priv.coins;
     g.onMessage('a', 'interact', { targetId: 'chest' });
     expect(g.state.chestOpen).toBe(false); // 멀리
-    a.pos = { x: 240, y: 36 };
+    a.pos = { x: 320, y: 60 };
     g.onMessage('a', 'interact', { targetId: 'chest' });
     g.onMessage('a', 'interact', { targetId: 'chest' });
     g.tick();

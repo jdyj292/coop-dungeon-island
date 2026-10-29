@@ -19,6 +19,9 @@ const OFFSET_Y = 8;
 /** 가려는데 이만큼 안 움직이면 막힌 것 → 깊이 방향으로 비켜 감 (장애물 돌아가기) */
 const STUCK_MS = 400;
 const SIDESTEP_MS = 500;
+/** 한 몬스터를 이만큼 쫓아도 못 쓰러뜨리면(거리를 벌리는 멧돼지) 잠시 다른 몬스터부터 */
+const CHASE_MS = 12000;
+const GIVE_UP_MS = 6000;
 
 export class Bot {
   private seq = 0;
@@ -28,6 +31,9 @@ export class Bot {
   private lastPos = { x: 0, y: 0, at: 0 };
   /** 막혔을 때: until까지 깊이 방향으로 비킨 뒤, passUntil까지는 가로로만 (비스듬히 가다 같은 장애물에 다시 걸리지 않게) */
   private sidestep: { dir: number; until: number; passUntil: number } | null = null;
+  /** 지금 쫓는 몬스터와 쫓기 시작한 시각, 잠시 미뤄 둔 몬스터 */
+  private chase = { id: -1, since: 0 };
+  private skip = { id: -1, until: 0 };
 
   constructor(private g: DungeonGame, readonly pid: string) {}
 
@@ -139,9 +145,18 @@ export class Bot {
   }
 
   private nearest(): Monster | undefined {
-    const p = this.me.pos;
-    return this.g.sim.alive.filter((m) => !m.body.ko)
-      .sort((a, b) => Math.hypot(a.body.x - p.x, a.body.y - p.y) - Math.hypot(b.body.x - p.x, b.body.y - p.y))[0];
+    const p = this.me.pos, now = this.g.now;
+    const all = this.g.sim.alive.filter((m) => !m.body.ko)
+      .sort((a, b) => Math.hypot(a.body.x - p.x, a.body.y - p.y) - Math.hypot(b.body.x - p.x, b.body.y - p.y));
+    const m = all.find((x) => !(x.id === this.skip.id && now < this.skip.until)) ?? all[0];
+    if (!m) return undefined;
+    if (m.id !== this.chase.id) this.chase = { id: m.id, since: now };
+    else if (now - this.chase.since > CHASE_MS && all.length > 1) {
+      this.skip = { id: m.id, until: now + GIVE_UP_MS };
+      this.chase = { id: -1, since: now };
+      return this.nearest();
+    }
+    return m;
   }
 
   private fight(m: Monster): void {

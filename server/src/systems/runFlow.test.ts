@@ -68,7 +68,7 @@ describe('한 판의 끝', () => {
     const { g, sent } = game(3);
     clearRoom(g);
     expect(g.state.doorOpen).toBe(true);
-    const ring = { x: 24 * 16 / 2, y: 9 * 16 / 2 };
+    const ring = { x: 32 * 16 / 2, y: 14 * 16 / 2 };
     g.sim.players.get('a')!.state.pos = { ...ring };
     g.sim.players.get('b')!.state.pos = { ...ring };
     ticks(g, 90);

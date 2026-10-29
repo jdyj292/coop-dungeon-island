@@ -53,6 +53,8 @@ export class Island extends Phaser.Scene {
   private notice: Phaser.GameObjects.GameObject | null = null;
   private noticeTimer: Phaser.Time.TimerEvent | null = null;
   private cam = { x: 0, y: 0 };
+  /** 다음 follow에서 데드존 없이 내 캐릭터를 화면 가운데로 (섬에 처음 들어올 때) */
+  private snapCam = false;
 
   constructor() {
     super('Island');
@@ -127,8 +129,7 @@ export class Island extends Phaser.Scene {
         const name = ITEMS.decorations[m.itemId]?.name ?? ITEMS.consumables[m.itemId]?.name ?? m.itemId;
         this.showNotice(m.ok ? `${name} ${m.count}개를 샀습니다` : BUY_FAIL[m.reason ?? 'unknown'] ?? '살 수 없습니다', NOTICE_MS);
       };
-      const p = this.stage.myPos;
-      this.cam = { x: p.x, y: p.y };
+      this.snapCam = true;
       // 방금 가입: 외형부터 고르게 (art.md 3장)
       if (this.registry.get('chooseLook')) {
         this.registry.set('chooseLook', false);
@@ -261,6 +262,10 @@ export class Island extends Phaser.Scene {
   private follow(p: { x: number; y: number }, viewW: number, viewH: number, screen = false): void {
     const { w, h } = islandScreenSize();
     const pr = project(p.x, p.y), target = screen ? { x: p.x, y: p.y } : { x: pr.sx, y: pr.sy - BODY_LIFT };
+    if (this.snapCam && !screen) {
+      this.cam = { ...target };
+      this.snapCam = false;
+    }
     for (const axis of ['x', 'y'] as const) {
       const d = DEADZONE[axis];
       if (target[axis] > this.cam[axis] + d) this.cam[axis] = target[axis] - d;
