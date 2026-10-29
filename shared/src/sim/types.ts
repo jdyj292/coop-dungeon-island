@@ -8,6 +8,8 @@ import type { PlayerInput, PlayerState } from '../player';
 import type { HurtEvent, PotionKind } from '../playerHurt';
 import type { Bolt } from './bolts';
 import type { HitLog } from './hitLog';
+import type { SkillBuild } from '../skillTree';
+import type { Echo } from './skillExtras';
 
 export interface Spawn {
   kind: string;
@@ -32,6 +34,8 @@ export interface SimPlayer {
   held: PlayerInput | null;
   /** 접속 끊김 (network.md 10장): 제자리에 멈춤, 무적, 몬스터가 노리지 않음 */
   away: boolean;
+  /** 스킬 노드 (skillTree.ts). 서버는 DB 값, 로컬은 개발 옵션 */
+  skills: SkillBuild;
 }
 
 /** pid = 그 사건의 플레이어 (hit은 공격자, playerHit·playerHurt는 맞은 사람) */
@@ -53,7 +57,9 @@ export type SimEvent =
   | { type: 'ko'; pid: string; m: Monster }
   /** 플레이어 마법탄 발사·사라짐 (스태프) */
   | { type: 'bolt'; bolt: Bolt }
-  | { type: 'boltEnd'; bolt: Bolt };
+  | { type: 'boltEnd'; bolt: Bolt }
+  /** 변형 예약 판정 (반복·후속·해제) 순간: 맞힌 몬스터가 없어도 */
+  | { type: 'echo'; echo: Echo };
 
 export interface SimOptions {
   /** false면 몬스터가 움직이거나 공격하지 않음 (tools/motion-preview) */

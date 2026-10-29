@@ -2,17 +2,19 @@
 // 내 캐릭터는 예측 상태로 바로 그리고 서버 패치마다 보정 (network.md 7장, net/localPlayer.ts)
 import type Phaser from 'phaser';
 import {
-  COMBAT, MONSTERS, NET, playerStateName, weaponDef,
+  buildFrom, buildSkill, COMBAT, MONSTERS, NET, playerStateName, weaponDef,
   type Bounds, type Monster, type PlayerState, type S2C, type ZoneArea,
 } from '@game/shared';
 import fx from '../../data/fx.json';
 import { sfx } from '../audio/player';
+import { echoSound } from '../audio/sfxEvents';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
 import { HazardLayer } from '../fx/hazards';
 import { ATTACKS, RemoteShots } from '../net/remoteShots';
 import { monsterCue, playerCue } from './onlineCues';
+import { castEcho } from '../fx/spellCast';
 import { hitPackage, type FxContext } from '../fx/hitPackage';
 import { FxLayer } from '../fx/layer';
 import { dust } from '../fx/particles';
@@ -62,6 +64,7 @@ export class OnlineStage {
   private shots = new RemoteShots();
   private boltLayer: BoltLayer;
   private hits: S2C['hit'][] = [];
+  private echoes: S2C['echo'][] = [];
   private clock = 0;
   /** 내 캐릭터 (입력·예측·보정) */
   readonly local: LocalPlayer;
@@ -199,6 +202,7 @@ export class OnlineStage {
 
     // 적중 연출은 그리는 시점이 서버 적중 시각에 닿을 때 (보간된 화면과 맞춤)
     this.hits = this.hits.filter((h) => (h.t <= t ? (this.playHit(h), false) : true));
+    this.echoes = this.echoes.filter((e) => (e.t <= t ? (this.playEcho(e), false) : true));
     this.drawWorld(t, realDt);
     drawReviveGauges(this.reviveG, this.downedAllies());
   }
@@ -207,6 +211,7 @@ export class OnlineStage {
     const now = this.conn.clock.serverNow();
     if (this.shots.on(type, msg, now)) return;
     if (type === 'hit') this.hits.push(msg as S2C['hit']);
+    else if (type === 'echo') this.echoes.push(msg as S2C['echo']);
     else if (type === 'playerHit') {
       const m = msg as S2C['playerHit'], r = this.players.get(m.pid), pos = r?.last;
       sfx.play(m.strength === 'heavy' ? 'hitHeavy' : 'hitLight');
@@ -240,6 +245,15 @@ export class OnlineStage {
     if (def?.sfx?.hit) sfx.play(def.sfx.hit);
     // 히트스톱 동기화: 내 공격이면 예측 중인 내 행동도 서버와 같은 시간(근접 역경직 포함) 멈춤 (몬스터·다른 사람은 서버 데이터가 이미 멈춰 있다)
     if (h.attacker === this.conn.myId) this.local.predictor?.stop(h.recoil, h.act, h.actT);
+  }
+
+  /** 변형 예약 판정: 그 사람의 노드로 스킬 정의를 찾아 로컬과 같은 연출·소리 */
+  private playEcho(m: S2C['echo']): void {
+    const snap = this.conn.players.latest?.items.get(m.pid);
+    const def = buildSkill(weaponDef(snap?.weapon ?? 'greatsword'), buildFrom(snap?.skills ?? ''), m.act);
+    if (!def) return;
+    castEcho(this.fx, m.kind, def, m);
+    echoSound(m.kind, def).forEach((n) => sfx.play(n));
   }
 
   private dustAt(x: number, y: number, kind: typeof fx.dust.down): void {

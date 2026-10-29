@@ -20,6 +20,7 @@ import { PositionHistory, type PastPos } from './history';
 import { HitLog } from './hitLog';
 import { hitMonster, phaseIsActive, strike, type PosOf, type StrikeHit } from './strike';
 import { spawnBolt, stepBolt, type Bolt } from './bolts';
+import { echoesOf, shatterDef, strikeEcho, thawed, type Echo } from './skillExtras';
 
 export type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
 import type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
@@ -35,6 +36,8 @@ export class RoomSim {
   zones: ZoneArea[] = [];
   /** 플레이어 마법탄 (스태프) */
   bolts: Bolt[] = [];
+  /** 변형 예약 판정 (반복·후속, skillExtras.ts) */
+  echoes: Echo[] = [];
   tokens: AttackTokens;
   private ids = 1;
   /** 몬스터 id → 노리는 플레이어 */
@@ -57,7 +60,7 @@ export class RoomSim {
   }
 
   addPlayer(pid: string, pos: Vec2, weapon: WeaponDef = this.weapon): SimPlayer {
-    const sp: SimPlayer = { pid, state: newPlayerState({ ...pos }), weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null, away: false };
+    const sp: SimPlayer = { pid, state: newPlayerState({ ...pos }), weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null, away: false, skills: {} };
     this.players.set(pid, sp);
     return sp;
   }
@@ -70,7 +73,7 @@ export class RoomSim {
     const fresh = newPlayerState({ ...pos });
     const p = from.state;
     const state: PlayerState = { ...p, pos: fresh.pos, fighter: fresh.fighter, run: fresh.run, backstep: null, hurt: null };
-    const sp: SimPlayer = { pid: from.pid, state, weapon: from.weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null, away: from.away };
+    const sp: SimPlayer = { pid: from.pid, state, weapon: from.weapon, combo: newCombo(), rewind: 0, stop: 0, hits: new HitLog(), held: null, away: from.away, skills: from.skills };
     this.players.set(sp.pid, sp);
     return sp;
   }
@@ -196,6 +199,7 @@ export class RoomSim {
     // 3. 플레이어 행동과 판정 (active 동안 매 틱)
     const moved = new Map<string, number>();
     for (const sp of this.players.values()) moved.set(sp.pid, this.stepPlayer(sp, inputs.get(sp.pid) ?? IDLE, dt, events));
+    this.stepEchoes(events);
     this.stepTeamCombo(events);
     // 4. 몬스터끼리 겹침 풀기 (지상·공격 중 아닐 때)
     separateMonsters(this.alive, this.bounds);
@@ -253,6 +257,7 @@ export class RoomSim {
       if (e.type === 'active') runs.add(e.run);
       // 투사체 행동은 active 순간 한 번 발사 (판정은 날아가는 마법탄이, 판정 모양이 없어 strike는 맞히지 않음)
       if (e.type === 'active' && e.run.def.projectile) this.shoot(sp, e.run.def, events);
+      if (e.type === 'active' && e.run.kind === 'skill') this.echoes.push(...echoesOf(pid, e.run.def, p, this.time));
     }
     if (p.fighter.run && phaseIsActive(p.fighter.run)) runs.add(p.fighter.run);
     let hits = 0;
@@ -266,12 +271,36 @@ export class RoomSim {
     }
     for (const b of this.bolts) if (b.pid === pid) hits += this.landHits(sp, b.def, stepBolt(b, dt, this.bounds, this.alive).map((m) => hitMonster(p, b.def, m, b.dir)), events);
     this.bolts = this.bolts.filter((b) => (b.done ? (events.push({ type: 'boltEnd', bolt: b }), false) : true));
-    // 솔로는 개인 콤보 단계가 코인 보너스 (파티는 팀 콤보, stepTeamCombo)
+    this.countCombo(sp, hits, events);
+    return res.moved;
+  }
+
+  /** 솔로는 개인 콤보 단계가 코인 보너스 (파티는 팀 콤보, stepTeamCombo) */
+  private countCombo(sp: SimPlayer, hits: number, events: SimEvent[]): void {
     if ((this.opts.partySize ?? 1) < 2) {
       const ms = milestoneHit(sp.combo, hits, COMBAT.combo.soloMilestones);
-      if (ms !== null) events.push({ type: 'comboMilestone', pid, count: ms });
+      if (ms !== null) events.push({ type: 'comboMilestone', pid: sp.pid, count: ms });
     } else comboHit(sp.combo, hits);
-    return res.moved;
+  }
+
+  /** 변형 특수 판정: 때가 된 예약 판정(반복·후속), 빙결이 풀린 몬스터의 해제 판정. 연출은 echo 사건 */
+  private stepEchoes(events: SimEvent[]): void {
+    const due = this.echoes.filter((e) => e.at <= this.time);
+    this.echoes = this.echoes.filter((e) => e.at > this.time);
+    for (const e of due) {
+      const sp = this.players.get(e.pid);
+      if (!sp || sp.away) continue;
+      events.push({ type: 'echo', echo: e });
+      this.countCombo(sp, this.landHits(sp, e.def, strikeEcho(e, sp.state, this.alive), events, true), events);
+    }
+    for (const m of thawed(this.alive)) {
+      const by = m.frozenBy!, sp = this.players.get(by.pid);
+      delete m.frozenBy;
+      if (!sp || sp.away) continue;
+      const def = shatterDef(by.def);
+      events.push({ type: 'echo', echo: { pid: by.pid, kind: 'shatter', def, x: m.body.x, y: m.body.y, facing: sp.state.facing, at: this.time } });
+      this.countCombo(sp, this.landHits(sp, def, [hitMonster(sp.state, def, m, sp.state.facing)], events, true), events);
+    }
   }
 
   /** 마법탄 발사 */
@@ -281,20 +310,22 @@ export class RoomSim {
     events.push({ type: 'bolt', bolt: b });
   }
 
-  /** 적중 사건·기절·보스 졸음 연장(파티: 서로 다른 2명, 솔로: 15히트)·히트스톱. 적중 수 */
-  private landHits(sp: SimPlayer, def: ActionDef, hits: StrikeHit[], events: SimEvent[]): number {
+  /** 적중 사건·기절·보스 졸음 연장(파티: 서로 다른 2명, 솔로: 15히트)·히트스톱. 적중 수. echo = 예약 판정 (공격자는 멈추지 않음) */
+  private landHits(sp: SimPlayer, def: ActionDef, hits: StrikeHit[], events: SimEvent[], echo = false): number {
     for (const h of hits) {
       const sec = gradeTiming(def.fx?.grade ?? 'light').hitstop;
       // 근접 역경직: 근접 무기는 더 오래 멈추고, 맞은 몬스터도 같은 시간 멈춘다 (weapons.json recoilMul, combat.md 5장)
-      const recoil = sec * (sp.weapon.recoilMul ?? 1);
+      const recoil = echo ? 0 : sec * (sp.weapon.recoilMul ?? 1);
       // actT = 맞힌 틱의 내 행동 진행 시간 (클라이언트가 예측 기록에서 같은 틱을 찾아 멈춤을 맞춘다, network.md 9장)
-      const run = sp.state.fighter.run;
+      const run = echo ? null : sp.state.fighter.run;
       events.push({ type: 'hit', pid: sp.pid, m: h.m, def, damage: h.damage, recoil, act: run?.def.id ?? '', actT: run?.t ?? -1 });
       if (h.ko) events.push({ type: 'ko', pid: sp.pid, m: h.m });
       recordGroggyHit(h.m, sp.pid, (this.opts.partySize ?? 1) >= 2);
+      // 해제 판정을 걸어둠 (그 행동이 건 빙결이 풀릴 때)
+      if (def.onStatusEnd && h.m.frozen > 0) h.m.frozenBy = { pid: sp.pid, def };
       if (this.opts.hitstop === 'entity') {
         sp.stop = Math.max(sp.stop, recoil);
-        this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, recoil));
+        this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, recoil || sec));
       }
     }
     return hits.length;

@@ -1,19 +1,20 @@
 // 서버 스냅샷 → 그리기용 객체 (PlayerState·Monster 모양). 기존 PlayerView·MonsterView·HazardLayer를 그대로 쓰기 위해
 // 행동 포즈는 actionId + actionStart와 데이터로 계산한다 (docs/network.md 5·8장)
 import {
-  COMBAT, newMonster, newPlayerState, PLAYER, skillDef, SKILLS, weaponDef,
-  type ActionDef, type ActionRun, type Monster, type PlayerState, type WeaponDef,
+  buildFrom, buildSkill, COMBAT, newMonster, newPlayerState, PLAYER, weaponDef,
+  type ActionDef, type ActionRun, type Monster, type PlayerState, type SkillBuild, type WeaponDef,
 } from '@game/shared';
 import type { MonsterSnap, PlayerSnap, PrivateView } from './connection';
 
 const sec = (ms: number) => Math.max(0, ms / 1000);
 
-/** 행동 id → 정의와 종류 (평타 단계·대시·스킬) */
-export function playerAction(weapon: WeaponDef, id: string): Pick<ActionRun, 'def' | 'kind' | 'step'> | null {
+/** 행동 id → 정의와 종류 (평타 단계·대시·스킬). 스킬은 그 사람의 노드(변형·레벨 배율)로 */
+export function playerAction(weapon: WeaponDef, id: string, skills: SkillBuild = {}): Pick<ActionRun, 'def' | 'kind' | 'step'> | null {
   const step = weapon.basic.findIndex((b) => b.id === id);
   if (step >= 0) return { def: weapon.basic[step]! as ActionDef, kind: 'basic', step };
   if (weapon.dash.id === id) return { def: weapon.dash as ActionDef, kind: 'dash', step: 0 };
-  return SKILLS[id] ? { def: skillDef(id), kind: 'skill', step: 0 } : null;
+  const skill = buildSkill(weapon, skills, id);
+  return skill ? { def: skill, kind: 'skill', step: 0 } : null;
 }
 
 /**
@@ -24,7 +25,7 @@ export function mirrorPlayer(s: PlayerSnap, t: number, weaponId: string, priv?: 
   const p = newPlayerState({ x: s.x, y: s.y });
   const el = sec(t - s.since);
   p.facing = s.facing;
-  const act = s.actionId ? playerAction(weaponDef(weaponId), s.actionId) : null;
+  const act = s.actionId ? playerAction(weaponDef(weaponId), s.actionId, buildFrom(s.skills ?? '')) : null;
   if (act) p.fighter.run = { ...act, t: sec(t - s.actionStart) };
   p.run.running = s.state === 'run';
   // 회피 방향은 서버 값 (본인 예측을 다시 계산할 때 앞회피가 뒤로 계산되지 않게)
@@ -47,6 +48,7 @@ export function mirrorPlayer(s: PlayerSnap, t: number, weaponId: string, priv?: 
     p.potions = { hp: priv.potionHp, mp: priv.potionMp };
     p.feathers = priv.feathers;
     priv.cooldowns.forEach((end, id) => { p.cooldowns[id] = sec(end - now); });
+    if (priv.reinputId) p.reinput = { id: priv.reinputId, left: priv.reinputLeft ?? 0, window: sec((priv.reinputEnd ?? 0) - now) };
   }
   return p;
 }

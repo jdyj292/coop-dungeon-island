@@ -24,10 +24,12 @@ export interface PlayerState extends Vitals {
   tired: boolean;
   /** 스킬 id → 남은 쿨타임 (실제 쿨 = 기준 쿨 × cooldownScale) */
   cooldowns: Record<string, number>;
+  /** 재입력 대기 (변형 reinput, skills.md 1장): 같은 스킬을 쿨타임·MP 없이 남은 횟수만큼. window = 스킬이 끝난 뒤 받는 남은 시간 */
+  reinput: { id: string; left: number; window: number } | null;
 }
 
 export const newPlayerState = (pos: Vec2): PlayerState => ({
-  pos, facing: 1, fighter: newFighter(), run: newRunState(), backstep: null, backstepCd: 0, stamina: PLAYER.stamina.max, staminaWait: 0, tired: false, cooldowns: {}, ...newVitals(),
+  pos, facing: 1, fighter: newFighter(), run: newRunState(), backstep: null, backstepCd: 0, stamina: PLAYER.stamina.max, staminaWait: 0, tired: false, cooldowns: {}, reinput: null, ...newVitals(),
 });
 
 export interface PlayerInput {
@@ -58,6 +60,12 @@ export interface PlayerStep {
 export const skillReady = (p: PlayerState, skill: ActionDef): boolean =>
   (p.cooldowns[skill.id] ?? 0) <= 0 && p.mp >= (skill.mp ?? 0);
 
+/** 재입력할 수 있는 스킬인가 (쿨타임·MP 무시) */
+export const canReinput = (p: PlayerState, skill: ActionDef): boolean => p.reinput?.id === skill.id && p.reinput.left > 0;
+
+/** 지금 쓸 수 있는 스킬인가: 재입력 또는 쿨타임·MP */
+export const canUseSkill = (p: PlayerState, skill: ActionDef): boolean => canReinput(p, skill) || skillReady(p, skill);
+
 /** 회피 가능: 쿨타임이 끝났고 지구력이 1회분 이상이고, 행동 중이면 후딜레이(recovery) 구간 (combat.md 1장) */
 export const canDodge = (p: PlayerState): boolean =>
   p.backstepCd <= 0 && p.stamina >= PLAYER.stamina.dodge && (!p.fighter.run || fighterPhase(p.fighter) === 'recovery');
@@ -77,6 +85,8 @@ export function stepPlayerState(
   const bs = PLAYER.backstep, st = PLAYER.stamina;
   for (const id of Object.keys(p.cooldowns)) p.cooldowns[id] = Math.max(0, p.cooldowns[id]! - dt);
   p.backstepCd = Math.max(0, p.backstepCd - dt);
+  // 재입력 시간은 그 스킬이 끝난 뒤부터 흐른다
+  if (p.reinput && p.fighter.run?.def.id !== p.reinput.id && (p.reinput.window -= dt) <= 0) p.reinput = null;
   p.staminaWait = Math.max(0, p.staminaWait - dt);
   if (p.staminaWait <= 0) p.stamina = Math.min(st.max, p.stamina + st.regen * dt);
   const out: PlayerStep = { events: [], moved: 0, running: false, backstepStarted: false, hurt: stepVitals(p, dt), potion: null };
@@ -123,16 +133,13 @@ export function stepPlayerState(
   if (!wantRun) p.tired = false;
   if (p.tired) p.run.running = false;
   const running = wantRun && !p.tired && !p.fighter.run;
-  const skill = input.skill && skillReady(p, input.skill) ? input.skill : null;
+  const skill = input.skill && canUseSkill(p, input.skill) ? input.skill : null;
   const before = p.fighter.run && { run: p.fighter.run, t: p.fighter.run.t };
   // 대시 공격은 좌우를 누르며 달릴 때만 (위아래만 누르며 달리면 평타, combat.md 1장)
-  out.events = stepFighter(p.fighter, weapon, { attack: input.attack, skill, dashing: running && input.x !== 0 }, dt);
+  out.events = stepFighter(p.fighter, weapon, { attack: input.attack, skill, dashing: running && input.x !== 0, chain: !!skill && canReinput(p, skill) }, dt);
   for (const e of out.events) {
     // 쿨타임은 windup 진입 시점부터 (balance.md 2장)
-    if (e.type === 'start' && e.run.kind === 'skill') {
-      if (e.run.def.cooldown) p.cooldowns[e.run.def.id] = e.run.def.cooldown * COMBAT.cooldownScale;
-      p.mp -= e.run.def.mp ?? 0;
-    }
+    if (e.type === 'start' && e.run.kind === 'skill') startSkill(p, e.run.def);
   }
   if (input.x && canTurn(p.fighter, weapon)) p.facing = Math.sign(input.x);
   // 평타 중 바라보는 쪽 키를 누르고 있으면 조금씩 전진, 각 타 끝 stopBefore초 전부터는 멈춤 (weapons.json basicAdvance, combat.md 2장)
@@ -154,6 +161,19 @@ export function stepPlayerState(
   }
   out.running = running && !p.fighter.run;
   return out;
+}
+
+/** 스킬 시작: 재입력이면 횟수만 줄이고, 아니면 쿨타임·MP를 쓰고 재입력 변형이면 대기를 연다 */
+function startSkill(p: PlayerState, def: ActionDef): void {
+  const window = COMBAT.skillTree.reinputWindow;
+  if (canReinput(p, def)) {
+    const left = p.reinput!.left - 1;
+    p.reinput = left > 0 ? { id: def.id, left, window } : null;
+    return;
+  }
+  if (def.cooldown) p.cooldowns[def.id] = def.cooldown * COMBAT.cooldownScale;
+  p.mp -= def.mp ?? 0;
+  p.reinput = def.reinput ? { id: def.id, left: def.reinput, window } : null;
 }
 
 /** 이번 틱의 행동 중 이동 거리: 진행 중이던 행동(끝났으면 끝까지) + 이번 틱에 시작한 행동 */

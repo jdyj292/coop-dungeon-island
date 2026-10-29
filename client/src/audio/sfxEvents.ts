@@ -1,6 +1,12 @@
 // 전투 이벤트 → 효과음 이름 (docs/audio.md 3장 연결표). 행동 소리는 데이터의 sfx 필드, 나머지는 여기서 정한다
 import type { SimEvent } from '@game/shared';
 
+/** 변형 예약 판정 (반복·후속 = 그 행동의 active 소리, 해제 = 적중 소리). 온라인 echo 메시지도 같은 규칙 */
+export const echoSound = (kind: string, def: { sfx?: { active?: string; hit?: string } }): string[] => {
+  const n = kind === 'shatter' ? def.sfx?.hit : def.sfx?.active;
+  return n ? [n] : [];
+};
+
 /** teleport = 순간이동 백스텝 무기 (스태프 backstepStyle teleport): 백스텝 소리 대신 teleport */
 export function soundsFor(e: SimEvent, opts: { teleport?: boolean } = {}): string[] {
   const pick = (...names: (string | undefined)[]) => names.filter((n): n is string => !!n);
@@ -11,6 +17,8 @@ export function soundsFor(e: SimEvent, opts: { teleport?: boolean } = {}): strin
       return [];
     case 'hit':
       return pick(e.def.sfx?.hit);
+    case 'echo':
+      return echoSound(e.echo.kind, e.echo.def);
     case 'backstep':
       return [opts.teleport ? 'teleport' : 'backstep'];
     case 'playerHit':

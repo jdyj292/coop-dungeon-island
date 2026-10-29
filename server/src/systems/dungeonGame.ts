@@ -1,7 +1,7 @@
 // 던전 한 판의 진행 (Colyseus 없이 테스트 가능): 방마다 RoomSim + 웨이브 + 방 진행 + 입력 대기열 + 상태 반영 + 이벤트
 // DungeonRoom(rooms/)은 연결·전송만 맡는다. 흐름은 docs/network.md 3~6장
 import {
-  arriveSecOf, atkFor, COMBAT, entryPos, mapOf, maxHpFor, MVP_WEAPONS, parseC2S, ROOMS, RoomSim, TICK, WaveRunner, weaponDef,
+  arriveSecOf, atkFor, COMBAT, decodeBuild, encodeBuild, entryPos, mapOf, maxHpFor, MVP_WEAPONS, parseC2S, ROOMS, RoomSim, TICK, WaveRunner, weaponDef,
   type C2SType, type RoomDef, type PlayerInput, type Projectile, type S2C, type SimOptions, type SimPlayer,
 } from '@game/shared';
 import { DungeonState, PlayerState } from '../schema/DungeonState';
@@ -73,12 +73,15 @@ export class DungeonGame {
   }
 
   /** party = 섬에서 출발한 파티원 정보 (이름·색·숙련도(최대 HP·ATK)·가져온 물약). 없으면 개발용 (Lv1, 물약 한도만큼) */
-  join(pid: string, name: unknown, party?: PartyMember, devWeapon?: unknown): void {
+  join(pid: string, name: unknown, party?: PartyMember, devWeapon?: unknown, devSkills?: unknown): void {
     const index = this.joined++;
     // 무기: 섬 파티는 파티 정보(users.weapon), 개발 방은 접속 옵션 weapon (MVP 무기만), 없으면 대검
     const want = party ? party.weapon : devWeapon;
     const weapon = (MVP_WEAPONS as readonly unknown[]).includes(want) ? want as string : 'greatsword';
     const sp = this.sim.addPlayer(pid, entryPos(this.room, index % 4), weaponDef(weapon));
+    // 스킬 노드: 섬 파티는 DB에서 읽은 파티 정보, 개발 방은 접속 옵션 (skills.md 1장, 판정은 이 값으로)
+    const skills = party ? party.skills : devSkills;
+    sp.skills = decodeBuild(typeof skills === 'string' ? skills.slice(0, 200) : '');
     // 부활의 깃털은 솔로만 (dungeon.md 3장). 파티는 동료 부활
     if (this.state.partySize > 1) sp.state.feathers = 0;
     sp.state.arrive = arriveSecOf(this.room); // 층 첫 방은 우물에서 떨어져 들어옴 (dungeon.md 2장)
@@ -87,7 +90,7 @@ export class DungeonGame {
     const raw = party?.name ?? name;
     const nick = typeof raw === 'string' && raw.trim() ? raw.trim().slice(0, NAME_MAX) : `모험가${index + 1}`;
     const color = party?.color ?? index % 4;
-    const s = new PlayerState().assign({ id: pid, name: nick, look: `beginner:${party?.hair ?? 0}:${party?.hairColor ?? 0}:${color}`, color, weapon });
+    const s = new PlayerState().assign({ id: pid, name: nick, look: `beginner:${party?.hair ?? 0}:${party?.hairColor ?? 0}:${color}`, color, weapon, skills: encodeBuild(sp.skills) });
     syncPlayer(s, sp, 0, this.now);
     this.state.players.set(pid, s);
     this.members.set(pid, { inputs: new InputQueue(), limit: new RateLimit(dungeonRules()), index, level, levelExp: party?.levelExp ?? 0 });
@@ -157,7 +160,7 @@ export class DungeonGame {
         const msg = parseC2S('action', raw);
         if (!msg) return 'ignored';
         lagCompensate(this.sim, sp, msg, this.now);
-        const reason = m.inputs.onAction(msg, sp.state, sp.weapon);
+        const reason = m.inputs.onAction(msg, sp.state, sp.weapon, sp.skills);
         if (reason) this.out.send(pid, 'rejected', { seq: msg.seq, reason });
         return 'ok';
       }

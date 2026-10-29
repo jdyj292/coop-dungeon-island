@@ -45,7 +45,7 @@ describe('SnapshotBuffer (network.md 8장)', () => {
 
 describe('mirror: 스냅샷 → 그리기 객체', () => {
   const ps: PlayerSnap = {
-    id: 'a', name: 'A', x: 50, y: 40, z: 0, facing: -1, dodgeDir: 0, dodgeDy: 0, dodgeStart: 0, state: 'action', since: 900, actionId: 'gs_b2', actionStart: 1000, hp: 800, maxHp: 1000, ult: 3, lastInputSeq: 0, reviveProgress: 0, color: 0, look: '', weapon: 'greatsword',
+    id: 'a', name: 'A', x: 50, y: 40, z: 0, facing: -1, dodgeDir: 0, dodgeDy: 0, dodgeStart: 0, state: 'action', since: 900, actionId: 'gs_b2', actionStart: 1000, hp: 800, maxHp: 1000, ult: 3, lastInputSeq: 0, reviveProgress: 0, color: 0, look: '', weapon: 'greatsword', skills: '',
   };
   it('행동 id → 평타 단계·대시·스킬', () => {
     const w = weaponDef('greatsword');
@@ -53,6 +53,8 @@ describe('mirror: 스냅샷 → 그리기 객체', () => {
     expect(playerAction(w, w.dash.id)).toMatchObject({ kind: 'dash' });
     expect(playerAction(w, 'gs_launch')).toMatchObject({ kind: 'skill' });
     expect(playerAction(w, 'nope')).toBeNull();
+    // 스킬은 그 사람의 노드(변형)로: 즉발 화염은 준비 0.2초
+    expect(playerAction(weaponDef('staff'), 'st_fireburst', { st_fireburst: { points: 3, variant: 'instant' } })?.def.phases.windup).toBe(0.2);
   });
   it('플레이어: 행동 진행 시간, 본인 전용 값(쿨타임은 지금 기준 남은 초)', () => {
     const p = mirrorPlayer(ps, 1100, 'greatsword', { mp: 70, stamina: 40, tired: true, cooldowns: new Map([['gs_launch', 3000]]), potionHp: 2, potionMp: 1, feathers: 0 }, 1500);

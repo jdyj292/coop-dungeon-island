@@ -28,6 +28,8 @@ export interface PartyMember {
   levelExp: number;
   /** 가져온 물약 */
   potions: { hp: number; mp: number };
+  /** 스킬 노드 (skillTree.encodeBuild, DB skill_nodes). 없으면 모두 1포인트 */
+  skills?: string;
 }
 
 export interface DungeonOptions {

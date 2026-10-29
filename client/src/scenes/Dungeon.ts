@@ -3,7 +3,7 @@
 // 서버 방 번호가 바뀌면 같은 접속으로 씬을 다시 시작해 방 화면(배경·소품·장애물)을 새로 만든다
 import Phaser from 'phaser';
 import { ChatBar } from '../stage/chatBar';
-import { COMBAT, entryPos, floorRoom, mapOf, MVP_WEAPONS, roomBounds, ROOMS, skillDef, TILE, WaveRunner, weaponDef, type Bounds, type PlayerState, type RoomDef } from '@game/shared';
+import { buildFrom, COMBAT, entryPos, floorRoom, mapOf, MVP_WEAPONS, roomBounds, ROOMS, TILE, WaveRunner, weaponDef, weaponSkills, type Bounds, type PlayerState, type RoomDef } from '@game/shared';
 import type { Shake } from '../fx/timing';
 import { music } from '../audio/bgm/music';
 import { sfx } from '../audio/player';
@@ -39,7 +39,8 @@ const HUD_DEPTH = 10000;
 /** 부활: E를 누르고 있는 동안 서버에 알리는 간격 (서버는 300ms 안에 다시 오면 계속 누른 것으로) */
 const REVIVE_SEND_MS = 150;
 /** 스킬 슬롯 U·I = 무기 기본 스킬 2개 (임시 고정 장착, 슬롯 UI는 MVP 이후) */
-const skillsOf = (weapon: string) => weaponDef(weapon).baseSkills.map(skillDef);
+/** 스킬 키 순서대로 (code = 스킬 노드: 온라인은 서버 값, 로컬은 개발 옵션 ?skills=) */
+const skillsOf = (weapon: string, code: string) => weaponSkills(weaponDef(weapon), buildFrom(code));
 
 type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2' | 'potionHp' | 'potionMp' | 'interact';
 
@@ -228,7 +229,7 @@ export class Dungeon extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    const k = this.keys, dt = delta / 1000, sk = skillsOf(this.weapon);
+    const k = this.keys, dt = delta / 1000, sk = skillsOf(this.weapon, this.online ? this.online.conn.mySkills : this.params.get('skills') ?? '');
     const input: KeyInput = {
       x: (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0),
       y: (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0),

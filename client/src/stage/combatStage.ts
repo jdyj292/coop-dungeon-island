@@ -19,7 +19,7 @@ import { dust, ring } from '../fx/particles';
 import { Rhythm } from '../fx/rhythm';
 import { SleepMarks } from '../fx/wellArrival';
 import { boltFizzle, boltHit, teleportPuff } from '../fx/spell';
-import { castActive, castStart } from '../fx/spellCast';
+import { castActive, castEcho, castStart } from '../fx/spellCast';
 import { HitStop, Shake } from '../fx/timing';
 import { spriteData } from '../sprites/data';
 import { PlayerView } from '../view/playerView';
@@ -182,6 +182,8 @@ export class CombatStage {
       const b = e.bolt, { sx, sy } = project(b.x, b.y, fx.spell.bolt.height);
       if (b.hit.length) this.fx.layer.add(boltHit(sx, sy));
       else add(boltFizzle(sx, sy));
+    } else if (e.type === 'echo') {
+      castEcho(this.fx, e.echo.kind, e.echo.def, e.echo);
     } else if (e.type === 'backstep' && this.playerView.teleport) {
       this.teleportAt(this.player);
     } else if (e.type === 'hit') {

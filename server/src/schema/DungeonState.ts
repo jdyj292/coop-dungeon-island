@@ -19,6 +19,10 @@ export class PlayerPrivate extends Schema {
   @type('uint16') exp = 0;
   /** 콤보 코인 보너스 % (정산 때 더함) */
   @type('uint8') bonusPct = 0;
+  /** 재입력 대기 (변형 reinput): 스킬 id·남은 횟수, 받는 시간이 끝나는 서버 시각(ms). 없으면 빈 문자열 */
+  @type('string') reinputId = '';
+  @type('uint8') reinputLeft = 0;
+  @type('float64') reinputEnd = 0;
 }
 
 export class PlayerState extends Schema {
@@ -29,6 +33,8 @@ export class PlayerState extends Schema {
   /** 플레이어 색 번호 (섬 주민 순서, 개발 방은 입장 순서) */
   @type('uint8') color = 0;
   @type('string') weapon = '';
+  /** 스킬 노드 (skillTree.encodeBuild): 변형에 따라 행동 시간·판정이 달라 그리기·예측에 필요 */
+  @type('string') skills = '';
   @type('int16') x = 0;
   @type('int16') y = 0;
   /** 백스텝 높이 등은 클라이언트 연출. 지상 판정만 */

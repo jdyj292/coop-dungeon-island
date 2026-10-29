@@ -38,6 +38,11 @@ export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: nu
   v.potionHp = p.potions.hp;
   v.potionMp = p.potions.mp;
   v.feathers = p.feathers;
+  const re = p.reinput;
+  v.reinputId = re?.id ?? '';
+  v.reinputLeft = re?.left ?? 0;
+  const reEnd = re ? now + re.window * 1000 : 0;
+  if (!reEnd || Math.abs(reEnd - v.reinputEnd) > TIME_EPS_MS) v.reinputEnd = reEnd;
   for (const [id, left] of Object.entries(p.cooldowns)) {
     if (left <= 0) {
       if (v.cooldowns.has(id)) v.cooldowns.delete(id);

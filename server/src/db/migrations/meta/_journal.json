@@ -64,6 +64,13 @@
       "when": 1793242659889,
       "tag": "0008_island_facilities",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1793269671639,
+      "tag": "0009_skill_nodes",
+      "breakpoints": true
     }
   ]
 }

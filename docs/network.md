@@ -72,6 +72,7 @@
 | memo | `{ text }` 1줄 1~40자 (NET.memoMaxLen, 제어 문자·줄바꿈은 공백으로). 저장 후 `board` 다시 보냄 |
 | look | `{ hair: 0~2, hairColor: 0~3 }` (shared LOOK) 외형 바꾸기 → users.hair_style·hair_color 저장, 주민 상태 hair·hairColor |
 | weapon | `{ id }` (shared MVP_WEAPONS) 무기 고르기 → users.weapon 저장, 주민 상태 weapon, `me` 다시 보냄(그 무기 숙련도). 출발 카운트다운 중인 대기자는 무시 |
+| skill | `{ weapon, op: set·reset, skillId?, points?, variant? }` 가방 스킬 탭 (skills.md 1장). 서버가 shared skillTree.checkNode로 검사 → skill_nodes 저장, 결과는 `skills` (안 되면 fail). 출발 카운트다운 중인 대기자는 fail busy |
 - chat·emote는 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }`·`emote { player, id }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
 | loadout | 무기 교체·스킬 장착·의상 장착 (MVP 이후 의상) |
 
@@ -101,6 +102,7 @@ DungeonState
 PlayerState
   id, name, look            look = 외형 키 "의상:머리 번호:머리색 번호:플레이어 색" (예: beginner:1:2:0, 섬 출발 파티 정보에서)
   weapon, x, y, facing      x·y는 정수 px
+  skills                    스킬 노드 (skillTree.encodeBuild "id:포인트[:변형],..."). 변형마다 행동 시간·판정이 달라 다른 사람 그리기·본인 예측이 이 값으로 스킬 정의를 찾는다
   dodgeDir, dodgeDy         회피 이동 방향 좌우 (1/−1/0)·깊이 (1 아래/−1 위/0). 회피 아니면 둘 다 0. 앞회피면 dodgeDir = facing
   dodgeStart                회피 시작 서버 시각 (회피 아니면 0). 본인 예측 재계산의 회피 진행 시간 (state 바뀐 걸 받은 시각은 최대 한 패치 늦어 회피 끝에 앞으로 당겨짐)
   state                     idle / walk / run / action / backstep / hitstun / down / knocked / disconnected / arrive(층 첫 방에 우물에서 떨어지는 중, 클라이언트는 상태가 시작된 뒤 흐른 시간으로 높이를 그리고 본인 예측도 입력을 받지 않음) (기상 무적은 연출만)
@@ -111,7 +113,8 @@ PlayerState
   priv: PlayerPrivate       @filter로 본인에게만
 
 PlayerPrivate (본인에게만 필터링해서 전송)
-  mp, stamina, tired (달리다 지구력이 바닥나 걷는 중), cooldowns (skillId → 끝나는 서버 시각 ms, 20ms 이상 바뀔 때만 갱신), potionHp, potionMp, feathers, coins, materials, exp, bonusPct (이번 판 보상)
+  mp, stamina, tired (달리다 지구력이 바닥나 걷는 중), cooldowns (skillId → 끝나는 서버 시각 ms, 20ms 이상 바뀔 때만 갱신), potionHp, potionMp, feathers, coins, materials, exp, bonusPct (이번 판 보상),
+  reinputId·reinputLeft·reinputEnd (변형 재입력 대기: 스킬 id·남은 횟수·받는 시간이 끝나는 서버 시각, 본인 예측이 쿨타임 중 재입력을 받게)
 
 MonsterState
   id, type, x, y, z, facing
@@ -149,7 +152,7 @@ IslandState
 ```
 - 구현 (4-5): server/src/rooms/IslandRoom.ts (섬마다 한 방, `filterBy(['islandId'])`), 진행 systems/islandGame.ts. 입장 인증은 onAuth에서 세션 쿠키(sid) → 그 섬 주민만, 같은 계정의 이전 연결은 종료 코드 4002로 끊음
 - 이동: 클라이언트는 던전과 같은 input 메시지, 서버 60Hz로 마지막 입력 적용(shared/src/island/walker.ts), 내 캐릭터는 같은 함수로 예측·보정(client/src/net/walkPredict.ts, 7장 보정 규칙), 다른 주민은 100ms 보간
-- 입장 때 본인에게 `me { wallet, level }`, 가방이 바뀔 때마다 `inv { items }` 메시지. 배치는 systems/islandPlacement.ts (규칙 검사 → DB 트랜잭션 db/islandStore.ts → 상태), 걸을 수 없는 장식은 서버·클라이언트 예측 모두 장애물. 끊기면 2초마다 다시 입장 (섬은 전체 상태를 새로 받으면 됨)
+- 입장 때 본인에게 `me { wallet, level }`·`skills { weapons[무기·받은 SP·쓴 SP·노드 문자열], fail? }`, 가방이 바뀔 때마다 `inv { items }` 메시지. 배치는 systems/islandPlacement.ts (규칙 검사 → DB 트랜잭션 db/islandStore.ts → 상태), 걸을 수 없는 장식은 서버·클라이언트 예측 모두 장애물. 끊기면 2초마다 다시 입장 (섬은 전체 상태를 새로 받으면 됨)
 - 개발: `pnpm island-bot --island <섬 번호>` 봇 주민이 가입·입장 신청 → 섬 주인이 게시판 주민 탭에서 허용하면 입장해 우물 앞을 걷는다 (브라우저 하나로 2인 확인). 섬 번호는 `GET /api/me`의 island.id
 - 섬 방 최대 접속 10명 (AUTH.islandResidents). 섬 주인에게만 `joinRequest { nickname }` (입장 신청 알림). 신청이 허용되면 접속 전에도 주민 목록에 넣음 (islandBus joined)
 - 개인 지갑·인벤토리는 본인 전용 메시지로 전송
@@ -164,6 +167,7 @@ IslandState
 | hit | `{ attacker, target, damage, strength, flags, hitstop, recoil, act, actT, x, y, z, t }` (recoil = 공격자 멈춤 초, act·actT = 맞힌 행동 id·진행 시간, 히트스톱 동기화) | 데미지 숫자, 섬광, 흰색 번쩍임, 히트스톱, 흔들림 |
 | projSpawn / projEnd | 위 참고 | 투사체 그리기 |
 | bolt / boltEnd | 플레이어 마법탄 `bolt { id, kind(행동 id), pid, x, y, dir, t0 }`, `boltEnd { id, reason, x, y }` | 마법탄 그리기 (MVP 보충 ST-2) |
+| echo | 변형 예약 판정 순간 `{ pid, kind: repeat·after·shatter, act(스킬 id), x, y, facing, t }` (반복·후속은 시전 자리, 해제는 몬스터 자리) | 그 사람의 skills로 정의를 찾아 로컬과 같은 연출·소리 (fx/spellCast castEcho), 그리는 시각이 t에 닿을 때 |
 | playerHit | 내가 맞음 `{ damage, strength, from }` | 피격 표정, 화면 붉은 테두리 없이 흔들림 |
 | reward | `{ coins, material, exp }` 본인에게 (몬스터 기절·보물상자) | coin 효과음, HUD 숫자 튐 |
 | comboBonus | `{ count, rate }` 본인에게 | "+5%" 표시 |

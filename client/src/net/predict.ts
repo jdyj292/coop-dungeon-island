@@ -29,7 +29,7 @@ function clone(p: PlayerState): PlayerState {
   const run = p.fighter.run;
   return {
     ...p, pos: { ...p.pos }, fighter: { ...p.fighter, run: run && { ...run } }, run: { ...p.run },
-    backstep: p.backstep && { ...p.backstep }, cooldowns: { ...p.cooldowns }, potions: { ...p.potions }, potionCd: { ...p.potionCd },
+    backstep: p.backstep && { ...p.backstep }, reinput: p.reinput && { ...p.reinput }, cooldowns: { ...p.cooldowns }, potions: { ...p.potions }, potionCd: { ...p.potionCd },
     hurt: p.hurt && { ...p.hurt, push: p.hurt.push && { ...p.hurt.push } },
   };
 }

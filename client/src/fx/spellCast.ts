@@ -4,7 +4,10 @@ import { areaCenter, type ActionDef, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
 import type { FxLayer } from './layer';
-import { magicCircle, muzzle, spark } from './spell';
+import fx from '../../data/fx.json';
+import type { FxContext } from './hitPackage';
+import { dust, ring } from './particles';
+import { boltHit, magicCircle, muzzle, spark } from './spell';
 import { fireBurst, fireTarget } from './spellFire';
 import { iceField } from './spellIce';
 
@@ -49,4 +52,30 @@ export function castActive(layer: FxLayer, weapon: WeaponDef, def: ActionDef, c:
   const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y);
   if (def.status?.type === 'freeze') layer.add(iceField(sx, sy, def.area.width ?? 32, def.area.depth ?? 16));
   else if (def.area.shape === 'circle') fireBurst(sx, sy, def.area.radius!).forEach((e) => layer.add(e));
+}
+
+/**
+ * 변형 예약 판정 순간 (반복·후속·해제, shared sim/skillExtras.ts): 새 그림 없이 기존 이펙트를 그 자리에.
+ * 해제(빙결 폭발) = 마법탄 적중 섬광, 원형 마법(연쇄) = 화염 폭발, 근접 판정(균열) = 판정 줄을 따라 먼지·충격 링·흔들림
+ */
+export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' | 'after' | 'shatter', def: ActionDef, at: Caster): void {
+  if (kind === 'shatter') {
+    const { sx, sy } = project(at.x, at.y, fx.spell.bolt.height);
+    c.layer.add(boltHit(sx, sy));
+    return;
+  }
+  if (def.area?.shape === 'circle') {
+    const p = areaCenter(at, def.area.at), { sx, sy } = project(p.x, p.y);
+    fireBurst(sx, sy, def.area.radius!).forEach((e) => c.layer.add(e));
+    return;
+  }
+  const box = def.hitbox;
+  if (!box) return;
+  for (let d = box.forward; d <= box.forward + box.width; d += 16) {
+    const { sx, sy } = project(at.x + d * at.facing, at.y);
+    dust(sx, sy, fx.dust.bounce).forEach((e) => c.layer.add(e));
+  }
+  const mid = project(at.x + (box.forward + box.width / 2) * at.facing, at.y);
+  c.layer.add(ring(mid.sx, mid.sy));
+  c.shake.start(fx.downShake.sec, fx.downShake.px);
 }

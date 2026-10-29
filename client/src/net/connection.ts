@@ -33,6 +33,8 @@ export interface PlayerSnap extends Pos {
   look: string;
   /** 무기 id (weapons.json) */
   weapon: string;
+  /** 스킬 노드 (skillTree.encodeBuild): 변형에 따라 행동 시간·판정이 다름 */
+  skills: string;
 }
 
 export interface MonsterSnap extends Pos {
@@ -62,6 +64,10 @@ export interface PrivateView {
   potionHp: number;
   potionMp: number;
   feathers: number;
+  /** 재입력 대기 (변형 reinput): 스킬 id(없으면 빈 문자열)·남은 횟수·받는 시간이 끝나는 서버 시각 */
+  reinputId?: string;
+  reinputLeft?: number;
+  reinputEnd?: number;
 }
 
 /** 서버 상태 모양 (colyseus.js가 디코드한 객체) */
@@ -90,7 +96,7 @@ const RECONNECT_EVERY_MS = 2000;
 const RECONNECT_MAX_MS = 60_000;
 
 const EVENTS: (keyof S2C)[] = [
-  'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'bolt', 'boltEnd', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter', 'result',
+  'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'bolt', 'boltEnd', 'echo', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter', 'result',
 ];
 
 /**
@@ -183,10 +189,10 @@ export class Connection {
   }
 
   /** 첫 상태까지 받은 뒤 돌려준다 (방 번호를 알아야 화면을 만든다) */
-  /** 개발 방: ?room=1~6 (기본 1) ?party=1~4 (기본 2) */
-  static devRoom(p: URLSearchParams): { room: number; partySize: number; weapon?: string } {
+  /** 개발 방: ?room=1~6 (기본 1) ?party=1~4 (기본 2) ?weapon ?skills=gs_launch:3:double (스킬 노드, skillTree.encodeBuild) */
+  static devRoom(p: URLSearchParams): { room: number; partySize: number; weapon?: string; skills?: string } {
     const room = Number(p.get('room') ?? 1), partySize = Math.min(4, Math.max(1, Number(p.get('party') ?? 2)));
-    return p.has('weapon') ? { room, partySize, weapon: p.get('weapon')! } : { room, partySize };
+    return { room, partySize, ...(p.has('weapon') ? { weapon: p.get('weapon')! } : {}), ...(p.has('skills') ? { skills: p.get('skills')! } : {}) };
   }
 
   /** 개발용 네트워크 흉내 초기값: ?lag=왕복ms&jitter=±ms&loss=% (` 키 패널에서 조정) */
@@ -235,6 +241,11 @@ export class Connection {
     return this.live.players?.get(this.myId)?.priv;
   }
 
+  /** 내 스킬 노드 (서버가 정한 값) */
+  get mySkills(): string {
+    return this.live.players?.get(this.myId)?.skills ?? '';
+  }
+
   /** 다음 seq 번호 */
   nextSeq(): number {
     return ++this.seq;
@@ -263,7 +274,7 @@ export class Connection {
     const players = new Map<string, PlayerSnap>();
     s.players.forEach((p, id) => players.set(id, {
       id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, dodgeDir: p.dodgeDir ?? 0, dodgeDy: p.dodgeDy ?? 0, dodgeStart: p.dodgeStart ?? 0, state: p.state, since: since(prevP?.get(id), p.state),
-      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0, look: p.look ?? '', weapon: p.weapon || 'greatsword',
+      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0, look: p.look ?? '', weapon: p.weapon || 'greatsword', skills: p.skills ?? '',
     }));
     const monsters = new Map<string, MonsterSnap>();
     s.monsters.forEach((m, id) => monsters.set(id, {

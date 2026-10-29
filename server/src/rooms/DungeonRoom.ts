@@ -69,11 +69,11 @@ export class DungeonRoom extends Room<DungeonState> {
     return m;
   }
 
-  onJoin(client: Client, options: { name?: unknown; weapon?: unknown }, auth?: PartyMember | true): void {
+  onJoin(client: Client, options: { name?: unknown; weapon?: unknown; skills?: unknown }, auth?: PartyMember | true): void {
     const m = auth === true ? undefined : auth;
     if (m) this.who.set(client.sessionId, m);
-    // 무기 옵션은 개발 방만 (섬 파티는 파티 정보로)
-    this.game.join(client.sessionId, options?.name, m, m ? undefined : options?.weapon);
+    // 무기·스킬 옵션은 개발 방만 (섬 파티는 파티 정보로)
+    this.game.join(client.sessionId, options?.name, m, m ? undefined : options?.weapon, m ? undefined : options?.skills);
   }
 
   /** 스스로 나가면 바로 이탈, 끊기면 재접속 대기 (파티 30초·솔로 60초·전원 60초, network.md 10장) */

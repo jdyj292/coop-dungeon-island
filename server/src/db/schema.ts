@@ -117,3 +117,11 @@ export const weaponMastery = sqliteTable('weapon_mastery', {
   exp: integer('exp').notNull().default(0),
   sp: integer('sp').notNull().default(0),
 }, (t) => [primaryKey({ columns: [t.userId, t.weapon] })]);
+
+/** 스킬 노드 (skills.md 1장): 찍은 포인트·고른 변형. 행이 없으면 기본 1포인트. 무기는 노드 id(스킬 id)로 정해진다 */
+export const skillNodes = sqliteTable('skill_nodes', {
+  userId: integer('user_id').notNull().references(() => users.id),
+  nodeId: text('node_id').notNull(),
+  points: integer('points').notNull(),
+  variant: text('variant'),
+}, (t) => [primaryKey({ columns: [t.userId, t.nodeId] })]);

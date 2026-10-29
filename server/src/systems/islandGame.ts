@@ -35,7 +35,7 @@ const islandRules = (): Record<string, readonly [number, number]> => {
   const l = NET.limits;
   const island = [1000, l.island] as const;
   return {
-    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], emote: island, look: island, weapon: island,
+    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], emote: island, look: island, weapon: island, skill: island,
     place: island, move: island, moveFacility: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island, well: island,
   };
 };
@@ -95,6 +95,7 @@ export class IslandGame {
     Object.assign(r, { online: true, status: 'island', x: Math.round(pos.x), y: Math.round(pos.y), facing: 1, state: 'idle', lastInputSeq: 0, wellAt: back ? Math.max(1, this.now) : 0 });
     this.placement?.sendInventory(id);
     this.shop?.sendMe(id);
+    this.shop?.sendSkills(id);
   }
 
   /** 섬을 나감 (끊김·던전 출발). 던전에 간 사람은 "탐험 중" 그대로 */

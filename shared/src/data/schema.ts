@@ -198,6 +198,8 @@ export const combat = z.object({
   _note: z.string().optional(),
   baseAtk: pos, atkPerLevel: sec, gravity: pos, launchVz: pos, airHitVz: sec, airGravityMul: pos, maxAirHits: z.number().int().positive(),
   bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec, wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
+  /** 스킬 포인트 (skills.md 1장, balance.md 1장): 노드 최대 포인트, 변형을 고르는 포인트, 포인트별 레벨 배율, 재입력 받는 시간 (스킬이 끝난 뒤) */
+  skillTree: z.object({ maxPoints: z.number().int().positive(), variantAt: z.number().int().positive(), levelMul: z.array(pos).min(1), reinputWindow: pos }).strict(),
   stun: z.object({ light: stun, medium: stun, heavy: stun }).strict(),
   weightMul: z.object({ light: sec, medium: sec, heavy: sec, fixed: sec, boss: sec }).strict(),
   grades: z.object(Object.fromEntries(GRADES.map((g) => [g, z.object({ hitstop: sec, shake: sec }).strict()])) as
@@ -249,6 +251,7 @@ export type Area = z.infer<typeof area>;
 export type Zone = z.infer<typeof zone>;
 export type ActionMove = z.infer<typeof move>;
 export type Skill = z.infer<typeof skill>;
+export type VariantExtra = z.infer<typeof variantExtra>;
 export type MonsterAttack = z.infer<typeof monsterAttack>;
 export type Weapon = z.infer<typeof weapon>;
 export type MonsterDef = z.infer<typeof monster>;

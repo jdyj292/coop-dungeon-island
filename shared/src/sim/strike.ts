@@ -4,7 +4,7 @@ import type { ActionDef, ActionRun } from '../actions';
 import { applyHit, canBeHit } from '../body';
 import { PLAYER } from '../data/load';
 import { damageOf } from '../hit';
-import { freezeMonster, type Monster } from '../monster/state';
+import { freezeMonster, slowMonster, type Monster } from '../monster/state';
 import type { PlayerState } from '../player';
 import { gainMpOnHit, gainUlt } from '../playerHurt';
 import { actionHits } from '../shapes';
@@ -30,6 +30,7 @@ export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: numb
   m.hp = Math.max(0, m.hp - damage);
   if (m.hp === 0) m.body.ko = true;
   if (def.status?.type === 'freeze' && !m.body.ko) freezeMonster(m, def.status.time);
+  if (def.status?.type === 'slow' && !m.body.ko) slowMonster(m, def.status.time, def.status.amount ?? 0);
   gainMpOnHit(p);
   gainUlt(p, PLAYER.ultimate.onHit);
   return { m, damage, ko };

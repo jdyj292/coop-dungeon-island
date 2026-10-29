@@ -106,6 +106,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | note | 예산 규칙(balance.md 3장)을 벗어난 이유 |
 
 - 변형의 특수 필드: reinput(재입력 횟수), repeat(`{count, interval}` 반복), after(`{delay, coef}` 후속 판정), onStatusEnd(상태이상 해제 시 판정)
+- 적용은 shared/src/skillTree.ts resolveSkill (덮어쓰기 + 특수 필드 + 계수에 레벨 배율), 특수 판정은 shared/src/sim/skillExtras.ts: 반복·후속 = 시전한 자리·방향에 같은 판정을 예약(반복은 count번 중 첫 판정 뒤 나머지), 해제 = 그 행동이 건 빙결이 풀릴 때 그 몬스터에 한 번(빙결·띄우기 없이), 재입력 = 같은 스킬을 쿨타임·MP 없이 (스킬 recovery 또는 끝난 뒤 combat.json skillTree.reinputWindow 안). status slow = 몬스터 걷는 속도 × (1 − amount)
 - 현재 파일: MVP 범위(대검·스태프 공용 기본 스킬). 나머지는 skills.md 표를 이 형식으로 옮겨 추가
 
 ---
@@ -208,6 +209,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | pushRate | 밀림이 남은 거리를 줄이는 속도 (초당 비율, 클수록 짧고 세게 밀림) |
 | turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 (무기 basicTurn false면 없음) |
 | cooldownScale | 전역 쿨타임 배율 (balance.md 2장). 실제 쿨 = 기준 쿨 × 이 값 |
+| skillTree | 스킬 포인트 (skills.md 1장): maxPoints(노드 최대), variantAt(변형을 고르는 포인트), levelMul(포인트별 레벨 배율, balance.md 1장), reinputWindow(변형 재입력을 받는 시간, 스킬이 끝난 뒤 초) |
 | stunExitSec | 기절(체력 0) 뒤 퇴장까지 시간 |
 | stun.{light,medium,heavy} | `{ time, push }` 경직 시간·밀림 거리 |
 | weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |

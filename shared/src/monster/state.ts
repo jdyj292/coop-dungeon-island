@@ -4,6 +4,7 @@ import type { Bounds } from '../movement';
 import { newBody, stepBody, type Body, type BodyEvent } from '../body';
 import { MONSTERS } from '../data/load';
 import type { MonsterAttack, MonsterDef } from '../data/schema';
+import type { ActionDef } from '../actions';
 
 /** idle = 대기·추적·맴돌기, attack = 공격 중, selfStun = 벽 충돌 어지러움, groggy = 보스 그로기 */
 export type AiMode = 'idle' | 'attack' | 'selfStun' | 'groggy';
@@ -48,6 +49,10 @@ export interface Monster {
   groggyExtended?: number;
   /** 빙결 남은 시간 (combat.md 3장): 움직이지도 공격하지도 않음, 맞으면 피해·경직은 그대로, 띄워지거나 다운되면 풀림 */
   frozen: number;
+  /** 빙결을 건 사람과 행동 (변형 onStatusEnd: 풀릴 때 판정, sim/skillExtras.ts) */
+  frozenBy?: { pid: string; def: ActionDef };
+  /** 감속 (status slow, 변형 동토): 남은 시간·줄이는 비율. 걷는 속도만 줄어든다 */
+  slow: { left: number; amount: number };
   /** 잠든 채 남은 시간 (첫 방 rooms.json wakeSec, dungeon.md 5장): 움직이지도 공격하지도 않음, 맞으면 바로 깨어남. 줄이는 건 RoomSim (누군가 착지한 뒤부터) */
   sleep: number;
 }
@@ -57,12 +62,17 @@ export function freezeMonster(m: Monster, sec: number): void {
   m.frozen = Math.max(m.frozen, sec);
 }
 
+/** 감속. 더 센 쪽으로, 시간은 더 긴 쪽으로 */
+export function slowMonster(m: Monster, sec: number, amount: number): void {
+  m.slow = { left: Math.max(m.slow.left, sec), amount: Math.max(m.slow.left > 0 ? m.slow.amount : 0, amount) };
+}
+
 /** hpMul = 인원 체력 보정 (combat.json partyHpMul) */
 export function newMonster(id: number, kind: string, x: number, y: number, hpMul = 1): Monster {
   const def = MONSTERS[kind];
   if (!def) throw new Error(`몬스터 '${kind}' 없음`);
   return {
-    id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0, frozen: 0, sleep: 0,
+    id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0, frozen: 0, slow: { left: 0, amount: 0 }, sleep: 0,
     attack: null, hasToken: false, cooldowns: {}, aware: false, moving: false, hopT: 0, loop: { phase: 0, index: 0 },
   };
 }
@@ -94,6 +104,7 @@ export const monsterHalf = (m: Monster): Half => ({ x: m.def.hurtbox.width / 2, 
 /** 몸 물리 한 틱 (넉백·띄우기). 넉백으로 장애물에 들어가면 그 틱의 좌우 이동은 취소. 빙결 시간도 여기서 흐름 (AI를 끈 도구에서도) */
 export function stepBodyIn(m: Monster, dt: number, bounds: Bounds): BodyEvent[] {
   m.frozen = Math.max(0, m.frozen - dt);
+  m.slow.left = Math.max(0, m.slow.left - dt);
   const bd = monsterBounds(m, bounds), x0 = m.body.x;
   const ev = stepBody(m.body, dt, bd.minX, bd.maxX);
   if (hitsBlock(m.body, monsterHalf(m), bounds)) m.body.x = x0;

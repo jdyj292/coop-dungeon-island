@@ -1,7 +1,7 @@
 // 메시지 → 틱 입력 (docs/network.md 4·7장). 이동은 마지막 값 유지, 누름(행동·물약)은 다음 틱에 한 번
 // 받을 때 검사해서 안 되는 행동은 거절 사유를 돌려준다 (클라이언트는 예측을 취소)
 // 회피는 히트스톱으로 서버 캐릭터가 아직 후딜레이 전이면 보관했다가 후딜레이에 들어가는 틱에 실행 (network.md 4장)
-import { canDodge, NET, PLAYER, skillDef, skillReady, type ActionDef, type C2SMessage, type PlayerInput, type PlayerState, type PotionKind, type S2C, type WeaponDef } from '@game/shared';
+import { buildSkill, canDodge, canReinput, NET, PLAYER, skillReady, type ActionDef, type C2SMessage, type PlayerInput, type PlayerState, type PotionKind, type S2C, type SkillBuild, type WeaponDef } from '@game/shared';
 
 type Reason = S2C['rejected']['reason'];
 
@@ -22,8 +22,8 @@ export class InputQueue {
     this.seq = m.seq;
   }
 
-  /** 행동: 되면 null, 안 되면 거절 사유 */
-  onAction(m: C2SMessage<'action'>, p: PlayerState, weapon: WeaponDef): Reason | null {
+  /** 행동: 되면 null, 안 되면 거절 사유. skills = 서버가 정한 스킬 노드 (변형·레벨 배율) */
+  onAction(m: C2SMessage<'action'>, p: PlayerState, weapon: WeaponDef, skills: SkillBuild = {}): Reason | null {
     this.seq = Math.max(this.seq, m.seq);
     if (p.downed || p.hurt) return 'state';
     switch (m.kind) {
@@ -33,10 +33,11 @@ export class InputQueue {
         this.attack = true;
         return null;
       case 'skill': {
-        if (!m.skillId || !weapon.baseSkills.includes(m.skillId)) return 'state';
-        const def = skillDef(m.skillId);
-        if ((p.cooldowns[def.id] ?? 0) > 0) return 'cooldown';
-        if (!skillReady(p, def)) return 'mp';
+        const def = m.skillId ? buildSkill(weapon, skills, m.skillId) : undefined;
+        if (!def) return 'state';
+        // 재입력(변형 reinput)은 쿨타임·MP 없이
+        if (!canReinput(p, def) && (p.cooldowns[def.id] ?? 0) > 0) return 'cooldown';
+        if (!canReinput(p, def) && !skillReady(p, def)) return 'mp';
         this.skill = def;
         return null;
       }

@@ -1,14 +1,14 @@
 // 행동 진행: windup → active → recovery, 평타 연타·선입력·캔슬 (docs/combat.md 1·2장, 형식 docs/data.md 1·2장)
 import { COMBAT, SKILLS, WEAPONS } from './data/load';
-import type { ActionMove, PlayerAction, Skill, Weapon } from './data/schema';
+import type { ActionMove, PlayerAction, Skill, VariantExtra, Weapon } from './data/schema';
 
 export type Phase = 'windup' | 'active' | 'recovery';
 export type Strength = 'light' | 'medium' | 'heavy';
 export type FxGrade = 'light' | 'medium' | 'heavy' | 'ultimate';
 
 
-/** 플레이어 행동 (평타·대시·스킬). 스킬이면 mp가 있음. 형식은 data/schema.ts */
-export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp'>>;
+/** 플레이어 행동 (평타·대시·스킬). 스킬이면 mp가 있고, 변형을 적용한 스킬이면 변형 특수 필드(재입력·후속·반복·해제 판정)가 있음. 형식은 data/schema.ts */
+export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp'>> & Partial<Omit<VariantExtra, 'name'>>;
 export type WeaponDef = Weapon;
 
 export function weaponDef(id: string): WeaponDef {
@@ -61,6 +61,8 @@ export interface FighterInput {
   skill?: ActionDef | null;
   /** 달리는 중: 평타 대신 대시 공격 */
   dashing?: boolean;
+  /** 재입력 (변형 reinput): 스킬 recovery에서도 스킬을 받는다 */
+  chain?: boolean;
 }
 
 export type FighterEvent =
@@ -79,8 +81,8 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
   };
   const phase = f.run && phaseAt(f.run.def, f.run.t);
 
-  // 캔슬: 평타·대시 recovery → 스킬만 가능, 스킬 → 스킬 불가 (combat.md 2장)
-  if (input.skill && (!f.run || (f.run.kind !== 'skill' && phase === 'recovery'))) {
+  // 캔슬: 평타·대시 recovery → 스킬만 가능, 스킬 → 스킬 불가 (combat.md 2장). 재입력은 스킬 recovery에서도
+  if (input.skill && (!f.run || (phase === 'recovery' && (f.run.kind !== 'skill' || input.chain)))) {
     start(input.skill, 'skill', 0);
   } else if (input.attack) {
     if (!f.run && input.dashing) start(weapon.dash, 'dash', 0);

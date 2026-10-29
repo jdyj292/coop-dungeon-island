@@ -1,6 +1,6 @@
 // 섬 잡화점·게시판·채팅 (docs/island.md 5·8장, hud.md 4장): 구매(트랜잭션) → 지갑(me)·가방(inv)·금고(상태)·공용 창고(상태)
 // 게시판은 열 때 요청 → 기록·메모를 그 사람에게. 채팅·이모트는 섬에 있는 주민 모두에게 (저장 안 함). 외형은 저장 + 주민 상태
-import { parseC2S } from '@game/shared';
+import { parseC2S, type S2C } from '@game/shared';
 import { ShopStore } from '../db/shopStore';
 import type { IslandState } from '../schema/IslandState';
 
@@ -24,6 +24,11 @@ export class IslandShop {
   /** 본인 값 (입장·지갑이 바뀔 때) */
   sendMe(userId: string): void {
     this.out.send(userId, 'me', { wallet: this.store.wallet(Number(userId)), level: this.store.level(Number(userId)) });
+  }
+
+  /** 내 스킬 (입장·바꿀 때). fail = 방금 요청이 안 된 사유 */
+  sendSkills(userId: string, fail?: S2C['skills']['fail']): void {
+    this.out.send(userId, 'skills', { weapons: this.store.skills(Number(userId)), ...(fail ? { fail } : {}) });
   }
 
   /** 처리했으면 true */
@@ -74,6 +79,20 @@ export class IslandShop {
           this.store.setWeapon(uid, m.id);
           r.weapon = m.id;
           this.sendMe(userId);
+        }
+        return true;
+      }
+      case 'skill': {
+        // 출발 카운트다운 중인 대기자는 못 바꿈 (파티 정보가 이미 정해짐). 던전에서는 섬 방에 없으니 저절로 못 바꿈
+        const m = parseC2S('skill', raw), w = this.state.well;
+        if (!m) return true;
+        if (w.departAt && w.members.includes(userId)) this.sendSkills(userId, 'busy');
+        else if (m.op === 'reset') {
+          this.store.resetSkills(uid, m.weapon);
+          this.sendSkills(userId);
+        } else {
+          const node = { points: m.points ?? 1, ...(m.variant ? { variant: m.variant } : {}) };
+          this.sendSkills(userId, this.store.setSkill(uid, m.weapon, m.skillId ?? '', node) ?? undefined);
         }
         return true;
       }

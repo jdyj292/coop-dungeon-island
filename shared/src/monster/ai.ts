@@ -69,9 +69,9 @@ function moveToward(m: Monster, goal: { x: number; y: number }, dt: number, ctx:
       return;
     }
   }
-  const b = m.body, bd = monsterBounds(m, ctx.bounds);
+  const b = m.body, bd = monsterBounds(m, ctx.bounds), mul = m.slow.left > 0 ? 1 - m.slow.amount : 1;
   const step = (cur: number, to: number, v: number) => (Math.abs(to - cur) <= 1 ? cur : cur + Math.sign(to - cur) * Math.min(Math.abs(to - cur), v * dt));
-  const n = moveBox(b, { x: step(b.x, goal.x, sp.x), y: step(b.y, goal.y, sp.y) }, monsterHalf(m), bd);
+  const n = moveBox(b, { x: step(b.x, goal.x, sp.x * mul), y: step(b.y, goal.y, sp.y * mul) }, monsterHalf(m), bd);
   m.moving = n.x !== b.x || n.y !== b.y || sp.style === 'hop';
   b.x = n.x;
   b.y = n.y;
