@@ -122,6 +122,7 @@ MonsterState
   actionId, actionStart     예고·공격 표시를 클라이언트가 데이터로 그린다
   hpRatio                   체력 비율 (0~1, uint8로 양자화)
   superArmor
+  slowed                    감속 중 (변형 동토, 발밑 눈송이 표시용)
 
 ZoneState
   id, attackId, x, y, endsAt (사라지는 서버 시각 ms)

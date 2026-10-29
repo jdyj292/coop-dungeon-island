@@ -24,6 +24,8 @@ export const controls = {
   mode: 'all' as ScriptMode,
   /** 무기 (바꾸면 무대를 새로 만든다) */
   weapon: 'greatsword',
+  /** 스킬 노드 코드 (변형 미리보기) */
+  skills: '',
   restart: false,
   rebuild: false,
   onInfo: (_text: string) => {},
@@ -44,11 +46,13 @@ export class MotionScene extends Phaser.Scene {
     this.add.image(-8, 0, 'motion-bg').setOrigin(0, 0).setDepth(-1000);
     this.stage = new CombatStage(this, { minX: 8, maxX: VIEW_W - 8, minY: 0, maxY: DEPTH_TILES * 16 }, PLAYER, spawnsFor(controls.weapon), { ai: false }, weaponDef(controls.weapon));
     this.script = new Script(controls.mode);
+    this.script.build = controls.skills;
   }
 
   private restart(): void {
     this.stage.reset(PLAYER, spawnsFor(controls.weapon));
     this.script.mode = controls.mode;
+    this.script.build = controls.skills;
     this.script.restart();
     this.clock = 0;
   }

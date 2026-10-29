@@ -86,6 +86,21 @@ export class HazardLayer {
       }
     }
 
+    // 감속(동토): 발밑 눈송이, 하나씩 차례로 반짝임 (몸에 가리지 않게 위 층)
+    const flakes = fx.spell.slowed.flakes as [number, number][];
+    const lit = Math.floor(performance.now() / 1000 / fx.spell.slowed.twinkleSec);
+    for (const m of sim.alive) {
+      if (!(m.slow.left > 0) || m.frozen > 0) continue;
+      const { sx, sy } = project(m.body.x, m.body.y);
+      flakes.forEach(([dx, dy], i) => {
+        const on = (lit + i * 2) % (flakes.length * 2) === 0;
+        dot(a, sx + dx, sy + dy, on ? glint : ice);
+        dot(a, sx + dx - 1, sy + dy, ice, 1, 1, on ? 1 : 0.5);
+        dot(a, sx + dx + 1, sy + dy, ice, 1, 1, on ? 1 : 0.5);
+        if (on) { dot(a, sx + dx, sy + dy - 1, ice); dot(a, sx + dx, sy + dy + 1, ice); }
+      });
+    }
+
     // 투사체: 공중에 뜬 구슬 (그림자 없이 높이만)
     for (const p of sim.projectiles) {
       const style = hz.projectile[p.def.id];

@@ -49,6 +49,8 @@ export interface MonsterSnap extends Pos {
   aimY: number;
   hpRatio: number;
   superArmor: boolean;
+  /** 감속 중 (변형 동토) */
+  slowed?: boolean;
 }
 
 /** 본인 전용 값 (보간 없이 최신) */
@@ -279,7 +281,7 @@ export class Connection {
     const monsters = new Map<string, MonsterSnap>();
     s.monsters.forEach((m, id) => monsters.set(id, {
       id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, state: m.state, since: since(prevM?.get(id), m.state),
-      actionId: m.actionId, actionStart: m.actionStart, aimY: m.aimY, hpRatio: m.hpRatio, superArmor: m.superArmor,
+      actionId: m.actionId, actionStart: m.actionStart, aimY: m.aimY, hpRatio: m.hpRatio, superArmor: m.superArmor, slowed: !!m.slowed,
     }));
     // 상태 객체는 계속 바뀌므로 값은 지금 복사하고, 버퍼에 넣는 것만 지연
     const roomIndex = s.roomIndex ?? 0;

@@ -34,8 +34,10 @@
     "thrust": { "actions": ["gs_dash"], "y": -6, "x0": -2, "x1": 19, "dust": 4 },
     "ground": {
       "_note": "땅을 내려치는 행동: 발 앞 forward부터 length만큼 spreadSec 동안 균열이 앞으로 번지고(끝 금색 반짝임), sec 동안 남았다 바둑판으로 사라짐. ringAt 자리에 충격 링 + 먼지 dust개",
-      "actions": ["gs_earthsplit"], "forward": 4, "length": 48, "sec": 0.5, "spreadSec": 0.12, "fadeLast": 0.4, "branchEvery": 7, "ringAt": 14, "dust": 6
-    }
+      "actions": ["gs_earthsplit"], "forward": 4, "length": 48, "sec": 0.5, "spreadSec": 0.12, "fadeLast": 0.4, "branchEvery": 7, "ringAt": 14, "dust": 6,
+      "fan": { "_note": "판정이 부채꼴(area fan)이면 균열 lines줄을 판정 각도로 펼침, 길이 = 판정 반지름. 줄 끝마다 먼지 tipDust개", "lines": 5, "tipDust": 2 }
+    },
+    "wind": { "_note": "판정이 뒤쪽까지(hitbox back)인 베기: 등 뒤로 거울 스미어(grade) + 뒤쪽 back 거리에 바람 먼지 dust개", "grade": "medium", "dust": 4 }
   },
   "afterimage": { "every": 0.04, "sec": 0.18, "alpha": 0.35 },
   "backstepHop": 3,
@@ -63,7 +65,9 @@
     "target": { "dash": 3, "spin": 8, "lockAt": 0.85 },
     "burst": { "sec": 0.38, "flashSec": 0.05, "sparks": 6, "embers": 5, "emberRise": 18 },
     "iceField": { "sec": 0.6, "fadeLast": 0.25, "spreadSec": 0.1, "glintSec": 0.07, "crystalGap": 9 },
+    "slowField": { "_note": "동토(감속) 장판: 점선 테두리·옅은 서리점·천천히 내려앉는 눈송이(fall px), 얼음 장판보다 오래 남음", "sec": 1.2, "fadeLast": 0.4, "spreadSec": 0.15, "flakeGap": 12, "fall": 3, "twinkleSec": 0.2 },
     "frozen": { "shards": [[-4, -14], [1, -16], [5, -13]] },
+    "slowed": { "_note": "감속 중 몬스터 발밑 눈송이 (차례로 반짝임)", "flakes": [[-8, -1], [0, 2], [8, -1]], "twinkleSec": 0.2 },
     "teleport": { "sec": 0.26, "count": 6, "spread": 7, "column": 14, "columnSec": 0.1, "visibleStart": 0.15, "visibleEnd": 0.8 }
   },
   "_wellHop": "우물 입장·복귀 연출 (art.md 0장, motion.md 6장). 뛰어들기: jumpSec 동안 앞 sinkAt 비율은 포물선(최고 jumpPeak)으로 구멍(시설 발밑에서 holeUp px 위) 위까지, 나머지는 sinkPx만큼 가라앉으며 사라짐 → fadeSec 동안 어두워짐. 튀어나오기: popSec 동안 반대로, 들어온 지 popWindowSec 안에 처음 보일 때만. 던전 첫 방: dropFrom px 위에서 shared combat.json arriveSec 동안 떨어지고(서버 판정) landSec 웅크림",

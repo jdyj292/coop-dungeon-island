@@ -1,6 +1,6 @@
 // 행동 active 진입 때의 무기 스미어 (motion.md 2장): 찌르기 행동은 직선 스미어 + 출발 먼지, 나머지는 포즈 모양의 초승달.
-// 땅을 내려치는 행동은 균열·충격 링·먼지를 더한다 (groundImpact)
-import { type ActionDef } from '@game/shared';
+// 땅을 내려치는 행동은 균열·충격 링·먼지를 더한다 (groundImpact, 부채꼴 판정이면 부채꼴 균열). 뒤쪽까지 베는 판정은 등 뒤 스미어
+import { type ActionDef, type FxGrade } from '@game/shared';
 import fx from '../../data/fx.json';
 import { groundImpact, isGroundImpact } from './groundImpact';
 import type { FxLayer } from './layer';
@@ -17,7 +17,16 @@ export function actionSmear(layer: FxLayer, def: ActionDef, foot: () => { sx: nu
     dust(sx, sy, fx.smear.thrust.dust).forEach((e) => layer.add(e));
     return;
   }
-  if (isGroundImpact(def.id)) groundImpact(sx, sy, facing).forEach((e) => layer.add(e));
+  if (isGroundImpact(def.id)) {
+    const a = def.area, fan = a?.shape === 'fan' && a.radius && a.angle ? { radius: a.radius, angle: a.angle } : undefined;
+    groundImpact(sx, sy, facing, fan).forEach((e) => layer.add(e));
+  }
   const shape = smearShape(def.poses?.active ?? '');
   if (shape) layer.add(smear(sx, sy, facing, shape, grade));
+  // 뒤쪽까지 베는 판정(변형 검풍): 등 뒤로 거울 스미어 + 뒤쪽 끝에 바람 먼지
+  const back = def.hitbox?.back;
+  if (shape && back) {
+    layer.add(smear(sx, sy, -facing, shape, fx.smear.wind.grade as FxGrade));
+    dust(sx - back * facing, sy, fx.smear.wind.dust).forEach((e) => layer.add(e));
+  }
 }

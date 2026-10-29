@@ -79,6 +79,8 @@ export class MonsterState extends Schema {
   /** 체력 비율 0~255 */
   @type('uint8') hpRatio = 255;
   @type('boolean') superArmor = false;
+  /** 감속 중 (변형 동토, 발밑 눈송이 표시용) */
+  @type('boolean') slowed = false;
 }
 
 export class ZoneState extends Schema {

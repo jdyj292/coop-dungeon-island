@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fx from '../../data/fx.json';
-import { crackPixels } from './groundImpact';
+import { crackPixels, fanLines } from './groundImpact';
 import { smearPixels, smearShape } from './smear';
 
 describe('대검 이펙트 모양', () => {
@@ -17,5 +17,12 @@ describe('대검 이펙트 모양', () => {
     expect(Math.min(...px.map((p) => p.dx))).toBe(g.forward);
     expect(Math.max(...px.filter((p) => p.tone === 0 && Math.abs(p.dy) <= 1).map((p) => p.dx))).toBeGreaterThanOrEqual(g.forward + g.length);
     expect(px.every((p) => Math.abs(p.dy) <= 4)).toBe(true);
+  });
+  it('부채꼴 균열은 판정 각도 안에 대칭으로, 길이는 반지름까지', () => {
+    const lines = fanLines({ radius: 40, angle: 70 }), half = (35 * Math.PI) / 180;
+    expect(lines).toHaveLength(fx.smear.ground.fan.lines);
+    expect(lines[0]!.rot).toBeCloseTo(-half);
+    expect(lines.at(-1)!.rot).toBeCloseTo(half);
+    expect(lines.every((l) => l.length === 40 - fx.smear.ground.forward)).toBe(true);
   });
 });

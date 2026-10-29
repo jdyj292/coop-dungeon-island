@@ -1,5 +1,5 @@
 // 행동 → 마법 연출 연결 (MVP 보충 ST-2a). 무엇을 그릴지는 데이터로 고른다:
-// 포즈 fx(poses.json: ready = spark, bolt = bolt, area·plant = circle) + 행동 판정(area 원 = 화염 폭발, status freeze = 얼음 장판)
+// 포즈 fx(poses.json: ready = spark, bolt = bolt, area·plant = circle) + 행동 판정(area 원 = 화염 폭발, status freeze = 얼음 장판, slow = 동토 장판)
 import { areaCenter, type ActionDef, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
@@ -9,7 +9,7 @@ import type { FxContext } from './hitPackage';
 import { dust, ring } from './particles';
 import { boltHit, magicCircle, muzzle, spark } from './spell';
 import { fireBurst, fireTarget } from './spellFire';
-import { iceField } from './spellIce';
+import { iceField, slowField } from './spellIce';
 
 /** 시전자 (논리 좌표) */
 export interface Caster {
@@ -51,6 +51,7 @@ export function castActive(layer: FxLayer, weapon: WeaponDef, def: ActionDef, c:
   if (!def.area || !isSpell(weapon, def, c)) return;
   const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y);
   if (def.status?.type === 'freeze') layer.add(iceField(sx, sy, def.area.width ?? 32, def.area.depth ?? 16));
+  else if (def.status?.type === 'slow') layer.add(slowField(sx, sy, def.area.width ?? 32, def.area.depth ?? 16));
   else if (def.area.shape === 'circle') fireBurst(sx, sy, def.area.radius!).forEach((e) => layer.add(e));
 }
 
