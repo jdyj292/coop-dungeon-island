@@ -1,6 +1,7 @@
 // 인증 HTTP API (docs/security.md, network.md 3장). 요청은 zod로 검사, 세션은 httpOnly 쿠키
-// POST /api/signup·login·logout·recover·password·island/invite, GET /api/me
-import { AUTH, loginReq, passwordReq, recoverReq, signupReq, type AuthError } from '@game/shared';
+// POST /api/signup·login·logout·recover·password, GET /api/me
+// 섬 고르기 (island.md 7장): GET /api/islands, POST /api/island/create·request·request/cancel, 섬 주인: GET /api/island/requests, POST /api/island/decide
+import { AUTH, decideReq, joinReq, loginReq, passwordReq, recoverReq, signupReq, type AuthError } from '@game/shared';
 import cookieParser from 'cookie-parser';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import type { z } from 'zod';
@@ -9,7 +10,8 @@ import type { Accounts } from './accounts';
 export const SESSION_COOKIE = 'sid';
 
 const STATUS: Record<AuthError, number> = {
-  invalid: 400, badLogin: 401, unauthorized: 401, locked: 423, suspended: 403, rateLimited: 429, nicknameTaken: 409, badInvite: 400, islandFull: 409,
+  invalid: 400, badLogin: 401, unauthorized: 401, locked: 423, suspended: 403, rateLimited: 429, nicknameTaken: 409, islandFull: 409,
+  noIsland: 409, hasIsland: 409, notOwner: 403, noRequest: 409,
 };
 
 export interface HttpOptions {
@@ -97,10 +99,43 @@ export function authRouter(accounts: Accounts, opts: HttpOptions = {}): express.
     res.json({ me });
   });
 
-  r.post('/island/invite', authed, (_req, res) => {
-    const out = accounts.reissueInvite(res.locals.userId as number, now());
+  const me = (res: Response) => res.json({ me: accounts.me(res.locals.userId as number) });
+
+  r.get('/islands', authed, (_req, res) => {
+    res.json({ islands: accounts.islands.list() });
+  });
+
+  r.post('/island/create', authed, (_req, res) => {
+    const out = accounts.islands.create(res.locals.userId as number, now());
     if (!out.ok) return void err(res, out.error);
-    res.json({ inviteCode: out.value });
+    me(res);
+  });
+
+  r.post('/island/request', authed, (req, res) => {
+    const body = parse(joinReq, req, res);
+    if (!body) return;
+    const out = accounts.islands.request(res.locals.userId as number, body.islandId, now());
+    if (!out.ok) return void err(res, out.error);
+    me(res);
+  });
+
+  r.post('/island/request/cancel', authed, (_req, res) => {
+    accounts.islands.cancel(res.locals.userId as number);
+    me(res);
+  });
+
+  r.get('/island/requests', authed, (_req, res) => {
+    const out = accounts.islands.pending(res.locals.userId as number);
+    if (!out.ok) return void err(res, out.error);
+    res.json({ requests: out.value });
+  });
+
+  r.post('/island/decide', authed, (req, res) => {
+    const body = parse(decideReq, req, res);
+    if (!body) return;
+    const out = accounts.islands.decide(res.locals.userId as number, body.userId, body.accept, now());
+    if (!out.ok) return void err(res, out.error);
+    res.json({ ok: true });
   });
 
   // 잘못된 JSON 등 → 400, 그 밖의 오류는 내용을 숨기고 500 (로그에 비밀 값 없음)

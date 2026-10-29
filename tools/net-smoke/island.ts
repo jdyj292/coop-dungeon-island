@@ -1,5 +1,6 @@
-// 실행: 서버를 띄운 뒤 pnpm island-bot --invite <초대 코드> [--sec 30] [--name 봇이름] [--well [--depart]] [--url http://localhost:8080]
-// 봇 주민 하나가 가입(초대 코드로 그 섬에 합류)·입장해 우물 앞을 왔다 갔다 한다. 브라우저 한 개로 2인 섬 화면을 볼 때 (roadmap 4-5)
+// 실행: 서버를 띄운 뒤 pnpm island-bot --island <섬 번호> [--sec 30] [--name 봇이름] [--well [--depart]] [--url http://localhost:8080]
+// 봇 주민 하나가 가입·그 섬에 입장 신청 → 섬 주인이 게시판 주민 탭에서 허용하면 입장해 우물 앞을 왔다 갔다 한다 (island.md 7장).
+// --island가 없으면 봇 자기 섬을 만든다. 브라우저 한 개로 2인 섬 화면을 볼 때 (roadmap 4-5)
 // --well: 우물 앞으로 걸어가 출발 대기에 합류 → 출발하면 던전 방에 들어가 --sec 동안 서 있다가 나감 (2인 출발 확인, roadmap 4-8)
 // 이미 가입한 봇 이름이면 같은 비밀번호로 로그인. 세션 쿠키를 WebSocket 입장에 실어야 해서 ws로 연결한다
 import { parseArgs } from 'node:util';
@@ -8,7 +9,7 @@ import { ISLAND, nearFacility, TILE } from '../../shared/src';
 
 const { values } = parseArgs({
   options: {
-    url: { type: 'string', default: 'http://localhost:2567' }, invite: { type: 'string' },
+    url: { type: 'string', default: 'http://localhost:2567' }, island: { type: 'string' },
     sec: { type: 'string', default: '30' }, name: { type: 'string', default: '봇주민' }, well: { type: 'boolean', default: false }, depart: { type: 'boolean', default: false },
   },
 });
@@ -16,18 +17,29 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** 개발 서버 전용 봇 비밀번호 (실제 계정에 쓰지 않음) */
 const BOT_PASSWORD = 'island-bot-pass';
 
+interface Me { id: number; island: { id: number; name: string } | null; request: { islandName: string; rejected: boolean } | null }
+
 async function auth(): Promise<{ cookie: string; islandId: number; userId: string }> {
-  const post = (path: string, body: object) => fetch(`${values.url}/api${path}`, {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  const post = (path: string, body?: object, cookie = '') => fetch(`${values.url}/api${path}`, {
+    method: 'POST', headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}) }, body: body ? JSON.stringify(body) : undefined,
   });
   let res = await post('/login', { nickname: values.name, password: BOT_PASSWORD });
-  if (!res.ok) {
-    // 초대 코드가 없으면 봇 자기 섬을 새로 만든다
-    res = await post('/signup', { nickname: values.name, password: BOT_PASSWORD, ...(values.invite ? { invite: values.invite } : {}) });
-  }
+  if (!res.ok) res = await post('/signup', { nickname: values.name, password: BOT_PASSWORD });
   if (!res.ok) throw new Error(`로그인·가입 실패 ${res.status} ${await res.text()}`);
   const cookie = res.headers.get('set-cookie')!.split(';')[0]!;
-  const { me } = (await res.json()) as { me: { id: number; island: { id: number; name: string } } };
+  let { me } = (await res.json()) as { me: Me };
+  if (!me.island) {
+    // 섬 번호가 없으면 봇 자기 섬, 있으면 입장 신청 후 허용될 때까지 기다림
+    const r = values.island ? await post('/island/request', { islandId: Number(values.island) }, cookie) : await post('/island/create', undefined, cookie);
+    if (!r.ok) throw new Error(`섬 ${values.island ? '신청' : '만들기'} 실패 ${r.status} ${await r.text()}`);
+    ({ me } = (await r.json()) as { me: Me });
+    if (!me.island) console.log(`${values.name}: ${me.request?.islandName}에 입장 신청 — 섬 주인이 게시판 주민 탭에서 허용해 주세요`);
+    while (!me.island) {
+      await sleep(2000);
+      ({ me } = (await (await fetch(`${values.url}/api/me`, { headers: { cookie } })).json()) as { me: Me });
+      if (me.request?.rejected) throw new Error('입장 신청이 거절됨');
+    }
+  }
   console.log(`${values.name}: ${me.island.name} (섬 ${me.island.id})`);
   return { cookie, islandId: me.island.id, userId: String(me.id) };
 }

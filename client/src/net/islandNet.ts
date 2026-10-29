@@ -66,6 +66,8 @@ export class IslandConnection {
   /** 우물 출발 → 던전 방 / 우물 요청 실패 */
   onDepart: (m: S2C['depart']) => void = () => {};
   onWellFail: (m: S2C['wellFail']) => void = () => {};
+  /** 섬 주인에게만: 입장 신청이 들어옴 */
+  onJoinRequest: (m: S2C['joinRequest']) => void = () => {};
   /** 새 스냅샷 직후 (예측 보정) */
   onSnapshot: () => void = () => {};
   /** 다시 들어갔을 때 (화면의 내 위치를 새로 받음) */
@@ -101,6 +103,7 @@ export class IslandConnection {
     room.onMessage('emote', (m: S2C['emote']) => this.onEmote(m));
     room.onMessage('depart', (m: S2C['depart']) => this.onDepart(m));
     room.onMessage('wellFail', (m: S2C['wellFail']) => this.onWellFail(m));
+    room.onMessage('joinRequest', (m: S2C['joinRequest']) => this.onJoinRequest(m));
     room.onLeave((code) => {
       if (this.leaving) return;
       if (code === REPLACED_CODE) {

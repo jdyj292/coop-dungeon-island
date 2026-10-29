@@ -1,7 +1,8 @@
 // 로그인·가입·비밀번호 찾기 폼 (docs/security.md 1장, hud.md 9장). 한글 입력기 때문에 DOM, 모양은 도트 패널
 // 글자는 모두 textContent (사용자 입력을 HTML로 해석하지 않음). 형식 검사는 서버와 같은 shared 스키마
-import { AUTH, inviteCodeSchema, nicknameSchema, passwordSchema, recoveryCodeSchema, type MeRes } from '@game/shared';
+import { AUTH, nicknameSchema, passwordSchema, recoveryCodeSchema, type MeRes } from '@game/shared';
 import { API_ERROR_TEXT, api, type ApiResult } from '../../net/api';
+import { el } from './domStyle';
 
 type Mode = 'login' | 'signup' | 'recover';
 
@@ -29,8 +30,6 @@ const FIELDS: Record<Mode, FieldDef[]> = {
     { name: 'nickname', label: '닉네임', type: 'text', autocomplete: 'username', hint: `${AUTH.nicknameMin}~${AUTH.nicknameMax}자`, check: nickCheck },
     { name: 'password', label: '비밀번호', type: 'password', autocomplete: 'new-password', hint: `${AUTH.passwordMin}자 이상`, check: pwCheck },
     { name: 'password2', label: '비밀번호 확인', type: 'password', autocomplete: 'new-password', check: sameCheck },
-    { name: 'invite', label: '초대 코드', type: 'text', autocomplete: 'off', hint: '없으면 새 섬', optional: true,
-      check: (v) => (inviteCodeSchema.safeParse(v).success ? null : '초대 코드가 맞지 않습니다') },
   ],
   recover: [
     { name: 'nickname', label: '닉네임', type: 'text', autocomplete: 'username' },
@@ -41,14 +40,7 @@ const FIELDS: Record<Mode, FieldDef[]> = {
   ],
 };
 
-const SUBMIT: Record<Mode, string> = { login: '로그인', signup: '가입하고 섬으로', recover: '비밀번호 바꾸기' };
-
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text !== undefined) e.textContent = text;
-  return e;
-}
+const SUBMIT: Record<Mode, string> = { login: '로그인', signup: '가입하기', recover: '비밀번호 바꾸기' };
 
 export class LoginForm {
   private panel = el('div', 'ui-panel');
@@ -131,7 +123,7 @@ export class LoginForm {
     this.busy = true;
     submit.disabled = true;
     const res: ApiResult<{ me: MeRes; recoveryCode?: string }> = mode === 'login' ? await api.login(v.nickname!, v.password!)
-      : mode === 'signup' ? await api.signup(v.nickname!, v.password!, v.invite || undefined)
+      : mode === 'signup' ? await api.signup(v.nickname!, v.password!)
       : await api.recover(v.nickname!, v.code!, v.password!);
     this.busy = false;
     submit.disabled = false;

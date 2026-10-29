@@ -1,7 +1,7 @@
 // 관리자 명령줄 (docs/deploy.md 6장). 배포: node admin.mjs <명령>, 개발: pnpm admin <명령>
 // DB는 환경 변수 DB_PATH (게임 서버와 같은 파일, 서버가 돌고 있어도 됨: WAL)
 import { parseArgs } from 'node:util';
-import { backup, FOREVER, kick, listUsers, reissueInvite, suspend, unsuspend } from './admin/commands';
+import { backup, FOREVER, kick, listUsers, suspend, unsuspend } from './admin/commands';
 import { CONFIG } from './config';
 import { openDb } from './db/client';
 
@@ -10,7 +10,6 @@ const HELP = `사용법:
   suspend <닉네임> [--days N]   정지 (기간 없으면 해제할 때까지), 세션도 끊음
   unsuspend <닉네임>            정지 해제 (로그인 잠금도 풂)
   kick <닉네임>                 세션 강제 종료 (다시 로그인)
-  invite <닉네임>               그 주민 섬의 초대 코드 재발급
   backup [--dir 폴더] [--keep 7] 온라인 백업 (오래된 것은 keep개만 남김)`;
 
 const { values, positionals } = parseArgs({
@@ -44,9 +43,6 @@ async function main(): Promise<void> {
         break;
       case 'kick':
         console.log(`세션 ${kick(db, need(), now)}개 끊음: ${need()}`);
-        break;
-      case 'invite':
-        console.log(`새 초대 코드: ${reissueInvite(db, need(), now)}`);
         break;
       case 'backup':
         console.log(`백업: ${await backup(sqlite, values.dir, Math.max(1, Number(values.keep)), now)}`);

@@ -1,4 +1,4 @@
-// 관리자 명령: 정지(로그인·세션 막힘)·해제, 세션 강제 종료, 초대 코드 재발급, 목록, 백업 → 복원
+// 관리자 명령: 정지(로그인·세션 막힘)·해제, 세션 강제 종료, 목록, 백업 → 복원
 import { copyFileSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
 import { users } from '../db/schema';
 import { Accounts } from '../http/accounts';
-import { backup, backupName, kick, listUsers, reissueInvite, suspend, unsuspend } from './commands';
+import { backup, backupName, kick, listUsers, suspend, unsuspend } from './commands';
 
 let dir: string, db: Db, sqlite: ReturnType<typeof openDb>['sqlite'], close: () => void, acc: Accounts, ipN = 0;
 const now = 1_800_000_000_000;
@@ -18,7 +18,8 @@ beforeEach(async () => {
   dir = mkdtempSync(join(tmpdir(), 'cdi-admin-'));
   ({ db, sqlite, close } = openDb(join(dir, 'game.sqlite')));
   acc = new Accounts(db);
-  await acc.signup(signupReq.parse({ nickname: '모리', password: 'password1' }), ip(), now);
+  const s = await acc.signup(signupReq.parse({ nickname: '모리', password: 'password1' }), ip(), now);
+  if (s.ok) acc.islands.create(s.value.userId, now);
 });
 afterEach(() => {
   close();
@@ -44,13 +45,11 @@ describe('관리자 명령', () => {
     expect(await acc.login({ nickname: '모리', password: 'wrong-pass' }, ip(), now)).toEqual({ ok: false, error: 'badLogin' });
   });
 
-  it('세션 강제 종료·초대 코드 재발급·목록, 없는 닉네임은 오류', async () => {
+  it('세션 강제 종료·목록, 없는 닉네임은 오류', async () => {
     const r = await login();
     if (!r.ok) throw new Error();
     expect(kick(db, '모리', now)).toBe(2);
     expect(acc.sessions.user(r.value.token, now)).toBeNull();
-    const old = acc.me(r.value.userId)!.island.inviteCode;
-    expect(reissueInvite(db, '모리', now)).not.toBe(old);
     expect(listUsers(db).map((u) => [u.nickname, u.island])).toEqual([['모리', '모리의 섬']]);
     expect(() => kick(db, '없음', now)).toThrow(/없는 닉네임/);
   });

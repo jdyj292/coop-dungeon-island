@@ -37,7 +37,7 @@ export class Island extends Phaser.Scene {
   /** 설정 (Esc, 볼륨) */
   private settings!: SettingsPanel;
   private keys!: Record<'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd', Phaser.Input.Keyboard.Key>;
-  private me!: MeRes;
+  private me!: MeRes & { island: NonNullable<MeRes['island']> };
   private notice: Phaser.GameObjects.GameObject | null = null;
   private noticeTimer: Phaser.Time.TimerEvent | null = null;
   private cam = { x: 0, y: 0 };
@@ -48,8 +48,9 @@ export class Island extends Phaser.Scene {
 
   create(): void {
     const me = this.registry.get('me') as MeRes | undefined;
-    if (!me) return void this.scene.start('Title');
-    this.me = me;
+    // 섬이 없으면 Title이 섬 고르기 화면을 보여 줌
+    if (!me?.island) return void this.scene.start('Title');
+    this.me = { ...me, island: me.island };
     this.stage = null;
     this.cameras.main.setBackgroundColor(colorInt('island.water'));
     this.world = new IslandWorld(this);
@@ -63,7 +64,7 @@ export class Island extends Phaser.Scene {
       set: (h) => this.stage?.conn.send('look', { hair: h.style, hairColor: h.color }),
     });
     const K = Phaser.Input.Keyboard.KeyCodes;
-    this.keys = this.input.keyboard!.addKeys({ up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D }) as typeof this.keys;
+    this.keys = this.input.keyboard!.addKeys({ up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D }) as Island['keys'];
     this.input.keyboard!.on('keydown', (e: KeyboardEvent) => this.onKey(e));
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.stage?.place.onPointerMove({ x: p.worldX, y: p.worldY }));
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onPointerDown(p));
@@ -86,6 +87,10 @@ export class Island extends Phaser.Scene {
       this.stage = new IslandStage(this, conn, () => this.stage?.chat.input('게시판 메모 한 줄', NET.memoMaxLen, (text) => conn.send('memo', { text })));
       conn.onPlaceFail = (m) => this.showNotice(PLACE_FAIL[m.reason] ?? m.reason, NOTICE_MS);
       conn.onWellFail = (m) => this.showNotice(WELL_FAIL[m.reason] ?? m.reason, NOTICE_MS);
+      conn.onJoinRequest = (m) => {
+        this.showNotice(`${m.nickname}님이 입장을 신청했습니다 (게시판 주민 탭)`, NOTICE_MS * 2);
+        this.stage?.panels.onJoinRequest();
+      };
       // 우물 출발: 섬 방을 나가 던전 방으로 (network.md 3장), 정산 뒤 Dungeon 씬이 섬으로 돌려보냄
       conn.onDepart = (m) => {
         this.registry.set('dungeonRoom', m.roomId);

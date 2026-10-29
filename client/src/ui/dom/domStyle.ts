@@ -36,10 +36,27 @@ export function injectDomStyle(): void {
 .ui-code { margin: ${px(6)} 0; padding: ${px(4)} 0; text-align: center; color: ${c('coin')}; background: ${c('barTrack')};
   border: ${px(1)} solid ${c('panelBorder')}; user-select: all; }
 .ui-p { margin: ${px(2)} 0; color: ${c('textDim')}; }
+.ui-panel.ui-wide { width: ${px(232)}; }
+.ui-list { max-height: ${px(140)}; overflow-y: auto; margin-top: ${px(4)}; background: ${c('barTrack')}; border: ${px(1)} solid ${c('panelBorder')}; }
+.ui-row { display: flex; align-items: center; gap: ${px(4)}; padding: ${px(2)} ${px(4)}; border-bottom: ${px(1)} solid ${c('panelInner')}; }
+.ui-row:last-child { border-bottom: 0; }
+.ui-row-main { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-row-sub { color: ${c('keyLabel')}; }
+.ui-row[aria-disabled="true"] { opacity: 0.5; }
+.ui-btn.ui-small { display: inline-block; width: auto; margin: 0; padding: 0 ${px(6)}; }
+.ui-empty { padding: ${px(6)} 0; text-align: center; color: ${c('keyLabel')}; }
 `;
   const el = document.createElement('style');
   el.textContent = css;
   document.head.appendChild(el);
+}
+
+/** 글자는 textContent로만 (사용자 입력을 HTML로 해석하지 않음) */
+export function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
 }
 
 /**

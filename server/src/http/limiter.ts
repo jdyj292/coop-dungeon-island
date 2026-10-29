@@ -6,7 +6,7 @@ export const AUTH_LIMITS = {
   loginIp: [MIN, 5], loginUser: [MIN, 5],
   signupIp: [HOUR, 3],
   recoverIp: [HOUR, 5],
-  inviteUser: [MIN, 5],
+  joinUser: [MIN, 5],
 } as const satisfies Record<string, readonly [number, number]>;
 
 /** 연속 실패 잠금: [횟수, 잠금 ms] */

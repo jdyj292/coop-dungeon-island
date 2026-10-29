@@ -34,15 +34,15 @@
 | 로그인 | IP당 분당 5회, 계정당 분당 5회. 연속 10회 실패 시 그 계정 15분 잠금 |
 | 가입 | IP당 시간당 3회 |
 | 복구 코드 재설정 | IP당 시간당 5회, 계정당 연속 5회 실패 시 1시간 잠금 |
-| 초대 코드 입력 | 계정당 분당 5회 |
+| 섬 입장 신청 | 계정당 분당 5회 |
 | 게임 메시지 | network.md 4장 |
 
 - 제한은 Nginx(limit_req)와 앱 양쪽에 둔다
 - 실패 응답은 "닉네임 또는 비밀번호가 틀렸습니다"로 통일 (닉네임 존재 여부를 알려주지 않음)
 
-### 초대 코드
-- 암호학적 난수 8자 (헷갈리는 글자 0/O, 1/I/L 제외한 대문자·숫자)
-- 주민 누구나 재발급, 이전 코드 즉시 무효
+### 섬 입장 신청 (island.md 7장)
+- 초대 코드는 없앰. 섬 목록은 로그인한 사람만 (섬 이름·주인 닉네임·주민 수)
+- 허용·거절은 섬 주인(islands.owner_id)만, 서버가 세션 계정으로 확인. 허용은 트랜잭션 안에서 자리·신청 상태를 다시 확인
 
 ---
 
@@ -69,7 +69,7 @@
 - 비밀 값(세션 서명 키 등)은 환경 변수로만. 저장소에 넣지 않음 (.env는 .gitignore)
 - SQLite 파일: 서비스 계정만 읽기·쓰기 권한. 매일 백업, 7일치 보관, 백업도 같은 권한
 - 로그: 인증 성공·실패, 잠금, 관리 작업, 서버 오류. **비밀번호·토큰·복구 코드는 기록하지 않음**
-- 관리자 도구: 명령줄 스크립트 (계정 정지·해제, 세션 강제 종료, 섬 초대 코드 재발급). 웹 관리자 페이지는 두지 않음
+- 관리자 도구: 명령줄 스크립트 (계정 정지·해제, 세션 강제 종료). 웹 관리자 페이지는 두지 않음
 - 의존성: 월 1회 업데이트 확인 (npm audit)
 
 ---
@@ -82,9 +82,10 @@
 
 ## 8. 구현 (M4 4-2)
 - 입력 형식·규칙 상수: shared/src/auth.ts (`AUTH`, zod 스키마 — 클라이언트 폼과 서버가 같이 씀)
-- 서버: server/src/http/ — accounts.ts(가입·로그인·복구·비밀번호 변경·초대 코드), sessions.ts, secrets.ts(Argon2id: 19MiB·2회·병렬 1, 토큰 SHA-256), limiter.ts(시도 제한 표), routes.ts, app.ts
-- API (`/api`, JSON): POST signup {nickname, password, invite?} · login · logout · recover {nickname, recoveryCode, password} · password {current, password} · island/invite, GET me
-- 응답 오류 코드: invalid 400 · badLogin 401 · unauthorized 401 · nicknameTaken 409 · islandFull 409 · badInvite 400 · rateLimited 429
+- 서버: server/src/http/ — accounts.ts(가입·로그인·복구·비밀번호 변경), islandJoin.ts(섬 목록·만들기·입장 신청·허용), sessions.ts, secrets.ts(Argon2id: 19MiB·2회·병렬 1, 토큰 SHA-256), limiter.ts(시도 제한 표), routes.ts, app.ts
+- API (`/api`, JSON): POST signup {nickname, password} · login · logout · recover {nickname, recoveryCode, password} · password {current, password}, GET me (섬이 없으면 island null, 넣어 둔 신청 request)
+- 섬 고르기 API: GET islands · POST island/create · island/request {islandId} · island/request/cancel (모두 {me} 응답) / 섬 주인: GET island/requests · POST island/decide {userId, accept}
+- 응답 오류 코드: invalid 400 · badLogin 401 · unauthorized 401 · nicknameTaken 409 · islandFull 409 · hasIsland 409 · noRequest 409 · notOwner 403 · rateLimited 429
 - 쿠키 이름 `sid` (httpOnly, Secure, SameSite=Lax, 30일). 개발 http에서 Secure를 끄려면 `COOKIE_SECURE=0` (localhost는 켜도 동작)
 - 로그인 실패는 없는 닉네임·잠긴 계정·틀린 비밀번호 모두 badLogin (응답 시간도 같게: 없는 닉네임도 해시 검사 1회)
 - 시도 제한은 앱 메모리 (재시작하면 비워짐). 로그인 잠금은 DB(failed_logins·locked_until), 복구 코드 연속 실패 잠금은 메모리
@@ -95,7 +96,7 @@
 - `PUBLIC_ORIGIN`(우리 사이트 주소)을 정하면: `/api` POST·WebSocket 연결은 Origin이 그것이거나 없을 때(봇·curl)만 받음 (다르면 403 / 소켓 거절), 매치메이킹 CORS는 그 주소로 고정. 비어 있으면 개발 (제한 없음)
 - 보안 헤더 (모든 응답): CSP `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'`(DOM 폼·index.html <style>)`; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' wss://<도메인>; object-src 'none'; frame-ancestors 'none'`, nosniff, Referrer-Policy same-origin, X-Frame-Options DENY, COOP same-origin. HSTS는 Nginx
 ### 운영 구현 (M5 5-3)
-- 관리자 명령줄 server/src/admin.ts (배포 dist/admin.mjs, 개발 `pnpm admin`): users · suspend <닉네임> [--days N] · unsuspend · kick · invite · backup. 모두 auth_log에 `admin:*` (ip admin)
+- 관리자 명령줄 server/src/admin.ts (배포 dist/admin.mjs, 개발 `pnpm admin`): users · suspend <닉네임> [--days N] · unsuspend · kick · backup. 모두 auth_log에 `admin:*` (ip admin)
 - 정지: users.suspended_until까지 로그인(비밀번호가 맞을 때만 403 suspended, 틀리면 그대로 badLogin)·세션·게임 입장 막힘, 정지하면 세션도 지움. 이미 열린 게임 연결은 다음 재접속부터 막힘
 - 백업: SQLite 온라인 백업 API (서버가 돌아도 됨) → <폴더>/game-<UTC 시각>.sqlite, 권한 600, 최근 keep개(기본 7)만. 매일 cron (docs/deploy.md 6장)
 

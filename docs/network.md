@@ -148,7 +148,8 @@ IslandState
 - 구현 (4-5): server/src/rooms/IslandRoom.ts (섬마다 한 방, `filterBy(['islandId'])`), 진행 systems/islandGame.ts. 입장 인증은 onAuth에서 세션 쿠키(sid) → 그 섬 주민만, 같은 계정의 이전 연결은 종료 코드 4002로 끊음
 - 이동: 클라이언트는 던전과 같은 input 메시지, 서버 60Hz로 마지막 입력 적용(shared/src/island/walker.ts), 내 캐릭터는 같은 함수로 예측·보정(client/src/net/walkPredict.ts, 7장 보정 규칙), 다른 주민은 100ms 보간
 - 입장 때 본인에게 `me { wallet, level }`, 가방이 바뀔 때마다 `inv { items }` 메시지. 배치는 systems/islandPlacement.ts (규칙 검사 → DB 트랜잭션 db/islandStore.ts → 상태), 걸을 수 없는 장식은 서버·클라이언트 예측 모두 장애물. 끊기면 2초마다 다시 입장 (섬은 전체 상태를 새로 받으면 됨)
-- 개발: `pnpm island-bot --invite <초대 코드>` 봇 주민이 가입·입장해 우물 앞을 걷는다 (브라우저 하나로 2인 확인)
+- 개발: `pnpm island-bot --island <섬 번호>` 봇 주민이 가입·입장 신청 → 섬 주인이 게시판 주민 탭에서 허용하면 입장해 우물 앞을 걷는다 (브라우저 하나로 2인 확인). 섬 번호는 `GET /api/me`의 island.id
+- 섬 방 최대 접속 10명 (AUTH.islandResidents). 섬 주인에게만 `joinRequest { nickname }` (입장 신청 알림). 신청이 허용되면 접속 전에도 주민 목록에 넣음 (islandBus joined)
 - 개인 지갑·인벤토리는 본인 전용 메시지로 전송
 - 게시판 기록은 요청할 때 메시지로 가져온다 (상태에 넣지 않음)
 

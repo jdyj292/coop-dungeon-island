@@ -5,10 +5,10 @@ import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'driz
 export const islands = sqliteTable('islands', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
-  /** 초대 코드 (새로 발급하면 이전 코드는 즉시 무효, island.md 7장) */
-  inviteCode: text('invite_code').notNull(),
   treasury: integer('treasury').notNull().default(0),
-}, (t) => [uniqueIndex('islands_invite_code').on(t.inviteCode)]);
+  /** 섬 주인 = 섬을 만든 사람. 입장 신청을 허용·거절 (island.md 7장). 순환 참조라 외래 키는 두지 않음 */
+  ownerId: integer('owner_id'),
+});
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -93,6 +93,14 @@ export const activityLog = sqliteTable('activity_log', {
   itemId: text('item_id'),
   createdAt: integer('created_at').notNull(),
 }, (t) => [index('activity_island_created').on(t.islandId, t.createdAt)]);
+
+/** 섬 입장 신청: 섬 없는 계정당 하나 (새로 신청하면 바뀜). 허용되면 지우고, 거절되면 rejected로 남겨 신청자에게 한 번 알림 (island.md 7장) */
+export const joinRequests = sqliteTable('join_requests', {
+  userId: integer('user_id').primaryKey().references(() => users.id),
+  islandId: integer('island_id').notNull().references(() => islands.id),
+  rejected: integer('rejected', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at').notNull(),
+}, (t) => [index('join_requests_island').on(t.islandId)]);
 
 export const weaponMastery = sqliteTable('weapon_mastery', {
   userId: integer('user_id').notNull().references(() => users.id),

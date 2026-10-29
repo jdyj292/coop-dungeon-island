@@ -80,9 +80,8 @@ pnpm deploy-local
 6. 확인: `curl -sI https://실제주소 | grep -i -e strict -e content-security` (HSTS·CSP 헤더), 브라우저로 가입 → 섬 → 우물 출발
 
 ### 친구 초대
-- 첫 사람이 초대 코드 없이 가입하면 자기 섬이 생긴다. 섬에서 M(게시판) → 초대 탭 → 복사로 초대 코드를 친구에게 준다. 친구는 가입할 때 그 코드를 넣어 같은 섬 주민이 된다
-- 코드가 새어 나가면 같은 탭의 "새 코드" (이전 코드는 바로 무효). 서버에서는 `sudo coop-admin invite <닉네임>`
-- 링크만 알려 주고 코드를 넣지 않으면 따로 새 섬이 생긴다
+- 첫 사람이 가입 → 섬 고르기 화면에서 "새 섬 만들기" → 그 섬의 주인이 된다
+- 친구는 주소로 가입 → 섬 목록에서 그 섬에 "신청" → 주인이 섬에서 M(게시판) → 주민 탭 → 신청 줄을 골라 "허용"하면 친구가 바로 들어온다 (섬당 10명까지)
 
 ### 업데이트
 1. 이 PC: `pnpm deploy-build` → 서버에 새 dist 올림
@@ -115,7 +114,6 @@ sudo coop-admin users
 | suspend <닉네임> [--days N] | 정지 (기간 없으면 해제할 때까지), 세션도 끊음 |
 | unsuspend <닉네임> | 정지 해제 (로그인 잠금도 풂) |
 | kick <닉네임> | 세션 강제 종료 |
-| invite <닉네임> | 그 주민 섬의 초대 코드 재발급 (새 코드를 주민에게 전달) |
 | backup [--dir 폴더] [--keep 7] | 온라인 백업, 오래된 것은 keep개만 |
 
 - 자동 백업: /etc/cron.d/coop-dungeon-island가 매일 04:30 `backup --dir /var/lib/coop-dungeon-island/backups --keep 7` (권한 600)

@@ -16,7 +16,7 @@ const line = (o: Partial<ResultLine>): ResultLine => ({
 
 beforeEach(() => {
   db = openDb(':memory:').db;
-  islandId = db.insert(islands).values({ name: '섬', inviteCode: 'ABCDEFGH', treasury: 5 }).returning({ id: islands.id }).get().id;
+  islandId = db.insert(islands).values({ name: '섬', treasury: 5 }).returning({ id: islands.id }).get().id;
   uid = db.insert(users).values({ nickname: 'a', nicknameKey: 'a', passwordHash: 'h', recoveryHash: 'r', islandId, wallet: 10, createdAt: 0 }).returning({ id: users.id }).get().id;
 });
 

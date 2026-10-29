@@ -8,7 +8,8 @@ MVP 열: O = MVP에 포함, — = MVP 이후.
 | users | id, nickname, nickname_key(중복 검사용: NFC + 소문자), password_hash, recovery_hash, failed_logins, locked_until, suspended_until(관리자 정지, 0 = 정상), island_id, wallet, hair_style, hair_color, weapon(고른 무기, 기본 greatsword, 0004_weapon), created_at | O | security, art |
 | sessions | token_hash, user_id, created_at, expires_at, last_seen_at | O | security |
 | auth_log | user_id(null 가능), ip, event, created_at (30일 보관) | O | security |
-| islands | id, name, invite_code, treasury | O | island |
+| islands | id, name, treasury, owner_id(섬 만든 사람 = 입장 신청 허용, 0005·0006, 초대 코드는 0007에서 뺌) | O | island |
+| join_requests | user_id(PK, 섬 없는 계정당 하나), island_id, rejected(거절 알림용), created_at | O | island |
 | placements | id, island_id, item_id, x, y, rotation, placed_by, communal(공동 금고 장식), placed_at | O | island |
 | memos | id, island_id, user_id, text, created_at (게시판 메모 1줄, 최근 20개 표시) | O | island |
 | island_storage | island_id, item_id, count (공용 창고: 공동 금고로 산 장식, 치운 공용 장식) | O | island |

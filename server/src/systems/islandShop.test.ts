@@ -22,7 +22,7 @@ const enter = (g: IslandGame, id: string) => { g.addResident({ id, name: id, col
 
 beforeEach(() => {
   db = openDb(':memory:').db;
-  islandId = db.insert(islands).values({ name: '섬', inviteCode: 'ABCDEFGH', treasury: 2000 }).returning({ id: islands.id }).get().id;
+  islandId = db.insert(islands).values({ name: '섬', treasury: 2000 }).returning({ id: islands.id }).get().id;
   sent = [];
   cast = [];
 });

@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 import { matchMaker, Room, type Client } from 'colyseus';
-import { FixedStep, NET, TICK, type MeRes } from '@game/shared';
+import { AUTH, FixedStep, LOOK, NET, TICK, type MeRes } from '@game/shared';
 import { CONFIG } from '../config';
 import { loadIsland } from '../db/islandQueries';
 import { IslandStore } from '../db/islandStore';
@@ -22,17 +22,17 @@ export const REPLACED_CODE = 4002;
  * 진행은 IslandGame, 여기는 연결·전송만. 60Hz 이동, 20Hz 상태 전송
  */
 export class IslandRoom extends Room<IslandState> {
-  maxClients = 4;
+  maxClients = AUTH.islandResidents;
   private game!: IslandGame;
   private ticks = new FixedStep();
   private islandId = 0;
-  private unwatch: (() => void) | null = null;
+  private unwatch: (() => void)[] = [];
 
   onCreate(options: { islandId?: unknown }): void {
     this.islandId = Number(options?.islandId);
     const row = loadIsland(services().db, this.islandId);
     if (!row) throw new Error(`섬 ${this.islandId} 없음`);
-    this.game = new IslandGame(row.name, row.treasury, row.residents.map((r, i) => ({ id: String(r.id), name: r.nickname, color: i, hair: r.hairStyle, hairColor: r.hairColor, weapon: r.weapon })), {
+    this.game = new IslandGame(row.name, row.treasury, row.residents.map((r, i) => ({ id: String(r.id), name: r.nickname, color: i % LOOK.playerColors, hair: r.hairStyle, hairColor: r.hairColor, weapon: r.weapon })), {
       send: (id, type, msg) => this.clientOf(id)?.send(type, msg),
       broadcast: (type, msg) => this.broadcast(type, msg),
     }, {
@@ -41,7 +41,17 @@ export class IslandRoom extends Room<IslandState> {
       onDepart: (ids, floor) => void this.depart(ids, floor),
     });
     // 던전에서 돌아옴 (정산 저장 뒤, DungeonRoom)
-    this.unwatch = islandBus.watch(this.islandId, (e) => { if (!e.floor) this.game.returned(e.userIds); });
+    this.unwatch.push(islandBus.watch(this.islandId, (e) => { if (!e.floor) this.game.returned(e.userIds); }));
+    // 입장 신청 → 섬 주인에게 알림 (허용·거절은 게시판 주민 탭, island.md 7장)
+    this.unwatch.push(islandBus.watchRequests(this.islandId, (nickname) => {
+      const owner = services().accounts.islands.ownerOf(this.islandId);
+      if (owner !== null) this.clientOf(String(owner))?.send('joinRequest', { nickname });
+    }));
+    // 허용된 새 주민: 접속 전에도 주민 목록(게시판 주민 탭·N/10)에 보이게
+    this.unwatch.push(islandBus.watchJoined(this.islandId, (userId) => {
+      const me = services().accounts.me(userId);
+      if (me) this.addResident(me);
+    }));
     this.setState(this.game.state);
     this.setPatchRate(1000 / NET.patchRate);
     this.setSimulationInterval((ms) => {
@@ -60,7 +70,7 @@ export class IslandRoom extends Room<IslandState> {
     const userId = accounts.sessions.user(readCookie(request?.headers.cookie, SESSION_COOKIE), Date.now());
     const me = userId === null ? null : accounts.me(userId);
     if (!me) throw new Error('unauthorized');
-    if (me.island.id !== this.islandId) throw new Error('forbidden');
+    if (me.island?.id !== this.islandId) throw new Error('forbidden');
     return me;
   }
 
@@ -70,9 +80,13 @@ export class IslandRoom extends Room<IslandState> {
     client.userData = { id };
     // 같은 계정의 이전 연결은 끊는다
     for (const c of this.clients) if (c !== client && this.userOf(c) === id) c.leave(REPLACED_CODE);
-    // 방이 생긴 뒤 가입한 주민
-    this.game.addResident({ id, name: me.nickname, color: this.game.state.residents.size, hair: me.hairStyle, hairColor: me.hairColor, weapon: me.weapon });
+    // 방이 생긴 뒤 들어온 주민
+    this.addResident(me);
     this.game.join(id);
+  }
+
+  private addResident(me: MeRes): void {
+    this.game.addResident({ id: String(me.id), name: me.nickname, color: this.game.state.residents.size % LOOK.playerColors, hair: me.hairStyle, hairColor: me.hairColor, weapon: me.weapon });
   }
 
   onLeave(client: Client): void {
@@ -88,9 +102,10 @@ export class IslandRoom extends Room<IslandState> {
    */
   private async depart(ids: string[], floor: string): Promise<void> {
     const db = services().db;
-    const members: PartyMember[] = ids.map((id) => {
+    // 색은 파티 순서대로 (섬 주민은 10명이라 색이 겹칠 수 있어서, 던전 파티 4명 안에서는 겹치지 않게)
+    const members: PartyMember[] = ids.map((id, slot) => {
       const r = this.game.state.residents.get(id), weapon = r?.weapon || 'greatsword', m = mastery(db, Number(id), weapon);
-      return { userId: id, name: r?.name ?? '?', color: r?.color ?? 0, hair: r?.hair ?? 0, hairColor: r?.hairColor ?? 0, weapon, level: m.level, levelExp: m.exp, potions: carryPotions(db, Number(id)) };
+      return { userId: id, name: r?.name ?? '?', color: slot % LOOK.playerColors, hair: r?.hair ?? 0, hairColor: r?.hairColor ?? 0, weapon, level: m.level, levelExp: m.exp, potions: carryPotions(db, Number(id)) };
     });
     islandBus.departed(this.islandId, ids, floor);
     try {
@@ -103,7 +118,7 @@ export class IslandRoom extends Room<IslandState> {
   }
 
   onDispose(): void {
-    this.unwatch?.();
+    for (const off of this.unwatch) off();
   }
 
   private userOf(client: Client): string {

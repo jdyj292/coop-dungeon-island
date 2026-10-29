@@ -1,8 +1,7 @@
-import { AUTH, ISLAND, ITEMS, recoverReq, signupReq } from '@game/shared';
-import { eq } from 'drizzle-orm';
+import { ITEMS, recoverReq, signupReq } from '@game/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
-import { activityLog, authLog, inventory, placements, sessions, users } from '../db/schema';
+import { authLog, inventory, islands, sessions, users } from '../db/schema';
 import { Accounts } from './accounts';
 import { LOCKS } from './limiter';
 
@@ -11,7 +10,7 @@ const MIN = 60_000;
 let db: Db, acc: Accounts, now: number, ipN = 0;
 /** 시도 제한에 걸리지 않게 요청마다 다른 IP */
 const ip = () => `10.0.0.${ipN++}`;
-const signup = (nickname: string, invite?: string) => acc.signup(signupReq.parse({ nickname, password: 'password1', invite }), ip(), now);
+const signup = (nickname: string) => acc.signup(signupReq.parse({ nickname, password: 'password1' }), ip(), now);
 
 beforeEach(() => {
   db = openDb(':memory:').db;
@@ -20,15 +19,15 @@ beforeEach(() => {
 });
 
 describe('가입', () => {
-  it('새 섬을 만들고 세션·복구 코드를 준다. 비밀번호·복구 코드는 해시만 저장', async () => {
+  it('섬 없이 시작하고 세션·복구 코드를 준다. 비밀번호·복구 코드는 해시만 저장', async () => {
     const r = await signup('모리');
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.value.recoveryCode).toMatch(/^[A-Z2-9]{4}(-[A-Z2-9]{4}){3}$/);
     const me = acc.me(r.value.userId)!;
     expect(me.nickname).toBe('모리');
-    expect(me.island.name).toBe('모리의 섬');
-    expect(me.island.inviteCode).toHaveLength(AUTH.inviteLen);
+    expect([me.island, me.request]).toEqual([null, null]);
+    expect(db.select().from(islands).all()).toEqual([]);
     expect(acc.sessions.user(r.value.token, now)).toBe(r.value.userId);
     const row = db.select().from(users).get()!;
     expect(row.passwordHash).toMatch(/^\$argon2id\$/);
@@ -36,10 +35,6 @@ describe('가입', () => {
     expect(row.recoveryHash).toMatch(/^\$argon2id\$/);
     // 가입 선물
     expect(Object.fromEntries(db.select().from(inventory).all().map((r) => [r.itemId, r.count]))).toEqual(ITEMS.starter);
-    // 섬 기본 장식: 공용, 놓은 사람 없음
-    const decor = db.select().from(placements).all();
-    expect(decor.map((p) => [p.itemId, p.x, p.y, p.rotation])).toEqual(ISLAND.starterDecor.map((d) => [d.itemId, d.x, d.y, d.rot]));
-    expect(decor.every((p) => p.communal && p.placedBy === null)).toBe(true);
     // 토큰 원문은 DB에 없음
     expect(db.select().from(sessions).get()!.tokenHash).not.toBe(r.value.token);
   });
@@ -49,22 +44,6 @@ describe('가입', () => {
     expect(await signup('MORI')).toEqual({ ok: false, error: 'nicknameTaken' });
     for (const bad of ['a', 'abcdefghijklm', 'mo ri', '<b>x</b>', 'ㅁㅁ']) expect(signupReq.safeParse({ nickname: bad, password: 'password1' }).success).toBe(false);
     expect(signupReq.safeParse({ nickname: 'mori2', password: 'short' }).success).toBe(false);
-  });
-
-  it('초대 코드로 합류 (소문자·하이픈 입력 허용), 주민 4명까지, 틀린 코드 거절', async () => {
-    const a = await signup('Aa');
-    if (!a.ok) throw new Error();
-    const code = acc.me(a.value.userId)!.island.inviteCode;
-    const loose = `${code.slice(0, 4).toLowerCase()}-${code.slice(4)}`;
-    for (const n of ['Bb', 'Cc', 'Dd']) {
-      const r = await signup(n, loose);
-      expect(r.ok && acc.me(r.value.userId)!.island.id).toBe(acc.me(a.value.userId)!.island.id);
-    }
-    expect(await signup('Ee', code)).toEqual({ ok: false, error: 'islandFull' });
-    expect(await signup('Ff', 'ABCDEFGH')).toEqual({ ok: false, error: 'badInvite' });
-    expect(db.select().from(activityLog).all().map((x) => x.action)).toEqual(['found', 'join', 'join', 'join']);
-    // 합류 가입은 기본 장식을 더 깔지 않음
-    expect(db.select().from(placements).all().length).toBe(ISLAND.starterDecor.length);
   });
 
   it('IP당 시간당 3회', async () => {
@@ -153,18 +132,6 @@ describe('복구·비밀번호 변경', () => {
     expect(c.ok && acc.sessions.user(c.value.token, now)).toBe(r.value.userId);
     expect(acc.sessions.user(r.value.token, now)).toBeNull();
   });
-});
-
-it('초대 코드 재발급: 이전 코드 즉시 무효, 활동 기록', async () => {
-  const a = await signup('Aa');
-  if (!a.ok) throw new Error();
-  const old = acc.me(a.value.userId)!.island.inviteCode;
-  const r = acc.reissueInvite(a.value.userId, now);
-  expect(r.ok && r.value).not.toBe(old);
-  expect(await signup('Bb', old)).toEqual({ ok: false, error: 'badInvite' });
-  if (r.ok) expect((await signup('Cc', r.value)).ok).toBe(true);
-  const isl = acc.me(a.value.userId)!.island.id;
-  expect(db.select().from(activityLog).where(eq(activityLog.islandId, isl)).all().map((x) => x.action)).toContain('invite');
 });
 
 it('인증 기록에 비밀번호·토큰·복구 코드가 없다', async () => {

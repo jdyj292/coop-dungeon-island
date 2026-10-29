@@ -1,4 +1,4 @@
-// 관리자 명령 (docs/security.md 6장 "관리자 도구: 명령줄 스크립트", docs/deploy.md): 정지·해제·세션 강제 종료·초대 코드 재발급·목록·백업
+// 관리자 명령 (docs/security.md 6장 "관리자 도구: 명령줄 스크립트", docs/deploy.md): 정지·해제·세션 강제 종료·목록·백업
 // 웹 관리자 페이지는 두지 않는다. 모든 관리 작업은 auth_log에 남긴다 (ip = 'admin'). 비밀 값은 출력하지 않음
 import { chmodSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -7,7 +7,6 @@ import type Database from 'better-sqlite3';
 import { desc, eq, max } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import { authLog, islands, sessions, users } from '../db/schema';
-import { Accounts } from '../http/accounts';
 
 const DAY = 86_400_000;
 /** 기간 없는 정지 (9999-12-31) */
@@ -45,15 +44,6 @@ export function kick(db: Db, nickname: string, now: number): number {
   const n = db.delete(sessions).where(eq(sessions.userId, u.id)).run().changes;
   log(db, u.id, 'kick', now);
   return n;
-}
-
-/** 그 주민 섬의 초대 코드 재발급 (이전 코드 즉시 무효). 반환 = 새 코드 (관리자가 주민에게 전달) */
-export function reissueInvite(db: Db, nickname: string, now: number): string {
-  const u = userOf(db, nickname);
-  const r = new Accounts(db).reissueInvite(u.id, now);
-  if (!r.ok) throw new Error(`초대 코드 재발급 실패: ${r.error}`);
-  log(db, u.id, 'invite', now);
-  return r.value;
 }
 
 /** 계정 목록 (닉네임·섬·지갑·정지·마지막 접속) */

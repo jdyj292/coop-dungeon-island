@@ -32,6 +32,22 @@ export const islandBus = {
     returnedAt.delete(userId);
     return t !== undefined && now - t <= windowMs;
   },
+  /** 섬 입장 신청이 들어옴 (islandJoin.ts → 섬 방이 주인에게 알림) */
+  requested(islandId: number, nickname: string): void {
+    bus.emit(`request:${islandId}`, nickname);
+  },
+  watchRequests(islandId: number, fn: (nickname: string) => void): () => void {
+    bus.on(`request:${islandId}`, fn);
+    return () => bus.off(`request:${islandId}`, fn);
+  },
+  /** 신청이 허용돼 주민이 됨 (섬 방 주민 목록에 바로 넣음) */
+  joined(islandId: number, userId: number): void {
+    bus.emit(`joined:${islandId}`, userId);
+  },
+  watchJoined(islandId: number, fn: (userId: number) => void): () => void {
+    bus.on(`joined:${islandId}`, fn);
+    return () => bus.off(`joined:${islandId}`, fn);
+  },
   /** 섬 방이 구독 (floor null = 돌아옴). 해제 함수를 돌려준다 */
   watch(islandId: number, fn: (e: { userIds: string[]; floor: string | null }) => void): () => void {
     bus.on(`island:${islandId}`, fn);

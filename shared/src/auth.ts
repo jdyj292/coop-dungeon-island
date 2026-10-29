@@ -11,12 +11,11 @@ export const AUTH = {
   /** 복구 코드: 4자리 × 4묶음 */
   recoveryGroups: 4,
   recoveryGroupLen: 4,
-  /** 초대 코드 8자, 헷갈리는 글자(0 O 1 I L) 뺀 대문자·숫자 */
-  inviteLen: 8,
+  /** 복구 코드 글자: 헷갈리는 글자(0 O 1 I L) 뺀 대문자·숫자 */
   codeAlphabet: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789',
   sessionDays: 30,
-  /** 섬 하나당 주민 최대 (island.md 7장) */
-  islandResidents: 4,
+  /** 섬 하나당 주민 최대 (island.md 7장). 던전 파티는 따로 최대 4명 (island.json well.maxParty) */
+  islandResidents: 10,
 } as const;
 
 /** 닉네임: NFC로 맞춘 뒤 한글(완성형)·영문·숫자 2~12자 */
@@ -33,15 +32,16 @@ const codeSchema = (len: number) => z.string().max(64)
   .transform((s) => s.toUpperCase().replace(/[\s-]/g, ''))
   .pipe(z.string().length(len).regex(new RegExp(`^[${AUTH.codeAlphabet}]+$`)));
 
-export const inviteCodeSchema = codeSchema(AUTH.inviteLen);
 export const recoveryCodeSchema = codeSchema(AUTH.recoveryGroups * AUTH.recoveryGroupLen);
 
 export const signupReq = z.object({
   nickname: nicknameSchema,
   password: passwordSchema,
-  /** 있으면 그 섬에 합류, 없으면 새 섬 */
-  invite: inviteCodeSchema.optional(),
 });
+/** 섬 입장 신청 (island.md 7장) */
+export const joinReq = z.object({ islandId: z.number().int().positive() });
+/** 섬 주인의 허용·거절 */
+export const decideReq = z.object({ userId: z.number().int().positive(), accept: z.boolean() });
 export const loginReq = z.object({ nickname: z.string().max(64), password: z.string().max(AUTH.passwordMax) });
 export const recoverReq = z.object({ nickname: z.string().max(64), recoveryCode: recoveryCodeSchema, password: passwordSchema });
 export const passwordReq = z.object({ current: z.string().max(AUTH.passwordMax), password: passwordSchema });
@@ -50,6 +50,8 @@ export type SignupReq = z.infer<typeof signupReq>;
 export type LoginReq = z.infer<typeof loginReq>;
 export type RecoverReq = z.infer<typeof recoverReq>;
 export type PasswordReq = z.infer<typeof passwordReq>;
+export type JoinReq = z.infer<typeof joinReq>;
+export type DecideReq = z.infer<typeof decideReq>;
 
 /** /api/me 등의 응답 (자기 정보만) */
 export interface MeRes {
@@ -59,8 +61,27 @@ export interface MeRes {
   hairStyle: number;
   hairColor: number;
   weapon: string;
-  island: { id: number; name: string; treasury: number; inviteCode: string };
+  /** 아직 섬이 없으면 null → 섬 고르기 화면 (island.md 7장) */
+  island: { id: number; name: string; treasury: number; ownerId: number } | null;
+  /** 섬이 없을 때 넣어 둔 입장 신청 (거절되면 rejected, 다음 신청·취소 때 지워짐) */
+  request: { islandId: number; islandName: string; rejected: boolean } | null;
+}
+
+/** 섬 목록 한 줄 (GET /api/islands) */
+export interface IslandListItem {
+  id: number;
+  name: string;
+  owner: string;
+  residents: number;
+}
+
+/** 섬 주인에게 보이는 입장 신청 (GET /api/island/requests) */
+export interface JoinRequestItem {
+  userId: number;
+  nickname: string;
+  createdAt: number;
 }
 
 /** 오류 코드 (화면 문구는 클라이언트가 고름. 로그인 실패는 닉네임 존재 여부를 알리지 않음) */
-export type AuthError = 'invalid' | 'badLogin' | 'locked' | 'suspended' | 'rateLimited' | 'nicknameTaken' | 'badInvite' | 'islandFull' | 'unauthorized';
+export type AuthError = 'invalid' | 'badLogin' | 'locked' | 'suspended' | 'rateLimited' | 'nicknameTaken' | 'islandFull' | 'unauthorized'
+  | 'noIsland' | 'hasIsland' | 'notOwner' | 'noRequest';

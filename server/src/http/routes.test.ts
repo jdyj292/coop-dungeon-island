@@ -57,16 +57,30 @@ describe('/api', () => {
     expect((await post('/signup', { nickname: 'kai', password: 'password1' })).status).toBe(409);
   });
 
-  it('로그인 없이 /me·초대 코드 재발급·비밀번호 변경은 401', async () => {
+  it('로그인 없이 /me·섬 목록·섬 만들기·신청·비밀번호 변경은 401', async () => {
     expect((await fetch(`${base}/me`)).status).toBe(401);
-    expect((await post('/island/invite')).status).toBe(401);
+    expect((await fetch(`${base}/islands`)).status).toBe(401);
+    expect((await post('/island/create')).status).toBe(401);
+    expect((await post('/island/request', { islandId: 1 })).status).toBe(401);
     expect((await post('/password', { current: 'a', password: 'password2' }, `${SESSION_COOKIE}=forged`)).status).toBe(401);
   });
 
-  it('로그인 → 초대 코드 재발급', async () => {
-    const l = await post('/login', { nickname: 'Kai', password: 'password1' });
-    expect(l.status).toBe(200);
-    const r = await post('/island/invite', undefined, sid(l));
-    expect(((await r.json()) as { inviteCode: string }).inviteCode).toHaveLength(8);
+  it('섬 만들기 → 목록 → 신청 → 주인이 허용 → 신청자 /me에 섬', async () => {
+    const kai = sid(await post('/login', { nickname: 'Kai', password: 'password1' }));
+    const mori = sid(await post('/login', { nickname: '모리', password: 'password1' }));
+    const made = (await (await post('/island/create', undefined, kai)).json()) as { me: { id: number; island: { id: number } } };
+    expect((await post('/island/create', undefined, kai)).status).toBe(409);
+    const list = (await (await fetch(`${base}/islands`, { headers: { cookie: mori } })).json()) as { islands: { id: number; owner: string; residents: number }[] };
+    expect(list.islands).toEqual([{ id: made.me.island.id, name: 'Kai의 섬', owner: 'Kai', residents: 1 }]);
+    expect((await post('/island/request', { islandId: 'x' }, mori)).status).toBe(400);
+    const req = (await (await post('/island/request', { islandId: made.me.island.id }, mori)).json()) as { me: { id: number; request: { islandName: string } } };
+    expect(req.me.request.islandName).toBe('Kai의 섬');
+    // 주인 아니면 403
+    expect((await fetch(`${base}/island/requests`, { headers: { cookie: mori } })).status).toBe(403);
+    const pending = (await (await fetch(`${base}/island/requests`, { headers: { cookie: kai } })).json()) as { requests: { userId: number }[] };
+    expect(pending.requests.map((r) => r.userId)).toEqual([req.me.id]);
+    expect((await post('/island/decide', { userId: req.me.id, accept: true }, kai)).status).toBe(200);
+    const me = (await (await fetch(`${base}/me`, { headers: { cookie: mori } })).json()) as { me: { island: { id: number; ownerId: number } } };
+    expect(me.me.island).toMatchObject({ id: made.me.island.id, ownerId: made.me.id });
   });
 });

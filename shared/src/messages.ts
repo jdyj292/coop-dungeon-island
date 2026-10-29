@@ -105,6 +105,8 @@ export interface S2C {
   depart: { roomId: string; floor: string };
   /** 섬: 우물 요청 실패 (멀리 있음·가득 참 등) */
   wellFail: { reason: 'far' | 'full' | 'busy' | 'notHost' };
+  /** 섬 주인에게: 입장 신청이 들어옴 (island.md 7장) */
+  joinRequest: { nickname: string };
   /** 섬: 게시판 (요청한 사람에게). 최신이 앞 */
   board: { log: { who: string; action: string; itemId: string | null; at: number }[]; memos: { who: string; text: string; at: number }[] };
 }

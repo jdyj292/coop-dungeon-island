@@ -24,7 +24,7 @@ const fails = (id: string) => sent.filter(([to, type]) => to === id && type === 
 
 beforeEach(() => {
   db = openDb(':memory:').db;
-  islandId = db.insert(islands).values({ name: '섬', inviteCode: 'ABCDEFGH' }).returning({ id: islands.id }).get().id;
+  islandId = db.insert(islands).values({ name: '섬' }).returning({ id: islands.id }).get().id;
   sent = [];
 });
 
