@@ -63,9 +63,10 @@ describe('textLeft', () => {
 
 describe('thrustPixels (찌르기 스미어)', () => {
   const s = { y: -6, x0: -2, x1: 19 };
-  it('한 줄 직선: 앞쪽만 위아래로 두꺼움, 꼬리부터 사라짐', () => {
+  it('직선: 앞으로 갈수록 두꺼움(1 → 3 → 5줄), 꼬리부터 사라짐', () => {
     const px = thrustPixels(s, 1);
-    expect(new Set(px.map((p) => p.dy))).toEqual(new Set([-7, -6, -5]));
+    expect(new Set(px.map((p) => p.dy))).toEqual(new Set([-8, -7, -6, -5, -4]));
+    expect(px.filter((p) => p.dx === 15).length).toBe(5);
     expect(px.filter((p) => p.dx === s.x0).length).toBe(1);
     expect(thrustPixels(s, 0.3).length).toBeLessThan(px.length);
     expect(thrustPixels(s, 0).length).toBe(0);

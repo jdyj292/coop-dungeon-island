@@ -20,15 +20,22 @@
     "ultimate": { "scale": [3, 2], "color": "global.damageText.ownSkill" }
   },
   "smear": {
-    "sec": 0.06,
+    "_note": "sec = 등급별 유지 초 (강할수록 오래). flat = 세로 납작 비율 (가로베기), center = 모양별 회전 중심 (없으면 smear.center)",
+    "sec": { "light": 0.06, "medium": 0.08, "heavy": 0.1, "ultimate": 0.12 },
     "center": [3, -11],
     "shapes": {
       "slash": { "a0": -1.7, "a1": 0.35, "r1": 8, "r2": 13 },
       "slam": { "a0": -1.7, "a1": 0.35, "r1": 8, "r2": 13 },
-      "upslash": { "a0": -1.5, "a1": 0.9, "r1": 9, "r2": 15, "rev": true }
+      "upslash": { "a0": -1.5, "a1": 0.9, "r1": 9, "r2": 15, "rev": true },
+      "sweep": { "a0": -2.4, "a1": 0.9, "r1": 11, "r2": 19, "flat": 0.4, "center": [1, -9] },
+      "rise": { "a0": -1.7, "a1": 0.9, "r1": 10, "r2": 16, "rev": true }
     },
     "grow": { "light": 0, "medium": 1, "heavy": 2, "ultimate": 3 },
-    "thrust": { "actions": ["gs_dash"], "y": -6, "x0": -2, "x1": 19 }
+    "thrust": { "actions": ["gs_dash"], "y": -6, "x0": -2, "x1": 19, "dust": 4 },
+    "ground": {
+      "_note": "땅을 내려치는 행동: 발 앞 forward부터 length만큼 spreadSec 동안 균열이 앞으로 번지고(끝 금색 반짝임), sec 동안 남았다 바둑판으로 사라짐. ringAt 자리에 충격 링 + 먼지 dust개",
+      "actions": ["gs_earthsplit"], "forward": 4, "length": 48, "sec": 0.5, "spreadSec": 0.12, "fadeLast": 0.4, "branchEvery": 7, "ringAt": 14, "dust": 6
+    }
   },
   "afterimage": { "every": 0.04, "sec": 0.18, "alpha": 0.35 },
   "backstepHop": 3,

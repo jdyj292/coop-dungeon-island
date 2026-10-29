@@ -1,5 +1,5 @@
 // 자동 재생 대본: 3연타(선입력) → 쉼 → 스킬 → 기상 → 처음으로. 입력만 만들고 판정은 게임 코드가 한다
-// 스킬 = 무기 기본 스킬 (대검은 올려베기 하나, 스태프는 화염 폭발 → 얼음 장판 → 순간이동 백스텝, MVP 보충 ST-2a)
+// 스킬 = 무기 기본 스킬 모두 (대검은 올려베기 → 대지가르기, 스태프는 화염 폭발 → 얼음 장판 → 순간이동 백스텝, MVP 보충 ST-2a)
 import { fighterPhase, skillDef, type ActionDef } from '@game/shared';
 import { NO_INPUT, type CombatStage, type StageInput } from '../../../client/src/stage/combatStage';
 
@@ -7,9 +7,8 @@ export type ScriptMode = 'all' | 'combo' | 'launch';
 /** 동작 사이 쉬는 시간 (게임 시간 초) */
 const REST = 0.6;
 
-/** 대본에 쓰는 스킬: 대검은 첫 기본 스킬(올려베기)만, 순간이동 무기(스태프)는 기본 스킬 모두 */
-const scriptSkills = (stage: CombatStage): ActionDef[] =>
-  (stage.weapon.backstepStyle === 'teleport' ? stage.weapon.baseSkills : stage.weapon.baseSkills.slice(0, 1)).map(skillDef);
+/** 대본에 쓰는 스킬: 무기 기본 스킬 모두 */
+const scriptSkills = (stage: CombatStage): ActionDef[] => stage.weapon.baseSkills.map(skillDef);
 
 export class Script {
   private part: 'combo' | 'launch' | 'backstep' | 'rest' = 'combo';

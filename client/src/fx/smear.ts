@@ -13,10 +13,17 @@ export interface SmearShape {
   r2: number;
   /** 아래에서 위로 휘두름 (꼬리가 반대쪽) */
   rev?: boolean;
+  /** 세로 납작 비율 (가로베기: 깊이 방향으로 도는 궤적을 납작한 타원으로) */
+  flat?: number;
+  /** 회전 중심 (발밑 기준). 없으면 smear.center */
+  center?: number[];
 }
 
 export const smearShape = (pose: string): SmearShape | undefined =>
   (fx.smear.shapes as Record<string, SmearShape>)[pose];
+
+/** 등급별 유지 시간: 강한 공격일수록 궤적이 오래 남는다 */
+export const smearSec = (grade: FxGrade): number => fx.smear.sec[grade];
 
 /**
  * 초승달 픽셀 목록. 가운데가 두껍고 양 끝이 가늘다. k = 남은 비율 (꼬리부터 지움)
@@ -24,9 +31,12 @@ export const smearShape = (pose: string): SmearShape | undefined =>
  */
 export function smearPixels(s: SmearShape, k: number): { dx: number; dy: number; tone: 0 | 1 | 2 }[] {
   const out: { dx: number; dy: number; tone: 0 | 1 | 2 }[] = [];
-  for (let dy = -s.r2; dy <= s.r2; dy++) {
+  const flat = s.flat ?? 1;
+  const ry = Math.ceil(s.r2 * flat);
+  for (let dy = -ry; dy <= ry; dy++) {
     for (let dx = -s.r2; dx <= s.r2; dx++) {
-      const a = Math.atan2(dy, dx), d = Math.hypot(dx, dy);
+      const uy = dy / flat;
+      const a = Math.atan2(uy, dx), d = Math.hypot(dx, uy);
       if (a < s.a0 || a > s.a1) continue;
       let f = (a - s.a0) / (s.a1 - s.a0);
       if (s.rev) f = 1 - f;
@@ -39,14 +49,17 @@ export function smearPixels(s: SmearShape, k: number): { dx: number; dy: number;
   return out;
 }
 
-/** (cx, cy) = 회전 중심, facing으로 좌우 반전, 강한 공격일수록 반지름을 키움 */
-export function smear(cx: number, cy: number, facing: number, shape: SmearShape, grade: FxGrade): Effect {
+/** (sx, sy) = 발밑, facing으로 좌우 반전, 강한 공격일수록 반지름을 키움 */
+export function smear(sx: number, sy: number, facing: number, shape: SmearShape, grade: FxGrade): Effect {
   const grow = fx.smear.grow[grade];
   const s = { ...shape, r1: shape.r1 + grow, r2: shape.r2 + grow };
+  const [ox = 0, oy = 0] = shape.center ?? fx.smear.center;
+  const cx = sx + ox * facing, cy = sy + oy;
   const tones = ['global.allyFx.white', 'global.allyFx.gold', 'global.fx.smearEdge'].map(colorInt);
+  const sec = smearSec(grade);
   return {
-    life: fx.smear.sec,
-    total: fx.smear.sec,
+    life: sec,
+    total: sec,
     draw(g, k) {
       for (const p of smearPixels(s, k)) dot(g, cx + p.dx * facing, cy + p.dy, tones[p.tone]!);
     },

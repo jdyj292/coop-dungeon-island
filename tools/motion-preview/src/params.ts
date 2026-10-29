@@ -60,9 +60,13 @@ export const PARAMS: Param[] = [
   ...(['light', 'medium', 'heavy'] as const).map((g): Param => (
     { group: '리듬 (px)', label: `${g} 앞으로`, file: F, path: `rhythm.forward.${g}`, range: [0, 6, 1] })),
   { group: '리듬 (px)', label: '복귀 초', file: F, path: 'rhythm.returnSec', range: [0.02, 0.4, 0.01] },
-  { group: '스미어', label: '유지 초', file: F, path: 'smear.sec', range: [0.02, 0.2, 0.01] },
-  ...(['light', 'medium', 'heavy'] as const).map((g): Param => (
-    { group: '스미어', label: `${g} 크기+`, file: F, path: `smear.grow.${g}`, range: [0, 5, 1] })),
+  ...(['light', 'medium', 'heavy'] as const).flatMap((g): Param[] => [
+    { group: '스미어', label: `${g} 유지 초`, file: F, path: `smear.sec.${g}`, range: [0.02, 0.2, 0.01] },
+    { group: '스미어', label: `${g} 크기+`, file: F, path: `smear.grow.${g}`, range: [0, 5, 1] },
+  ]),
+  { group: '땅 균열', label: '번지는 초', file: F, path: 'smear.ground.spreadSec', range: [0.02, 0.4, 0.01] },
+  { group: '땅 균열', label: '남는 초', file: F, path: 'smear.ground.sec', range: [0.1, 1.2, 0.05] },
+  { group: '땅 균열', label: '길이 px', file: F, path: 'smear.ground.length', range: [16, 80, 2] },
 ];
 
 /** 승인 데모의 타이밍 (motion.md 1장 기준 예) */

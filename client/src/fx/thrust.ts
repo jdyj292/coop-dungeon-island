@@ -3,6 +3,7 @@ import type { FxGrade } from '@game/shared';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
 import { dot, type Effect } from './layer';
+import { smearSec } from './smear';
 
 export interface ThrustShape {
   /** 칼날 줄 높이 (발밑 기준, 위가 -) */
@@ -15,7 +16,7 @@ export interface ThrustShape {
 /** 스미어를 찌르기로 그리는 행동 id 목록 (fx.json smear.thrust.actions) */
 export const isThrust = (actionId: string): boolean => fx.smear.thrust.actions.includes(actionId);
 
-/** 픽셀 목록. 가운데 줄 흰색, 위아래 줄 금색(앞쪽 절반만), 맨 끝 어두운 금색. k = 남은 비율 */
+/** 픽셀 목록. 가운데 줄 흰색, 위아래 줄 금색(앞 80%), 그 바깥 어두운 금색(앞 40%), 맨 끝 어두운 금색. k = 남은 비율 */
 export function thrustPixels(s: ThrustShape, k: number, grow = 0): { dx: number; dy: number; tone: 0 | 1 | 2 }[] {
   const out: { dx: number; dy: number; tone: 0 | 1 | 2 }[] = [];
   if (k <= 0) return out;
@@ -24,8 +25,11 @@ export function thrustPixels(s: ThrustShape, k: number, grow = 0): { dx: number;
     const f = (dx - s.x0) / (x1 - s.x0);
     if (f < 1 - k * 1.4) continue;
     out.push({ dx, dy: s.y, tone: dx === x1 ? 2 : 0 });
-    if (f > 0.4 && dx < x1) {
+    if (f > 0.2 && dx < x1) {
       out.push({ dx, dy: s.y - 1, tone: 1 }, { dx, dy: s.y + 1, tone: 1 });
+    }
+    if (f > 0.6 && dx < x1 - 1) {
+      out.push({ dx, dy: s.y - 2, tone: 2 }, { dx, dy: s.y + 2, tone: 2 });
     }
   }
   return out;
@@ -36,9 +40,10 @@ export function thrust(at: () => { sx: number; sy: number; facing: number }, gra
   const s = fx.smear.thrust as ThrustShape;
   const grow = fx.smear.grow[grade];
   const tones = ['global.allyFx.white', 'global.allyFx.gold', 'global.fx.smearEdge'].map(colorInt);
+  const sec = smearSec(grade);
   return {
-    life: fx.smear.sec,
-    total: fx.smear.sec,
+    life: sec,
+    total: sec,
     draw(g, k) {
       const { sx, sy, facing } = at();
       for (const p of thrustPixels(s, k, grow)) dot(g, sx + p.dx * facing, sy + p.dy, tones[p.tone]!);
