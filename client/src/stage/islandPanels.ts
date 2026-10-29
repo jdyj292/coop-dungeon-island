@@ -1,22 +1,25 @@
-// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·스킬·장식·물약·재료) / 게시판(기록·메모·주민)
-// 키: ↑↓ 고르기, ←→ 수량(스킬 탭은 포인트), Q·E·Tab 탭, Enter 사기·장착·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
+// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·장식·물약·재료) / 스킬(무기별 탭) / 게시판(기록·메모·주민)
+// 키: ↑↓ 고르기, ←→ 수량(스킬 창은 포인트), Q·E·Tab 탭, Enter 사기·장착·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
 import type Phaser from 'phaser';
 import { facilityName, ISLAND, ITEMS, MVP_WEAPONS, NET, WEAPONS } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
+import { moneyLines } from './islandBadges';
 import { ResidentsTab } from './islandResidents';
 import { SkillsTab } from './islandSkills';
 
-export type PanelKind = 'shop' | 'bag' | 'board' | 'well';
+export type PanelKind = 'shop' | 'bag' | 'skill' | 'board' | 'well';
 
 const TABS: Record<PanelKind, { label: string; disabled?: boolean }[]> = {
   shop: [{ label: '물약' }, { label: '장식' }, { label: '의상', disabled: true }],
-  bag: [{ label: '장비' }, { label: '스킬' }, { label: '장식' }, { label: '물약' }, { label: '재료' }],
+  bag: [{ label: '장비' }, { label: '장식' }, { label: '물약' }, { label: '재료' }],
+  // 무기별 스킬 (처음 열면 장착한 무기 탭)
+  skill: MVP_WEAPONS.map((id) => ({ label: WEAPONS[id]?.name ?? id })),
   board: [{ label: '기록' }, { label: '메모' }, { label: '주민' }],
   // 층 선택 (해금된 층만, island.json well.floors)
   well: ISLAND.well.floors.map((f) => ({ label: `${f.replace(/\D/g, '')}층` })),
 };
-const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', board: '게시판', well: '우물' };
+const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', skill: '스킬', board: '게시판', well: '우물' };
 const POTION_COLOR: Record<string, string> = { hpPotion: 'global.ui.hp', mpPotion: 'global.ui.mp' };
 const VERB: Record<string, string> = {
   found: '섬을 만듦', 'dungeon:clear': '1층 클리어', 'dungeon:return': '1층에서 귀환', 'dungeon:wipe': '1층 전멸', join: '섬에 들어옴', invite: '초대 코드를 바꿈', place: '놓음', move: '옮김', remove: '치움', buy: '삼', treasury: '금고로 삼',
@@ -26,8 +29,8 @@ const MAX_QTY = 99;
 const weaponName = (id = 'greatsword') => WEAPONS[id]?.name ?? id;
 /** 가방 장비 탭 번호 */
 const EQUIP_TAB = 0;
-/** 가방 스킬 탭 번호 (그 뒤 장식·물약·재료) */
-const SKILL_TAB = 1;
+/** 가방 장식·물약·재료 탭 번호 */
+const DECO_TAB = 1, POTION_TAB = 2;
 /** 게시판 주민 탭 번호 */
 const RESIDENTS_TAB = 2;
 
@@ -57,11 +60,18 @@ export class IslandPanels {
     this.panel = new ListPanel(scene, depth);
     this.residents = new ResidentsTab(conn);
     this.skills = new SkillsTab(conn);
+    // 섬 주인이면 기다리는 신청 수 (M 버튼 이름표)
+    this.residents.refresh();
   }
 
-  /** 입장 신청 알림이 옴: 주민 탭을 보고 있으면 새로 */
+  /** 입장 신청 알림이 옴: 신청 수·주민 탭을 새로 */
   onJoinRequest(): void {
-    if (this.onResidents()) this.residents.refresh();
+    this.residents.refresh();
+  }
+
+  /** 기다리는 입장 신청 수 (주인이 아니면 0) */
+  get pendingRequests(): number {
+    return this.residents.pending;
   }
 
   show(kind: PanelKind): void {
@@ -71,6 +81,7 @@ export class IslandPanels {
     this.qty = 1;
     this.confirm = false;
     if (kind === 'board') this.conn.send('board', {});
+    if (kind === 'skill') this.tab = Math.max(0, (MVP_WEAPONS as readonly string[]).indexOf(this.myWeapon()));
   }
 
   private setTab(t: number): void {
@@ -88,7 +99,12 @@ export class IslandPanels {
   }
 
   private onSkills(): boolean {
-    return this.open === 'bag' && this.tab === SKILL_TAB;
+    return this.open === 'skill';
+  }
+
+  /** 스킬 창에서 보고 있는 무기 탭 */
+  private skillWeapon(): string {
+    return MVP_WEAPONS[this.tab] ?? this.myWeapon();
   }
 
   private myWeapon(): string {
@@ -135,16 +151,16 @@ export class IslandPanels {
       return { ids: [...MVP_WEAPONS], rows: MVP_WEAPONS.map((id) => ({ icon: { kind: 'weapon' as const, weapon: id }, label: id === cur ? `${weaponName(id)} (장착 중)` : weaponName(id) })) };
     }
     if (this.onSkills()) {
-      const rows = this.skills.rows(this.myWeapon());
+      const rows = this.skills.rows(this.skillWeapon());
       return { ids: rows.map(() => ''), rows };
     }
     if (this.open === 'bag') {
-      const inv = c.inventory, src = [ITEMS.decorations, ITEMS.consumables, ITEMS.materials][this.tab - 2]!;
+      const inv = c.inventory, src = [ITEMS.decorations, ITEMS.consumables, ITEMS.materials][this.tab - DECO_TAB]!;
       const ids = Object.keys(src).filter((id) => (inv[id] ?? 0) > 0);
       return {
         ids,
         rows: ids.map((id) => ({
-          icon: this.tab === 2 ? { kind: 'deco' as const, itemId: id } : this.tab === 3 ? { kind: 'potion' as const, color: POTION_COLOR[id] ?? 'global.ui.hp' } : { kind: 'material' as const },
+          icon: this.tab === DECO_TAB ? { kind: 'deco' as const, itemId: id } : this.tab === POTION_TAB ? { kind: 'potion' as const, color: POTION_COLOR[id] ?? 'global.ui.hp' } : { kind: 'material' as const },
           label: itemName(id), right: `X${inv[id]}`,
         })),
       };
@@ -189,8 +205,8 @@ export class IslandPanels {
       footer = locked ? '출발 카운트다운 중에는 못 바꿉니다' : `${weaponName(this.myWeapon())} · LV ${c.me.level}`;
       buttons = [{ id: 'equip', label: '장착', disabled: !id || id === this.myWeapon() || locked }];
     } else if (this.onSkills()) {
-      footer = this.skills.footer(this.myWeapon(), this.weaponLocked());
-      buttons = this.skills.buttons(this.myWeapon(), this.sel, this.weaponLocked());
+      footer = this.skills.footer(this.skillWeapon(), this.weaponLocked());
+      buttons = this.skills.buttons(this.skillWeapon(), this.sel, this.weaponLocked());
     } else if (this.onResidents()) {
       footer = this.residents.footer();
       buttons = this.residents.buttons(this.sel);
@@ -199,13 +215,14 @@ export class IslandPanels {
     return {
       title: TITLE[kind], tabs: TABS[kind], tab: this.tab, rows, sel: (kind === 'board' && !this.onResidents()) || kind === 'well' ? -1 : Math.min(this.sel, rows.length - 1), footer, buttons,
       ...(kind === 'board' && !this.onResidents() ? { scrollTop: this.sel } : {}),
+      ...(this.onSkills() ? { detail: this.skills.detail(this.skillWeapon(), this.sel) } : kind === 'bag' ? { detail: moneyLines(this.conn) } : {}),
       empty: this.onResidents() ? '불러오는 중…' : kind === 'board' ? (c.board ? '아직 없습니다' : '불러오는 중…') : kind === 'well' ? '대기 중인 주민이 없습니다' : '비어 있습니다',
     };
   }
 
   private act(id: string): void {
     if (this.onResidents()) return this.residents.act(id, this.sel);
-    if (this.onSkills()) return this.skills.act(id, this.myWeapon(), this.sel, this.weaponLocked());
+    if (this.onSkills()) return this.skills.act(id, this.skillWeapon(), this.sel, this.weaponLocked());
     const ids = this.rows().ids, item = ids[this.sel];
     if (id === 'minus') this.qty = Math.max(1, this.qty - 1);
     else if (id === 'plus') this.qty = Math.min(MAX_QTY, this.qty + 1);

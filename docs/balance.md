@@ -220,7 +220,7 @@
 - 보물상자 (3번 방, 데이터 rooms.json chest): 클리어 뒤 E로 한 번, 파티원 모두 코인 15 + 버섯 1
 - 콤보 코인 보너스: 솔로 개인 콤보 30/60/90, 파티 팀 콤보 20/40/60 → 이번 판 코인 +5/10/15% (combat.json combo.soloMilestones·teamMilestones·coinBonus). 한 판에서 가장 높은 단계만, 더하는 것은 정산 때
 - 경험치는 이번 판 누적, 레벨은 정산 때 올라 weapon_mastery에 저장 (M4). 던전에서 숙련도는 최대 HP(maxHpFor)와 ATK(atkFor, 플레이어 상태 atk → 데미지)에 반영 (섬 연마 보너스는 MVP 이후). 보스 첫 처치 보상(트로피·SP·의상)과 무기 외형 드롭은 MVP 이후
-- SP: 저장하지 않고 계산 = 무기 숙련도 레벨 − 1 + weapon_mastery.sp(보너스, 보스 첫 처치용, 지금은 0). 쓴 SP = 기본 스킬 노드의 (포인트 − 1) 합 (skills.md 1장, server/src/db/skillStore.ts). 레벨이 오르면 섬 가방 스킬 탭에서 바로 쓸 수 있다
+- SP: 저장하지 않고 계산 = 무기 숙련도 레벨 − 1 + weapon_mastery.sp(보너스, 보스 첫 처치용, 지금은 0). 쓴 SP = 기본 스킬 노드의 (포인트 − 1) 합 (skills.md 1장, server/src/db/skillStore.ts). 레벨이 오르면 섬 스킬 창(K)에서 바로 쓸 수 있다
 
 ### 재료
 - 층 고유 재료 1종. 일반 몬스터 6%(3-9 웨이브 증가로 15%에서 낮춤, 한 판 약 8개 유지), 정예 100%, 보스 3개 확정

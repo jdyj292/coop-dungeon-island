@@ -22,7 +22,7 @@ export function spOf(db: Db, userId: number, weapon: string): number {
   return spTotal(r?.level ?? 1, r?.sp ?? 0);
 }
 
-/** 가방 스킬 탭에 보낼 값: 무기마다 받은 SP·쓴 SP·노드 문자열 */
+/** 스킬 창(K)에 보낼 값: 무기마다 받은 SP·쓴 SP·노드 문자열 */
 export function skillsView(db: Db, userId: number): { weapon: string; sp: number; spent: number; build: string }[] {
   const b = skillBuild(db, userId);
   return MVP_WEAPONS.map((weapon) => {

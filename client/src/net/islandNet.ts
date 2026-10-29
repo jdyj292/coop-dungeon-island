@@ -57,7 +57,7 @@ export class IslandConnection {
   me: S2C['me'] = { wallet: 0, level: 1 };
   /** 내 가방 (inv 메시지) */
   inventory: Record<string, number> = {};
-  /** 내 스킬 (무기마다 SP·노드, 가방 스킬 탭). skillsSeq = 받을 때마다 1씩 (실패 알림 구분) */
+  /** 내 스킬 (무기마다 SP·노드, 스킬 창(K)). skillsSeq = 받을 때마다 1씩 (실패 알림 구분) */
   skills: S2C['skills'] = { weapons: [] };
   skillsSeq = 0;
   /** 배치 실패 (화면 알림) */

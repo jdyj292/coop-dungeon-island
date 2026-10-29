@@ -20,7 +20,9 @@
 | floor1_room_hud_mockup.html | 1층 방 + HUD (전투 중 / 보스전 HUD / 방 클리어 전환). 아래 띠는 예전 통짜 띠 |
 | hud_bottom_cluster.html | 던전 아래 HUD 묶음형 (현재 vs 묶음형 비교, 기준 = hudBottomDraft) |
 | island_screen_hud_mockup.html | 섬 기본 화면 / 배치 모드. 아래 띠는 예전 통짜 띠 |
-| island_hud_cluster.html | 섬 아래 HUD 묶음형 (기본 화면·배치 모드, 현재 vs 묶음형 비교, 기준 = islandDraft·placeDraft) |
+| island_hud_cluster.html | 섬 아래 HUD 묶음형 (기본 화면·배치 모드, 현재 vs 묶음형 비교, 기준 = placeDraft. 기본 화면은 island_hud_help.html이 대체) |
+| island_hud_help.html | 섬 HUD 처음 하는 사람용 (기준 = helpDraft): 작은 아래 띠(얼굴 14·버튼 B I K M 14), 알림 점, 버튼 이름표, 우물 화살표, Esc 도움말 탭(섬·던전), 가방 아래 돈 상자. 알림 점·시설 이름표·우물 화살표·얼굴 묶음은 승인 뒤 뺌, 버튼 그림은 island_hud_icons.html로 바뀜 (hud.md 8장). 지갑·금고 묶음과 주민 목록 없음. 글자는 client/public/fonts .bin (dev 서버 /@fs/ 경로로 열기) |
+| island_hud_icons.html | 섬 아래 띠 버튼 비교 (현재 / A / B, 기준 = optA): 16px 칸, 12×12 그림 B 망치·I 배낭·K 별·M 게시판, 키는 왼쪽 아래 꼬리표, 묶음은 화면 가운데 |
 | character_expressions.html, character_outfit_layers.html, character_weapon_poses.html | 캐릭터 |
 | floor1_monster_animations.html | 몬스터 동작 |
 

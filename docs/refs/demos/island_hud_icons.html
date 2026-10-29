@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>섬 아래 띠 버튼 (확정)</title>
+<!-- 대화 중 승인된 원본 데모 (2026-10, 기준 = optA: 16px 칸·12×12 그림 망치/배낭/별/게시판·키 꼬리표). 수정 금지. 망치 그림자색은 게임에서 global.materials.gauntlet. 섬 아래 띠 B I K M 버튼이 무엇인지 잘 보이게: 현재(14px, 키 글자 + 8×8 그림) / A 그림 크게 16px / B 키 + 한글 낱말. 한글은 게임과 같은 갈무리7 .bin. 색은 palette.json 값 -->
+<style>
+body{font-family:system-ui,sans-serif;max-width:880px;margin:16px auto;padding:0 16px;background:#f6f5f1;color:#222}
+.row{display:flex;flex-direction:column;align-items:center;gap:4px;margin:14px 0}
+.lab{font-size:14px;color:#555}
+canvas{image-rendering:pixelated;border-radius:6px;max-width:100%}
+</style></head><body>
+<h2 style="font-size:18px;margin:0 0 4px">섬 아래 띠 버튼: 무엇인지 한눈에</h2>
+<p style="margin:0 0 8px;color:#666;font-size:14px">게임 화면(288×162) 아래쪽만 잘라 3배로. 모두 화면 가운데. 마우스 올림 이름표·알림 점은 그대로 (K·M에 점)</p>
+<div id="rows"></div>
+<script>
+const OL='#2A2540',BD='#4b4268',IN='#2A2540',BG='#1d1830',KEY='#b9b0dc',COIN='#F5C542',GOLD='#FFE08A',WOOD='#A7764E',WOODD='#5a4632',LIGHT='#c79a6a',PAPER='#F4E8D0',STEEL='#D9DDE3',STEELL='#f2f5f8',LEATHER='#8a5a36',WHITE='#FFF8E7',TXT='#f2f5f8';
+const LW=288,SH=34,TOPY=162-SH;
+const F={'B':['110','101','110','101','110'],'I':['111','010','010','010','111'],'K':['101','110','100','110','101'],'M':['101','111','111','101','101']};
+let g;
+const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+function key(s,x,y,c){[...s].forEach((ch,k)=>F[ch].forEach((r,j)=>[...r].forEach((b,i)=>{if(b=='1')R(x+k*4+i,y+j,1,1,c);})));}
+// 게임 도트 글꼴 (client/src/ui/glyphFont.ts 형식)
+let G7=null;
+function decodeGLF(buf){const v=new DataView(buf),asc=v.getUint8(4),n=v.getUint32(8,true),gl=new Map();let t=12,d=12+n*7;for(let i=0;i<n;i++,t+=7){const w=v.getUint8(t+3),h=v.getUint8(t+4),len=Math.ceil(w*h/8);gl.set(v.getUint16(t,true),{dw:v.getUint8(t+2),w,h,xo:v.getInt8(t+5),yo:v.getInt8(t+6),b:new Uint8Array(buf,d,len)});d+=len;}return{asc,gl};}
+const gw=(f,s)=>{let w=0;for(const ch of s)w+=(f.gl.get(ch.codePointAt(0))||f.gl.get(63)).dw;return w;};
+function gtext(f,s,x,y,col){let pen=0;for(const ch of s){const q=f.gl.get(ch.codePointAt(0))||f.gl.get(63);const top=f.asc-(q.yo+q.h);for(let j=0;j<q.h;j++)for(let i=0;i<q.w;i++){const k=j*q.w+i;if(q.b[k>>3]&(0x80>>(k&7)))R(x+pen+q.xo+i,y+top+j,1,1,col);}pen+=q.dw;}}
+function cluster(x,y,w){R(x+2,y-1,w-4,1,'rgba(0,0,0,.4)');R(x+1,y+1,w-2,162-y-1,'rgba(29,24,48,.78)');R(x+2,y,w-4,1,BD);R(x+1,y+1,1,1,BD);R(x+w-2,y+1,1,1,BD);R(x,y+2,1,162-y-2,BD);R(x+w-1,y+2,1,162-y-2,BD);R(x+2,y+1,w-4,1,'rgba(255,255,255,.07)');}
+function slot(x,y,w,h,sel){R(x,y,w,h,sel?COIN:BD);R(x+1,y+1,w-2,h-2,IN);R(x+2,y+2,w-4,h-4,BG);}
+function badge(x,y){R(x,y,4,4,OL);R(x+1,y+1,2,2,COIN);}
+function ground(){for(let y=TOPY;y<162;y++)for(let x=0;x<LW;x++)R(x,y,1,1,((x>>4)+(y>>3))%2?'#8DAA68':'#97B472');}
+
+// 현재: 14px, 키 글자 + 8×8 그림
+function now(){const n=4,step=15,cw=n*step+4,x0=Math.floor((LW-cw)/2)+3;cluster(x0-3,146,cw);['B','I','K','M'].forEach((k,i)=>{const x=x0+i*step,y=148;slot(x,y,14,14);key(k,x+2,y+2,KEY);const r=(a,b,w,h,c)=>R(x+a,y+b,w,h,c);
+if(k=='B'){r(5,6,8,1,WOOD);r(5,9,8,1,WOOD);[6,9,12].forEach(c=>{r(c,5,1,7,WOOD);r(c,5,1,1,LIGHT);});r(5,10,8,1,WOODD);}
+if(k=='I'){r(5,6,8,7,OL);r(6,7,6,5,WOOD);r(6,7,6,2,LIGHT);r(8,5,2,2,WOODD);}
+if(k=='K'){for(let t=0;t<5;t++){r(7+t,10-t,1,1,STEELL);r(8+t,10-t,1,1,STEEL);}r(6,10,3,1,COIN);r(7,9,1,3,COIN);r(5,12,2,1,LEATHER);}
+if(k=='M'){r(5,6,8,7,OL);r(6,7,6,5,WOOD);r(7,8,2,2,PAPER);r(10,9,2,2,PAPER);}
+if(k=='K'||k=='M')r(10,0,4,4,OL),r(11,1,2,2,COIN);});}
+
+// A: 그림 크게 (16px 칸, 그림 12×12 가운데, 키 글자는 칸 아래 테두리에 걸친 작은 꼬리표)
+function iconA(k,x,y){const r=(a,b,w,h,c)=>R(x+a,y+b,w,h,c);
+if(k=='B'){// 망치: 머리(쇠) + 나무 손잡이
+r(2,1,9,5,OL);r(3,2,7,3,STEEL);r(3,2,7,1,STEELL);r(9,2,1,3,'#a8adb8');r(5,6,3,6,OL);r(6,6,1,6,WOOD);r(6,6,1,1,LIGHT);}
+if(k=='I'){// 배낭: 멜빵 고리·덮개·버클·주머니
+r(4,0,4,3,OL);r(5,1,2,1,WOOD);r(1,2,10,10,OL);r(2,3,8,8,WOOD);r(2,3,8,3,LIGHT);r(2,6,8,1,WOODD);r(5,5,2,2,COIN);r(3,8,6,3,WOODD);r(4,8,4,2,WOOD);}
+if(k=='K'){// 반짝이는 별 (특별한 기술)
+const P=[[5,0],[5,1],[4,2],[5,2],[6,2],[4,3],[5,3],[6,3],[0,4],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5],[8,5],[9,5],[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[8,6],[3,7],[4,7],[5,7],[6,7],[7,7],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[8,8],[2,9],[3,9],[7,9],[8,9],[1,10],[2,10],[8,10],[9,10]];
+const S=new Set(P.map(([a,b])=>a+','+b));P.forEach(([a,b])=>[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{if(!S.has((a+dx)+','+(b+dy)))r(a+dx,b+dy,1,1,OL);}));P.forEach(([a,b])=>r(a,b,1,1,b<5?GOLD:COIN));r(5,3,1,1,WHITE);r(11,0,1,1,WHITE);r(10,1,1,1,GOLD);}
+if(k=='M'){// 게시판: 나무 판 + 종이 두 장 + 다리
+r(0,0,12,8,OL);r(1,1,10,6,WOOD);r(1,1,10,1,LIGHT);r(2,2,3,4,PAPER);r(6,2,4,3,WHITE);r(3,3,1,1,'#9a8f7a');r(7,3,2,1,'#9a8f7a');r(3,8,2,4,OL);r(7,8,2,4,OL);r(3,8,1,4,WOOD);r(7,8,1,4,WOOD);}}
+function optA(){const n=4,step=19,cw=n*step+2,x0=Math.floor((LW-cw)/2)+3;cluster(x0-3,144,cw);['B','I','K','M'].forEach((k,i)=>{const x=x0+i*step,y=145;slot(x,y,16,16);iconA(k,x+2,y+2);
+// 키 꼬리표: 칸 왼쪽 아래 모서리
+R(x-1,y+10,6,7,BD);R(x,y+11,4,5,BG);key(k,x+1,y+11,'#ffffff');if(k=='K'||k=='M')badge(x+12,y);});}
+
+// B: 키 칸 + 한글 낱말 (갈무리7)
+function optB(){const items=[['B','꾸미기'],['I','가방'],['K','스킬'],['M','게시판']],pad=3;
+const ws=items.map(([k,t])=>5+2+gw(G7,t)+pad*2+1);const gap=2,cw=ws.reduce((a,b)=>a+b,0)+gap*(items.length-1)+6;let x=Math.floor((LW-cw)/2)+3;cluster(x-3,147,cw);
+items.forEach(([k,t],i)=>{const w=ws[i],y=149;slot(x,y,w,13);R(x+2,y+2,7,9,BD);R(x+3,y+3,5,7,BG);key(k,x+4,y+4,'#ffffff');gtext(G7,t,x+11,y+1,TXT);if(k=='K'||k=='M')badge(x+w-4,y);x+=w+gap;});}
+
+const OPTS=[['현재 (14px · 키 글자 + 8×8 그림)',now],['A · 그림 크게 (16px · 망치 / 배낭 / 별 / 게시판, 키는 왼쪽 아래 꼬리표)',optA],['B · 키 + 한글 낱말 (높이 13px · 꾸미기 / 가방 / 스킬 / 게시판)',optB]];
+fetch('../../../client/public/fonts/Galmuri7.bin').then(r=>r.arrayBuffer()).then(b=>{G7=decodeGLF(b);
+const host=document.getElementById('rows');OPTS.forEach(([name,fn])=>{const d=document.createElement('div');d.className='row';d.innerHTML='';const l=document.createElement('div');l.className='lab';l.textContent=name;
+const c=document.createElement('canvas');c.width=LW;c.height=SH;c.style.width='100%';g=c.getContext('2d');g.translate(0,-TOPY);ground();fn();d.append(l,c);host.append(d);});});
+</script>
+</body></html>

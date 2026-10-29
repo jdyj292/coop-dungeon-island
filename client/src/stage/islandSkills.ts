@@ -1,4 +1,4 @@
-// 가방 스킬 탭 (hud.md 8장, skills.md 1장): 장착한 무기의 기본 스킬 2개. 줄 = 스킬(포인트 N/3) 다음에 그 변형 2개
+// 스킬 창 (K, hud.md 8장, skills.md 1장): 무기 탭마다 그 무기의 기본 스킬 2개. 줄 = 스킬(포인트 N/3) 다음에 그 변형 2개
 // 스킬 줄 ←→ = 포인트 내리기·올리기, 변형 줄 Enter = 고르기(3포인트일 때), 초기화 버튼. 검사·저장은 서버 (islandShop skill), 값은 islandNet.skills
 import { buildFrom, COMBAT, MVP_WEAPONS, nodeOf, SKILLS, weaponDef, type S2C, type SkillNode } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
@@ -43,6 +43,13 @@ export class SkillsTab {
       const name = s.variants?.[variant]?.name ?? variant;
       return { label: `· ${name}${n.variant === variant ? ' (선택)' : ''}`, dim: n.points < TREE.variantAt };
     });
+  }
+
+  /** 고른 줄 설명 (패널 아래 상자): 스킬 = 기본 효과, 변형 = 무엇이 바뀌는지 */
+  detail(weapon: string, sel: number): string {
+    const l = this.lines(weapon)[sel], s = l && SKILLS[l.skill];
+    if (!s) return '';
+    return l.variant ? (s.variants?.[l.variant]?.desc ?? '') : s.desc;
   }
 
   footer(weapon: string, locked: boolean): string {

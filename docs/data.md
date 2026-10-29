@@ -98,6 +98,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 |---|---|
 | weapon | 무기 id |
 | name | 표시 이름 |
+| desc | 스킬 창(K) 설명 (필수, 2줄 안: 패널 폭 196px). 변형에도 desc 필수 = 기본 스킬과 무엇이 다른지. 변형 desc는 판정에 덮어쓰지 않음 |
 | branch | base / A / B |
 | tier | 계열 스킬의 단계 (1~3, 각성 4) |
 | cooldown | 기준 쿨 (실제 = × COOLDOWN_SCALE) |

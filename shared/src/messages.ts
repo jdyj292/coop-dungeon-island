@@ -46,7 +46,7 @@ export const C2S = {
   memo: z.object({ text: lineText(NET.memoMaxLen) }).strict(),
   /** 무기 고르기 (섬 가방 장비 탭, MVP 보충 ST-4) */
   weapon: z.object({ id: z.enum(MVP_WEAPONS) }).strict(),
-  /** 섬: 스킬 포인트·변형 바꾸기, 무기 스킬 초기화 (skills.md 1장, 가방 스킬 탭). 검사는 서버 */
+  /** 섬: 스킬 포인트·변형 바꾸기, 무기 스킬 초기화 (skills.md 1장, 스킬 창(K)). 검사는 서버 */
   skill: z.object({
     weapon: z.enum(MVP_WEAPONS), op: z.enum(['set', 'reset']), skillId: z.string().max(40).optional(),
     points: z.number().int().min(1).max(9).optional(), variant: z.string().max(24).optional(),

@@ -36,6 +36,14 @@ export function coinIcon(g: G, x: number, y: number): void {
   dot(g, x + 4, y + 4, C('global.fx.smearEdge'), 1, 1);
 }
 
+/** 공동 금고(상자) 아이콘 9×8 (외곽선 포함, 승인 데모 island_hud_help.html 가방 아래 상자) */
+export function vaultIcon(g: G, x: number, y: number): void {
+  dot(g, x - 1, y - 1, C('global.outline'), 9, 8);
+  dot(g, x, y, C('island.wood'), 7, 6);
+  dot(g, x, y, C('global.ui.bagLight'), 7, 2);
+  dot(g, x + 3, y + 2, C('global.ui.coin'), 1, 2);
+}
+
 /** 재료(버섯) 아이콘 5×5 (승인 데모 아래 띠) */
 export function materialIcon(g: G, x: number, y: number): void {
   dot(g, x, y, C('floors.1.monster.mushroomCap'), 5, 3);

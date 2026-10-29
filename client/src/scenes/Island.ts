@@ -6,9 +6,12 @@ import fx from '../../data/fx.json';
 import { api } from '../net/api';
 import { IslandConnection } from '../net/islandNet';
 import { colorInt } from '../palette';
+import { spLeft } from '../stage/islandBadges';
 import { IslandStage } from '../stage/islandStage';
 import { SettingsPanel } from '../stage/settingsPanel';
-import { IslandHud } from '../ui/islandHud';
+import { done } from '../ui/firstVisit';
+import { HudTip } from '../ui/hudTip';
+import { IslandHud, type HudButton } from '../ui/islandHud';
 import { koText } from '../ui/koText';
 import { islandScreenSize, IslandWorld } from '../view/islandWorld';
 import { HUD_HEIGHT, project } from '../view/layout';
@@ -17,6 +20,10 @@ import { HUD_HEIGHT, project } from '../view/layout';
 const DEADZONE = { x: 40, y: 12 };
 const BODY_LIFT = 10;
 const NOTICE_MS = 2000;
+/** 도움말 탭 번호 (settingsPanel) */
+const HELP_TAB = 2;
+/** 아래 띠 버튼 이름 (마우스 올림 이름표 첫 줄) */
+const BUTTON_NAME: Record<HudButton, string> = { B: '섬 꾸미기 (B)', I: '가방 (I)', K: '스킬 (K)', M: '게시판 (M)' };
 /** 구매 실패 이유 → 알림 */
 const BUY_FAIL: Record<string, string> = { money: '코인이 모자랍니다', treasury: '공동 금고가 모자랍니다', unknown: '살 수 없는 품목입니다' };
 const WELL_FAIL: Record<string, string> = { far: '우물 앞에서 합류할 수 있습니다', full: '파티가 가득 찼습니다 (최대 4명)', notHost: '대기를 시작한 사람만 출발할 수 있습니다', busy: '잠시 뒤 다시' };
@@ -29,12 +36,16 @@ const PLACE_FAIL: Record<string, string> = {
 
 /**
  * 섬 씬 (docs/island.md, hud.md 4·8장): 섬 방에 접속해 주민과 함께 걷고, 꾸미고, 사고, 이야기하고, 우물에서 던전으로 출발한다
- * 조작: 방향키·WASD 이동(좌우 두 번 = 달리기), B 배치 모드, I 가방, M 게시판, E 잡화점·게시판·우물(앞에서), Enter 채팅, L 로그아웃 (개발 임시)
+ * 조작: 방향키·WASD 이동(좌우 두 번 = 달리기), B 배치 모드, I 가방, K 스킬, M 게시판, E 잡화점·게시판·우물(앞에서), Enter 채팅, Esc 설정(도움말 탭), L 로그아웃 (개발 임시)
+ * 아래 띠 B·I·K·M 클릭, 마우스를 올리면 이름표 (hud.md 8장)
  */
 export class Island extends Phaser.Scene {
   private stage: IslandStage | null = null;
   private world!: IslandWorld;
   private hud!: IslandHud;
+  private tip!: HudTip;
+  /** 마우스가 올라가 있는 아래 띠 버튼 */
+  private hover: HudButton | null = null;
   /** 설정 (Esc, 볼륨) */
   private settings!: SettingsPanel;
   private keys!: Record<'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd', Phaser.Input.Keyboard.Key>;
@@ -56,6 +67,7 @@ export class Island extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(colorInt('island.water'));
     this.world = new IslandWorld(this);
     this.hud = new IslandHud(this, 6000);
+    this.tip = new HudTip(this, 6500);
     // 외형 탭: 내 주민 상태를 보이고, 바꾸면 look 메시지 (서버가 저장·상태 갱신)
     this.settings = new SettingsPanel(this, 6600, {
       get: () => {
@@ -63,14 +75,19 @@ export class Island extends Phaser.Scene {
         return { hair: { style: r?.hair ?? 0, color: r?.hairColor ?? 0 }, color: r?.color ?? 0 };
       },
       set: (h) => this.stage?.conn.send('look', { hair: h.style, hairColor: h.color }),
-    });
+    }, 'island');
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({ up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D }) as Island['keys'];
     this.input.keyboard!.on('keydown', (e: KeyboardEvent) => this.onKey(e));
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.stage?.place.onPointerMove({ x: p.worldX, y: p.worldY }));
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      this.hover = IslandHud.hitButton(p.x, p.y, this.bandTop(), this.scale.gameSize.width);
+      this.stage?.place.onPointerMove({ x: p.worldX, y: p.worldY });
+    });
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onPointerDown(p));
     this.events.once('shutdown', () => {
       this.settings.destroy();
+      this.hud.destroy();
+      this.tip.destroy();
       this.stage?.destroy();
       this.stage = null;
       this.input.keyboard!.off('keydown');
@@ -137,13 +154,15 @@ export class Island extends Phaser.Scene {
     // 우물로 뛰어들거나 튀어나오는 중에는 단축키도 멈춤
     if (s.busy) return;
     if (s.panels.open) {
-      const toggle = { KeyI: 'bag', KeyM: 'board' }[e.code];
+      const toggle = { KeyI: 'bag', KeyK: 'skill', KeyM: 'board' }[e.code];
       return toggle === s.panels.open ? s.panels.close() : s.panels.onKey(e.code);
     }
     if (s.place.active) return e.code === 'KeyB' ? this.togglePlace() : s.place.onKey(e.code);
-    if (e.code === 'Escape' && !e.repeat) this.settings.show();
+    // 도움말을 아직 안 봤으면 도움말 탭부터 (왼쪽 위 "Esc · 도움말" 안내)
+    if (e.code === 'Escape' && !e.repeat) this.settings.show(done('helpSeen') ? 0 : HELP_TAB);
     else if (e.code === 'KeyB') this.togglePlace();
     else if (e.code === 'KeyI') s.panels.show('bag');
+    else if (e.code === 'KeyK') s.panels.show('skill');
     else if (e.code === 'KeyM') s.panels.show('board');
     else if (e.code === 'Enter') s.chat.chat((text) => s.conn.send('chat', { text }));
     else if (/^Digit[1-4]$/.test(e.code)) s.conn.send('emote', { id: Number(e.code.slice(5)) });
@@ -167,14 +186,15 @@ export class Island extends Phaser.Scene {
     else s.place.enter(s.myPos);
   }
 
-  /** 설정 > 패널 > 배치 모드 > 아래 띠 B·I·M 버튼 */
+  /** 설정 > 패널 > 배치 모드 > 아래 띠 B·I·K·M 버튼 */
   private onPointerDown(p: Phaser.Input.Pointer): void {
     const s = this.stage;
     if (this.settings.onPointer(p.x, p.y) || !s || s.chat.open || s.panels.onPointer(p.x, p.y)) return;
     if (s.place.active) return void s.place.onPointerDown({ x: p.x, y: p.y }, { x: p.worldX, y: p.worldY }, this.bandTop());
-    const b = IslandHud.hitButton(p.x, p.y, this.bandTop());
+    const b = IslandHud.hitButton(p.x, p.y, this.bandTop(), this.scale.gameSize.width);
     if (b === 'B') this.togglePlace();
     else if (b === 'I') s.panels.show('bag');
+    else if (b === 'K') s.panels.show('skill');
     else if (b === 'M') s.panels.show('board');
   }
 
@@ -208,13 +228,13 @@ export class Island extends Phaser.Scene {
     const pos = s?.myPos ?? null;
     const placing = !!s?.place.active;
     if (s) this.world.setFacilities(s.conn.facilities, s.place.movingFacility?.id ?? null);
-    this.world.update(time, s && pos && !placing && !s.panels.open && !s.busy ? nearFacility(pos, s.conn.facilities) : null);
-    const residents = s ? [...(s.conn.residents.latest?.items.values() ?? [])] : [];
-    const mine = residents.find((r) => r.id === String(this.me.id));
+    const free = !!s && !placing && !s.panels.open && !s.busy;
+    this.world.update(time, s && pos && free ? nearFacility(pos, s.conn.facilities) : null);
+    const opened = ({ bag: 'I', skill: 'K', board: 'M' } as const)[s?.panels.open as 'bag'] ?? null;
     this.hud.draw({
-      colorIndex: mine?.color ?? 0, hair: { style: mine?.hair ?? 0, color: mine?.hairColor ?? 0 }, level: s?.conn.me.level ?? 1, wallet: s?.conn.me.wallet ?? this.me.wallet,
-      treasury: s?.conn.island.treasury ?? this.me.island.treasury, residents, placing,
+      selected: opened ?? this.hover, hint: !done('helpSeen') && !this.settings.open, time: time / 1000, placing,
     }, width, height - HUD_HEIGHT);
+    this.drawTip(width, height - HUD_HEIGHT);
     this.settings.update(width, height - HUD_HEIGHT);
     if (s) {
       s.panels.update(width, height - HUD_HEIGHT);
@@ -225,6 +245,16 @@ export class Island extends Phaser.Scene {
       s.place.update(time / 1000, width, height - HUD_HEIGHT, { x: cam.scrollX, y: cam.scrollY, w: width, h: height - HUD_HEIGHT });
       if (!s.place.usingPointer) this.follow(s.place.focus, width, height - HUD_HEIGHT, true);
     } else if (pos) this.follow(pos, width, height - HUD_HEIGHT);
+  }
+
+  /** 아래 띠 버튼 마우스 올림 이름표: 이름 + 챙길 일(쓸 SP·입장 신청) (패널·설정·배치 모드 중에는 숨김) */
+  private drawTip(width: number, bandTop: number): void {
+    const s = this.stage, k = this.hover;
+    if (!s || !k || s.panels.open || s.place.active || this.settings.open) return this.tip.show([], 0, 0, width);
+    const sp = spLeft(s.conn), req = s.panels.pendingRequests;
+    const why: Partial<Record<HudButton, string>> = { K: sp > 0 ? `쓸 SP ${sp}` : undefined, M: req > 0 ? `입장 신청 ${req}` : undefined };
+    const at = IslandHud.buttonTop(k, bandTop, width);
+    this.tip.show([BUTTON_NAME[k], ...(why[k] ? [why[k]!] : [])], at.x, at.y, width);
   }
 
   /** 데드존 안에서는 가만히, 섬 경계에서 멈춤 (가로·세로). screen = p가 이미 화면 좌표 (배치 커서) */

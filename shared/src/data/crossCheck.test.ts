@@ -53,7 +53,7 @@ describe('crossCheck 오류', () => {
   });
   it('변형 적용 결과도 검사: 판정을 지우기만 하면 오류', () => {
     const d = fresh();
-    d.skills.gs_earthsplit!.variants = { bad: { name: '나쁜 변형', hitbox: null } };
+    d.skills.gs_earthsplit!.variants = { bad: { name: '나쁜 변형', desc: '판정 없음', hitbox: null } };
     expect(errors(d)).toEqual(['skills.gs_earthsplit.variants.bad']);
   });
 });

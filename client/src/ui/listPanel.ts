@@ -7,12 +7,14 @@ import { islandObjects, islandView } from '../sprites/island';
 import { islandTexture } from '../sprites/textures';
 import type { Hair } from '../view/look';
 import { setFace } from './hudFace';
-import { coinIcon, icon, materialIcon, panel, weaponIcon } from './hudParts';
+import { coinIcon, icon, materialIcon, panel, vaultIcon, weaponIcon } from './hudParts';
 import { koText, koWidth, wrapKo, type KoText } from './koText';
 import { drawText } from './pixelFont';
 
 const C = (p: string) => colorInt(p);
 export const PANEL = { w: 208, h: 124, rowH: 13, rows: 6, pad: 6 } as const;
+/** 패널 아래 설명 상자 (스킬 창): 위 틈, 줄 수, 높이 */
+const DETAIL = { gap: 2, lines: 2, h: 32 } as const;
 
 export type RowIcon = { kind: 'deco'; itemId: string } | { kind: 'potion'; color: string } | { kind: 'material' } | { kind: 'face'; color: number; hair?: Hair } | { kind: 'weapon'; weapon: string } | null;
 
@@ -25,7 +27,12 @@ export interface PanelRow {
   coin?: boolean;
   /** 흐리게 (살 수 없음 등) */
   dim?: boolean;
+  /** 줄 앞 키 칸 (설정 도움말 탭: "E", "Enter") */
+  key?: string;
 }
+
+/** 설명 상자 한 줄: 아이콘 + 글 (가방 아래 지갑·금고) */
+export interface DetailLine { icon?: 'coin' | 'vault'; text: string; dim?: boolean }
 
 export interface PanelButton { id: string; label: string; disabled?: boolean }
 
@@ -43,6 +50,8 @@ export interface PanelView {
   empty: string;
   /** 고르는 줄 없이 이 줄부터 보이기 (게시판 ↑↓ 스크롤) */
   scrollTop?: number;
+  /** 패널 아래 설명 상자 (2줄까지): 글이면 줄바꿈, 줄 목록이면 줄마다 아이콘 + 글 */
+  detail?: string | DetailLine[];
 }
 
 export type PanelHit = { kind: 'tab'; i: number } | { kind: 'row'; i: number } | { kind: 'button'; id: string } | { kind: 'inside' } | { kind: 'outside' };
@@ -52,7 +61,7 @@ export class ListPanel {
   private texts: KoText[] = [];
   private icons: Phaser.GameObjects.Image[] = [];
   private sig = '';
-  private box = { x: 0, y: 0 };
+  private box = { x: 0, y: 0, h: 0 };
   private hits: { x: number; y: number; w: number; h: number; hit: PanelHit }[] = [];
 
   constructor(private scene: Phaser.Scene, private depth: number) {
@@ -65,12 +74,14 @@ export class ListPanel {
   }
 
   render(v: PanelView, screenW: number, fieldH: number): void {
-    const x = Math.floor((screenW - PANEL.w) / 2), y = Math.max(2, Math.floor((fieldH - PANEL.h) / 2));
+    // 설명 상자가 있으면 패널 + 상자를 함께 가운데로
+    const boxH = PANEL.h + (v.detail !== undefined ? DETAIL.gap + DETAIL.h : 0);
+    const x = Math.floor((screenW - PANEL.w) / 2), y = Math.max(2, Math.floor((fieldH - boxH) / 2));
     const sig = JSON.stringify([v, x, y]);
     if (sig === this.sig) return;
     this.sig = sig;
     this.clear();
-    this.box = { x, y };
+    this.box = { x, y, h: boxH };
     const g = this.g, P = PANEL.pad;
     panel(g, x, y, PANEL.w, PANEL.h);
     this.text(x + P, y + 4, v.title, 'global.ui.coin');
@@ -97,7 +108,15 @@ export class ListPanel {
         dot(g, x + P - 1, ry, C('global.ui.panel'), rw + 2, PANEL.rowH - 1);
         dot(g, x + P - 1, ry, C('global.ui.coin'), 1, PANEL.rowH - 1);
       }
-      const lx = this.icon(r.icon ?? null, x + P + 1, ry);
+      let lx = this.icon(r.icon ?? null, x + P + 1, ry);
+      if (r.key !== undefined) {
+        // 키 칸: 테두리 + 안쪽, 글자는 흰색
+        const kw = this.measure(r.key) + 6;
+        dot(g, lx, ry, C('global.ui.panelBorder'), kw, PANEL.rowH - 1);
+        dot(g, lx + 1, ry + 1, C('global.ui.panel'), kw - 2, PANEL.rowH - 3);
+        this.text(lx + 3, ry, r.key, 'global.fx.flash');
+        lx += kw + 4;
+      }
       // 오른쪽 값 자리를 남기고 넘치면 말줄임
       const room = x + P + rw - 4 - lx - (r.right !== undefined ? r.right.length * 4 + (r.coin ? 10 : 2) : 0);
       this.text(lx, ry, wrapKo(r.label, room, 1)[0] ?? '', r.dim ? 'global.ui.textDim' : 'global.ui.steelLight');
@@ -113,6 +132,17 @@ export class ListPanel {
       const bar = Math.max(4, Math.floor((PANEL.rows / v.rows.length) * (PANEL.rows * PANEL.rowH)));
       const by = top + Math.floor((first / v.rows.length) * PANEL.rows * PANEL.rowH);
       dot(g, x + PANEL.w - P + 1, by, C('global.ui.panelBorder'), 1, bar);
+    }
+    if (v.detail !== undefined) {
+      const dy = y + PANEL.h + DETAIL.gap;
+      panel(g, x, dy, PANEL.w, DETAIL.h);
+      const lines: DetailLine[] = typeof v.detail === 'string' ? wrapKo(v.detail, PANEL.w - 2 * P, DETAIL.lines).map((text) => ({ text, dim: true })) : v.detail.slice(0, DETAIL.lines);
+      lines.forEach((l, i) => {
+        const ly = dy + 3 + i * PANEL.rowH;
+        if (l.icon === 'coin') coinIcon(g, x + P, ly + 4);
+        if (l.icon === 'vault') vaultIcon(g, x + P + 1, ly + 3);
+        this.text(x + P + (l.icon ? 11 : 0), ly, l.text, l.dim ? 'global.ui.textDim' : 'global.ui.steelLight');
+      });
     }
     // 아래 줄: 글 + 버튼 (오른쪽)
     const fy = top + PANEL.rows * PANEL.rowH + 4;
@@ -132,8 +162,8 @@ export class ListPanel {
   /** 화면 좌표 → 무엇을 눌렀나 */
   hit(px: number, py: number): PanelHit {
     for (const h of this.hits) if (px >= h.x && px < h.x + h.w && py >= h.y && py < h.y + h.h) return h.hit;
-    const { x, y } = this.box;
-    return px >= x && px < x + PANEL.w && py >= y && py < y + PANEL.h ? { kind: 'inside' } : { kind: 'outside' };
+    const { x, y, h } = this.box;
+    return px >= x && px < x + PANEL.w && py >= y && py < y + h ? { kind: 'inside' } : { kind: 'outside' };
   }
 
   private measure(s: string): number {

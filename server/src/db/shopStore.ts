@@ -29,7 +29,7 @@ export class ShopStore {
     this.db.update(users).set({ hairStyle: hair, hairColor }).where(eq(users.id, userId)).run();
   }
 
-  /** 스킬 탭 값 (skillStore) */
+  /** 스킬 창 값 (skillStore) */
   skills(userId: number): ReturnType<typeof skillsView> {
     return skillsView(this.db, userId);
   }

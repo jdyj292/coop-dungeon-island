@@ -72,7 +72,7 @@
 | memo | `{ text }` 1줄 1~40자 (NET.memoMaxLen, 제어 문자·줄바꿈은 공백으로). 저장 후 `board` 다시 보냄 |
 | look | `{ hair: 0~2, hairColor: 0~3 }` (shared LOOK) 외형 바꾸기 → users.hair_style·hair_color 저장, 주민 상태 hair·hairColor |
 | weapon | `{ id }` (shared MVP_WEAPONS) 무기 고르기 → users.weapon 저장, 주민 상태 weapon, `me` 다시 보냄(그 무기 숙련도). 출발 카운트다운 중인 대기자는 무시 |
-| skill | `{ weapon, op: set·reset, skillId?, points?, variant? }` 가방 스킬 탭 (skills.md 1장). 서버가 shared skillTree.checkNode로 검사 → skill_nodes 저장, 결과는 `skills` (안 되면 fail). 출발 카운트다운 중인 대기자는 fail busy |
+| skill | `{ weapon, op: set·reset, skillId?, points?, variant? }` 스킬 창(K) (skills.md 1장). 서버가 shared skillTree.checkNode로 검사 → skill_nodes 저장, 결과는 `skills` (안 되면 fail). 출발 카운트다운 중인 대기자는 fail busy |
 - chat·emote는 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }`·`emote { player, id }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
 | loadout | 무기 교체·스킬 장착·의상 장착 (MVP 이후 의상) |
 

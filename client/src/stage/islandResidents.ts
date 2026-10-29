@@ -18,6 +18,11 @@ export class ResidentsTab {
 
   constructor(private conn: IslandConnection) {}
 
+  /** 기다리는 입장 신청 수 (주인이 아니면 0, M 버튼 이름표) */
+  get pending(): number {
+    return this.owner ? this.requests.length : 0;
+  }
+
   private get owner(): boolean {
     return this.ownerId !== null && String(this.ownerId) === this.conn.userId;
   }

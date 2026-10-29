@@ -29,17 +29,20 @@
     },
     "weapon": "greatsword",
     "name": "올려베기",
+    "desc": "앞의 적을 베어 올려 공중에 띄운다. 땅에 있는 적만 맞는다",
     "branch": "base",
     "cooldown": 5,
     "mp": 10,
     "variants": {
       "double": {
         "name": "연속 올려베기",
+        "desc": "한 번 더 눌러 두 번 올려벤다 (각 250%)",
         "coef": 250,
         "reinput": 1
       },
       "wind": {
         "name": "검풍",
+        "desc": "띄우는 범위가 넓어지고 뒤쪽 적까지 띄운다",
         "hitbox": {
           "forward": 4,
           "width": 30,
@@ -81,12 +84,14 @@
     },
     "weapon": "greatsword",
     "name": "대지가르기",
+    "desc": "검을 내려쳐 앞 3타일 직선의 적을 쓰러뜨린다",
     "branch": "base",
     "cooldown": 7,
     "mp": 14,
     "variants": {
       "crack": {
         "name": "균열",
+        "desc": "1초 뒤 같은 자리가 한 번 더 터진다 (300%)",
         "after": {
           "delay": 1.0,
           "coef": 300
@@ -94,6 +99,7 @@
       },
       "fan": {
         "name": "부채꼴",
+        "desc": "직선 대신 앞쪽 넓은 부채꼴을 내려친다 (500%)",
         "coef": 500,
         "hitbox": null,
         "area": {
@@ -143,12 +149,14 @@
     "sfx": { "windup": "skill_fireburst" },
     "weapon": "staff",
     "name": "화염 폭발",
+    "desc": "4타일 앞이 잠시 뒤 폭발해 적을 띄운다",
     "branch": "base",
     "cooldown": 6,
     "mp": 12,
     "variants": {
       "chain": {
         "name": "연쇄",
+        "desc": "폭발이 3번 이어진다 (각 300%)",
         "repeat": {
           "count": 3,
           "interval": 0.2
@@ -157,6 +165,7 @@
       },
       "instant": {
         "name": "즉발",
+        "desc": "준비 없이 거의 바로 터진다 (550%)",
         "phases": {
           "windup": 0.2
         },
@@ -199,18 +208,21 @@
     "sfx": { "active": "skill_icefield", "hit": "hitLight" },
     "weapon": "staff",
     "name": "얼음 장판",
+    "desc": "얼음 장판을 깔아 땅의 적을 1.5초 얼린다",
     "branch": "base",
     "cooldown": 10,
     "mp": 20,
     "variants": {
       "shatter": {
         "name": "빙결 폭발",
+        "desc": "빙결이 풀릴 때 얼음이 터진다 (400%)",
         "onStatusEnd": {
           "coef": 400
         }
       },
       "permafrost": {
         "name": "동토",
+        "desc": "얼리는 대신 4초 동안 40% 느려지는 장판, 범위 2배",
         "status": {
           "type": "slow",
           "amount": 0.4,

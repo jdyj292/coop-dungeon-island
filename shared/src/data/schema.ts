@@ -83,6 +83,8 @@ export const playerAction = playerActionObj.superRefine(oneShape);
 /** 스킬 변형의 특수 필드 (data.md 3장). 나머지 필드는 기본 스킬에 덮어써서 검사 */
 export const variantExtra = z.object({
   name: z.string(),
+  /** 스킬 창(K) 설명 (기본 스킬과 무엇이 다른지) */
+  desc: z.string().min(1),
   reinput: z.number().int().positive().optional(),
   repeat: z.object({ count: z.number().int().positive(), interval: pos }).strict().optional(),
   after: z.object({ delay: pos, coef: z.number().nonnegative() }).strict().optional(),
@@ -92,11 +94,13 @@ export const variantExtra = z.object({
 export const skill = playerActionObj.extend({
   weapon: z.string(),
   name: z.string(),
+  /** 스킬 창(K) 설명 (hud.md 8장) */
+  desc: z.string().min(1),
   branch: z.enum(['base', 'A', 'B']),
   tier: z.number().int().min(1).max(4).optional(),
   cooldown: pos,
   mp: z.number().int().nonnegative(),
-  variants: z.record(z.object({ name: z.string() }).passthrough()).optional(),
+  variants: z.record(z.object({ name: z.string(), desc: z.string() }).passthrough()).optional(),
   note: z.string().optional(),
 }).strict().superRefine(oneShape);
 

@@ -1,4 +1,4 @@
-// 가방 스킬 탭 (skills.md 1장): 섬에서 포인트·변형 저장(서버 검사)·초기화, 던전 파티 정보·입력 검사에 반영
+// 스킬 창(K) (skills.md 1장): 섬에서 포인트·변형 저장(서버 검사)·초기화, 던전 파티 정보·입력 검사에 반영
 import { decodeBuild, resolveSkill, type S2C } from '@game/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
