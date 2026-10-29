@@ -1,8 +1,8 @@
-// 섬 장식 배치 (docs/island.md 3장, CLAUDE.md 방 구조): 메시지를 받은 순서대로 처리 → 같은 칸은 먼저 온 요청만 성공
-// 규칙(shared canPlace) 검사 → DB 트랜잭션(IslandStore) → 상태(placements·storage) 반영 → 바뀐 가방은 본인에게
-import { canPlace, ITEMS, parseC2S, type Placed, type Vec2 } from '@game/shared';
+// 섬 장식 배치·시설 옮기기 (docs/island.md 2·3장, CLAUDE.md 방 구조): 메시지를 받은 순서대로 처리 → 같은 칸은 먼저 온 요청만 성공
+// 규칙(shared canPlace·canMoveFacility) 검사 → DB 트랜잭션(IslandStore) → 상태(placements·facilities·storage) 반영 → 바뀐 가방은 본인에게
+import { canMoveFacility, canPlace, defaultFacilities, facilitiesWith, ITEMS, parseC2S, type Facility, type Placed, type Vec2 } from '@game/shared';
 import type { IslandStore, PlacementRow } from '../db/islandStore';
-import { Placement, type IslandState } from '../schema/IslandState';
+import { FacilityPos, Placement, type IslandState } from '../schema/IslandState';
 
 export interface PlacementOut {
   send: (userId: string, type: string, msg: unknown) => void;
@@ -18,7 +18,16 @@ export class IslandPlacement {
     private dev: boolean,
   ) {
     for (const p of store.placements()) this.show(p);
+    for (const f of facilitiesWith(store.facilities())) state.facilities.set(f.id, Object.assign(new FacilityPos(), { x: f.x, y: f.y }));
     this.syncStorage();
+  }
+
+  /** 이 섬의 시설 위치 (상태에서) */
+  facilities(): Facility[] {
+    return defaultFacilities().map((f) => {
+      const p = this.state.facilities.get(f.id);
+      return p ? { ...f, x: p.x, y: p.y } : f;
+    });
   }
 
   /** 상태의 장식 목록 (규칙 검사용) */
@@ -34,14 +43,14 @@ export class IslandPlacement {
   /** 섬 메시지. 배치가 바뀌었으면 true (걷기 장애물 다시 계산) */
   onMessage(userId: string, type: string, raw: unknown, now: number): boolean {
     const uid = Number(userId);
-    const fail = (op: 'place' | 'move' | 'remove', reason: string) => { this.out.send(userId, 'placeFail', { op, reason }); return false; };
+    const fail = (op: 'place' | 'move' | 'remove' | 'moveFacility', reason: string) => { this.out.send(userId, 'placeFail', { op, reason }); return false; };
     switch (type) {
       case 'place': {
         const m = parseC2S('place', raw);
         if (!m) return false;
         const def = ITEMS.decorations[m.itemId];
         if (!def) return fail('place', 'unknown');
-        const why = canPlace(m.itemId, m.x, m.y, m.rot, this.placed(), this.residents());
+        const why = canPlace(m.itemId, m.x, m.y, m.rot, this.placed(), this.residents(), undefined, this.facilities());
         if (why) return fail('place', why);
         const row = this.store.place(uid, m.itemId, m.x, m.y, m.rot, m.from, now);
         if (!row) return fail('place', 'none');
@@ -54,10 +63,19 @@ export class IslandPlacement {
         const m = parseC2S('move', raw);
         const p = m && this.state.placements.get(m.placementId);
         if (!m || !p) return m ? fail('move', 'gone') : false;
-        const why = canPlace(p.itemId, m.x, m.y, m.rot, this.placed(), this.residents(), p.id);
+        const why = canPlace(p.itemId, m.x, m.y, m.rot, this.placed(), this.residents(), p.id, this.facilities());
         if (why) return fail('move', why);
         if (!this.store.move(uid, Number(p.id), m.x, m.y, m.rot, now)) return fail('move', 'gone');
         Object.assign(p, { x: m.x, y: m.y, rot: m.rot });
+        return true;
+      }
+      case 'moveFacility': {
+        const m = parseC2S('moveFacility', raw);
+        if (!m) return false;
+        const why = canMoveFacility(m.facilityId, m.x, m.y, this.facilities(), this.placed(), this.residents());
+        if (why) return fail('moveFacility', why);
+        this.store.moveFacility(uid, m.facilityId, m.x, m.y, now);
+        this.state.facilities.get(m.facilityId)?.assign({ x: m.x, y: m.y });
         return true;
       }
       case 'remove': {

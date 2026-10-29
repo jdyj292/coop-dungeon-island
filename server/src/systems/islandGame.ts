@@ -1,4 +1,4 @@
-// 섬 진행 (Colyseus 없이 테스트 가능, docs/network.md 3·5장): 주민 접속·이동, 장식 배치(islandPlacement.ts). 상점·우물은 4-7~4-8
+// 섬 진행 (Colyseus 없이 테스트 가능, docs/network.md 3·5장): 주민 접속·이동, 장식 배치·시설 옮기기(islandPlacement.ts). 상점·우물은 4-7~4-8
 // 60Hz로 각 주민의 마지막 입력을 적용하고 상태(정수 위치)에 반영. 상태는 20Hz로 전송 (IslandRoom)
 import { ISLAND, islandBounds, NET, newWalker, parseC2S, placementBlocks, spawnPos, stepWalker, TICK, type WalkInput, type Walker } from '@game/shared';
 import type { IslandStore } from '../db/islandStore';
@@ -36,7 +36,7 @@ const islandRules = (): Record<string, readonly [number, number]> => {
   const island = [1000, l.island] as const;
   return {
     input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], emote: island, look: island, weapon: island,
-    place: island, move: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island, well: island,
+    place: island, move: island, moveFacility: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island, well: island,
   };
 };
 
@@ -56,7 +56,7 @@ export class IslandGame {
     this.state.name = name;
     this.state.treasury = treasury;
     for (const r of residents) this.addResident(r);
-    this.well = new IslandWell(this.state, out, (id) => this.live.get(id)?.walker.pos, (ids, floor) => {
+    this.well = new IslandWell(this.state, out, (id) => this.live.get(id)?.walker.pos, () => this.placement?.facilities(), (ids, floor) => {
       for (const id of ids) this.state.residents.get(id)?.assign({ status: dungeonStatus(floor) });
       opts.onDepart?.(ids, floor);
     });
@@ -74,7 +74,7 @@ export class IslandGame {
 
   /** 걸을 수 없는 장식을 장애물로 */
   private updateBounds(): void {
-    this.bounds = islandBounds(placementBlocks(this.placement?.placed() ?? []));
+    this.bounds = islandBounds(placementBlocks(this.placement?.placed() ?? []), this.placement?.facilities());
   }
 
   /** 주민 목록에 (새로 가입한 주민 포함) */

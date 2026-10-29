@@ -15,12 +15,12 @@ const newUser = (nickname: string, islandId: number | null = null) => ({
 });
 
 describe('DB 마이그레이션', () => {
-  it('빈 DB에 db.md MVP 테이블 11개를 만든다', () => {
+  it('빈 DB에 db.md MVP 테이블 12개를 만든다', () => {
     const { db, close } = openDb(':memory:');
     // __drizzle_migrations(적용 기록)·sqlite_sequence는 빼고
     const names = db.all<{ name: string }>(sql`select name from sqlite_master where type = 'table'`)
       .map((r) => r.name).filter((n) => !n.startsWith('__') && !n.startsWith('sqlite')).sort();
-    expect(names).toEqual(['activity_log', 'auth_log', 'inventory', 'island_storage', 'islands', 'join_requests', 'memos', 'placements', 'sessions', 'users', 'weapon_mastery']);
+    expect(names).toEqual(['activity_log', 'auth_log', 'inventory', 'island_facilities', 'island_storage', 'islands', 'join_requests', 'memos', 'placements', 'sessions', 'users', 'weapon_mastery']);
     close();
   });
 

@@ -57,7 +57,7 @@ export class IslandRoom extends Room<IslandState> {
     this.setSimulationInterval((ms) => {
       for (let n = this.ticks.advance(ms / 1000); n > 0; n--) this.game.tick();
     }, TICK * 1000);
-    for (const type of ['input', 'ping', 'place', 'move', 'remove', 'give', 'giveCoins', 'buy', 'board', 'memo', 'chat', 'emote', 'look', 'weapon', 'well']) {
+    for (const type of ['input', 'ping', 'place', 'move', 'moveFacility', 'remove', 'give', 'giveCoins', 'buy', 'board', 'memo', 'chat', 'emote', 'look', 'weapon', 'well']) {
       this.onMessage(type, (client, raw) => {
         if (this.game.onMessage(this.userOf(client), type, raw) === 'kick') client.leave(KICK_CODE);
       });

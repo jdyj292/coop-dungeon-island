@@ -1,7 +1,7 @@
 // 섬 방 접속 (docs/network.md 3·5장): 세션 쿠키로 입장, 주민 상태 → 스냅샷 버퍼(다른 주민 보간), 본인 값 메시지
 // 끊기면 2초마다 다시 입장 (섬 변경은 즉시 DB에 저장되므로 새로 들어가 전체 상태를 받으면 된다, network.md 10장)
 import { Client, type Room } from 'colyseus.js';
-import { NET, type C2SMessage, type C2SType, type S2C } from '@game/shared';
+import { facilitiesWith, NET, type C2SMessage, type C2SType, type Facility, type S2C } from '@game/shared';
 import { ServerClock } from './clock';
 import { serverUrl } from './connection';
 import { SnapshotBuffer, type Pos } from './interp';
@@ -41,6 +41,7 @@ type Live = {
   treasury: number;
   residents: Map<string, Omit<ResidentSnap, 'z'>>;
   placements?: Map<string, Partial<PlacementSnap>>;
+  facilities?: Map<string, { x?: number; y?: number }>;
   well?: { members?: string[]; floor?: string; departAt?: number };
   storage?: Map<string, number>;
 };
@@ -139,6 +140,11 @@ export class IslandConnection {
     return [...(this.live.placements?.values() ?? [])].map((p) => ({
       id: p.id ?? '', itemId: p.itemId ?? '', x: p.x ?? 0, y: p.y ?? 0, rot: p.rot ?? 0, placedBy: p.placedBy ?? '', communal: p.communal ?? false,
     }));
+  }
+
+  /** 이 섬의 시설 위치 (옮긴 시설 반영, 0은 전송되지 않으므로 채움) */
+  get facilities(): Facility[] {
+    return facilitiesWith([...(this.live.facilities?.entries() ?? [])].map(([id, p]) => ({ id, x: p.x ?? 0, y: p.y ?? 0 })));
   }
 
   /** 우물 대기 (기본값은 전송되지 않으므로 채움) */

@@ -124,3 +124,34 @@ describe('장식 배치', () => {
     expect(db.select().from(users).where(eq(users.id, Number(a))).get()).toBeDefined();
   });
 });
+
+describe('시설 옮기기 (island.md 2장)', () => {
+  it('주민 누구나 옮김, 우물은 고정, 다시 열어도 남음, 활동 기록', () => {
+    const a = String(user('a'));
+    const { g } = game();
+    g.addResident({ id: a, name: 'a', color: 0 });
+    g.join(a);
+    g.onMessage(a, 'moveFacility', { facilityId: 'well', ...cell });
+    expect(fails(a)).toEqual(['fixed']);
+    g.onMessage(a, 'moveFacility', { facilityId: 'shop', ...cell });
+    expect(g.state.facilities.get('shop')).toMatchObject(cell);
+    expect(g.placement!.facilities().find((f) => f.id === 'shop')).toMatchObject(cell);
+    const reopened = game().g;
+    expect(reopened.state.facilities.get('shop')).toMatchObject(cell);
+    expect(reopened.state.facilities.get('well')).toMatchObject({ x: ISLAND.facilities.find((f) => f.id === 'well')!.x });
+    expect(db.select().from(activityLog).all().map((r) => [r.action, r.itemId])).toEqual([['move', 'shop']]);
+  });
+
+  it('옮긴 시설은 걷기 장애물', () => {
+    const a = String(user('a'));
+    const { g } = game();
+    g.addResident({ id: a, name: 'a', color: 0 });
+    g.join(a);
+    g.onMessage(a, 'moveFacility', { facilityId: 'board', ...cell });
+    const w = g.walkerOf(a)!;
+    w.pos = { x: (cell.x + 0.5) * TILE, y: (cell.y + 1.5) * TILE };
+    g.onMessage(a, 'input', { seq: 1, mx: 0, my: -1, run: false });
+    for (let i = 0; i < 60; i++) g.tick();
+    expect(w.pos.y).toBeGreaterThanOrEqual((cell.y + 1) * TILE);
+  });
+});

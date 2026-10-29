@@ -33,6 +33,8 @@ export const C2S = {
   place: z.object({ itemId: z.string().max(32), x: cell, y: cell, rot, from: z.enum(['mine', 'storage']) }).strict(),
   move: z.object({ placementId: z.string().max(16), x: cell, y: cell, rot }).strict(),
   remove: z.object({ placementId: z.string().max(16) }).strict(),
+  /** 섬: 시설 옮기기 (island.md 2장, 우물 빼고 주민 누구나). 칸 = 새 왼쪽 위 */
+  moveFacility: z.object({ facilityId: z.string().max(16), x: cell, y: cell }).strict(),
   /** 개발 명령 (서버가 개발 모드일 때만): 장식·물약 받기 / 지갑·금고에 코인 */
   give: z.object({ itemId: z.string().max(32), count: z.number().int().min(1).max(99) }).strict(),
   giveCoins: z.object({ to: z.enum(['wallet', 'treasury']), amount: z.number().int().min(1).max(100000) }).strict(),
@@ -98,7 +100,7 @@ export interface S2C {
   /** 섬: 내 가방 (장식 id → 개수, 바뀔 때마다 본인에게) */
   inv: { items: Record<string, number> };
   /** 섬: 배치 요청 실패 (같은 칸에 먼저 온 요청 등) */
-  placeFail: { op: 'place' | 'move' | 'remove'; reason: string };
+  placeFail: { op: 'place' | 'move' | 'remove' | 'moveFacility'; reason: string };
   /** 섬: 구매 결과 (본인에게). ok면 지갑·가방은 me·inv로 */
   buyResult: { ok: boolean; itemId: string; count: number; reason?: 'unknown' | 'money' | 'treasury' };
   /** 섬: 출발 → 이 던전 방으로 들어가기 (파티원 각자에게) */

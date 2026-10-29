@@ -2,7 +2,7 @@
 // 규칙 검사(칸·겹침)는 IslandGame이 먼저 하고, 여기서는 개수·소유만 확인하고 저장한다
 import { and, eq, sql } from 'drizzle-orm';
 import type { Db } from './client';
-import { activityLog, inventory, islandStorage, placements } from './schema';
+import { activityLog, inventory, islandFacilities, islandStorage, placements } from './schema';
 
 export interface PlacementRow {
   id: number;
@@ -26,6 +26,21 @@ export class IslandStore {
       id: placements.id, itemId: placements.itemId, x: placements.x, y: placements.y, rot: placements.rotation,
       placedBy: placements.placedBy, communal: placements.communal,
     }).from(placements).where(eq(placements.islandId, this.islandId)).all();
+  }
+
+  /** 옮긴 시설 위치 (옮긴 적 없는 시설은 없음) */
+  facilities(): { id: string; x: number; y: number }[] {
+    return this.db.select({ id: islandFacilities.facilityId, x: islandFacilities.x, y: islandFacilities.y })
+      .from(islandFacilities).where(eq(islandFacilities.islandId, this.islandId)).all();
+  }
+
+  /** 시설 옮기기 (주민 누구나, 규칙 검사는 IslandPlacement) */
+  moveFacility(userId: number, facilityId: string, x: number, y: number, now: number): void {
+    this.db.transaction((tx) => {
+      tx.insert(islandFacilities).values({ islandId: this.islandId, facilityId, x, y })
+        .onConflictDoUpdate({ target: [islandFacilities.islandId, islandFacilities.facilityId], set: { x, y } }).run();
+      this.log(tx, userId, 'move', facilityId, now);
+    });
   }
 
   inventory(userId: number): Record<string, number> {

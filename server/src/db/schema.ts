@@ -62,6 +62,14 @@ export const placements = sqliteTable('placements', {
   placedAt: integer('placed_at').notNull(),
 }, (t) => [index('placements_island').on(t.islandId)]);
 
+/** 옮긴 시설 위치 (island.md 2장). 없는 시설은 island.json 기본 칸 */
+export const islandFacilities = sqliteTable('island_facilities', {
+  islandId: integer('island_id').notNull().references(() => islands.id),
+  facilityId: text('facility_id').notNull(),
+  x: integer('x').notNull(),
+  y: integer('y').notNull(),
+}, (t) => [primaryKey({ columns: [t.islandId, t.facilityId] })]);
+
 /** 장식·재료·물약·의상 보유 수 */
 export const inventory = sqliteTable('inventory', {
   userId: integer('user_id').notNull().references(() => users.id),

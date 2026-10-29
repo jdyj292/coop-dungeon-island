@@ -63,6 +63,7 @@
 | 메시지 | 내용 |
 |---|---|
 | place / move / remove | 장식 배치 `{ itemId, x, y, rot, from: "mine" | "storage" }` / `{ placementId, x, y, rot }` / `{ placementId }`. 칸 좌표. 받은 순서대로 처리, 실패는 `placeFail { op, reason }` (본인에게) |
+| moveFacility | 시설 옮기기 `{ facilityId, x, y }` (새 왼쪽 위 칸, 우물 빼고 주민 누구나, island.md 2장). 실패는 `placeFail { op: "moveFacility", reason }` |
 | give | 개발 명령 (개발 모드만): `{ itemId, count }` 가방에 장식 |
 | buy | `{ itemId, count }` 잡화점 구매. 장식·물약 = 개인 지갑 → 가방, 공용 장식 = 공동 금고 → 공용 창고 (트랜잭션, 조건부 차감). 결과 `buyResult { ok, itemId, count, reason? }`, 지갑은 `me`, 가방은 `inv`, 금고·창고는 상태 |
 | board | `{}` 게시판 열기 → `board { log(최근 100), memos(최근 20) }` (최신이 앞) |
@@ -142,6 +143,7 @@ IslandState
                                    x, y, facing, state(idle/walk/run), lastInputSeq,
                                    wellAt(던전에서 돌아와 우물 앞으로 들어온 서버 시각 ms, 선착장 입장은 0 — 우물에서 튀어나오는 연출, island.md 6장)
   placements: Map<id, Placement>   id, itemId, x, y, rot, placedBy, communal (칸 좌표)
+  facilities: Map<facilityId, { x, y }>  시설 위치 (칸, 크기는 island.json)
   storage: Map<itemId, count>      공용 창고
   well: { members[], floor, countdownEnd } (4-8)
 ```

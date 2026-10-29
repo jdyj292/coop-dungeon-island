@@ -240,7 +240,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | shoreRows | 맨 앞 줄 수: 모래·흙 절벽·물 (화면 30px = 3칸, 걸을 수 없음) |
 | walk | `{ x, y, w, h }` 걸을 수 있는 영역 (가장자리 나무 안쪽) |
 | place | 장식을 놓을 수 있는 영역 (약 30×22) |
-| facilities | `{ id, x, y, w, h }` 고정 시설: 그림 id(client/data/sprites/island.json)와 차지하는 칸. 걸어서 지나갈 수 없음 |
+| facilities | `{ id, name, x, y, w, h, fixed? }` 시설: 그림 id(client/data/sprites/island.json), 이름(게시판 기록), 새 섬의 칸. 걸어서 지나갈 수 없음. fixed = 옮길 수 없음 (우물). 옮긴 위치는 DB island_facilities (island.md 2장) |
 | paths | 처음부터 깔린 흙길 (바닥 무늬만, 데모 길 무늬) |
 | scenery | `{ id, x, y, ground? }` 배경 사물 (가장자리 숲, 선착장). 칸 = 발밑. ground = 바닥 높이 (캐릭터가 위를 걸음, 늘 캐릭터 아래에 그림) |
 | spawn | `{ login, return }` 들어오는 자리 `{ x, y }`: login = 접속 (선착장), return = 던전 복귀 (우물 앞). 사람마다 옆으로 한 칸 (island.md 2장) |

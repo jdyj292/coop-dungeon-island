@@ -1,7 +1,7 @@
 // 배치 모드 월드 표시 (docs/art.md 6장 "배치 모드 표시", 모양은 승인 데모 배치 모드와 같음)
 // 칸마다 점선 테두리(흰 45%), 놓을 수 없는 칸 회색 빗금(45%), 놓을 자리 연두 55% + 테두리, 미리보기 75%, 흰 화살표 커서
 import type Phaser from 'phaser';
-import { canPlace, footOf, footprint, ISLAND, TILE, type CellRect, type Placed } from '@game/shared';
+import { canMoveFacility, canPlace, footOf, footprint, ISLAND, TILE, type CellRect, type Facility, type Placed } from '@game/shared';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { islandObjects, islandView } from '../sprites/island';
@@ -22,9 +22,13 @@ export interface OverlayInput {
   /** 보이는 화면 영역 (월드 좌표) */
   view: { x: number; y: number; w: number; h: number };
   placed: Placed[];
+  /** 이 섬의 시설 위치 */
+  facilities: Facility[];
   cursor: { x: number; y: number };
   /** 들고 있는 장식 (없으면 null) */
   holding: { itemId: string; rot: number; ignoreId?: string } | null;
+  /** 옮기는 중인 시설과 놓을 왼쪽 위 칸 (없으면 null) */
+  facility: { id: string; x: number; y: number } | null;
   /** 커서 화살표 위치 (월드 화면 좌표) */
   pointer: { x: number; y: number };
   /** 커서 아래 장식 설명 (이름 · 놓은 사람) */
@@ -56,7 +60,7 @@ export class PlaceOverlay {
       for (let cx = x0; cx < x1; cx++) {
         const s = cellScreen({ x: cx, y: cy, w: 1, h: 1 });
         // 놓을 수 없는 칸: 1×1 걸을 수 있는 장식으로 검사 (시설·우물 주변·영역 밖·다른 장식)
-        if (canPlace('flowerBed', cx, cy, 0, o.placed, [], o.holding?.ignoreId)) {
+        if (canPlace('flowerBed', cx, cy, 0, o.placed, [], o.holding?.ignoreId, o.facilities)) {
           for (let j = 0; j < ROW_PX; j++) for (let i = 0; i < TILE; i++) if ((i + j) % 4 === 0) dot(g, s.x + i, s.y + j, gray, 1, 1, BLOCKED_ALPHA);
         }
         for (let i = 0; i < TILE; i += 2) dot(g, s.x + i, s.y, white, 1, 1, GRID_ALPHA);
@@ -71,26 +75,48 @@ export class PlaceOverlay {
     this.drawTip(o.tip, o.pointer);
   }
 
-  /** 놓을 자리(연두 또는 회색) + 반투명 미리보기 */
+  /** 놓을 자리(연두 또는 회색) + 반투명 미리보기. 시설이면 입구 줄도 같은 색 테두리로 */
   private drawHolding(o: OverlayInput): void {
-    const h = o.holding;
-    this.preview.setVisible(!!h);
+    const h = o.holding, f = o.facility;
+    this.preview.setVisible(!!h || !!f);
+    if (f) {
+      const size = o.facilities.find((q) => q.id === f.id);
+      if (!size) return void this.preview.setVisible(false);
+      const r = { x: f.x, y: f.y, w: size.w, h: size.h };
+      const ok = !canMoveFacility(f.id, f.x, f.y, o.facilities, o.placed);
+      this.drawFoot(r, ok);
+      this.drawFootLine({ x: r.x, y: r.y + r.h, w: r.w, h: 1 }, ok);
+      return this.showPreview(f.id, 0, r, o.timeSec);
+    }
     if (!h) return;
-    const r = footprint(h.itemId, o.cursor.x, o.cursor.y, h.rot), s = cellScreen(r);
-    const ok = !canPlace(h.itemId, r.x, r.y, h.rot, o.placed, [], h.ignoreId);
-    const c = colorInt(ok ? 'global.ui.placeOk' : 'global.ui.placeBlocked'), g = this.grid;
-    dot(g, s.x, s.y, c, s.w, s.h, FOOT_ALPHA);
+    const r = footprint(h.itemId, o.cursor.x, o.cursor.y, h.rot);
+    this.drawFoot(r, !canPlace(h.itemId, r.x, r.y, h.rot, o.placed, [], h.ignoreId, o.facilities));
+    this.showPreview(h.itemId, h.rot, r, o.timeSec);
+  }
+
+  private drawFoot(r: CellRect, ok: boolean): void {
+    const s = cellScreen(r);
+    dot(this.grid, s.x, s.y, colorInt(ok ? 'global.ui.placeOk' : 'global.ui.placeBlocked'), s.w, s.h, FOOT_ALPHA);
+    this.drawFootLine(r, ok);
+  }
+
+  /** 칸 테두리 1px */
+  private drawFootLine(r: CellRect, ok: boolean): void {
+    const s = cellScreen(r), c = colorInt(ok ? 'global.ui.placeOk' : 'global.ui.placeBlocked'), g = this.grid;
     dot(g, s.x, s.y, c, s.w, 1);
     dot(g, s.x, s.y + s.h - 1, c, s.w, 1);
     dot(g, s.x, s.y, c, 1, s.h);
     dot(g, s.x + s.w - 1, s.y, c, 1, s.h);
-    const obj = islandObjects()[h.itemId];
+  }
+
+  private showPreview(id: string, rot: number, r: CellRect, timeSec: number): void {
+    const obj = islandObjects()[id];
     if (!obj) {
       // 돌길: 그림 없이 칸 표시만
       this.preview.setVisible(false);
       return;
     }
-    const v = islandView(obj, h.rot, o.timeSec), tex = islandTexture(this.scene, h.itemId, v.frame, v.flip);
+    const v = islandView(obj, rot, timeSec), tex = islandTexture(this.scene, id, v.frame, v.flip);
     const foot = footOf(r), { sx, sy } = project(foot.x, foot.y);
     this.preview.setTexture(tex.key).setPosition(sx - tex.foot[0], sy - tex.foot[1]).setDepth(5500);
   }

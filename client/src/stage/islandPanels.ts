@@ -1,7 +1,7 @@
 // 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장식·물약·재료) / 게시판(기록·메모·주민)
 // 키: ↑↓ 고르기, ←→ 수량, Q·E·Tab 탭, Enter 사기·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
 import type Phaser from 'phaser';
-import { ISLAND, ITEMS, MVP_WEAPONS, NET, WEAPONS } from '@game/shared';
+import { facilityName, ISLAND, ITEMS, MVP_WEAPONS, NET, WEAPONS } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
 import { ResidentsTab } from './islandResidents';
@@ -35,7 +35,7 @@ export function ago(at: number, now: number): string {
   return m < 1440 ? `${Math.floor(m / 60)}시간 전` : `${Math.floor(m / 1440)}일 전`;
 }
 
-const itemName = (id: string | null) => (id ? ITEMS.decorations[id]?.name ?? ITEMS.consumables[id]?.name ?? ITEMS.materials[id]?.name ?? id : '');
+const itemName = (id: string | null) => (id ? ITEMS.decorations[id]?.name ?? ITEMS.consumables[id]?.name ?? ITEMS.materials[id]?.name ?? facilityName(id) ?? id : '');
 
 export class IslandPanels {
   open: PanelKind | null = null;

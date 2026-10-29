@@ -12,6 +12,7 @@ MVP 열: O = MVP에 포함, — = MVP 이후.
 | join_requests | user_id(PK, 섬 없는 계정당 하나), island_id, rejected(거절 알림용), created_at | O | island |
 | placements | id, island_id, item_id, x, y, rotation, placed_by, communal(공동 금고 장식), placed_at | O | island |
 | memos | id, island_id, user_id, text, created_at (게시판 메모 1줄, 최근 20개 표시) | O | island |
+| island_facilities | island_id, facility_id (PK 둘), x, y (옮긴 시설 위치, 없으면 island.json 기본 칸, 0008) | O | island |
 | island_storage | island_id, item_id, count (공용 창고: 공동 금고로 산 장식, 치운 공용 장식) | O | island |
 | inventory | user_id, item_id, count (장식·재료·물약·의상) | O | island |
 | activity_log | id, island_id, user_id, action, item_id, created_at | O | island |

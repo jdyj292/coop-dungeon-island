@@ -14,8 +14,8 @@ export const island = z.object({
   walk: rect,
   /** 장식을 놓을 수 있는 영역 (island.md 2장 약 30×22) */
   place: rect,
-  /** 고정 시설: 그림 id, 차지하는 칸 */
-  facilities: z.array(rect.extend({ id: z.string() })).min(1),
+  /** 시설: 그림 id, 이름(게시판 기록), 새 섬의 칸. fixed = 옮길 수 없음 (우물). 옮긴 위치는 섬마다 DB (island.md 2장) */
+  facilities: z.array(rect.extend({ id: z.string(), name: z.string().min(1), fixed: z.boolean().optional() })).min(1),
   /** 처음부터 깔린 흙길 (바닥 무늬, 걸을 수 있음. 장식을 놓을 수 있음) */
   paths: z.array(rect),
   /** 배경 사물 (가장자리 나무·선착장). 칸 = 발밑. ground = 바닥 높이 (캐릭터가 위를 걸음, 늘 캐릭터 아래에 그림) */

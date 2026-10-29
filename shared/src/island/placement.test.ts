@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ISLAND, ITEMS } from '../data/load';
 import { TILE } from '../constants';
-import { canPlace, footprint, placedAt, placementBlocks, reservedCells, type Placed } from './placement';
+import { canMoveFacility, canPlace, footprint, placedAt, placementBlocks, reservedCells, type Placed } from './placement';
+import { defaultFacilities, facilitiesWith } from './world';
 
 const well = ISLAND.facilities.find((f) => f.id === 'well')!;
 const P = ISLAND.place;
@@ -53,6 +54,33 @@ describe('장식 배치 규칙', () => {
       { id: 'a', itemId: 'fence', x: 6, y: 6, rot: 0 }, { id: 'b', itemId: 'flowerBed', x: 8, y: 6, rot: 0 },
     ]);
     expect(blocks).toEqual([{ x0: 96, y0: 96, x1: 112, y1: 112, kind: 'fence' }]);
+  });
+
+  it('시설 옮기기: 우물은 고정, 빈 곳은 됨, 영역 밖·다른 시설·입구 막힘·사람 위는 안 됨 (island.md 2장)', () => {
+    const facs = defaultFacilities();
+    expect(canMoveFacility('well', free.x, free.y, facs, [])).toBe('fixed');
+    expect(canMoveFacility('nope', free.x, free.y, facs, [])).toBe('unknown');
+    expect(canMoveFacility('shop', free.x, free.y, facs, [])).toBeNull();
+    // 입구 줄(맨 아래 + 1)도 영역 안이어야 함
+    expect(canMoveFacility('shop', free.x, P.y + P.h - 2, facs, [])).toBe('outside');
+    expect(canMoveFacility('shop', well.x, well.y, facs, [])).toBe('facility');
+    expect(canMoveFacility('shop', well.x + well.w, well.y, facs, [])).toBe('clearance');
+    // 몸에 장식 → overlap, 입구에 장식 → entrance
+    expect(canMoveFacility('shop', free.x, free.y, facs, [{ id: 'a', itemId: 'flowerBed', x: free.x + 1, y: free.y + 1, rot: 0 }])).toBe('overlap');
+    expect(canMoveFacility('shop', free.x, free.y, facs, [{ id: 'a', itemId: 'flowerBed', x: free.x, y: free.y + 2, rot: 0 }])).toBe('entrance');
+    expect(canMoveFacility('shop', free.x, free.y, facs, [], [{ x: (free.x + 0.5) * TILE, y: (free.y + 0.5) * TILE }])).toBe('occupied');
+    // 제자리 (자기 자신은 무시)
+    const shop = facs.find((f) => f.id === 'shop')!;
+    expect(canMoveFacility('shop', shop.x, shop.y, facs, [])).toBeNull();
+  });
+
+  it('옮긴 시설 기준으로 장식 규칙 (원래 자리는 비고, 새 자리·입구는 막힘)', () => {
+    const shop = ISLAND.facilities.find((f) => f.id === 'shop')!;
+    const facs = facilitiesWith([{ id: 'shop', x: free.x, y: free.y }, { id: 'well', x: 1, y: 1 }]);
+    expect(facs.find((f) => f.id === 'well')).toMatchObject({ x: well.x, y: well.y });
+    expect(canPlace('fence', shop.x, shop.y, 0, [], [], undefined, facs)).toBeNull();
+    expect(canPlace('fence', free.x, free.y, 0, [], [], undefined, facs)).toBe('facility');
+    expect(canPlace('fence', free.x, free.y + shop.h, 0, [], [], undefined, facs)).toBe('clearance');
   });
 
   it('가입 선물은 있는 장식만', () => {

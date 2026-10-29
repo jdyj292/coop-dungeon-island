@@ -40,6 +40,12 @@ export class Placement extends Schema {
   @type('boolean') communal = false;
 }
 
+/** 시설 위치 (칸, island.md 2장). 크기는 island.json */
+export class FacilityPos extends Schema {
+  @type('uint8') x = 0;
+  @type('uint8') y = 0;
+}
+
 /** 우물 출발 대기 (island.md 6장) */
 export class WellState extends Schema {
   /** 대기 중인 주민 users.id (들어온 순서, 첫 사람 = 대기 시작자) */
@@ -56,6 +62,8 @@ export class IslandState extends Schema {
   @type('uint32') treasury = 0;
   @type({ map: Resident }) residents = new MapSchema<Resident>();
   @type({ map: Placement }) placements = new MapSchema<Placement>();
+  /** 시설 id → 위치 (옮기면 바뀜) */
+  @type({ map: FacilityPos }) facilities = new MapSchema<FacilityPos>();
   /** 공용 창고: 장식 id → 개수 (주민 모두에게) */
   @type({ map: 'uint16' }) storage = new MapSchema<number>();
   @type(WellState) well = new WellState();

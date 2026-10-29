@@ -24,6 +24,7 @@ const WELL_FAIL: Record<string, string> = { far: '우물 앞에서 합류할 수
 const PLACE_FAIL: Record<string, string> = {
   overlap: '이미 다른 장식이 있습니다', occupied: '사람이 서 있는 칸입니다', clearance: '비워 둬야 하는 칸입니다 (우물 주변·시설 앞)',
   facility: '시설 자리입니다', outside: '여기에는 놓을 수 없습니다', none: '가방에 없습니다', gone: '이미 없어진 장식입니다', unknown: '알 수 없는 장식입니다',
+  fixed: '우물은 옮길 수 없습니다', entrance: '시설 입구(앞 한 줄)에 장식이 있습니다', facilityRemove: '시설은 치울 수 없습니다 (옮기기만)',
 };
 
 /**
@@ -148,7 +149,7 @@ export class Island extends Phaser.Scene {
     else if (/^Digit[1-4]$/.test(e.code)) s.conn.send('emote', { id: Number(e.code.slice(5)) });
     else if (e.code === 'KeyL') this.logout();
     else if (e.code === 'KeyE') {
-      const near = nearFacility(s.myPos);
+      const near = nearFacility(s.myPos, s.conn.facilities);
       if (near === 'shop') s.panels.show('shop');
       else if (near === 'board') s.panels.show('board');
       else if (near === 'well') {
@@ -206,7 +207,8 @@ export class Island extends Phaser.Scene {
     }
     const pos = s?.myPos ?? null;
     const placing = !!s?.place.active;
-    this.world.update(time, pos && !placing && !s?.panels.open && !s?.busy ? nearFacility(pos) : null);
+    if (s) this.world.setFacilities(s.conn.facilities, s.place.movingFacility?.id ?? null);
+    this.world.update(time, s && pos && !placing && !s.panels.open && !s.busy ? nearFacility(pos, s.conn.facilities) : null);
     const residents = s ? [...(s.conn.residents.latest?.items.values() ?? [])] : [];
     const mine = residents.find((r) => r.id === String(this.me.id));
     this.hud.draw({

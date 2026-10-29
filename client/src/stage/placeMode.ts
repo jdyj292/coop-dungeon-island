@@ -1,8 +1,8 @@
 // 배치 모드 (docs/hud.md 8장 배치 모드, island.md 3장): 키보드와 마우스 둘 다
-// 방향키·마우스 = 커서, 1~7·Q/E·클릭 = 장식 고르기, Enter·Space·클릭 = 놓기(장식 위면 집어서 옮기기), R 회전, X 치우기, Esc 취소·나가기
+// 방향키·마우스 = 커서, 1~7·Q/E·클릭 = 장식 고르기, Enter·Space·클릭 = 놓기(장식·시설 위면 집어서 옮기기, island.md 2장), R 회전, X 치우기, Esc 취소·나가기
 // 클라이언트는 요청만 보내고 결과는 서버 상태로 (같은 칸은 먼저 온 요청만 성공)
 import type Phaser from 'phaser';
-import { cellOf, ISLAND, ITEMS, placedAt, type Vec2 } from '@game/shared';
+import { cellOf, facilityAt, facilityName, isFixedFacility, ISLAND, ITEMS, placedAt, type Vec2 } from '@game/shared';
 import type { IslandConnection, PlacementSnap } from '../net/islandNet';
 import { PlaceTray, TRAY, type TrayItem } from '../ui/placeTray';
 import { FLOOR_TOP } from '../view/layout';
@@ -15,6 +15,8 @@ export class PlaceMode {
   active = false;
   /** 옮기는 중인 장식 */
   moving: PlacementSnap | null = null;
+  /** 옮기는 중인 시설 (dx·dy = 집은 칸 − 시설 왼쪽 위, 커서를 따라 같은 자리를 잡고 다님) */
+  movingFacility: { id: string; dx: number; dy: number } | null = null;
   private sel = 0;
   private rot = 0;
   private cursor = { x: 0, y: 0 };
@@ -51,6 +53,7 @@ export class PlaceMode {
   enter(me: Vec2): void {
     this.active = true;
     this.moving = null;
+    this.movingFacility = null;
     const c = cellOf(me);
     this.cursor = { x: c.x, y: c.y - 1 };
     this.pointer = null;
@@ -61,6 +64,7 @@ export class PlaceMode {
   exit(): void {
     this.active = false;
     this.moving = null;
+    this.movingFacility = null;
     this.overlay?.destroy();
     this.overlay = null;
     this.tray.setVisible(false);
@@ -88,7 +92,7 @@ export class PlaceMode {
     else if (code === 'Enter' || code === 'Space') this.act();
     else if (code === 'KeyX') this.remove();
     else if (code === 'Escape') {
-      if (this.moving) this.moving = null;
+      if (this.moving || this.movingFacility) this.moving = this.movingFacility = null;
       else this.exit();
     }
   }
@@ -97,6 +101,7 @@ export class PlaceMode {
     if (i < this.items().length) {
       this.sel = i;
       this.moving = null;
+      this.movingFacility = null;
     }
   }
 
@@ -121,12 +126,24 @@ export class PlaceMode {
     return true;
   }
 
-  /** 놓기: 옮기는 중이면 옮기고, 커서가 장식 위면 집고, 아니면 고른 장식을 놓는다 */
+  /** 놓기: 옮기는 중이면 옮기고, 커서가 시설·장식 위면 집고, 아니면 고른 장식을 놓는다 */
   private act(): void {
     const { x, y } = this.cursor;
+    const f = this.movingFacility;
+    if (f) {
+      this.conn.send('moveFacility', { facilityId: f.id, x: Math.max(0, x - f.dx), y: Math.max(0, y - f.dy) });
+      this.movingFacility = null;
+      return;
+    }
     if (this.moving) {
       this.conn.send('move', { placementId: this.moving.id, x, y, rot: this.rot });
       this.moving = null;
+      return;
+    }
+    const fac = facilityAt(this.conn.facilities, x, y);
+    if (fac) {
+      if (isFixedFacility(fac.id)) this.conn.onPlaceFail({ op: 'moveFacility', reason: 'fixed' });
+      else this.movingFacility = { id: fac.id, dx: x - fac.x, dy: y - fac.y };
       return;
     }
     const under = placedAt(this.conn.placements, x, y);
@@ -140,9 +157,10 @@ export class PlaceMode {
   }
 
   private remove(): void {
+    if (facilityAt(this.conn.facilities, this.cursor.x, this.cursor.y)) this.conn.onPlaceFail({ op: 'remove', reason: 'facilityRemove' });
     const under = placedAt(this.conn.placements, this.cursor.x, this.cursor.y);
     if (under) this.conn.send('remove', { placementId: under.id });
-    this.moving = null;
+    this.moving = this.movingFacility = null;
   }
 
   /** 프레임마다 (그리기) */
@@ -151,12 +169,17 @@ export class PlaceMode {
     const items = this.items();
     this.sel = Math.max(0, Math.min(this.sel, items.length - 1));
     const it = items[this.sel];
-    const holding = this.moving ? { itemId: this.moving.itemId, rot: this.rot, ignoreId: this.moving.id } : it ? { itemId: it.itemId, rot: this.rot } : null;
+    const mf = this.movingFacility, facilities = this.conn.facilities;
+    const holding = mf ? null : this.moving ? { itemId: this.moving.itemId, rot: this.rot, ignoreId: this.moving.id } : it ? { itemId: it.itemId, rot: this.rot } : null;
+    const facility = mf && { id: mf.id, x: this.cursor.x - mf.dx, y: this.cursor.y - mf.dy };
     const under = placedAt(this.conn.placements, this.cursor.x, this.cursor.y);
     const p = under && this.conn.placements.find((q) => q.id === under.id);
-    const tip = p && !this.moving ? `${ITEMS.decorations[p.itemId]?.name ?? p.itemId} · ${p.communal ? '공용' : this.nameOf(p.placedBy)}` : null;
+    const fac = facilityAt(facilities, this.cursor.x, this.cursor.y);
+    const tip = this.moving || mf ? null
+      : fac ? `${facilityName(fac.id) ?? fac.id} · ${isFixedFacility(fac.id) ? '고정' : '옮기기'}`
+      : p ? `${ITEMS.decorations[p.itemId]?.name ?? p.itemId} · ${p.communal ? '공용' : this.nameOf(p.placedBy)}` : null;
     const pointer = this.pointer ?? this.focus;
-    this.overlay.draw({ view, placed: this.conn.placements, cursor: this.cursor, holding, pointer, tip, timeSec });
+    this.overlay.draw({ view, placed: this.conn.placements, facilities, cursor: this.cursor, holding, facility, pointer, tip, timeSec });
     this.tray.draw(items, this.sel, this.conn.me.wallet, width, bandTop);
   }
 }

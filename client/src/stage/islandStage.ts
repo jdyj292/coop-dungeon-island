@@ -140,14 +140,14 @@ export class IslandStage {
     }
   }
 
-  /** 놓인 장식 그리기 + 걷기 장애물 갱신 (서버와 같은 placementBlocks) */
+  /** 놓인 장식 그리기 + 걷기 장애물 갱신 (서버와 같은 placementBlocks + 옮긴 시설) */
   private syncDecor(): void {
-    const list = this.conn.placements;
+    const list = this.conn.placements, facs = this.conn.facilities;
     this.decor.sync(list, this.clock, this.place.moving?.id ?? null);
-    const sig = list.map((p) => `${p.id}:${p.itemId}:${p.x}:${p.y}:${p.rot}`).join('|');
+    const sig = [...list.map((p) => `${p.id}:${p.itemId}:${p.x}:${p.y}:${p.rot}`), ...facs.map((f) => `${f.id}:${f.x}:${f.y}`)].join('|');
     if (sig !== this.blocksSig) {
       this.blocksSig = sig;
-      this.predictor.setBounds(islandBounds(placementBlocks(list)));
+      this.predictor.setBounds(islandBounds(placementBlocks(list), facs));
     }
   }
 

@@ -57,6 +57,13 @@
       "when": 1793241618982,
       "tag": "0007_drop_invite",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793242659889,
+      "tag": "0008_island_facilities",
+      "breakpoints": true
     }
   ]
 }
