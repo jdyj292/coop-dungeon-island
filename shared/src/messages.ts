@@ -44,7 +44,7 @@ export const C2S = {
   /** 우물 (island.md 6장): 대기 합류·나가기, 대기 시작자의 출발 */
   well: z.object({ op: z.enum(['join', 'leave', 'depart']), floor: z.string().max(16).optional() }).strict(),
   memo: z.object({ text: lineText(NET.memoMaxLen) }).strict(),
-  /** 무기 고르기 (섬 우물 패널, MVP 보충 ST-4) */
+  /** 무기 고르기 (섬 가방 장비 탭, MVP 보충 ST-4) */
   weapon: z.object({ id: z.enum(MVP_WEAPONS) }).strict(),
   /** 외형 바꾸기 (섬에서, 설정 외형 탭) */
   look: z.object({ hair: z.number().int().min(0).max(LOOK.hairStyles - 1), hairColor: z.number().int().min(0).max(LOOK.hairColors - 1) }).strict(),

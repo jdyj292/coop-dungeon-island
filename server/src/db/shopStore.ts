@@ -18,7 +18,7 @@ export class ShopStore {
     return this.db.select({ w: users.wallet }).from(users).where(eq(users.id, userId)).get()?.w ?? 0;
   }
 
-  /** 무기 저장 (우물 패널) */
+  /** 무기 저장 (가방 장비 탭) */
   setWeapon(userId: number, weapon: string): void {
     this.db.update(users).set({ weapon }).where(eq(users.id, userId)).run();
   }

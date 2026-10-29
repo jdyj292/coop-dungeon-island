@@ -59,15 +59,18 @@ function drawBar(g: G, x: number, y: number, w: number, h: number, f: number, li
   dot(g, x, y + Math.ceil(h / 2), C(dark), fw, Math.floor(h / 2));
 }
 
-/** 16×16 아이콘 (hud_icons.json). gray = MP 부족 회색 */
-export function icon(g: G, name: string, x: number, y: number, gray = false): void {
+/** 16×16 아이콘 (hud_icons.json). gray = MP 부족 회색. inset = 가장자리를 이만큼 잘라 그림 (패널 줄 12×12 칸은 2) */
+export function icon(g: G, name: string, x: number, y: number, gray = false, inset = 0): void {
   const rows = (icons.icons as Record<string, string[]>)[name];
   if (!rows) return;
-  const pal = icons.palette as Record<string, string>;
+  const pal = icons.palette as Record<string, string>, end = 16 - inset;
   rows.forEach((row, j) => [...row].forEach((ch, i) => {
-    if (ch !== '.') dot(g, x + i, y + j, C(gray ? 'global.ui.panelBorder' : pal[ch]!));
+    if (ch !== '.' && i >= inset && j >= inset && i < end && j < end) dot(g, x + i - inset, y + j - inset, C(gray ? 'global.ui.panelBorder' : pal[ch]!));
   }));
 }
+
+/** 무기 id → 슬롯 아이콘 이름 (hud_icons.json slots) */
+export const weaponIcon = (weapon: string): string => (icons.slots as Record<string, string>)[weapon] ?? 'empty';
 
 export interface SlotLook {
   icon: string;

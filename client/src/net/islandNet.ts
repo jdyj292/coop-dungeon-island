@@ -13,7 +13,7 @@ export interface ResidentSnap extends Pos {
   /** 머리 모양·머리색 번호 (view/look.ts) */
   hair: number;
   hairColor: number;
-  /** 고른 무기 (우물 패널) */
+  /** 고른 무기 (가방 장비 탭) */
   weapon: string;
   online: boolean;
   status: string;

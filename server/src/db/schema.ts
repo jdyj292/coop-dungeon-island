@@ -25,7 +25,7 @@ export const users = sqliteTable('users', {
   wallet: integer('wallet').notNull().default(0),
   hairStyle: integer('hair_style').notNull().default(0),
   hairColor: integer('hair_color').notNull().default(0),
-  /** 고른 무기 (shared MVP_WEAPONS, 섬 우물 패널, MVP 보충 ST-4). 숙련도는 weapon_mastery에 무기마다 */
+  /** 고른 무기 (shared MVP_WEAPONS, 섬 가방 장비 탭, MVP 보충 ST-4). 숙련도는 weapon_mastery에 무기마다 */
   weapon: text('weapon').notNull().default('greatsword'),
   createdAt: integer('created_at').notNull(),
 }, (t) => [uniqueIndex('users_nickname_key').on(t.nicknameKey), index('users_island').on(t.islandId)]);

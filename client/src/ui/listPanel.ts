@@ -7,14 +7,14 @@ import { islandObjects, islandView } from '../sprites/island';
 import { islandTexture } from '../sprites/textures';
 import type { Hair } from '../view/look';
 import { setFace } from './hudFace';
-import { coinIcon, materialIcon, panel } from './hudParts';
+import { coinIcon, icon, materialIcon, panel, weaponIcon } from './hudParts';
 import { koText, koWidth, wrapKo, type KoText } from './koText';
 import { drawText } from './pixelFont';
 
 const C = (p: string) => colorInt(p);
 export const PANEL = { w: 208, h: 124, rowH: 13, rows: 6, pad: 6 } as const;
 
-export type RowIcon = { kind: 'deco'; itemId: string } | { kind: 'potion'; color: string } | { kind: 'material' } | { kind: 'face'; color: number; hair?: Hair } | null;
+export type RowIcon = { kind: 'deco'; itemId: string } | { kind: 'potion'; color: string } | { kind: 'material' } | { kind: 'face'; color: number; hair?: Hair } | { kind: 'weapon'; weapon: string } | null;
 
 export interface PanelRow {
   icon?: RowIcon;
@@ -154,6 +154,8 @@ export class ListPanel {
       dot(g, x + 4, y + 5, C('global.fx.flash'), 1, 1);
       dot(g, x + 5, y + 2, C('global.materials.leather'), 2, 1);
     } else if (ic.kind === 'material') materialIcon(g, x + 3, y + 4);
+    // 무기: HUD 슬롯 아이콘의 가운데 12×12 (무기 그림은 가장자리 2px가 비어 있음)
+    else if (ic.kind === 'weapon') icon(g, weaponIcon(ic.weapon), x, y, false, 2);
     else if (ic.kind === 'face') {
       // 주민 얼굴 12×11 (hudFace)
       const img = this.scene.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setScrollFactor(0).setDepth(this.depth + 1);
