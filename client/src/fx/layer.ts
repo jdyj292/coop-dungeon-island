@@ -10,6 +10,9 @@ export interface Effect {
   draw(g: Phaser.GameObjects.Graphics, k: number): void;
 }
 
+/** 바닥 이펙트 층 깊이 (마법진·범위 표시·장판): 바닥 예고(hazards -450) 위, 캐릭터·몬스터 아래 */
+export const FX_GROUND_DEPTH = -400;
+
 export class FxLayer {
   private list: Effect[] = [];
   private g: Phaser.GameObjects.Graphics;

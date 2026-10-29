@@ -23,12 +23,12 @@ export function playerCue(c: FxContext, view: PlayerView, p: PlayerState, q: Cue
   const caster = { x: p.pos.x, y: p.pos.y, facing: p.facing };
   if (q.type === 'actionStart') {
     if (q.def.sfx?.windup) sfx.play(q.def.sfx.windup);
-    castStart(c.layer, w, q.def as ActionDef, caster);
+    castStart(c, w, q.def as ActionDef, caster);
   }
   if (q.type === 'actionActive') {
     if (q.def.sfx?.active) sfx.play(q.def.sfx.active);
     actionSmear(c.layer, q.def as ActionDef, () => ({ ...project(p.pos.x, p.pos.y), facing: p.facing }));
-    castActive(c.layer, w, q.def as ActionDef, caster);
+    castActive(c, w, q.def as ActionDef, caster);
   }
   if (q.type !== 'enter') return;
   // 순간이동 백스텝: 사라지는 자리·나타나는 자리에 하늘색 점 (스태프)

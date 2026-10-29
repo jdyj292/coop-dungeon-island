@@ -3,7 +3,6 @@
 import { areaCenter, type ActionDef, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
-import type { FxLayer } from './layer';
 import fx from '../../data/fx.json';
 import type { FxContext } from './hitPackage';
 import { dust, ring } from './particles';
@@ -33,26 +32,29 @@ const isSpell = (weapon: WeaponDef, def: ActionDef, c: Caster) => {
   return t === 'bolt' || t === 'circle';
 };
 
+/** 이펙트 층: layer = 캐릭터 위, ground = 바닥(마법진·범위 표시·장판, 캐릭터·몬스터 아래) */
+type Layers = Pick<FxContext, 'layer' | 'ground'>;
+
 /** 준비 시작: 준비 시간 동안 보석으로 빛 모으기, 지연 원형 마법이면 바닥 표적 (준비 시간 동안) */
-export function castStart(layer: FxLayer, weapon: WeaponDef, def: ActionDef, c: Caster): void {
+export function castStart(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Caster): void {
   const w = poseFx(weapon, def.poses?.windup, c);
-  if (w?.type === 'spark') layer.add(spark(w.x, w.y, def.phases.windup));
+  if (w?.type === 'spark') fxl.layer.add(spark(w.x, w.y, def.phases.windup));
   if (def.area?.shape === 'circle' && isSpell(weapon, def, c)) {
     const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y);
-    layer.add(fireTarget(sx, sy, def.area.radius!, def.phases.windup));
+    fxl.ground.add(fireTarget(sx, sy, def.area.radius!, def.phases.windup));
   }
 }
 
 /** active 순간: 발사 섬광·마법진, 화염 폭발·얼음 장판 */
-export function castActive(layer: FxLayer, weapon: WeaponDef, def: ActionDef, c: Caster): void {
+export function castActive(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Caster): void {
   const a = poseFx(weapon, def.poses?.active, c);
-  if (a?.type === 'bolt') layer.add(muzzle(a.x, a.y));
-  if (a?.type === 'circle') layer.add(magicCircle(a.x, a.y));
+  if (a?.type === 'bolt') fxl.layer.add(muzzle(a.x, a.y));
+  if (a?.type === 'circle') fxl.ground.add(magicCircle(a.x, a.y));
   if (!def.area || !isSpell(weapon, def, c)) return;
   const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y);
-  if (def.status?.type === 'freeze') layer.add(iceField(sx, sy, def.area.width ?? 32, def.area.depth ?? 16));
-  else if (def.status?.type === 'slow') layer.add(slowField(sx, sy, def.area.width ?? 32, def.area.depth ?? 16));
-  else if (def.area.shape === 'circle') fireBurst(sx, sy, def.area.radius!).forEach((e) => layer.add(e));
+  if (def.status?.type === 'freeze') fxl.ground.add(iceField(sx, sy, def.area.width ?? 32, def.area.depth ?? 16));
+  else if (def.status?.type === 'slow') fxl.ground.add(slowField(sx, sy, def.area.width ?? 32, def.area.depth ?? 16));
+  else if (def.area.shape === 'circle') fireBurst(sx, sy, def.area.radius!).forEach((e) => fxl.layer.add(e));
 }
 
 /**

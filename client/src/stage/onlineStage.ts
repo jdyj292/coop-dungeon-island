@@ -16,7 +16,7 @@ import { ATTACKS, RemoteShots } from '../net/remoteShots';
 import { monsterCue, playerCue } from './onlineCues';
 import { castEcho } from '../fx/spellCast';
 import { hitPackage, type FxContext } from '../fx/hitPackage';
-import { FxLayer } from '../fx/layer';
+import { FX_GROUND_DEPTH, FxLayer } from '../fx/layer';
 import { dust } from '../fx/particles';
 import { HitStop, Shake } from '../fx/timing';
 import { SleepMarks } from '../fx/wellArrival';
@@ -74,7 +74,7 @@ export class OnlineStage {
   private sleepMarks: SleepMarks;
 
   constructor(private scene: Phaser.Scene, readonly conn: Connection, bounds: Bounds) {
-    this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
+    this.fx = { layer: new FxLayer(scene, FX_DEPTH), ground: new FxLayer(scene, FX_GROUND_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.local = new LocalPlayer(conn, bounds);
     this.hazards = new HazardLayer(scene);
     this.boltLayer = new BoltLayer(scene);
@@ -280,6 +280,8 @@ export class OnlineStage {
     this.boltLayer.draw(shots.bolts);
     this.hazards.draw({ zones: this.zones, alive: alive.map((e) => e.m), projectiles: shots.projectiles });
     this.fx.layer.update(dt);
+    this.fx.ground.update(dt);
+    this.fx.ground.draw();
     this.fx.layer.draw();
   }
 }

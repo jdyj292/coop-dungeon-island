@@ -14,7 +14,7 @@ import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
 import { HazardLayer } from '../fx/hazards';
 import { hitPackage, type FxContext } from '../fx/hitPackage';
-import { FxLayer } from '../fx/layer';
+import { FX_GROUND_DEPTH, FxLayer } from '../fx/layer';
 import { dust, ring } from '../fx/particles';
 import { Rhythm } from '../fx/rhythm';
 import { SleepMarks } from '../fx/wellArrival';
@@ -76,7 +76,7 @@ export class CombatStage {
     this.playerView.weaponVisual = this.weapon.visual;
     this.playerView.teleport = this.weapon.backstepStyle === 'teleport';
     this.bolts = new BoltLayer(scene);
-    this.fx = { layer: new FxLayer(scene, FX_DEPTH), stop: new HitStop(), shake: new Shake() };
+    this.fx = { layer: new FxLayer(scene, FX_DEPTH), ground: new FxLayer(scene, FX_GROUND_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.hazards = new HazardLayer(scene);
     this.ghosts = new Afterimages(scene);
     this.sleepMarks = new SleepMarks(scene, FX_DEPTH);
@@ -109,6 +109,7 @@ export class CombatStage {
     this.sim.spawn(spawns);
     this.rhythm.offset = 0;
     this.fx.layer.clear();
+    this.fx.ground.clear();
     this.fx.stop.clear();
     this.fx.shake.clear();
     this.ghosts.clear();
@@ -159,6 +160,7 @@ export class CombatStage {
     this.wasRunning = running;
     this.rhythm.update(dt, !!this.player.fighter.run);
     this.fx.layer.update(dt);
+    this.fx.ground.update(dt);
     return moved;
   }
 
@@ -173,10 +175,10 @@ export class CombatStage {
     if (e.type === 'fighter') {
       this.rhythm.onEvent(e.e);
       const p = this.player, caster = { x: p.pos.x, y: p.pos.y, facing: p.facing };
-      if (e.e.type === 'start') castStart(this.fx.layer, this.weapon, e.e.run.def, caster);
+      if (e.e.type === 'start') castStart(this.fx, this.weapon, e.e.run.def, caster);
       if (e.e.type === 'active') {
         this.smearFor(e.e.run.def);
-        castActive(this.fx.layer, this.weapon, e.e.run.def, caster);
+        castActive(this.fx, this.weapon, e.e.run.def, caster);
       }
     } else if (e.type === 'boltEnd') {
       const b = e.bolt, { sx, sy } = project(b.x, b.y, fx.spell.bolt.height);
@@ -254,6 +256,7 @@ export class CombatStage {
     this.sim.alive.forEach((m, i) => placeMonster(this.scene, this.view(m), data, m, this.clock, i));
     if (this.sleepMarks.draw(this.sim.alive.map((m) => ({ m, v: this.view(m) })), this.clock)) this.sound('monWake');
     this.hazards.draw(this.sim);
+    this.fx.ground.draw();
     this.fx.layer.draw();
   }
 }

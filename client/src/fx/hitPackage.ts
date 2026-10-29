@@ -8,6 +8,8 @@ import type { HitStop, Shake, ShakeDir } from './timing';
 
 export interface FxContext {
   layer: FxLayer;
+  /** 바닥 이펙트 (마법진·범위 표시·장판): 캐릭터·몬스터 아래 */
+  ground: FxLayer;
   stop: HitStop;
   shake: Shake;
 }
