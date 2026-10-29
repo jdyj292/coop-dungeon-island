@@ -76,6 +76,11 @@ export class IslandStage {
     return this.clock;
   }
 
+  /** 서버 상태에 내 주민이 들어와 위치를 믿을 수 있음 (그 전 myPos는 0,0) */
+  get ready(): boolean {
+    return !!this.conn.residents.latest?.items.get(this.conn.userId);
+  }
+
   /** 내 위치 (화면) */
   get myPos(): Vec2 {
     return this.predictor.display;

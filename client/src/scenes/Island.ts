@@ -20,6 +20,8 @@ import { HUD_HEIGHT, project } from '../view/layout';
 const DEADZONE = { x: 40, y: 12 };
 const BODY_LIFT = 10;
 const NOTICE_MS = 2000;
+/** 접속해 카메라를 내 캐릭터에 맞춘 뒤 밝아지는 시간 (접속 중에는 어둡게 가림) */
+const ENTER_FADE_MS = 250;
 /** 도움말 탭 번호 (settingsPanel) */
 const HELP_TAB = 2;
 /** 아래 띠 버튼 이름 (마우스 올림 이름표 첫 줄) */
@@ -67,6 +69,8 @@ export class Island extends Phaser.Scene {
     this.me = { ...me, island: me.island };
     this.stage = null;
     this.cameras.main.setBackgroundColor(colorInt('island.water'));
+    // 접속해 내 위치를 받기 전에는 섬 왼쪽 위(스크롤 0,0)가 보이지 않게 가려 둔다 (follow에서 밝힘)
+    this.cameras.main.fadeOut(0);
     this.world = new IslandWorld(this);
     this.hud = new IslandHud(this, 6000);
     this.tip = new HudTip(this, 6500);
@@ -137,6 +141,7 @@ export class Island extends Phaser.Scene {
       }
     } catch (e) {
       console.warn('[island] 접속 실패', e);
+      this.cameras.main.fadeIn(ENTER_FADE_MS);
       this.showNotice('섬에 들어갈 수 없습니다 (서버 확인)');
     }
   }
@@ -263,8 +268,11 @@ export class Island extends Phaser.Scene {
     const { w, h } = islandScreenSize();
     const pr = project(p.x, p.y), target = screen ? { x: p.x, y: p.y } : { x: pr.sx, y: pr.sy - BODY_LIFT };
     if (this.snapCam && !screen) {
+      // 내 주민이 상태에 들어오기 전 위치(0,0)로 맞추지 않게 기다렸다가, 맞춘 뒤 화면을 밝힌다
+      if (!this.stage?.ready) return;
       this.cam = { ...target };
       this.snapCam = false;
+      this.cameras.main.fadeIn(ENTER_FADE_MS);
     }
     for (const axis of ['x', 'y'] as const) {
       const d = DEADZONE[axis];
