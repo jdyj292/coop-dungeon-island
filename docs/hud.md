@@ -23,7 +23,7 @@
 
 - 구현: client/src/ui/hudBottom.ts (그리기 부품 hudParts.ts의 cluster·emptySlot·bar 눈금, 3×5 글꼴 pixelFont.ts). 위치·모양은 승인 데모 docs/refs/demos/hud_bottom_cluster.html의 hudBottomDraft와 같다 (예전 통짜 띠는 floor1_room_hud_mockup.html). 시간·투명도 값(흰 잔상 0.4초, 사용 가능 깜빡임 0.2초, 묶음 판 투명도 등)은 client/data/fx.json hud
 - 섬 기본 화면·배치 모드 띠도 같은 묶음 판 (8장)
-- 슬롯 아이콘 도트는 client/data/sprites/hud_icons.json (행동·무기 id → 아이콘은 slots). 스태프 J = 지팡이(하늘색 보석), U 화염 폭발 = 금색 폭발, I 얼음 장판 = 눈 결정 + 얼음판 (MVP 보충 ST-3). 새 아이콘은 drafts/hud_icons.json에 초안 → sprite-preview HUD 탭에서 승인 → 옮김. 키 글자 J U O P Z X는 승인 데모 글꼴에 없어 보이지 않았던 것을 같은 3×5 규칙으로 추가
+- 슬롯 아이콘 도트는 client/data/sprites/hud_icons.json (행동·무기 id → 아이콘은 slots). 스태프 J = 지팡이(하늘색 보석), U 화염 폭발 = 금색 폭발, I 얼음 장판 = 눈 결정 + 얼음판 (MVP 보충 ST-3). O·P 계열 1단계 (SK-2 2c): 회전베기 = 칼 둘레 도는 금색 고리, 어깨 들이받기 = 속도선 + 큰 괄호, 검기 날리기 = 세로 초승달 + 잔상, 발도 = 손잡이에서 뻗는 한 줄 섬광, 불꽃 기둥 = 금·주황 불길, 얼음 창 = 비스듬한 하늘색 창, 부유 구슬 = 고리 두른 큰 구슬, 끌어올림 = 모여드는 점 위 솟는 화살표. sprite-preview HUD 탭 아래 줄은 무기마다 J U I O P 조합 2가지. 새 아이콘은 drafts/hud_icons.json에 초안 → sprite-preview HUD 탭에서 승인 → 옮김. 키 글자 J U O P Z X는 승인 데모 글꼴에 없어 보이지 않았던 것을 같은 3×5 규칙으로 추가
 - 필살기 L: 지금은 게이지만 쌓인다 (발동은 이후). 이번 판 코인·재료는 서버 본인 전용 값 (로컬 테스트는 0)
 
 ### 슬롯 상태
