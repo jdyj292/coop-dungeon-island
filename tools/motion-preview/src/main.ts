@@ -1,6 +1,6 @@
 // motion-preview: 게임과 같은 전투 코드로 모션을 반복 재생하고, 값을 바꿔 보고, 바꾼 값을 JSON으로 복사 (docs/motion.md 9장)
 import Phaser from 'phaser';
-import { SKILLS, treeSkills, weaponDef } from '@game/shared';
+import { PASSIVES, SKILLS, treeSkills, weaponDef, weaponPassives } from '@game/shared';
 import { el, select, slider } from '../../sprite-preview/src/ui';
 import { applyPreset, changedJson, DEMO_TIMING, getValue, isChanged, PARAMS, resetAll, setValue } from './params';
 import { controls, MotionScene, VIEW_H, VIEW_W } from './scene';
@@ -37,14 +37,27 @@ const variantOptions = (w: string): [string, string][] => {
   return [['', '기본 (변형 없음)'], ...base.flatMap(variants),
     ...treeSkills(weaponDef(w)).filter((id) => !base.includes(id)).flatMap((id): [string, string][] => [[`${id}:1`, `[${SKILLS[id]!.branch}] ${SKILLS[id]!.name}`], ...variants(id)])];
 };
+/** 보조 노드 고르기: 무대 플레이어에 실제로 배워 판정·표식(연소·무중력)까지 걸린다 */
+const passiveOptions = (w: string): [string, string][] => [['', '보조 없음'], ...weaponPassives(weaponDef(w)).map((id): [string, string] => [`${id}:1`, `[${PASSIVES[id]!.branch}] ${PASSIVES[id]!.name}`])];
+let picked = { variant: '', passive: '' };
+const setBuild = (): void => {
+  controls.skills = [picked.variant, picked.passive].filter(Boolean).join(',');
+  controls.rebuild = true;
+};
 const variant = select('변형', variantOptions('greatsword'), '', (v) => {
-  controls.skills = v;
-  controls.restart = true;
+  picked.variant = v;
+  setBuild();
+});
+const passive = select('보조', passiveOptions('greatsword'), '', (v) => {
+  picked.passive = v;
+  setBuild();
 });
 const weapon = select('무기', [['greatsword', '대검'], ['staff', '스태프']], 'greatsword', (v) => {
   controls.weapon = v;
   controls.skills = '';
+  picked = { variant: '', passive: '' };
   variant.set(variantOptions(v), '');
+  passive.set(passiveOptions(v), '');
   controls.rebuild = true;
 });
 const mode = select('동작', [['all', '3연타 → 스킬'], ['combo', '3연타만'], ['launch', '스킬만']], 'all', (v) => {
@@ -106,7 +119,7 @@ reference.addEventListener('load', () => {
 app.append(
   el('header', {},
     el('h1', { text: 'motion-preview' }), playBtn, button('▶ 1프레임 (.)', stepFrame),
-    button('처음부터', () => { controls.restart = true; }), speed.node, weapon.node, variant.node, mode.node),
+    button('처음부터', () => { controls.restart = true; }), speed.node, weapon.node, variant.node, passive.node, mode.node),
   el('div', { className: 'tab' }, panel,
     el('div', { className: 'view' },
       el('div', { className: 'label', text: '구현 (게임 코드 그대로, 값은 메모리에서만 바뀜)' }), stageBox, info,

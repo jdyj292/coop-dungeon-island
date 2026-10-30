@@ -6,6 +6,7 @@ import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
 import { project } from '../view/layout';
 import { dot } from './layer';
+import { px } from './spellDraw';
 
 type G = Phaser.GameObjects.Graphics;
 
@@ -99,6 +100,48 @@ export class HazardLayer {
         dot(a, sx + dx + 1, sy + dy, ice, 1, 1, on ? 1 : 0.5);
         if (on) { dot(a, sx + dx, sy + dy - 1, ice); dot(a, sx + dx, sy + dy + 1, ice); }
       });
+    }
+
+    // 연소: 몸 좌우에서 불씨가 시차를 두고 떠오르며 흰 → 금 → 주황빛 금, 위에서 바둑판으로 사라짐
+    const bn = fx.spell.burning, now = performance.now() / 1000;
+    const fire = [glint, colorInt('global.allyFx.gold'), colorInt('global.fx.fireDeep')];
+    for (const m of sim.alive) {
+      if (!(m.burn.left > 0)) continue;
+      const { sx, sy } = project(m.body.x, m.body.y, m.body.z);
+      // 머리 위 작은 불꽃 (W 흰·G 금·O 주황빛 금), flickerSec마다 끝이 좌우로 일렁임
+      const sway = Math.floor(now / bn.flickerSec + m.id) % 2;
+      (bn.flame as string[]).forEach((row, ry, rows) => {
+        const shift = ry === 0 ? sway : 0;
+        [...row].forEach((ch, rx) => {
+          const c = ch === 'W' ? glint : ch === 'G' ? fire[1]! : ch === 'O' ? fire[2]! : -1;
+          if (c >= 0) dot(a, sx + rx - (row.length >> 1) + shift, sy + bn.flameY - (rows.length - 1 - ry), c);
+        });
+      });
+      (bn.embers as [number, number][]).forEach(([dx, dy], i, all) => {
+        const t = (now / bn.riseSec + i / all.length) % 1;
+        const x = sx + dx + Math.round(Math.sin((t + i) * Math.PI * 2) * bn.sway), y = sy + dy - Math.round(t * bn.rise);
+        // 갓 피어난 불씨는 2×2 (위 왼쪽이 밝음), 반쯤 오르면 1px, 끝 fadeFrom부터 바둑판으로 사라짐
+        const c = fire[Math.min(2, Math.floor(t * 3))]!, fade = Math.min(1, (1 - t) / (1 - bn.fadeFrom));
+        px(a, x, y, t < bn.bigUntil ? glint : c, fade);
+        if (t < bn.bigUntil) { px(a, x + 1, y, c, fade); px(a, x, y + 1, c, fade); px(a, x + 1, y + 1, fire[2]!, fade); }
+      });
+    }
+
+    // 무중력: 떠 있는 동안 하늘색 반짝이가 몸 둘레 납작한 궤도를 돈다. 뒤쪽 반은 진한 1px, 몸 폭 body 안은 가려짐
+    const wl = fx.spell.weightless, deep = colorInt('global.fx.spellDeep');
+    for (const m of sim.alive) {
+      if (!(m.lifted > 0) || m.body.state !== 'air') continue;
+      const { sx, sy } = project(m.body.x, m.body.y, m.body.z);
+      for (let i = 0; i < wl.sparks; i++) {
+        const ang = now * wl.spin + (i / wl.sparks) * Math.PI * 2;
+        const x = sx + Math.round(Math.cos(ang) * wl.rx), y = sy + wl.y + Math.round(Math.sin(ang) * wl.ry);
+        if (Math.sin(ang) < 0) {
+          if (Math.abs(x - sx) > wl.body) dot(a, x, y, deep);
+          continue;
+        }
+        dot(a, x, y, glint);
+        dot(a, x - 1, y, ice); dot(a, x + 1, y, ice); dot(a, x, y - 1, ice); dot(a, x, y + 1, ice);
+      }
     }
 
     // 투사체: 공중에 뜬 구슬 (그림자 없이 높이만)

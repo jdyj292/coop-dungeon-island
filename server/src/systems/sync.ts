@@ -80,6 +80,8 @@ export function syncMonster(s: MonsterState, m: Monster, now: number): void {
   s.hpRatio = Math.ceil((255 * m.hp) / m.maxHp);
   s.superArmor = hasArmor(m);
   s.slowed = m.slow.left > 0;
+  s.burning = m.burn.left > 0;
+  s.weightless = m.lifted > 0 && m.body.state === 'air';
 }
 
 /** 몬스터·장판 목록 맞추기 (새로 생기면 추가, 퇴장하면 삭제) */

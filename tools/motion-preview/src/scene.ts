@@ -1,6 +1,6 @@
 // 모션 무대: 게임과 같은 CombatStage를 대본 입력으로 돌린다. 속도·일시정지·한 프레임 넘기기
 import Phaser from 'phaser';
-import { fighterPhase, weaponDef, type Spawn, type Vec2 } from '@game/shared';
+import { buildFrom, fighterPhase, weaponDef, type Spawn, type Vec2 } from '@game/shared';
 import { color } from '../../../client/src/palette';
 import { CombatStage } from '../../../client/src/stage/combatStage';
 import { FLOOR_TOP } from '../../../client/src/view/layout';
@@ -24,7 +24,7 @@ export const controls = {
   mode: 'all' as ScriptMode,
   /** 무기 (바꾸면 무대를 새로 만든다) */
   weapon: 'greatsword',
-  /** 스킬 노드 코드 (변형 미리보기) */
+  /** 스킬 노드 코드 (변형·보조 미리보기, 바꾸면 무대를 새로 만든다) */
   skills: '',
   restart: false,
   rebuild: false,
@@ -44,7 +44,7 @@ export class MotionScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(color('floors.1.env.void'));
     this.textures.addCanvas('motion-bg', drawRoomBg(1, VIEW_W + 16, DEPTH_TILES, VIEW_H + 8));
     this.add.image(-8, 0, 'motion-bg').setOrigin(0, 0).setDepth(-1000);
-    this.stage = new CombatStage(this, { minX: 8, maxX: VIEW_W - 8, minY: 0, maxY: DEPTH_TILES * 16 }, PLAYER, spawnsFor(controls.weapon), { ai: false }, weaponDef(controls.weapon));
+    this.stage = new CombatStage(this, { minX: 8, maxX: VIEW_W - 8, minY: 0, maxY: DEPTH_TILES * 16 }, PLAYER, spawnsFor(controls.weapon), { ai: false, skills: buildFrom(controls.skills) }, weaponDef(controls.weapon));
     this.script = new Script(controls.mode);
     this.script.build = controls.skills;
   }

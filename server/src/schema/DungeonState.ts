@@ -81,6 +81,9 @@ export class MonsterState extends Schema {
   @type('boolean') superArmor = false;
   /** 감속 중 (변형 동토, 발밑 눈송이 표시용) */
   @type('boolean') slowed = false;
+  /** 보조 노드 표식 (연소·무중력, 표시용. 배율은 서버만 안다) */
+  @type('boolean') burning = false;
+  @type('boolean') weightless = false;
 }
 
 export class ZoneState extends Schema {

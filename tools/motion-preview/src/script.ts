@@ -1,6 +1,6 @@
 // 자동 재생 대본: 3연타(선입력) → 쉼 → 스킬 → 기상 → 처음으로. 입력만 만들고 판정은 게임 코드가 한다
 // 스킬 = 무기 기본 스킬 모두 (대검은 올려베기 → 대지가르기, 스태프는 화염 폭발 → 얼음 장판 → 순간이동 백스텝, MVP 보충 ST-2a)
-import { buildFrom, buildSkill, fighterPhase, skillDef, type ActionDef } from '@game/shared';
+import { buildFrom, buildSkill, fighterPhase, skillDef, SKILLS, type ActionDef } from '@game/shared';
 import { NO_INPUT, type CombatStage, type StageInput } from '../../../client/src/stage/combatStage';
 
 export type ScriptMode = 'all' | 'combo' | 'launch';
@@ -9,7 +9,7 @@ const REST = 0.6;
 
 /** 대본에 쓰는 스킬: 무기 기본 스킬 모두, build = 스킬 노드 코드(변형 미리보기, 게임 ?skills=와 같은 형식). 계열 스킬을 고르면 그 스킬만 */
 const scriptSkills = (stage: CombatStage, build: string): ActionDef[] => {
-  const b = buildFrom(build), base = stage.weapon.baseSkills, branch = Object.keys(b).filter((id) => !base.includes(id));
+  const b = buildFrom(build), base = stage.weapon.baseSkills, branch = Object.keys(b).filter((id) => SKILLS[id] && !base.includes(id));
   return (branch.length ? branch : base).map((id) => buildSkill(stage.weapon, b, id) ?? skillDef(id));
 };
 
