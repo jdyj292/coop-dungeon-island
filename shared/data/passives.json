@@ -1,5 +1,5 @@
 {
-  "_note": "계열 보조 노드 (skills.md 1~3장, data.md 3장). 1포인트, 같은 무기·계열·단계 보조는 하나만. effect 키 의미는 data.md. 가벼운 발 쿨은 회피 쿨 0.6초에 맞춰 −0.2초",
+  "_note": "계열 보조 노드 (skills.md 1~3장, data.md 3장). 1포인트, 같은 무기·계열·단계 보조는 하나만. effect 키 의미는 data.md. 가벼운 발 쿨은 회피 쿨 0.6초에 맞춰 −0.2초. weapon \"*\" = 공용 패시브: 무기마다 노드 '<무기>.<id>'로 펼쳐짐(무기별 SP), 택1 없음, maxPoints 포인트별 값은 배열",
   "gs_heavyhand": {
     "id": "gs_heavyhand", "weapon": "greatsword", "branch": "A", "tier": 1, "name": "무거운 손",
     "desc": "스킬 충전이 30% 빠르고, 충전 중\n받는 피해 -30%",
@@ -39,5 +39,15 @@
     "id": "st_lightfoot", "weapon": "staff", "branch": "B", "tier": 1, "name": "가벼운 발",
     "desc": "회피(순간이동) 거리 +50%, 쿨 -0.2초",
     "effect": { "dodge": { "distanceMul": 1.5, "cooldownAdd": -0.2 } }
+  },
+  "cancel": {
+    "id": "cancel", "weapon": "*", "branch": "common", "tier": 1, "maxPoints": 3, "name": "스킬 캔슬",
+    "desc": "스킬 후딜레이에 다른 스킬로 끊고 이어 씀.\n이은 스킬 준비 ×1.5 / ×1.3 / ×1.15 (포인트별)",
+    "effect": { "cancel": { "windupMul": [1.5, 1.3, 1.15] } }
+  },
+  "quickrise": {
+    "id": "quickrise", "weapon": "*", "branch": "common", "tier": 1, "name": "기상 회피",
+    "desc": "다운 중 회피 키로 바로 일어나며 회피\n(기상 무적 대신 회피 무적, 쿨·지구력 씀)",
+    "effect": { "quickRise": true }
   }
 }

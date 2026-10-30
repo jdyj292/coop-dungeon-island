@@ -1,11 +1,12 @@
 // 스킬 포인트·변형 (docs/skills.md 1장, balance.md 1장): 노드 규칙 검사, 변형·레벨 배율을 적용한 스킬 정의 (클라이언트·서버 공용)
 // 기본 스킬은 처음부터 1포인트, 계열 스킬(A·B)은 0포인트(안 배움)에서 시작. 같은 계열·단계의 액티브는 하나만 (바꾸면 포인트가 옮겨감).
 // 최대 maxPoints, variantAt 포인트에서 변형 택1. 보조 노드(passives.json)는 1포인트, 같은 계열·단계 보조끼리 택1, 슬롯에 들어가지 않음 (효과는 passives.ts).
+// 공용 패시브(passives.json weapon '*', 무기마다 '<무기>.<id>')는 택1 없이 각자 maxPoints까지.
 // 노드 바꾸기·단계 열림·슬롯 장착(U I O P)은 skillLoadout.ts. 3단계·필살기는 MVP 이후
 import { skillDef, type ActionDef, type WeaponDef } from './actions';
 import { applyVariant } from './data/crossCheck';
 import { COMBAT, PASSIVES, SKILLS, WEAPONS } from './data/load';
-import { isPassive, weaponPassives } from './passives';
+import { isCommonPassive, isPassive, weaponPassives } from './passives';
 
 export interface SkillNode {
   points: number;
@@ -26,8 +27,8 @@ export const SLOT_COUNT = 4;
 export const isBaseSkill = (id: string): boolean => SKILLS[id]?.branch === 'base';
 /** 노드 최소 포인트: 기본 스킬 1(공짜), 계열 스킬·보조 노드 0(안 배움) */
 export const minPoints = (id: string): number => (isBaseSkill(id) ? 1 : 0);
-/** 노드 최대 포인트: 보조 노드 1, 액티브 maxPoints */
-export const maxPointsOf = (id: string): number => (isPassive(id) ? 1 : TREE.maxPoints);
+/** 노드 최대 포인트: 보조 노드 passives.json maxPoints(없으면 1), 액티브 maxPoints */
+export const maxPointsOf = (id: string): number => (isPassive(id) ? (PASSIVES[id]!.maxPoints ?? 1) : TREE.maxPoints);
 
 export const nodeOf = (b: SkillBuild, id: string): SkillNode => b[id] ?? { points: minPoints(id) };
 
@@ -49,6 +50,7 @@ export const treeNodes = (weapon: WeaponDef): string[] => [...treeSkills(weapon)
 /** 같은 계열·같은 단계의 다른 액티브 (택1 상대). 보조 노드는 같은 계열·단계의 다른 보조 */
 export function rivalsOf(weapon: WeaponDef, id: string): string[] {
   const pv = PASSIVES[id];
+  if (pv && isCommonPassive(id)) return [];
   if (pv) return weaponPassives(weapon).filter((o) => o !== id && PASSIVES[o]!.branch === pv.branch && PASSIVES[o]!.tier === pv.tier);
   const s = SKILLS[id];
   if (!s || s.branch === 'base') return [];

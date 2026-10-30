@@ -124,7 +124,12 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
     const at = `passives.${id}`;
     if (p.id !== id) err(`${at}.id`, `키와 id('${p.id}')가 다름`);
     uniqueId(p.id, at);
-    if (!d.weapons[p.weapon]) err(`${at}.weapon`, `무기 '${p.weapon}' 없음`);
+    // 공용 패시브: weapon '*'(펼친 뒤에는 무기 이름)는 branch common, 포인트별 값 배열 길이 = maxPoints
+    const common = p.branch === 'common';
+    if (p.weapon === '*' ? !common : !d.weapons[p.weapon]) err(`${at}.weapon`, p.weapon === '*' ? `weapon '*'는 branch common만` : `무기 '${p.weapon}' 없음`);
+    if (!common && (p.maxPoints ?? 1) !== 1) err(`${at}.maxPoints`, '계열 보조 노드는 1포인트');
+    const wm = p.effect.cancel?.windupMul;
+    if (wm && wm.length !== (p.maxPoints ?? 1)) err(`${at}.effect.cancel.windupMul`, `길이 ${wm.length} ≠ maxPoints ${p.maxPoints ?? 1}`);
     const burn = p.effect.burn?.element;
     if (burn && !Object.values(d.skills).some((s) => s.weapon === p.weapon && s.element === burn)) warn(`${at}.effect.burn`, `'${burn}' 원소 스킬이 이 무기에 없음`);
   }

@@ -127,12 +127,14 @@ export const skill = playerActionObj.extend({
   lasting: z.boolean().optional(),
 }).strict().superRefine(oneShape);
 
-/** 계열 보조 노드 (data.md 3장 passives.json): 1포인트, 같은 무기·계열·단계 보조는 하나만 */
+/** 계열 보조 노드 (data.md 3장 passives.json): 1포인트, 같은 무기·계열·단계 보조는 하나만.
+ * 공용 패시브 = weapon '*'·branch common: 무기마다 펼쳐지고 택1 없음, maxPoints까지 (포인트별 값은 배열) */
 export const passive = z.object({
   id: z.string(),
   weapon: z.string(),
-  branch: z.enum(['A', 'B']),
+  branch: z.enum(['A', 'B', 'common']),
   tier: z.number().int().min(1).max(3),
+  maxPoints: z.number().int().min(1).max(3).optional(),
   name: z.string(),
   desc: z.string().min(1),
   effect: z.object({
@@ -145,6 +147,8 @@ export const passive = z.object({
     burn: z.object({ element: z.enum(['fire', 'ice']), time: sec, takenMul: pos }).strict().optional(),
     lift: z.object({ takenMul: pos }).strict().optional(),
     dodge: z.object({ distanceMul: pos, cooldownAdd: z.number() }).strict().optional(),
+    cancel: z.object({ windupMul: z.array(pos).min(1) }).strict().optional(),
+    quickRise: z.literal(true).optional(),
   }).strict(),
 }).strict();
 

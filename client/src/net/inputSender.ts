@@ -2,7 +2,7 @@
 // 달리기는 클라이언트가 두 번 누르기로 판정해 run으로 보낸다 (서버는 간격을 다시 재지 않음)
 // 대검 충전: 보낸 스킬 키를 떼면 chargeRelease (서버는 스킬을 받은 뒤 이 메시지까지 누르고 있다고 본다, charge.ts)
 // 안 될 행동(쿨타임·MP·피격 중)은 보내지 않는다 (예측 상태로 미리 검사)
-import { canDodge, NET, newRunState, skillReady, stepRun, type ActionDef, type PlayerState, type PotionKind } from '@game/shared';
+import { canDodge, canQuickRise, NET, newRunState, skillReady, stepRun, type ActionDef, type PlayerState, type PotionKind } from '@game/shared';
 import type { Connection } from './connection';
 
 export interface KeyInput {
@@ -57,7 +57,7 @@ export class InputSender {
     const press = {
       attack: k.attack && free,
       skill: k.skill && free && (!me || skillReady(me, k.skill)) ? k.skill : null,
-      backstep: k.backstep && free && (!me || canDodge(me)),
+      backstep: k.backstep && (free ? !me || canDodge(me) : canQuickRise(me!)),
       potion: k.potion && (!me || (me.potions[k.potion] > 0 && me.potionCd[k.potion] <= 0)) ? k.potion : null,
     };
     const at = { x: Math.round(me?.pos.x ?? 0), y: Math.round(me?.pos.y ?? 0), facing: (me?.facing ?? 1) < 0 ? (-1 as const) : (1 as const) };

@@ -24,7 +24,7 @@ export function branchPoints(weapon: WeaponDef, b: SkillBuild, branch: string, b
 /** 이 노드의 단계가 열렸나 (기본 스킬·1단계는 처음부터) */
 export function isUnlocked(weapon: WeaponDef, b: SkillBuild, id: string): boolean {
   const m = metaOf(id);
-  if (!m || m.branch === 'base') return true;
+  if (!m || m.branch === 'base' || m.branch === 'common') return true;
   return branchPoints(weapon, b, m.branch, tierOf(id)) >= (TREE.tierPoints[tierOf(id) - 1] ?? Infinity);
 }
 

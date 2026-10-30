@@ -10,7 +10,7 @@ import playerJson from '../../data/player.json';
 import roomsJson from '../../data/rooms.json';
 import skillsJson from '../../data/skills.json';
 import weaponsJson from '../../data/weapons.json';
-import { FILE_SCHEMAS, formatIssues, withoutNotes } from './schema';
+import { FILE_SCHEMAS, formatIssues, withoutNotes, type Passive } from './schema';
 
 type Files = typeof FILE_SCHEMAS;
 
@@ -27,10 +27,19 @@ function load<K extends keyof Files>(file: K, json: object): z.infer<Files[K]['s
 
 export const WEAPONS = load('weapons.json', weaponsJson);
 export const SKILLS = load('skills.json', skillsJson);
-export const PASSIVES = load('passives.json', passivesJson);
+export const PASSIVES = expandCommon(load('passives.json', passivesJson));
 export const MONSTERS = load('monsters.json', monstersJson);
 export const ROOMS = load('rooms.json', roomsJson);
 export const PLAYER = load('player.json', playerJson);
 export const COMBAT = load('combat.json', combatJson);
 export const ISLAND = load('island.json', islandJson);
 export const ITEMS = load('items.json', itemsJson);
+
+/** 공용 패시브(weapon '*')를 무기마다 노드 '<무기>.<id>'로 펼친다 (SP·DB 노드가 무기별, skills.md 1장) */
+function expandCommon(raw: Record<string, Passive>): Record<string, Passive> {
+  const out: Record<string, Passive> = {};
+  const common = Object.values(raw).filter((p) => p.weapon === '*');
+  for (const [k, p] of Object.entries(raw)) if (p.weapon !== '*') out[k] = p;
+  for (const w of Object.keys(WEAPONS)) for (const p of common) out[`${w}.${p.id}`] = { ...p, id: `${w}.${p.id}`, weapon: w };
+  return out;
+}

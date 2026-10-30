@@ -68,6 +68,8 @@ export interface FighterInput {
   chain?: boolean;
   /** 충전 무기: 지금 스킬 키를 누르고 있나 등 (없으면 충전 없음) */
   charge?: ChargeInput;
+  /** 공용 패시브 스킬 캔슬: 스킬 recovery에서 다른 스킬을 받고, 그 스킬의 windup에 이 배율 (없으면 스킬 → 스킬 불가) */
+  cancelWindupMul?: number;
 }
 
 export type FighterEvent =
@@ -86,9 +88,10 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
   };
   const phase = f.run && phaseAt(f.run.def, f.run.t);
 
-  // 캔슬: 평타·대시 recovery → 스킬만 가능, 스킬 → 스킬 불가 (combat.md 2장). 재입력은 스킬 recovery에서도
-  if (input.skill && (!f.run || (phase === 'recovery' && (f.run.kind !== 'skill' || input.chain)))) {
-    start(input.skill, 'skill', 0);
+  // 캔슬: 평타·대시 recovery → 스킬만 가능, 스킬 → 스킬은 공용 패시브 스킬 캔슬이 있을 때만 (combat.md 2장). 재입력은 스킬 recovery에서도
+  const cancel = !!input.skill && phase === 'recovery' && f.run!.kind === 'skill' && !input.chain && !!input.cancelWindupMul;
+  if (input.skill && (!f.run || (phase === 'recovery' && (f.run.kind !== 'skill' || input.chain || cancel)))) {
+    start(cancel ? withWindupMul(input.skill, input.cancelWindupMul!) : input.skill, 'skill', 0);
   } else if (input.attack) {
     if (!f.run && input.dashing) start(weapon.dash, 'dash', 0);
     else if (!f.run) start(weapon.basic[f.nextStep]!, 'basic', f.nextStep);
@@ -117,6 +120,18 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
     }
   }
   return events;
+}
+
+const windupCache = new WeakMap<ActionDef, Map<number, ActionDef>>();
+
+/** 준비(windup)만 mul배 늘린 정의 (스킬 캔슬로 이은 스킬, id·쿨·MP는 그대로) */
+export function withWindupMul(def: ActionDef, mul: number): ActionDef {
+  if (mul === 1) return def;
+  let byMul = windupCache.get(def);
+  if (!byMul) windupCache.set(def, (byMul = new Map()));
+  let out = byMul.get(mul);
+  if (!out) byMul.set(mul, (out = { ...def, phases: { ...def.phases, windup: def.phases.windup * mul } }));
+  return out;
 }
 
 /** 지금 구간의 포즈 이름 (행동 중이 아니면 null) */

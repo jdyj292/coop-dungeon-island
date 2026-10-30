@@ -1,4 +1,4 @@
-// 스킬 창 (K, hud.md 8장, skills.md 1장): 무기 탭마다 기본 스킬 2개, 계열(A·B)마다 1단계 액티브(택1)·보조(택1), 2단계 액티브(택1).
+// 스킬 창 (K, hud.md 8장, skills.md 1장): 무기 탭마다 맨 위 공용 패시브(스킬 캔슬 N/3·기상 회피 N/1), 기본 스킬 2개, 계열(A·B)마다 1단계 액티브(택1)·보조(택1), 2단계 액티브(택1).
 // 2단계는 같은 계열 1단계에 3포인트를 쓰면 열림 (안 열렸으면 "잠김"). 줄 = 스킬(장착한 슬롯 키·포인트 N/3) 다음에 그 변형 2개.
 // 스킬 줄 ←→ = 포인트 내리기·올리기 (계열 스킬은 0 = 안 배움, 배우면 같은 단계 다른 스킬은 지워짐), Enter·장착 버튼 = 다음 슬롯(U→I→O→P)에 장착,
 // 변형 줄 Enter = 고르기(3포인트일 때), 초기화 버튼. 1단계를 내려 2단계가 지워지면 설명 상자에 먼저 경고.
@@ -15,7 +15,7 @@ const TREE = COMBAT.skillTree;
 /** 아래 줄 알림 시간 */
 const NOTE_MS = 2000;
 const SLOT_KEYS = ['U', 'I', 'O', 'P'] as const;
-const BRANCH_ORDER = ['base', 'A', 'B'];
+const BRANCH_ORDER = ['common', 'base', 'A', 'B'];
 const FAIL_TEXT: Record<NonNullable<S2C['skills']['fail']>, string> = {
   skill: '이 무기 스킬이 아닙니다', points: `포인트는 최대 ${TREE.maxPoints}`, variant: `변형은 ${TREE.variantAt}포인트부터`,
   sp: 'SP가 모자랍니다', locked: '아직 잠긴 단계입니다', slot: '없는 슬롯입니다', busy: '출발 카운트다운 중에는 못 바꿉니다',
@@ -45,7 +45,7 @@ export class SkillsTab {
     return nodeOf(this.build(weapon), skill);
   }
 
-  /** 기본 스킬, A 계열(1단계 액티브·변형, 보조, 2단계 액티브·변형), B 계열 순 */
+  /** 공용 패시브, 기본 스킬, A 계열(1단계 액티브·변형, 보조, 2단계 액티브·변형), B 계열 순 */
   private lines(weapon: string): Line[] {
     const order = (id: string) => BRANCH_ORDER.indexOf(SKILLS[id]?.branch ?? PASSIVES[id]?.branch ?? 'B');
     return treeNodes(weaponDef(weapon))
@@ -66,7 +66,7 @@ export class SkillsTab {
   rows(weapon: string): PanelRow[] {
     return this.lines(weapon).map(({ skill, variant }) => {
       const n = this.node(weapon, skill), pv = PASSIVES[skill];
-      if (pv) return { label: `보조 ${pv.name}`, right: `${n.points}/1`, dim: n.points === 0 };
+      if (pv) return { label: `${pv.branch === 'common' ? '공용' : '보조'} ${pv.name}`, right: `${n.points}/${maxPointsOf(skill)}`, dim: n.points === 0 };
       const s = SKILLS[skill]!;
       if (!variant) {
         // 앞 글자 = 장착한 슬롯 키 (장착 안 했으면 -), 안 배운 계열 스킬은 흐리게, 안 열린 단계는 이름 뒤 "(잠김)" (오른쪽 칸은 도트 숫자 글꼴이라 한글 없음)

@@ -2,7 +2,7 @@
 // 받을 때 검사해서 안 되는 행동은 거절 사유를 돌려준다 (클라이언트는 예측을 취소)
 // 대검 충전: 스킬을 받으면 chargeRelease가 올 때까지 그 키를 누르고 있다고 본다 (charge.ts, network.md 4장)
 // 회피는 히트스톱으로 서버 캐릭터가 아직 후딜레이 전이면 보관했다가 후딜레이에 들어가는 틱에 실행 (network.md 4장)
-import { buildSkill, canDodge, canReinput, NET, PLAYER, skillReady, type ActionDef, type C2SMessage, type PlayerInput, type PlayerState, type PotionKind, type S2C, type SkillBuild, type WeaponDef } from '@game/shared';
+import { buildSkill, canDodge, canQuickRise, canReinput, NET, PLAYER, skillReady, type ActionDef, type C2SMessage, type PlayerInput, type PlayerState, type PotionKind, type S2C, type SkillBuild, type WeaponDef } from '@game/shared';
 
 type Reason = S2C['rejected']['reason'];
 
@@ -33,7 +33,8 @@ export class InputQueue {
       this.hold = false;
       return null;
     }
-    if (p.downed || p.hurt) return 'state';
+    // 다운 중에는 기상 회피(공용 패시브)의 회피만
+    if (p.downed || (p.hurt && !(m.kind === 'backstep' && canQuickRise(p)))) return 'state';
     switch (m.kind) {
       case 'basic':
       case 'dash':
