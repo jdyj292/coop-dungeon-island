@@ -285,7 +285,7 @@
       "grade": "light"
     },
     "sfx": {
-      "active": "swingHeavy",
+      "active": "skill_whirl",
       "hit": "hitLight"
     },
     "weapon": "greatsword",
@@ -345,7 +345,7 @@
       "grade": "heavy"
     },
     "sfx": {
-      "active": "dash",
+      "active": "skill_shoulder",
       "hit": "hitHeavy"
     },
     "weapon": "greatsword",
@@ -397,7 +397,7 @@
       "grade": "medium"
     },
     "sfx": {
-      "active": "skill_slash",
+      "active": "skill_wave",
       "hit": "hitLight"
     },
     "weapon": "greatsword",
@@ -459,7 +459,7 @@
       "grade": "medium"
     },
     "sfx": {
-      "active": "dash",
+      "active": "skill_draw",
       "hit": "hitHeavy"
     },
     "weapon": "greatsword",
@@ -515,7 +515,7 @@
       "grade": "light"
     },
     "sfx": {
-      "windup": "skill_fireburst",
+      "windup": "skill_pillar",
       "hit": "hitLight"
     },
     "weapon": "staff",
@@ -586,7 +586,7 @@
       "grade": "medium"
     },
     "sfx": {
-      "active": "bolt_cast",
+      "active": "skill_icelance",
       "hit": "bolt_hit"
     },
     "weapon": "staff",
@@ -661,7 +661,7 @@
       "grade": "light"
     },
     "sfx": {
-      "active": "bolt_cast",
+      "active": "skill_orb",
       "hit": "hitLight"
     },
     "weapon": "staff",
@@ -728,7 +728,7 @@
       "grade": "medium"
     },
     "sfx": {
-      "active": "launch",
+      "active": "skill_lift",
       "hit": "hitLight"
     },
     "weapon": "staff",
