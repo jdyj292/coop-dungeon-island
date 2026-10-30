@@ -72,7 +72,7 @@
 | memo | `{ text }` 1줄 1~40자 (NET.memoMaxLen, 제어 문자·줄바꿈은 공백으로). 저장 후 `board` 다시 보냄 |
 | look | `{ hair: 0~2, hairColor: 0~3 }` (shared LOOK) 외형 바꾸기 → users.hair_style·hair_color 저장, 주민 상태 hair·hairColor |
 | weapon | `{ id }` (shared MVP_WEAPONS) 무기 고르기 → users.weapon 저장, 주민 상태 weapon, `me` 다시 보냄(그 무기 숙련도). 출발 카운트다운 중인 대기자는 무시 |
-| skill | `{ weapon, op: set·reset, skillId?, points?, variant? }` 스킬 창(K) (skills.md 1장). 서버가 shared skillTree.checkNode로 검사 → skill_nodes 저장, 결과는 `skills` (안 되면 fail). 출발 카운트다운 중인 대기자는 fail busy |
+| skill | `{ weapon, op: set·equip·reset, skillId?, points?, variant?, slot? }` 스킬 창(K) (skills.md 1장). 서버가 shared skillLoadout.checkNode·checkEquip으로 검사 → skill_nodes 저장(택1 상대·지워진 위 단계·슬롯 함께), 결과는 `skills` (안 되면 fail: skill·points·variant·sp·locked·slot). 출발 카운트다운 중인 대기자는 fail busy |
 - chat·emote는 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }`·`emote { player, id }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
 | loadout | 무기 교체·스킬 장착·의상 장착 (MVP 이후 의상) |
 
@@ -102,7 +102,7 @@ DungeonState
 PlayerState
   id, name, look            look = 외형 키 "의상:머리 번호:머리색 번호:플레이어 색" (예: beginner:1:2:0, 섬 출발 파티 정보에서)
   weapon, x, y, facing      x·y는 정수 px
-  skills                    스킬 노드 (skillTree.encodeBuild "id:포인트[:변형],..."). 변형마다 행동 시간·판정이 달라 다른 사람 그리기·본인 예측이 이 값으로 스킬 정의를 찾는다
+  skills                    스킬 노드 (skillTree.encodeBuild "id:포인트[:변형][@슬롯],..."). 변형마다 행동 시간·판정이 달라 다른 사람 그리기·본인 예측이 이 값으로 스킬 정의를 찾는다
   dodgeDir, dodgeDy         회피 이동 방향 좌우 (1/−1/0)·깊이 (1 아래/−1 위/0). 회피 아니면 둘 다 0. 앞회피면 dodgeDir = facing
   dodgeStart                회피 시작 서버 시각 (회피 아니면 0). 본인 예측 재계산의 회피 진행 시간 (state 바뀐 걸 받은 시각은 최대 한 패치 늦어 회피 끝에 앞으로 당겨짐)
   state                     idle / walk / run / action / backstep / hitstun / down / knocked / disconnected / arrive(층 첫 방에 우물에서 떨어지는 중, 클라이언트는 상태가 시작된 뒤 흐른 시간으로 높이를 그리고 본인 예측도 입력을 받지 않음) (기상 무적은 연출만)

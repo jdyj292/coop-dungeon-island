@@ -15,7 +15,7 @@
   "pushRate": 20,
   "turnWindow": 0.1,
   "cooldownScale": 1.5,
-  "skillTree": { "maxPoints": 3, "variantAt": 3, "levelMul": [1, 1.15, 1.3], "reinputWindow": 0.6 },
+  "skillTree": { "maxPoints": 3, "variantAt": 3, "tierPoints": [0, 3, 7], "levelMul": [1, 1.15, 1.3], "reinputWindow": 0.6 },
   "stunExitSec": 1.0,
   "stun": {
     "light": { "time": 0.3, "push": 6 },

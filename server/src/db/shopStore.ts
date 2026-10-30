@@ -3,7 +3,7 @@
 import { ITEMS, type NodeFail, type SkillNode } from '@game/shared';
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
 import type { Db } from './client';
-import { resetSkills, setSkillNode, skillsView } from './skillStore';
+import { equipSkillSlot, resetSkills, setSkillNode, skillsView } from './skillStore';
 import { mastery } from './runStore';
 import { activityLog, inventory, islandStorage, islands, memos, users } from './schema';
 
@@ -36,6 +36,10 @@ export class ShopStore {
 
   setSkill(userId: number, weapon: string, id: string, node: SkillNode): NodeFail | null {
     return setSkillNode(this.db, userId, weapon, id, node);
+  }
+
+  equipSkill(userId: number, weapon: string, id: string, slot: number): NodeFail | null {
+    return equipSkillSlot(this.db, userId, weapon, id, slot);
   }
 
   resetSkills(userId: number, weapon: string): void {

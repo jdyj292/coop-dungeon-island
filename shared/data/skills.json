@@ -484,6 +484,154 @@
       }
     }
   },
+  "gs_quake": {
+    "id": "gs_quake",
+    "phases": {
+      "windup": 0.35,
+      "active": 0.1,
+      "recovery": 0.5
+    },
+    "coef": 800,
+    "area": {
+      "shape": "circle",
+      "at": [
+        0,
+        0
+      ],
+      "radius": 40,
+      "z": "ground"
+    },
+    "strength": "heavy",
+    "flags": [
+      "launch"
+    ],
+    "launchVz": 130,
+    "poses": {
+      "windup": "overhead",
+      "active": "slam",
+      "recovery": "slam"
+    },
+    "fx": {
+      "grade": "heavy",
+      "shake": "vertical"
+    },
+    "sfx": {
+      "active": "skill_slash",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "지진",
+    "desc": "땅을 내리쳐 둘레 2.5타일 안 땅의 적을 살짝 띄운다",
+    "branch": "A",
+    "tier": 2,
+    "cooldown": 10,
+    "mp": 20,
+    "variants": {
+      "chain": {
+        "name": "연속 지진",
+        "desc": "땅을 세 번 내리쳐 흔든다, 띄운 적도 맞는다 (각 350%)",
+        "coef": 350,
+        "repeat": {
+          "count": 3,
+          "interval": 0.4
+        },
+        "area": {
+          "z": "both"
+        }
+      },
+      "focus": {
+        "name": "집중",
+        "desc": "좁은 원(1.5타일)에 힘을 모은다 (1100%)",
+        "coef": 1100,
+        "area": {
+          "radius": 24
+        }
+      }
+    }
+  },
+  "gs_cyclone": {
+    "id": "gs_cyclone",
+    "phases": {
+      "windup": 0.25,
+      "active": 0.1,
+      "recovery": 0.35
+    },
+    "coef": 80,
+    "area": {
+      "shape": "circle",
+      "at": [
+        24,
+        0
+      ],
+      "radius": 16,
+      "z": "both"
+    },
+    "repeat": {
+      "count": 10,
+      "interval": 0.2,
+      "step": 8
+    },
+    "strength": "light",
+    "flags": [
+      "hold"
+    ],
+    "status": {
+      "type": "hold",
+      "time": 0.4
+    },
+    "poses": {
+      "windup": "ready",
+      "active": "sweep",
+      "recovery": "sweep"
+    },
+    "fx": {
+      "grade": "light"
+    },
+    "sfx": {
+      "active": "skill_wave",
+      "hit": "hitLight"
+    },
+    "weapon": "greatsword",
+    "name": "회오리 검기",
+    "desc": "2초 동안 앞으로 나아가는 회오리가 10번 베고 공중 적을 붙잡아 둔다",
+    "branch": "B",
+    "tier": 2,
+    "cooldown": 10,
+    "mp": 20,
+    "note": "예산 대비 +25%: 회오리가 앞으로 나아가 10번을 다 맞히기 어렵고 hold는 공중 적에게만",
+    "variants": {
+      "still": {
+        "name": "정지형",
+        "desc": "제자리에 큰 회오리를 세운다",
+        "area": {
+          "radius": 26
+        },
+        "repeat": {
+          "step": 0
+        }
+      },
+      "twin": {
+        "name": "쌍회오리",
+        "desc": "회오리 2개가 나란히 나아간다 (각 6번)",
+        "area": {
+          "at": [
+            24,
+            -12
+          ]
+        },
+        "repeat": {
+          "count": 6,
+          "interval": 0.3,
+          "copies": [
+            [
+              0,
+              24
+            ]
+          ]
+        }
+      }
+    }
+  },
   "st_pillar": {
     "id": "st_pillar",
     "phases": {
@@ -755,6 +903,129 @@
         },
         "area": {
           "z": "both"
+        }
+      }
+    }
+  },
+  "st_well": {
+    "id": "st_well",
+    "phases": {
+      "windup": 0.45,
+      "active": 0.1,
+      "recovery": 0.3
+    },
+    "coef": 60,
+    "area": {
+      "shape": "circle",
+      "at": [
+        56,
+        0
+      ],
+      "radius": 32,
+      "z": "both"
+    },
+    "repeat": {
+      "count": 6,
+      "interval": 0.4
+    },
+    "strength": "light",
+    "flags": [
+      "pull"
+    ],
+    "poses": {
+      "windup": "ready",
+      "active": "area",
+      "recovery": "area"
+    },
+    "fx": {
+      "grade": "light"
+    },
+    "sfx": {
+      "active": "skill_lift",
+      "hit": "hitLight"
+    },
+    "weapon": "staff",
+    "name": "중력 우물",
+    "desc": "앞 자리로 2초 동안 적을 끌어당긴다 (6번)",
+    "lasting": true,
+    "branch": "B",
+    "tier": 2,
+    "cooldown": 12,
+    "mp": 24,
+    "note": "예산 대비 크게 낮음: 끌어모으기(2초 pull)가 주 가치, 딜은 의도적으로 낮게",
+    "variants": {
+      "collapse": {
+        "name": "붕괴",
+        "desc": "끌어당긴 뒤 그 자리가 터진다 (400%)",
+        "after": {
+          "delay": 2.4,
+          "coef": 400
+        }
+      },
+      "long": {
+        "name": "지속",
+        "desc": "3.5초 동안 끌어당긴다 (10번)",
+        "repeat": {
+          "count": 10,
+          "interval": 0.38
+        }
+      }
+    }
+  },
+  "st_gravfield": {
+    "id": "st_gravfield",
+    "phases": {
+      "windup": 0.45,
+      "active": 0.1,
+      "recovery": 0.35
+    },
+    "coef": 200,
+    "area": {
+      "shape": "circle",
+      "at": [
+        48,
+        0
+      ],
+      "radius": 36,
+      "z": "both"
+    },
+    "strength": "light",
+    "status": {
+      "type": "slow",
+      "time": 4,
+      "amount": 0.4
+    },
+    "poses": {
+      "windup": "ready",
+      "active": "area",
+      "recovery": "area"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "skill_orb",
+      "hit": "hitLight"
+    },
+    "weapon": "staff",
+    "name": "중력장",
+    "desc": "범위 안 적을 4초 동안 40% 느리게 한다 (걷기·공격 사이 쉬는 시간)",
+    "lasting": true,
+    "branch": "B",
+    "tier": 2,
+    "cooldown": 10,
+    "mp": 20,
+    "note": "예산 대비 크게 낮음: 4초 감속(걷기·공격 사이 쉬는 시간)이 주 가치, 딜은 의도적으로 낮게",
+    "variants": {
+      "float": {
+        "name": "부양장",
+        "desc": "느리게 하는 대신 범위 안 공중 적을 2초 붙잡아 둔다",
+        "flags": [
+          "hold"
+        ],
+        "status": {
+          "type": "hold",
+          "time": 2
         }
       }
     }

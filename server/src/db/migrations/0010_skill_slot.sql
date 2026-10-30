@@ -1,0 +1,1 @@
+ALTER TABLE `skill_nodes` ADD `slot` integer;

@@ -71,6 +71,13 @@
       "when": 1793269671639,
       "tag": "0009_skill_nodes",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1793344249091,
+      "tag": "0010_skill_slot",
+      "breakpoints": true
     }
   ]
 }

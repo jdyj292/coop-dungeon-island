@@ -24,8 +24,7 @@ MVP 열: O = MVP에 포함, — = MVP 이후.
 | weapon_skins | user_id, skin_id (보유 무기 외형) | — | island, sprites |
 | weapon_loadout | user_id, weapon, skin_id (무기 종류별 장착 외형) | — | island |
 | boss_drop_pity | user_id, boss_id, kills_since_drop (천장 카운트) | — | island |
-| skill_nodes | user_id, node_id(스킬 id), points, variant. 행이 없으면 1포인트 (마이그레이션 0009) | O (기본 스킬만, MVP 보충) | skills |
-| skill_loadout | user_id, weapon, slot, skill_id | — (MVP는 기본 스킬 고정 장착) | skills |
+| skill_nodes | user_id, node_id(스킬 id), points, variant, slot(0~3 = U I O P, null = 장착 안 함). 행이 없으면 기본 스킬 1포인트·계열 0포인트. 그 무기에 slot이 하나도 없으면 기본 배치 (마이그레이션 0009, slot은 0010) | O (SK-1·SK-4) | skills |
 
 - 돈·재고 변경은 항상 트랜잭션
 - 던전 진행 상태는 DB에 저장하지 않는다 (메모리)

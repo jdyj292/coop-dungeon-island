@@ -1,5 +1,5 @@
 // 스킬 창(K) (skills.md 1장): 섬에서 포인트·변형 저장(서버 검사)·초기화, 던전 파티 정보·입력 검사에 반영
-import { decodeBuild, resolveSkill, weaponDef, type S2C } from '@game/shared';
+import { decodeBuild, resolveSkill, slotSkills, weaponDef, type S2C } from '@game/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
 import { IslandStore } from '../db/islandStore';
@@ -75,6 +75,40 @@ describe('스킬 탭', () => {
     expect(skillBuild(db, Number(a))).toEqual({ gs_shoulder: { points: 2 } });
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_shoulder', points: 0 });
     expect(gs(lastSkills(a))).toMatchObject({ spent: 0, build: '' });
+  });
+
+  it('계열 2단계: 1단계 3포인트 전에는 잠김, 1단계를 내리면 2단계가 지워지고 SP가 돌아옴', () => {
+    const a = user(6), g = game();
+    enter(g, a);
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_quake', points: 1 });
+    expect(lastSkills(a).fail).toBe('locked');
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_whirl', points: 3 });
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_quake', points: 2 });
+    expect(gs(lastSkills(a))).toMatchObject({ spent: 5, build: 'gs_whirl:3,gs_quake:2' });
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_whirl', points: 2 });
+    expect(gs(lastSkills(a))).toMatchObject({ spent: 2, build: 'gs_whirl:2' });
+  });
+
+  it('슬롯 장착: 저장되고 던전 파티 정보에 실림, 장착 안 한 스킬은 던전에서 거절', () => {
+    const a = user(6), g = game(), w = weaponDef('greatsword');
+    enter(g, a);
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_whirl', points: 3 });
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_wave', points: 1 });
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_quake', points: 1 });
+    // 빈칸이 없어 지진은 장착 안 됨 → U에 장착하면 올려베기가 빠짐
+    expect(slotSkills(w, skillBuild(db, Number(a)))).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_wave']);
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_quake', slot: 0 });
+    expect(lastSkills(a).fail).toBeUndefined();
+    const b = skillBuild(db, Number(a));
+    expect(slotSkills(w, b)).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_wave']);
+    expect(slotSkills(w, decodeBuild(gs(lastSkills(a)).build))).toEqual(slotSkills(w, b));
+    const q = new InputQueue(), act = (skillId: string) => ({ seq: 1, t: 0, kind: 'skill' as const, skillId, x: 0, y: 0, facing: 1 as const });
+    const p = { downed: false, hurt: null, cooldowns: {}, mp: 100, reinput: null };
+    expect(q.onAction(act('gs_launch'), p as never, w, b)).not.toBeNull();
+    expect(q.onAction(act('gs_quake'), p as never, w, b)).toBeNull();
+    // 안 배운 스킬은 거절 (없는 슬롯은 skillLoadout.test, 섬 메시지는 초당 5개라 여기서는 5번까지)
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_draw', slot: 1 });
+    expect(lastSkills(a).fail).toBe('skill');
   });
 
   it('출발 카운트다운 중인 대기자는 못 바꿈', () => {

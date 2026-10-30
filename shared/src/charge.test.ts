@@ -6,7 +6,7 @@ import { TICK } from './constants';
 import { perksOf } from './passives';
 import { newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from './player';
 import { hurtPlayer } from './playerHurt';
-import { buildSkill } from './skillTree';
+import { buildSkill } from './skillLoadout';
 
 const gs = weaponDef('greatsword'), st = weaponDef('staff');
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };

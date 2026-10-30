@@ -6,7 +6,8 @@ import { newMonster } from '../monster/state';
 import { perksOf } from '../passives';
 import { newPlayerState, type PlayerInput } from '../player';
 import { hurtPlayer } from '../playerHurt';
-import { applyNode, buildSkill, checkNode, decodeBuild, encodeBuild, slotSkills, spSpent } from '../skillTree';
+import { applyNode, buildSkill, checkNode, slotSkills } from '../skillLoadout';
+import { decodeBuild, encodeBuild, spSpent } from '../skillTree';
 import { RoomSim } from './room';
 import { hitMonster } from './strike';
 

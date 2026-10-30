@@ -1,7 +1,8 @@
 // 스킬 포인트·변형 규칙 (skills.md 1장, balance.md 1장 스킬 레벨 배율)
 import { describe, expect, it } from 'vitest';
 import { skillDef, weaponDef } from './actions';
-import { applyNode, buildSkill, checkNode, decodeBuild, encodeBuild, resolveSkill, slotSkills, spSpent, spTotal, treeSkills, weaponSkills } from './skillTree';
+import { applyNode, buildSkill, checkNode, slotSkills, weaponSkills } from './skillLoadout';
+import { decodeBuild, encodeBuild, resolveSkill, spSpent, spTotal, treeSkills } from './skillTree';
 
 const gs = weaponDef('greatsword');
 
@@ -71,7 +72,7 @@ describe('노드 규칙', () => {
 
 describe('계열 1단계 (skills.md 1장)', () => {
   it('트리 = 기본 스킬 뒤 계열 스킬, 계열 스킬은 0포인트(안 배움)부터', () => {
-    expect(treeSkills(gs)).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder', 'gs_wave', 'gs_draw']);
+    expect(treeSkills(gs)).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder', 'gs_wave', 'gs_draw', 'gs_quake', 'gs_cyclone']);
     expect(checkNode(gs, {}, 'gs_whirl', { points: 0 }, 0)).toBeNull();
     expect(checkNode(gs, {}, 'gs_whirl', { points: 1 }, 0)).toBe('sp');
     expect(spSpent(gs, { gs_whirl: { points: 2 } })).toBe(2);

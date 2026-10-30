@@ -81,7 +81,7 @@ export class DungeonGame {
     const sp = this.sim.addPlayer(pid, entryPos(this.room, index % 4), weaponDef(weapon));
     // 스킬 노드: 섬 파티는 DB에서 읽은 파티 정보, 개발 방은 접속 옵션 (skills.md 1장, 판정은 이 값으로)
     const skills = party ? party.skills : devSkills;
-    sp.skills = decodeBuild(typeof skills === 'string' ? skills.slice(0, 200) : '');
+    sp.skills = decodeBuild(typeof skills === 'string' ? skills.slice(0, 400) : '');
     // 부활의 깃털은 솔로만 (dungeon.md 3장). 파티는 동료 부활
     if (this.state.partySize > 1) sp.state.feathers = 0;
     sp.state.arrive = arriveSecOf(this.room); // 층 첫 방은 우물에서 떨어져 들어옴 (dungeon.md 2장)

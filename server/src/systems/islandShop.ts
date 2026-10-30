@@ -90,6 +90,8 @@ export class IslandShop {
         else if (m.op === 'reset') {
           this.store.resetSkills(uid, m.weapon);
           this.sendSkills(userId);
+        } else if (m.op === 'equip') {
+          this.sendSkills(userId, this.store.equipSkill(uid, m.weapon, m.skillId ?? '', m.slot ?? 0) ?? undefined);
         } else {
           const node = { points: m.points ?? 1, ...(m.variant ? { variant: m.variant } : {}) };
           this.sendSkills(userId, this.store.setSkill(uid, m.weapon, m.skillId ?? '', node) ?? undefined);

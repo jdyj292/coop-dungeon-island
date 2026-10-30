@@ -46,10 +46,10 @@ export const C2S = {
   memo: z.object({ text: lineText(NET.memoMaxLen) }).strict(),
   /** 무기 고르기 (섬 가방 장비 탭, MVP 보충 ST-4) */
   weapon: z.object({ id: z.enum(MVP_WEAPONS) }).strict(),
-  /** 섬: 스킬 포인트·변형 바꾸기, 무기 스킬 초기화 (skills.md 1장, 스킬 창(K)). 검사는 서버 */
+  /** 섬: 스킬 포인트·변형 바꾸기, 슬롯 장착(slot 0~3 = U I O P), 무기 스킬 초기화 (skills.md 1장, 스킬 창(K)). 검사는 서버 */
   skill: z.object({
-    weapon: z.enum(MVP_WEAPONS), op: z.enum(['set', 'reset']), skillId: z.string().max(40).optional(),
-    points: z.number().int().min(0).max(9).optional(), variant: z.string().max(24).optional(),
+    weapon: z.enum(MVP_WEAPONS), op: z.enum(['set', 'equip', 'reset']), skillId: z.string().max(40).optional(),
+    points: z.number().int().min(0).max(9).optional(), variant: z.string().max(24).optional(), slot: z.number().int().min(0).max(9).optional(),
   }).strict(),
   /** 외형 바꾸기 (섬에서, 설정 외형 탭) */
   look: z.object({ hair: z.number().int().min(0).max(LOOK.hairStyles - 1), hairColor: z.number().int().min(0).max(LOOK.hairColors - 1) }).strict(),
@@ -105,7 +105,7 @@ export interface S2C {
   /** 섬: 입장 때 본인에게 (지갑은 상태에 넣지 않음, network.md 5장) */
   me: { wallet: number; level: number };
   /** 섬: 내 스킬 (입장 때·바꿀 때 본인에게). 무기마다 받은 SP·쓴 SP·노드 문자열 (skillTree.encodeBuild). fail = 방금 요청이 안 된 사유 */
-  skills: { weapons: { weapon: string; sp: number; spent: number; build: string }[]; fail?: 'skill' | 'points' | 'variant' | 'sp' | 'busy' };
+  skills: { weapons: { weapon: string; sp: number; spent: number; build: string }[]; fail?: 'skill' | 'points' | 'variant' | 'sp' | 'locked' | 'slot' | 'busy' };
   /** 섬: 내 가방 (장식 id → 개수, 바뀔 때마다 본인에게) */
   inv: { items: Record<string, number> };
   /** 섬: 배치 요청 실패 (같은 칸에 먼저 온 요청 등) */

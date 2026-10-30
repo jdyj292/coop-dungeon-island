@@ -124,4 +124,6 @@ export const skillNodes = sqliteTable('skill_nodes', {
   nodeId: text('node_id').notNull(),
   points: integer('points').notNull(),
   variant: text('variant'),
+  /** 장착한 슬롯 0~3 (U I O P). null = 장착 안 함 (그 무기에 slot이 하나도 없으면 기본 배치, skillLoadout.ts) */
+  slot: integer('slot'),
 }, (t) => [primaryKey({ columns: [t.userId, t.nodeId] })]);

@@ -112,7 +112,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | lasting | 장판·지속 스킬 (보조 노드 원소 친화가 상태 이상 시간·repeat 횟수를 늘림) |
 
 - 특수 필드: reinput(재입력 횟수), repeat(`{count, interval, step?, seek?, copies?}` 반복: step = 판정마다 앞으로 px, seek = 판정마다 가까운 맞을 몬스터 쪽으로 px, copies = `[[앞, 깊이], ...]` 자리에 같은 반복을 첫 판정부터 더), after(`{delay, coef}` 후속 판정), onStatusEnd(상태이상 해제 시 판정), onWall(`{coef}` 벽꿍). 기본 스킬에 repeat가 있으면 변형은 일부 키만 덮어써도 됨
-- 적용은 shared/src/skillTree.ts resolveSkill (덮어쓰기 + 특수 필드 + 계수에 레벨 배율), 특수 판정은 shared/src/sim/skillExtras.ts: 반복·후속 = 시전한 자리·방향에 같은 판정을 예약(반복은 count번 중 첫 판정 뒤 나머지), 해제 = 그 행동이 건 빙결이 풀릴 때 그 몬스터에 한 번(빙결·띄우기 없이), 재입력 = 같은 스킬을 쿨타임·MP 없이 (스킬 recovery 또는 끝난 뒤 combat.json skillTree.reinputWindow 안). status slow = 몬스터 걷는 속도 × (1 − amount)
+- 적용은 shared/src/skillTree.ts resolveSkill (덮어쓰기 + 특수 필드 + 계수에 레벨 배율), 특수 판정은 shared/src/sim/skillExtras.ts: 반복·후속 = 시전한 자리·방향에 같은 판정을 예약(반복은 count번 중 첫 판정 뒤 나머지), 해제 = 그 행동이 건 빙결이 풀릴 때 그 몬스터에 한 번(빙결·띄우기 없이), 재입력 = 같은 스킬을 쿨타임·MP 없이 (스킬 recovery 또는 끝난 뒤 combat.json skillTree.reinputWindow 안). status slow = 몬스터 걷는 속도·공격 쿨타임·공격 사이 쉬는 시간이 × (1 − amount)로 흐름
 - 현재 파일: 대검·스태프 공용 기본 스킬 + A·B 계열 1단계 액티브(SK-2). 나머지는 skills.md 표를 이 형식으로 옮겨 추가
 - **passives.json (계열 보조 노드)**: `{ id, weapon, branch: A|B, tier, name, desc, effect }`. effect 키: chargeSpeedMul(대검 충전 속도 배율, 최대까지 maxTime / 값), chargeTakenMul(충전 중 받는 피해 배율), skillArmor(모든 스킬 슈퍼아머), airDamageMul(공중 대상 피해 배율), projectileRangeMul(투사체 스킬 사거리 배율), lastingMul(lasting 스킬 상태 이상 시간·repeat count 배율, 횟수는 반올림), burn `{element, time, takenMul}`(그 원소 스킬 적중 대상이 time초 동안 받는 피해 배율), lift `{takenMul}`(내 launch·hold로 떠 있는 동안 받는 피해 배율), dodge `{distanceMul, cooldownAdd}`(회피 거리 배율·쿨 더하기). 노드 id는 행동 id와 겹치면 안 됨 (data-validate). 예산 검사 대상 아님
 - 예산 검사(balance-check)는 한 번 쓸 때 계수 합 = coef × hits·repeat(copies 포함)·burst·lanes 수
@@ -217,7 +217,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | pushRate | 밀림이 남은 거리를 줄이는 속도 (초당 비율, 클수록 짧고 세게 밀림) |
 | turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 (무기 basicTurn false면 없음) |
 | cooldownScale | 전역 쿨타임 배율 (balance.md 2장). 실제 쿨 = 기준 쿨 × 이 값 |
-| skillTree | 스킬 포인트 (skills.md 1장): maxPoints(노드 최대), variantAt(변형을 고르는 포인트), levelMul(포인트별 레벨 배율, balance.md 1장), reinputWindow(변형 재입력을 받는 시간, 스킬이 끝난 뒤 초) |
+| skillTree | 스킬 포인트 (skills.md 1장): maxPoints(노드 최대), variantAt(변형을 고르는 포인트), tierPoints(단계마다 열리는 데 필요한 같은 계열 아래 단계 포인트 합, [1단계, 2단계, 3단계]), levelMul(포인트별 레벨 배율, balance.md 1장), reinputWindow(변형 재입력을 받는 시간, 스킬이 끝난 뒤 초) |
 | stunExitSec | 기절(체력 0) 뒤 퇴장까지 시간 |
 | stun.{light,medium,heavy} | `{ time, push }` 경직 시간·밀림 거리 |
 | weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |

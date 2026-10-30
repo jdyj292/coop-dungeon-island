@@ -79,7 +79,9 @@ function moveToward(m: Monster, goal: { x: number; y: number }, dt: number, ctx:
 
 export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEvent[] {
   const ev: MonsterEvent[] = [];
-  for (const id of Object.keys(m.cooldowns)) m.cooldowns[id] = Math.max(0, m.cooldowns[id]! - dt);
+  // 감속(status slow)은 공격 쿨타임·공격 사이 쉬는 시간도 그만큼 느리게 흐른다 (중력장, skills.md 3장)
+  const slowMul = m.slow.left > 0 ? 1 - m.slow.amount : 1;
+  for (const id of Object.keys(m.cooldowns)) m.cooldowns[id] = Math.max(0, m.cooldowns[id]! - dt * slowMul);
   m.moving = false;
   m.body.armor = hasArmor(m);
   for (const e of stepBodyIn(m, dt, ctx.bounds)) ev.push({ type: 'body', e });
@@ -109,7 +111,7 @@ export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEv
   if (!m.aware && Math.hypot(dx, p.y - m.body.y) <= m.def.detectRange) m.aware = true;
   if (!m.aware) return ev;
   if (dx !== 0) m.facing = Math.sign(dx);
-  if (m.timer > 0) m.timer = Math.max(0, m.timer - dt);
+  if (m.timer > 0) m.timer = Math.max(0, m.timer - dt * slowMul);
   const { def, goal } = decide(m, ctx);
   const free = !m.def.usesToken || ctx.tokens.available(m.id);
   const eliteOk = m.def.rank !== 'elite' || !ctx.eliteBusy(m);

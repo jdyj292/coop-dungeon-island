@@ -5,6 +5,7 @@ export * from './movement';
 export * from './actions';
 export * from './charge';
 export * from './skillTree';
+export * from './skillLoadout';
 export * from './passives';
 export * from './hit';
 export * from './shapes';

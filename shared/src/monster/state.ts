@@ -53,7 +53,7 @@ export interface Monster {
   frozenBy?: { pid: string; def: ActionDef };
   /** 벽꿍 판정을 건 행동 (변형 onWall): 이 몬스터가 밀려 벽에 닿으면 다운 + 추가 판정. 다음 피격·착지 전까지 */
   wallBy?: { pid: string; def: ActionDef };
-  /** 감속 (status slow, 변형 동토): 남은 시간·줄이는 비율. 걷는 속도만 줄어든다 */
+  /** 감속 (status slow, 변형 동토·중력장): 남은 시간·줄이는 비율. 걷는 속도와 공격 쿨타임·공격 사이 쉬는 시간이 느려진다 (공격 동작 자체는 그대로) */
   slow: { left: number; amount: number };
   /** 잠든 채 남은 시간 (첫 방 rooms.json wakeSec, dungeon.md 5장): 움직이지도 공격하지도 않음, 맞으면 바로 깨어남. 줄이는 건 RoomSim (누군가 착지한 뒤부터) */
   sleep: number;

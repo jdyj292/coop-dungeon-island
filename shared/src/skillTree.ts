@@ -1,23 +1,27 @@
 // 스킬 포인트·변형 (docs/skills.md 1장, balance.md 1장): 노드 규칙 검사, 변형·레벨 배율을 적용한 스킬 정의 (클라이언트·서버 공용)
 // 기본 스킬은 처음부터 1포인트, 계열 스킬(A·B)은 0포인트(안 배움)에서 시작. 같은 계열·단계의 액티브는 하나만 (바꾸면 포인트가 옮겨감).
-// 최대 maxPoints, variantAt 포인트에서 변형 택1. 슬롯 = 기본 스킬 순서 + A·B 계열에서 배운 스킬 (U I O P).
-// 보조 노드(passives.json)는 1포인트, 같은 계열·단계 보조끼리 택1, 슬롯에 들어가지 않음 (효과는 passives.ts). 2단계 이상·슬롯 장착은 MVP 이후
+// 최대 maxPoints, variantAt 포인트에서 변형 택1. 보조 노드(passives.json)는 1포인트, 같은 계열·단계 보조끼리 택1, 슬롯에 들어가지 않음 (효과는 passives.ts).
+// 노드 바꾸기·단계 열림·슬롯 장착(U I O P)은 skillLoadout.ts. 3단계·필살기는 MVP 이후
 import { skillDef, type ActionDef, type WeaponDef } from './actions';
 import { applyVariant } from './data/crossCheck';
 import { COMBAT, PASSIVES, SKILLS, WEAPONS } from './data/load';
-import { isPassive, perksOf, weaponPassives, withPerks } from './passives';
+import { isPassive, weaponPassives } from './passives';
 
 export interface SkillNode {
   points: number;
   variant?: string;
+  /** 장착한 슬롯 (0~3 = U I O P, skillLoadout.ts). 없으면 장착 안 함 (빌드 전체에 slot이 없으면 기본 배치) */
+  slot?: number;
 }
 
 /** 스킬 id → 노드. 없는 기본 스킬은 1포인트, 없는 계열 스킬은 0포인트 */
 export type SkillBuild = Record<string, SkillNode>;
 
 const TREE = COMBAT.skillTree;
-/** 계열 슬롯 순서 (기본 스킬 뒤 O·P) */
+/** 계열 (기본 배치에서 기본 스킬 뒤 O·P) */
 export const BRANCHES = ['A', 'B'] as const;
+/** 스킬 슬롯 수 (U I O P) */
+export const SLOT_COUNT = 4;
 
 export const isBaseSkill = (id: string): boolean => SKILLS[id]?.branch === 'base';
 /** 노드 최소 포인트: 기본 스킬 1(공짜), 계열 스킬·보조 노드 0(안 배움) */
@@ -58,26 +62,6 @@ export const spTotal = (level: number, bonus = 0): number => Math.max(0, level -
 export const spSpent = (weapon: WeaponDef, b: SkillBuild): number =>
   treeNodes(weapon).reduce((s, id) => s + nodeOf(b, id).points - minPoints(id), 0);
 
-/** 노드 하나를 바꾼 빌드: 계열 스킬을 배우면 같은 단계 상대는 지운다 (포인트가 옮겨감). 기본값 노드는 지운다 */
-export function applyNode(weapon: WeaponDef, b: SkillBuild, id: string, node: SkillNode): SkillBuild {
-  const out: SkillBuild = { ...b };
-  if (node.points > 0) for (const r of rivalsOf(weapon, id)) delete out[r];
-  if (node.points === minPoints(id) && !node.variant) delete out[id];
-  else out[id] = node;
-  return out;
-}
-
-export type NodeFail = 'skill' | 'points' | 'variant' | 'sp';
-
-/** 이 노드로 바꿔도 되나 (sp = 받은 SP). 변형은 variantAt 포인트 이상일 때만. 택1 상대를 지운 뒤의 SP로 센다 */
-export function checkNode(weapon: WeaponDef, b: SkillBuild, id: string, node: SkillNode, sp: number): NodeFail | null {
-  if (!treeNodes(weapon).includes(id)) return 'skill';
-  if (!Number.isInteger(node.points) || node.points < minPoints(id) || node.points > maxPointsOf(id)) return 'points';
-  if (node.variant !== undefined && (node.points < TREE.variantAt || !SKILLS[id]?.variants?.[node.variant])) return 'variant';
-  if (spSpent(weapon, applyNode(weapon, b, id, node)) > sp) return 'sp';
-  return null;
-}
-
 export const levelMul = (points: number): number => TREE.levelMul[Math.min(Math.max(points, 1), TREE.levelMul.length) - 1] ?? 1;
 
 const EXTRAS = ['reinput', 'repeat', 'after', 'onStatusEnd', 'onWall'] as const;
@@ -109,30 +93,11 @@ export function resolveSkill(id: string, node: SkillNode = { points: 1 }): Actio
   return def;
 }
 
-/** 슬롯(U I O P) 순서의 스킬 id: 기본 스킬, 그다음 계열마다 배운 1단계 액티브 (없으면 null) */
-export function slotSkills(weapon: WeaponDef, b: SkillBuild): (string | null)[] {
-  const tree = treeSkills(weapon);
-  return [
-    ...weapon.baseSkills,
-    ...BRANCHES.map((br) => tree.find((id) => SKILLS[id]!.branch === br && SKILLS[id]!.tier === 1 && nodeOf(b, id).points > 0) ?? null),
-  ];
-}
-
-/** 무기 스킬을 슬롯 순서대로 (노드·보조 노드 적용, 빈 슬롯 null) */
-export const weaponSkills = (weapon: WeaponDef, b: SkillBuild): (ActionDef | null)[] =>
-  slotSkills(weapon, b).map((id) => (id ? withPerks(resolveSkill(id, nodeOf(b, id)), perksOf(weapon, b)) : null));
-
-/** 이 무기로 쓸 수 있는(배운) 스킬이면 노드·보조 노드를 적용한 정의 */
-export function buildSkill(weapon: WeaponDef, b: SkillBuild, id: string): ActionDef | undefined {
-  const n = nodeOf(b, id);
-  return treeSkills(weapon).includes(id) && n.points > 0 ? withPerks(resolveSkill(id, n), perksOf(weapon, b)) : undefined;
-}
-
-/** 저장·전송용 문자열 "id:포인트[:변형],..." (기본값 노드 = 기본 스킬 1포인트·계열 스킬 0포인트는 생략) */
+/** 저장·전송용 문자열 "id:포인트[:변형][@슬롯],..." (기본값 노드 = 기본 스킬 1포인트·계열 스킬 0포인트이고 슬롯이 없으면 생략) */
 export function encodeBuild(b: SkillBuild): string {
   return Object.entries(b)
-    .filter(([id, n]) => n.points !== minPoints(id) || n.variant)
-    .map(([id, n]) => (n.variant ? `${id}:${n.points}:${n.variant}` : `${id}:${n.points}`))
+    .filter(([id, n]) => n.points !== minPoints(id) || n.variant || n.slot !== undefined)
+    .map(([id, n]) => `${id}:${n.points}${n.variant ? `:${n.variant}` : ''}${n.slot !== undefined ? `@${n.slot}` : ''}`)
     .join(',');
 }
 
@@ -145,14 +110,17 @@ export function buildFrom(s: string): SkillBuild {
   return b;
 }
 
-/** encodeBuild의 반대. 모르는 스킬·변형, 잘못된 포인트는 버린다 */
+/** encodeBuild의 반대. 모르는 스킬·변형, 잘못된 포인트·슬롯은 버린다 (보조 노드는 슬롯 없음) */
 export function decodeBuild(s: string): SkillBuild {
   const out: SkillBuild = {};
   for (const part of s.split(',')) {
-    const [id = '', pts = '', variant] = part.split(':');
-    const points = Number(pts);
+    const [body = '', slotText] = part.split('@');
+    const [id = '', pts = '', variant] = body.split(':');
+    const points = Number(pts), slot = slotText === undefined ? NaN : Number(slotText);
     if (!(SKILLS[id] || isPassive(id)) || !Number.isInteger(points) || points < 1 || points > maxPointsOf(id)) continue;
-    out[id] = variant && points >= TREE.variantAt && SKILLS[id]!.variants?.[variant] ? { points, variant } : { points };
+    const n: SkillNode = variant && points >= TREE.variantAt && SKILLS[id]!.variants?.[variant] ? { points, variant } : { points };
+    if (SKILLS[id] && Number.isInteger(slot) && slot >= 0 && slot < SLOT_COUNT) n.slot = slot;
+    out[id] = n;
   }
   return out;
 }

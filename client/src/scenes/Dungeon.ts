@@ -233,7 +233,7 @@ export class Dungeon extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     const k = this.keys, dt = delta / 1000, sk = skillsOf(this.weapon, this.online ? this.online.conn.mySkills : this.params.get('skills') ?? '');
-    // U I O P = 슬롯 순서 (기본 스킬 2개 + A·B 계열, skillTree.slotSkills). 마지막에 누른 스킬 키를 누르고 있으면 대검 충전
+    // U I O P = 장착한 슬롯 순서 (skillLoadout.slotSkills). 마지막에 누른 스킬 키를 누르고 있으면 대검 충전
     const slots = ['skill1', 'skill2', 'skill3', 'skill4'] as const;
     const pressed = slots.findIndex((n, i) => Phaser.Input.Keyboard.JustDown(k[n]) && sk[i]);
     if (pressed >= 0) this.skillKey = slots[pressed]!;
