@@ -19,6 +19,7 @@ import { chooseTarget } from './aim';
 import { separateMonsters } from './separate';
 import { PositionHistory, type PastPos } from './history';
 import { HitLog } from './hitLog';
+import { perksOf } from '../passives';
 import { hitMonster, phaseIsActive, strike, type PosOf, type StrikeHit } from './strike';
 import { spawnBolt, stepBolt, type Bolt } from './bolts';
 import { echoesOf, placeEcho, shatterDef, strikeEcho, thawed, wallDef, type Echo } from './skillExtras';
@@ -56,7 +57,7 @@ export class RoomSim {
 
   /** playerPos가 있으면 솔로 플레이어(SOLO_PID)를 바로 넣는다 */
   constructor(readonly weapon: WeaponDef, readonly bounds: Bounds, playerPos: Vec2 | null, readonly opts: SimOptions = {}) {
-    if (playerPos) this.addPlayer(SOLO_PID, playerPos);
+    if (playerPos) this.addPlayer(SOLO_PID, playerPos).skills = opts.skills ?? {};
     this.tokens = new AttackTokens(opts.partySize ?? 1);
   }
 
@@ -249,6 +250,7 @@ export class RoomSim {
     }
     const input = sp.held ? { ...mergePresses(sp.held, raw)!, x: raw.x, y: raw.y, run: raw.run } : raw;
     sp.held = null;
+    p.perks = perksOf(sp.weapon, sp.skills);
     const res = stepPlayerState(p, sp.weapon, input, dt, this.bounds, zoneSpeedMul(this.zones, p.pos, PLAYER.hurtbox));
     if (res.backstepStarted) events.push({ type: 'backstep', pid });
     res.hurt.forEach((e) => events.push({ type: 'playerHurt', pid, e }));

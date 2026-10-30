@@ -1,0 +1,43 @@
+{
+  "_note": "계열 보조 노드 (skills.md 1~3장, data.md 3장). 1포인트, 같은 무기·계열·단계 보조는 하나만. effect 키 의미는 data.md. 무거운 손은 충전 구현 전 대체 효과, 가벼운 발 쿨은 회피 쿨 0.6초에 맞춰 −0.2초",
+  "gs_heavyhand": {
+    "id": "gs_heavyhand", "weapon": "greatsword", "branch": "A", "tier": 1, "name": "무거운 손",
+    "desc": "스킬 준비가 30% 빠르고, 스킬을 쓰는 중\n받는 피해 -30%",
+    "effect": { "skillWindupMul": 0.77, "skillTakenMul": 0.7 }
+  },
+  "gs_steadfast": {
+    "id": "gs_steadfast", "weapon": "greatsword", "branch": "A", "tier": 1, "name": "굳건함",
+    "desc": "모든 스킬을 쓰는 동안 슈퍼아머\n(맞아도 피해만 받고 끊기지 않음)",
+    "effect": { "skillArmor": true }
+  },
+  "gs_keenedge": {
+    "id": "gs_keenedge", "weapon": "greatsword", "branch": "B", "tier": 1, "name": "날 선 칼날",
+    "desc": "공중에 뜬 적에게 주는 피해 +15%\n(평타·대시 공격 포함)",
+    "effect": { "airDamageMul": 1.15 }
+  },
+  "gs_honing": {
+    "id": "gs_honing", "weapon": "greatsword", "branch": "B", "tier": 1, "name": "검기 연마",
+    "desc": "검기 같은 투사체 스킬의 사거리 +40%",
+    "effect": { "projectileRangeMul": 1.4 }
+  },
+  "st_affinity": {
+    "id": "st_affinity", "weapon": "staff", "branch": "A", "tier": 1, "name": "원소 친화",
+    "desc": "장판·지속 스킬(불꽃 기둥·부유 구슬·얼음\n장판)의 지속시간·횟수 +25%",
+    "effect": { "lastingMul": 1.25 }
+  },
+  "st_burn": {
+    "id": "st_burn", "weapon": "staff", "branch": "A", "tier": 1, "name": "연소",
+    "desc": "화염 스킬에 맞은 적은 3초 동안\n모두에게 받는 피해 +15%",
+    "effect": { "burn": { "element": "fire", "time": 3, "takenMul": 1.15 } }
+  },
+  "st_weightless": {
+    "id": "st_weightless", "weapon": "staff", "branch": "B", "tier": 1, "name": "무중력",
+    "desc": "내가 띄우거나 체공시킨 적은 떠 있는 동안\n모두에게 받는 피해 +10%",
+    "effect": { "lift": { "takenMul": 1.1 } }
+  },
+  "st_lightfoot": {
+    "id": "st_lightfoot", "weapon": "staff", "branch": "B", "tier": 1, "name": "가벼운 발",
+    "desc": "회피(순간이동) 거리 +50%, 쿨 -0.2초",
+    "effect": { "dodge": { "distanceMul": 1.5, "cooldownAdd": -0.2 } }
+  }
+}

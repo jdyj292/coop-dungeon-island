@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { applyVariant, basicDps, crossCheck, type CrossRefs, type GameData } from './crossCheck';
-import { MONSTERS, ROOMS, SKILLS, WEAPONS } from './load';
+import { MONSTERS, PASSIVES, ROOMS, SKILLS, WEAPONS } from './load';
 import { FILE_SCHEMAS, monsterAttack, playerAction, withoutNotes } from './schema';
 
 const readJson = (p: string) => JSON.parse(readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8'));
@@ -14,7 +14,7 @@ const refs: CrossRefs = {
   sounds: ['action', 'clear'].flatMap((bus) => Object.keys(readJson('client/data/sfx.json')[bus])),
 };
 const rules = { basicDps: {}, tolerance: 0.15 };
-const fresh = (): GameData => structuredClone({ weapons: WEAPONS, skills: SKILLS, monsters: MONSTERS, rooms: ROOMS });
+const fresh = (): GameData => structuredClone({ weapons: WEAPONS, skills: SKILLS, passives: PASSIVES, monsters: MONSTERS, rooms: ROOMS });
 const errors = (d: GameData) => crossCheck(d, refs, rules).filter((i) => i.level === 'error').map((i) => i.where);
 
 describe('현재 데이터', () => {
@@ -93,6 +93,6 @@ describe('스키마', () => {
     expect(monsterAttack.safeParse({ ...m, damage: 5 }).success).toBe(false);
   });
   it('모든 파일 스키마가 있음', () => {
-    expect(Object.keys(FILE_SCHEMAS)).toHaveLength(8);
+    expect(Object.keys(FILE_SCHEMAS)).toHaveLength(9);
   });
 });

@@ -4,6 +4,7 @@ import type { z } from 'zod';
 import combatJson from '../../data/combat.json';
 import islandJson from '../../data/island.json';
 import itemsJson from '../../data/items.json';
+import passivesJson from '../../data/passives.json';
 import monstersJson from '../../data/monsters.json';
 import playerJson from '../../data/player.json';
 import roomsJson from '../../data/rooms.json';
@@ -26,6 +27,7 @@ function load<K extends keyof Files>(file: K, json: object): z.infer<Files[K]['s
 
 export const WEAPONS = load('weapons.json', weaponsJson);
 export const SKILLS = load('skills.json', skillsJson);
+export const PASSIVES = load('passives.json', passivesJson);
 export const MONSTERS = load('monsters.json', monstersJson);
 export const ROOMS = load('rooms.json', roomsJson);
 export const PLAYER = load('player.json', playerJson);

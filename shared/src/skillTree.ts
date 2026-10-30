@@ -1,9 +1,11 @@
 // 스킬 포인트·변형 (docs/skills.md 1장, balance.md 1장): 노드 규칙 검사, 변형·레벨 배율을 적용한 스킬 정의 (클라이언트·서버 공용)
 // 기본 스킬은 처음부터 1포인트, 계열 스킬(A·B)은 0포인트(안 배움)에서 시작. 같은 계열·단계의 액티브는 하나만 (바꾸면 포인트가 옮겨감).
-// 최대 maxPoints, variantAt 포인트에서 변형 택1. 슬롯 = 기본 스킬 순서 + A·B 계열에서 배운 스킬 (U I O P). 2단계 이상·보조·슬롯 장착은 MVP 이후
+// 최대 maxPoints, variantAt 포인트에서 변형 택1. 슬롯 = 기본 스킬 순서 + A·B 계열에서 배운 스킬 (U I O P).
+// 보조 노드(passives.json)는 1포인트, 같은 계열·단계 보조끼리 택1, 슬롯에 들어가지 않음 (효과는 passives.ts). 2단계 이상·슬롯 장착은 MVP 이후
 import { skillDef, type ActionDef, type WeaponDef } from './actions';
 import { applyVariant } from './data/crossCheck';
-import { COMBAT, SKILLS, WEAPONS } from './data/load';
+import { COMBAT, PASSIVES, SKILLS, WEAPONS } from './data/load';
+import { isPassive, perksOf, weaponPassives, withPerks } from './passives';
 
 export interface SkillNode {
   points: number;
@@ -18,8 +20,10 @@ const TREE = COMBAT.skillTree;
 export const BRANCHES = ['A', 'B'] as const;
 
 export const isBaseSkill = (id: string): boolean => SKILLS[id]?.branch === 'base';
-/** 노드 최소 포인트: 기본 스킬 1(공짜), 계열 스킬 0(안 배움) */
+/** 노드 최소 포인트: 기본 스킬 1(공짜), 계열 스킬·보조 노드 0(안 배움) */
 export const minPoints = (id: string): number => (isBaseSkill(id) ? 1 : 0);
+/** 노드 최대 포인트: 보조 노드 1, 액티브 maxPoints */
+export const maxPointsOf = (id: string): number => (isPassive(id) ? 1 : TREE.maxPoints);
 
 export const nodeOf = (b: SkillBuild, id: string): SkillNode => b[id] ?? { points: minPoints(id) };
 
@@ -35,8 +39,13 @@ export function treeSkills(weapon: WeaponDef): string[] {
   return ids;
 }
 
-/** 같은 계열·같은 단계의 다른 액티브 (택1 상대) */
+/** 무기의 모든 노드: 액티브(treeSkills) 뒤에 보조 노드 */
+export const treeNodes = (weapon: WeaponDef): string[] => [...treeSkills(weapon), ...weaponPassives(weapon)];
+
+/** 같은 계열·같은 단계의 다른 액티브 (택1 상대). 보조 노드는 같은 계열·단계의 다른 보조 */
 export function rivalsOf(weapon: WeaponDef, id: string): string[] {
+  const pv = PASSIVES[id];
+  if (pv) return weaponPassives(weapon).filter((o) => o !== id && PASSIVES[o]!.branch === pv.branch && PASSIVES[o]!.tier === pv.tier);
   const s = SKILLS[id];
   if (!s || s.branch === 'base') return [];
   return treeSkills(weapon).filter((o) => o !== id && SKILLS[o]!.branch === s.branch && SKILLS[o]!.tier === s.tier);
@@ -47,7 +56,7 @@ export const spTotal = (level: number, bonus = 0): number => Math.max(0, level -
 
 /** 쓴 SP: 기본 스킬은 1포인트가 공짜 */
 export const spSpent = (weapon: WeaponDef, b: SkillBuild): number =>
-  treeSkills(weapon).reduce((s, id) => s + nodeOf(b, id).points - minPoints(id), 0);
+  treeNodes(weapon).reduce((s, id) => s + nodeOf(b, id).points - minPoints(id), 0);
 
 /** 노드 하나를 바꾼 빌드: 계열 스킬을 배우면 같은 단계 상대는 지운다 (포인트가 옮겨감). 기본값 노드는 지운다 */
 export function applyNode(weapon: WeaponDef, b: SkillBuild, id: string, node: SkillNode): SkillBuild {
@@ -62,8 +71,8 @@ export type NodeFail = 'skill' | 'points' | 'variant' | 'sp';
 
 /** 이 노드로 바꿔도 되나 (sp = 받은 SP). 변형은 variantAt 포인트 이상일 때만. 택1 상대를 지운 뒤의 SP로 센다 */
 export function checkNode(weapon: WeaponDef, b: SkillBuild, id: string, node: SkillNode, sp: number): NodeFail | null {
-  if (!treeSkills(weapon).includes(id)) return 'skill';
-  if (!Number.isInteger(node.points) || node.points < minPoints(id) || node.points > TREE.maxPoints) return 'points';
+  if (!treeNodes(weapon).includes(id)) return 'skill';
+  if (!Number.isInteger(node.points) || node.points < minPoints(id) || node.points > maxPointsOf(id)) return 'points';
   if (node.variant !== undefined && (node.points < TREE.variantAt || !SKILLS[id]?.variants?.[node.variant])) return 'variant';
   if (spSpent(weapon, applyNode(weapon, b, id, node)) > sp) return 'sp';
   return null;
@@ -109,14 +118,14 @@ export function slotSkills(weapon: WeaponDef, b: SkillBuild): (string | null)[] 
   ];
 }
 
-/** 무기 스킬을 슬롯 순서대로 (노드 적용, 빈 슬롯 null) */
+/** 무기 스킬을 슬롯 순서대로 (노드·보조 노드 적용, 빈 슬롯 null) */
 export const weaponSkills = (weapon: WeaponDef, b: SkillBuild): (ActionDef | null)[] =>
-  slotSkills(weapon, b).map((id) => (id ? resolveSkill(id, nodeOf(b, id)) : null));
+  slotSkills(weapon, b).map((id) => (id ? withPerks(resolveSkill(id, nodeOf(b, id)), perksOf(weapon, b)) : null));
 
-/** 이 무기로 쓸 수 있는(배운) 스킬이면 노드를 적용한 정의 */
+/** 이 무기로 쓸 수 있는(배운) 스킬이면 노드·보조 노드를 적용한 정의 */
 export function buildSkill(weapon: WeaponDef, b: SkillBuild, id: string): ActionDef | undefined {
   const n = nodeOf(b, id);
-  return treeSkills(weapon).includes(id) && n.points > 0 ? resolveSkill(id, n) : undefined;
+  return treeSkills(weapon).includes(id) && n.points > 0 ? withPerks(resolveSkill(id, n), perksOf(weapon, b)) : undefined;
 }
 
 /** 저장·전송용 문자열 "id:포인트[:변형],..." (기본값 노드 = 기본 스킬 1포인트·계열 스킬 0포인트는 생략) */
@@ -142,7 +151,7 @@ export function decodeBuild(s: string): SkillBuild {
   for (const part of s.split(',')) {
     const [id = '', pts = '', variant] = part.split(':');
     const points = Number(pts);
-    if (!SKILLS[id] || !Number.isInteger(points) || points < 1 || points > TREE.maxPoints) continue;
+    if (!(SKILLS[id] || isPassive(id)) || !Number.isInteger(points) || points < 1 || points > maxPointsOf(id)) continue;
     out[id] = variant && points >= TREE.variantAt && SKILLS[id]!.variants?.[variant] ? { points, variant } : { points };
   }
   return out;

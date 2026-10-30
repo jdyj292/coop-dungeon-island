@@ -1,6 +1,6 @@
 // 스킬 노드 저장 (docs/skills.md 1장, db.md skill_nodes): 받은 SP = 숙련도 레벨 − 1 + weapon_mastery.sp(보너스), 쓴 SP = 노드 포인트에서 계산
 // 검사는 shared/skillTree.checkNode (클라이언트 신고값은 믿지 않는다), 던전 입장 때 이 값으로 판정 (skillBuild)
-import { applyNode, checkNode, decodeBuild, encodeBuild, MVP_WEAPONS, nodeOf, spSpent, spTotal, treeSkills, weaponDef, type NodeFail, type SkillBuild, type SkillNode } from '@game/shared';
+import { applyNode, checkNode, decodeBuild, encodeBuild, MVP_WEAPONS, nodeOf, spSpent, spTotal, treeNodes, weaponDef, type NodeFail, type SkillBuild, type SkillNode } from '@game/shared';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { Db } from './client';
 import { skillNodes, weaponMastery } from './schema';
@@ -27,7 +27,7 @@ export function skillsView(db: Db, userId: number): { weapon: string; sp: number
   const b = skillBuild(db, userId);
   return MVP_WEAPONS.map((weapon) => {
     const w = weaponDef(weapon), mine: SkillBuild = {};
-    for (const id of treeSkills(w)) mine[id] = nodeOf(b, id);
+    for (const id of treeNodes(w)) mine[id] = nodeOf(b, id);
     return { weapon, sp: spOf(db, userId, weapon), spent: spSpent(w, mine), build: encodeBuild(mine) };
   });
 }
@@ -39,7 +39,7 @@ export function setSkillNode(db: Db, userId: number, weapon: string, id: string,
   if (fail) return fail;
   const after = applyNode(w, before, id, node);
   db.transaction((tx) => {
-    for (const k of treeSkills(w)) {
+    for (const k of treeNodes(w)) {
       const n = after[k];
       if (!n) {
         if (before[k]) tx.delete(skillNodes).where(and(eq(skillNodes.userId, userId), eq(skillNodes.nodeId, k))).run();
@@ -55,5 +55,5 @@ export function setSkillNode(db: Db, userId: number, weapon: string, id: string,
 
 /** 무기 스킬 전체 초기화 (섬에서 무료, skills.md 1장) */
 export function resetSkills(db: Db, userId: number, weapon: string): void {
-  db.delete(skillNodes).where(and(eq(skillNodes.userId, userId), inArray(skillNodes.nodeId, treeSkills(weaponDef(weapon))))).run();
+  db.delete(skillNodes).where(and(eq(skillNodes.userId, userId), inArray(skillNodes.nodeId, treeNodes(weaponDef(weapon))))).run();
 }

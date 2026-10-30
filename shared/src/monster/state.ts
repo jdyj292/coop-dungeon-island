@@ -57,6 +57,10 @@ export interface Monster {
   slow: { left: number; amount: number };
   /** 잠든 채 남은 시간 (첫 방 rooms.json wakeSec, dungeon.md 5장): 움직이지도 공격하지도 않음, 맞으면 바로 깨어남. 줄이는 건 RoomSim (누군가 착지한 뒤부터) */
   sleep: number;
+  /** 연소 (보조 노드, skills.md 3장): 남은 시간·받는 피해 배율. 누가 때려도 */
+  burn: { left: number; mul: number };
+  /** 무중력 (보조 노드): 떠 있는 동안 받는 피해 배율 (0 = 없음). 땅에서 다시 맞으면 지운다 (sim/strike.ts) */
+  lifted: number;
 }
 
 /** 빙결 (얼음 장판 등 status freeze). 더 긴 쪽으로 */
@@ -74,7 +78,7 @@ export function newMonster(id: number, kind: string, x: number, y: number, hpMul
   const def = MONSTERS[kind];
   if (!def) throw new Error(`몬스터 '${kind}' 없음`);
   return {
-    id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0, frozen: 0, slow: { left: 0, amount: 0 }, sleep: 0,
+    id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0, frozen: 0, slow: { left: 0, amount: 0 }, sleep: 0, burn: { left: 0, mul: 1 }, lifted: 0,
     attack: null, hasToken: false, cooldowns: {}, aware: false, moving: false, hopT: 0, loop: { phase: 0, index: 0 },
   };
 }
@@ -107,6 +111,7 @@ export const monsterHalf = (m: Monster): Half => ({ x: m.def.hurtbox.width / 2, 
 export function stepBodyIn(m: Monster, dt: number, bounds: Bounds): BodyEvent[] {
   m.frozen = Math.max(0, m.frozen - dt);
   m.slow.left = Math.max(0, m.slow.left - dt);
+  m.burn.left = Math.max(0, m.burn.left - dt);
   const bd = monsterBounds(m, bounds), x0 = m.body.x, y0 = m.body.y;
   const ev = stepBody(m.body, dt, bd.minX, bd.maxX);
   // 깊이 끌림(pull)은 방 위아래 끝에서 멈춤

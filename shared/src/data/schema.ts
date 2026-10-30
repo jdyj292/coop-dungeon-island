@@ -122,7 +122,31 @@ export const skill = playerActionObj.extend({
   superArmor: z.boolean().optional(),
   repeat: repeat.optional(),
   onWall: onWall.optional(),
+  // 원소 (보조 노드 연소 등이 본다). lasting = 장판·지속 스킬 (원소 친화가 지속시간·반복 횟수를 늘림)
+  element: z.enum(['fire', 'ice']).optional(),
+  lasting: z.boolean().optional(),
 }).strict().superRefine(oneShape);
+
+/** 계열 보조 노드 (data.md 3장 passives.json): 1포인트, 같은 무기·계열·단계 보조는 하나만 */
+export const passive = z.object({
+  id: z.string(),
+  weapon: z.string(),
+  branch: z.enum(['A', 'B']),
+  tier: z.number().int().min(1).max(3),
+  name: z.string(),
+  desc: z.string().min(1),
+  effect: z.object({
+    skillWindupMul: pos.optional(),
+    skillTakenMul: pos.optional(),
+    skillArmor: z.literal(true).optional(),
+    airDamageMul: pos.optional(),
+    projectileRangeMul: pos.optional(),
+    lastingMul: pos.optional(),
+    burn: z.object({ element: z.enum(['fire', 'ice']), time: sec, takenMul: pos }).strict().optional(),
+    lift: z.object({ takenMul: pos }).strict().optional(),
+    dodge: z.object({ distanceMul: pos, cooldownAdd: z.number() }).strict().optional(),
+  }).strict(),
+}).strict();
 
 export const monsterAttack = z.object({
   ...actionFields,
@@ -275,6 +299,8 @@ export type Area = z.infer<typeof area>;
 export type Zone = z.infer<typeof zone>;
 export type ActionMove = z.infer<typeof move>;
 export type Skill = z.infer<typeof skill>;
+export type Passive = z.infer<typeof passive>;
+export type PassiveEffect = Passive['effect'];
 export type VariantExtra = z.infer<typeof variantExtra>;
 export type MonsterAttack = z.infer<typeof monsterAttack>;
 export type Weapon = z.infer<typeof weapon>;
@@ -287,6 +313,7 @@ export type { DecorationDef, IslandDef, ItemsDef } from './islandSchema';
 export const FILE_SCHEMAS = {
   'weapons.json': { schema: z.record(weapon), notes: true },
   'skills.json': { schema: z.record(skill), notes: true },
+  'passives.json': { schema: z.record(passive), notes: true },
   'monsters.json': { schema: z.record(monster), notes: true },
   'rooms.json': { schema: rooms, notes: true },
   'player.json': { schema: player, notes: false },

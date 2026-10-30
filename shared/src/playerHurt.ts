@@ -50,7 +50,9 @@ export function isInvulnerable(p: PlayerState): boolean {
 /** 몬스터 공격 적중. 약·중 → 경직, 강 → 다운. 하던 행동은 끊긴다. pushDir = 밀려날 방향 (1 오른쪽, -1 왼쪽, 0 = 밀리지 않음) */
 export function hurtPlayer(p: PlayerState, damage: number, strength: Strength = 'light', pushDir = 0): HurtEvent[] {
   if (isInvulnerable(p)) return [];
-  p.hp = Math.max(0, p.hp - damage);
+  // 보조 노드 무거운 손: 스킬을 쓰는 중 받는 피해 감소
+  const taken = p.fighter.run?.kind === 'skill' ? (p.perks?.skillTakenMul ?? 1) : 1;
+  p.hp = Math.max(0, p.hp - Math.round(damage * taken));
   // 슈퍼아머 스킬 시전 중: 피해만 받고 계속 (쓰러질 피해면 아래 규칙대로)
   if (p.hp > 0 && p.fighter.run?.kind === 'skill' && p.fighter.run.def.superArmor) return ['armor'];
   p.fighter = newFighter();

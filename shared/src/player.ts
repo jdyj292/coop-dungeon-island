@@ -6,6 +6,7 @@ import {
 import { COMBAT, PLAYER } from './data/load';
 import { moveSpeed, newRunState, stepMove, stepRun, type Bounds, type RunState, type Vec2, playerHalf } from './movement';
 import { moveBox } from './map/collision';
+import type { Perks } from './passives';
 import { newVitals, stepVitals, usePotion, type HurtEvent, type PotionKind, type Vitals } from './playerHurt';
 
 export interface PlayerState extends Vitals {
@@ -26,6 +27,8 @@ export interface PlayerState extends Vitals {
   cooldowns: Record<string, number>;
   /** 재입력 대기 (변형 reinput, skills.md 1장): 같은 스킬을 쿨타임·MP 없이 남은 횟수만큼. window = 스킬이 끝난 뒤 받는 남은 시간 */
   reinput: { id: string; left: number; window: number } | null;
+  /** 배운 보조 노드 효과 (passives.ts perksOf). 서버 상태로 보내지 않음: RoomSim·예측이 빌드에서 채운다 */
+  perks?: Perks;
 }
 
 export const newPlayerState = (pos: Vec2): PlayerState => ({
@@ -83,6 +86,8 @@ export function stepPlayerState(
   p: PlayerState, weapon: WeaponDef, input: PlayerInput, dt: number, bounds: Bounds, speedMul = 1,
 ): PlayerStep {
   const bs = PLAYER.backstep, st = PLAYER.stamina;
+  // 보조 노드 가벼운 발: 회피 거리·쿨
+  const dg = p.perks?.dodge, far = dg?.distanceMul ?? 1;
   for (const id of Object.keys(p.cooldowns)) p.cooldowns[id] = Math.max(0, p.cooldowns[id]! - dt);
   p.backstepCd = Math.max(0, p.backstepCd - dt);
   // 재입력 시간은 그 스킬이 끝난 뒤부터 흐른다
@@ -113,14 +118,14 @@ export function stepPlayerState(
     p.fighter = newFighter();
     const dir = Math.sign(input.x), dy = Math.sign(input.y);
     p.backstep = { t: 0, dir: dir || dy ? dir : -p.facing, dy };
-    p.backstepCd = bs.cooldown;
+    p.backstepCd = bs.cooldown + (dg?.cooldownAdd ?? 0);
     spendStamina(p, st.dodge);
     out.backstepStarted = true;
   }
   if (p.backstep) {
     const t0 = p.backstep.t, t1 = Math.min(bs.sec, t0 + dt);
     const k = (t1 - t0) / bs.sec;
-    const to = { x: p.pos.x + p.backstep.dir * bs.distance * k, y: p.pos.y + p.backstep.dy * bs.depthDistance * k };
+    const to = { x: p.pos.x + p.backstep.dir * bs.distance * far * k, y: p.pos.y + p.backstep.dy * bs.depthDistance * far * k };
     p.pos = moveBox(p.pos, to, playerHalf(), bounds);
     p.backstep.t = t0 + dt;
     if (p.backstep.t >= bs.sec) p.backstep = null;

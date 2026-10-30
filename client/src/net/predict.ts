@@ -3,7 +3,7 @@
 // 이동 입력은 "바뀔 때 + 20Hz"로 보내므로 서버가 한 입력을 적용한 틱 수가 2~3틱 다를 수 있다 (보정 규칙이 흡수)
 import {
   mergePresses, NET, newPlayerState, stepPlayerState, TICK,
-  type Bounds, type PlayerInput, type PlayerState, type PlayerStep, type Vec2, type WeaponDef,
+  type Bounds, type Perks, type PlayerInput, type PlayerState, type PlayerStep, type Vec2, type WeaponDef,
 } from '@game/shared';
 
 interface Pending {
@@ -51,8 +51,9 @@ export class Predictor {
   /** 멈춘 동안 들어온 누름 (서버 RoomSim과 같게 멈춤이 끝난 틱에 적용) */
   private held: PlayerInput | null = null;
 
-  constructor(private weapon: WeaponDef, private bounds: Bounds, start: Vec2) {
-    this.state = newPlayerState({ ...start });
+  /** perks = 내 보조 노드 효과 (회피 거리·쿨을 서버와 같게 예측) */
+  constructor(private weapon: WeaponDef, private bounds: Bounds, start: Vec2, perks?: Perks) {
+    this.state = { ...newPlayerState({ ...start }), perks };
   }
 
   get display(): Vec2 {
@@ -114,6 +115,7 @@ export class Predictor {
   reconcile(server: PlayerState, lastSeq: number, dt: number): { mode: Correction; error: number } {
     this.pending = this.pending.filter((p) => p.seq > lastSeq);
     const sim = clone(server);
+    sim.perks = this.state.perks;
     let held: PlayerInput | null = null;
     // 회피 누름은 시작될 때까지 이어 누른다 (서버가 히트스톱 중 받은 회피를 보관했다 실행하는 것과 같게, server inputs.ts)
     let dodge = false;

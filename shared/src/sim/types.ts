@@ -71,4 +71,6 @@ export interface SimOptions {
    * 'entity' = 공격자와 대상만 멈추고 세계는 계속 (서버, network.md 9장)
    */
   hitstop?: 'none' | 'entity';
+  /** 솔로 플레이어(SOLO_PID) 스킬 노드 (로컬 개발 ?skills=, 보조 노드 효과용) */
+  skills?: SkillBuild;
 }

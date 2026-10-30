@@ -30,6 +30,7 @@ export interface Rules {
 export interface GameData {
   weapons: Record<string, S.Weapon>;
   skills: Record<string, S.Skill>;
+  passives: Record<string, S.Passive>;
   monsters: Record<string, S.MonsterDef>;
   rooms: S.Rooms;
 }
@@ -117,6 +118,15 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
       const rep = (v as { repeat?: object }).repeat;
       if (rep && !S.repeat.safeParse({ ...s.repeat, ...rep }).success) err(`${vat}.repeat`, '기본 스킬에 repeat가 없으면 count·interval 필요');
     }
+  }
+
+  for (const [id, p] of Object.entries(d.passives)) {
+    const at = `passives.${id}`;
+    if (p.id !== id) err(`${at}.id`, `키와 id('${p.id}')가 다름`);
+    uniqueId(p.id, at);
+    if (!d.weapons[p.weapon]) err(`${at}.weapon`, `무기 '${p.weapon}' 없음`);
+    const burn = p.effect.burn?.element;
+    if (burn && !Object.values(d.skills).some((s) => s.weapon === p.weapon && s.element === burn)) warn(`${at}.effect.burn`, `'${burn}' 원소 스킬이 이 무기에 없음`);
   }
 
   for (const [id, m] of Object.entries(d.monsters)) {

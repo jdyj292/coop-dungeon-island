@@ -105,7 +105,7 @@ export class Dungeon extends Phaser.Scene {
     this.events.once('shutdown', () => { if (!this.keepConn) this.conn?.leave(); });
     if (!this.onlineMode) {
       const { bounds } = this.buildRoom(this.room);
-      const stage = (this.stage = new CombatStage(this, bounds, entryPos(this.room, 0), this.waves.next(), {}, weaponDef(this.weapon)));
+      const stage = (this.stage = new CombatStage(this, bounds, entryPos(this.room, 0), this.waves.next(), { skills: buildFrom(this.params.get('skills') ?? '') }, weaponDef(this.weapon)));
       stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
       stage.enterRoom(this.room); // 층 첫 방: 우물에서 떨어져 들어오고 몬스터는 잠든 채 (dungeon.md 2·5장)
     } else if (this.conn) this.setupOnline(this.conn);
