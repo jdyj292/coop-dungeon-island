@@ -106,7 +106,7 @@ export class IslandStage {
   update(dt: number, keys: { x: number; y: number }): void {
     this.clock += dt;
     this.syncDecor();
-    const k: KeyInput = { x: keys.x, y: keys.y, attack: false, skill: null, backstep: false, potion: null };
+    const k: KeyInput = { x: keys.x, y: keys.y, attack: false, skill: null, backstep: false, potion: null, hold: false };
     const s = this.sender.update(k, dt, null);
     this.sent = { x: s.x, y: s.y, run: s.run, seq: s.seq };
     const ticks = this.ticks.advance(dt);

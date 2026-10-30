@@ -48,3 +48,19 @@ describe('회피 보관 (network.md 4장)', () => {
     expect(q.onAction(dodgeMsg(5), sim.player, gs)).toBe('stamina');
   });
 });
+
+describe('대검 충전 키 누름 (charge.ts)', () => {
+  const act = (seq: number, kind: 'skill' | 'chargeRelease') =>
+    ({ seq, t: 0, kind, ...(kind === 'skill' ? { skillId: 'gs_launch' } : {}), x: 0, y: 0, facing: 1 }) as C2SMessage<'action'>;
+  it('스킬을 받으면 chargeRelease까지 누르고 있음, 맞은 상태에서도 뗌은 받는다', () => {
+    const sim = new RoomSim(gs, { minX: 0, maxX: 1000, minY: 0, maxY: 100 }, { x: 100, y: 50 }, { ai: false });
+    const q = new InputQueue(), p = sim.player;
+    expect(q.take().input.hold).toBe(false);
+    expect(q.onAction(act(1, 'skill'), p, gs)).toBeNull();
+    expect(q.take().input.hold).toBe(true);
+    expect(q.take().input.hold).toBe(true);
+    p.hurt = { kind: 'stun', left: 0.2 };
+    expect(q.onAction(act(2, 'chargeRelease'), p, gs)).toBeNull();
+    expect(q.take()).toMatchObject({ input: { hold: false }, seq: 2 });
+  });
+});

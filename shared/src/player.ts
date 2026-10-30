@@ -3,6 +3,7 @@ import {
   actionMoveDelta, canTurn, fighterPhase, newFighter, phaseRange, stepFighter,
   type ActionDef, type ActionRun, type Fighter, type FighterEvent, type WeaponDef,
 } from './actions';
+import { noCharge, type ChargeInput } from './charge';
 import { COMBAT, PLAYER } from './data/load';
 import { moveSpeed, newRunState, stepMove, stepRun, type Bounds, type RunState, type Vec2, playerHalf } from './movement';
 import { moveBox } from './map/collision';
@@ -46,6 +47,8 @@ export interface PlayerInput {
   potion?: PotionKind | null;
   /** 있으면 두 번 누르기 판정 대신 이 값으로 달리기 (네트워크 입력) */
   run?: boolean;
+  /** 마지막에 누른 스킬 키를 아직 누르고 있음 (대검 충전, charge.ts) */
+  hold?: boolean;
 }
 
 export interface PlayerStep {
@@ -141,10 +144,11 @@ export function stepPlayerState(
   const skill = input.skill && canUseSkill(p, input.skill) ? input.skill : null;
   const before = p.fighter.run && { run: p.fighter.run, t: p.fighter.run.t };
   // 대시 공격은 좌우를 누르며 달릴 때만 (위아래만 누르며 달리면 평타, combat.md 1장)
-  out.events = stepFighter(p.fighter, weapon, { attack: input.attack, skill, dashing: running && input.x !== 0, chain: !!skill && canReinput(p, skill) }, dt);
+  const chain = !!skill && canReinput(p, skill);
+  out.events = stepFighter(p.fighter, weapon, { attack: input.attack, skill, dashing: running && input.x !== 0, chain, charge: chargeInput(p, weapon, input) }, dt);
   for (const e of out.events) {
     // 쿨타임은 windup 진입 시점부터 (balance.md 2장)
-    if (e.type === 'start' && e.run.kind === 'skill') startSkill(p, e.run.def);
+    if (e.type === 'start' && e.run.kind === 'skill') startSkill(p, e.run);
   }
   if (input.x && canTurn(p.fighter, weapon)) p.facing = Math.sign(input.x);
   // 평타 중 바라보는 쪽 키를 누르고 있으면 조금씩 전진, 각 타 끝 stopBefore초 전부터는 멈춤 (weapons.json basicAdvance, combat.md 2장)
@@ -168,10 +172,18 @@ export function stepPlayerState(
   return out;
 }
 
-/** 스킬 시작: 재입력이면 횟수만 줄이고, 아니면 쿨타임·MP를 쓰고 재입력 변형이면 대기를 연다 */
-function startSkill(p: PlayerState, def: ActionDef): void {
-  const window = COMBAT.skillTree.reinputWindow;
+/** 충전 무기(대검)의 이번 틱 충전 입력: 충전 시간은 보조 노드 충전 속도만큼 짧아진다 (skills.md 2장) */
+function chargeInput(p: PlayerState, weapon: WeaponDef, input: PlayerInput): ChargeInput | undefined {
+  const tr = weapon.trait;
+  if (tr?.type !== 'charge') return undefined;
+  return { hold: !!input.hold, maxTime: tr.maxTime / (p.perks?.chargeSpeedMul ?? 1), bonusMax: tr.bonusMax, armor: tr.superArmorWhileCharging };
+}
+
+/** 스킬 시작: 재입력이면 횟수만 줄이고(충전 없음), 아니면 쿨타임·MP를 쓰고 재입력 변형이면 대기를 연다 */
+function startSkill(p: PlayerState, run: ActionRun): void {
+  const window = COMBAT.skillTree.reinputWindow, def = run.def;
   if (canReinput(p, def)) {
+    run.charge = noCharge();
     const left = p.reinput!.left - 1;
     p.reinput = left > 0 ? { id: def.id, left, window } : null;
     return;

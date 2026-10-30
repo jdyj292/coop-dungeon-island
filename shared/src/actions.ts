@@ -1,4 +1,5 @@
 // 행동 진행: windup → active → recovery, 평타 연타·선입력·캔슬 (docs/combat.md 1·2장, 형식 docs/data.md 1·2장)
+import { stepCharge, type ChargeInput, type ChargeState } from './charge';
 import { COMBAT, SKILLS, WEAPONS } from './data/load';
 import type { ActionMove, PlayerAction, Skill, VariantExtra, Weapon } from './data/schema';
 
@@ -39,6 +40,8 @@ export interface ActionRun {
   /** 평타 단계 (0부터). 대시·스킬은 0 */
   step: number;
   t: number;
+  /** 충전 (대검 스킬, charge.ts). 충전이 끝나면 def가 충전한 만큼 커진 정의로 바뀐다 */
+  charge?: ChargeState;
 }
 
 /** 평타·스킬을 쓰는 쪽의 행동 상태 (클라이언트 예측·서버 판정 공용) */
@@ -63,6 +66,8 @@ export interface FighterInput {
   dashing?: boolean;
   /** 재입력 (변형 reinput): 스킬 recovery에서도 스킬을 받는다 */
   chain?: boolean;
+  /** 충전 무기: 지금 스킬 키를 누르고 있나 등 (없으면 충전 없음) */
+  charge?: ChargeInput;
 }
 
 export type FighterEvent =
@@ -97,7 +102,7 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
     return events;
   }
   const before = phaseAt(run.def, run.t);
-  run.t += dt;
+  run.t += input.charge ? stepCharge(run, input.charge, dt) : dt;
   const after = phaseAt(run.def, run.t);
   if (before === 'windup' && after !== 'windup') events.push({ type: 'active', run });
   if (after === null) {

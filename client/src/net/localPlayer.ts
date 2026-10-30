@@ -50,7 +50,7 @@ export class LocalPlayer {
     for (let i = 0; i < n; i++) {
       const press = this.press;
       this.press = null;
-      const input = { x: sent.x, y: sent.y, run: sent.run, attack: false, skill: null, backstep: false, potion: null, ...press?.input };
+      const input = { x: sent.x, y: sent.y, run: sent.run, hold: sent.hold, attack: false, skill: null, backstep: false, potion: null, ...press?.input };
       moved += pr.tick(input, TICK, sent.seq, press?.seq ?? null, zoneSpeedMul(zones, pr.state.pos, PLAYER.hurtbox)).moved;
     }
     return n > 0 ? moved : null;

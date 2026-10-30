@@ -136,8 +136,8 @@ export const passive = z.object({
   name: z.string(),
   desc: z.string().min(1),
   effect: z.object({
-    skillWindupMul: pos.optional(),
-    skillTakenMul: pos.optional(),
+    chargeSpeedMul: pos.optional(),
+    chargeTakenMul: pos.optional(),
     skillArmor: z.literal(true).optional(),
     airDamageMul: pos.optional(),
     projectileRangeMul: pos.optional(),

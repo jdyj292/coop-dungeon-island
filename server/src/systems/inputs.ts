@@ -1,5 +1,6 @@
 // 메시지 → 틱 입력 (docs/network.md 4·7장). 이동은 마지막 값 유지, 누름(행동·물약)은 다음 틱에 한 번
 // 받을 때 검사해서 안 되는 행동은 거절 사유를 돌려준다 (클라이언트는 예측을 취소)
+// 대검 충전: 스킬을 받으면 chargeRelease가 올 때까지 그 키를 누르고 있다고 본다 (charge.ts, network.md 4장)
 // 회피는 히트스톱으로 서버 캐릭터가 아직 후딜레이 전이면 보관했다가 후딜레이에 들어가는 틱에 실행 (network.md 4장)
 import { buildSkill, canDodge, canReinput, NET, PLAYER, skillReady, type ActionDef, type C2SMessage, type PlayerInput, type PlayerState, type PotionKind, type S2C, type SkillBuild, type WeaponDef } from '@game/shared';
 
@@ -13,6 +14,8 @@ export class InputQueue {
   /** 보관 중인 회피: 행동 메시지 seq, 남은 초 */
   private dodgeWait: { seq: number; left: number } | null = null;
   private potion: PotionKind | null = null;
+  /** 스킬 키 누름 (충전) */
+  private hold = false;
   /** 받은 입력 중 가장 큰 seq (다음 틱에 처리됨) */
   private seq = 0;
 
@@ -25,6 +28,11 @@ export class InputQueue {
   /** 행동: 되면 null, 안 되면 거절 사유. skills = 서버가 정한 스킬 노드 (변형·레벨 배율) */
   onAction(m: C2SMessage<'action'>, p: PlayerState, weapon: WeaponDef, skills: SkillBuild = {}): Reason | null {
     this.seq = Math.max(this.seq, m.seq);
+    // 키 뗌은 어떤 상태에서든 받는다 (안 받으면 다음 스킬이 계속 충전됨)
+    if (m.kind === 'chargeRelease') {
+      this.hold = false;
+      return null;
+    }
     if (p.downed || p.hurt) return 'state';
     switch (m.kind) {
       case 'basic':
@@ -39,6 +47,7 @@ export class InputQueue {
         if (!canReinput(p, def) && (p.cooldowns[def.id] ?? 0) > 0) return 'cooldown';
         if (!canReinput(p, def) && !skillReady(p, def)) return 'mp';
         this.skill = def;
+        this.hold = true;
         return null;
       }
       case 'backstep':
@@ -49,7 +58,7 @@ export class InputQueue {
         else return 'state';
         return null;
       default:
-        // 필살기·충전은 MVP 이후
+        // 필살기·chargeStart는 MVP 이후
         return 'state';
     }
   }
@@ -65,7 +74,7 @@ export class InputQueue {
   /** 이번 틱 입력과 처리한 seq. 누름은 비운다 (보관한 회피는 시작될 때까지 계속 누름, seq도 그 앞까지만) */
   take(): { input: PlayerInput; seq: number } {
     const input: PlayerInput = {
-      x: this.move.x, y: this.move.y, run: this.move.run,
+      x: this.move.x, y: this.move.y, run: this.move.run, hold: this.hold,
       attack: this.attack, skill: this.skill, backstep: this.backstep || !!this.dodgeWait, potion: this.potion,
     };
     this.attack = this.backstep = false;

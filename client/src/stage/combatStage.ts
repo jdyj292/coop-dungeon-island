@@ -37,11 +37,13 @@ export interface StageInput {
   skill: ActionDef | null;
   backstep: boolean;
   potion: PotionKind | null;
+  /** 마지막에 누른 스킬 키를 아직 누르고 있음 (대검 충전) */
+  hold: boolean;
 }
 
 type Presses = Pick<StageInput, 'attack' | 'skill' | 'backstep' | 'potion'>;
 const NO_PRESS: Presses = { attack: false, skill: null, backstep: false, potion: null };
-export const NO_INPUT: StageInput = { x: 0, y: 0, ...NO_PRESS };
+export const NO_INPUT: StageInput = { x: 0, y: 0, hold: false, ...NO_PRESS };
 
 export class CombatStage {
   sim: RoomSim;

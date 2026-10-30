@@ -13,7 +13,7 @@ export class HitLog {
     const f = p.fighter;
     this.list.push({ t, before: {
       pos: { ...p.pos }, hp: p.hp, hurt: p.hurt && { ...p.hurt, push: p.hurt.push && { ...p.hurt.push } }, downed: p.downed, feathers: p.feathers, invuln: p.invuln, ult: p.ult,
-      fighter: { ...f, run: f.run && { ...f.run } }, backstep: p.backstep && { ...p.backstep }, running: p.run.running,
+      fighter: { ...f, run: f.run && { ...f.run, charge: f.run.charge && { ...f.run.charge } } }, backstep: p.backstep && { ...p.backstep }, running: p.run.running,
     } });
     const keep = t - NET.historyMs / 1000;
     while (this.list.length && this.list[0]!.t < keep) this.list.shift();

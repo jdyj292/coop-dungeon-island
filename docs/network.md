@@ -48,7 +48,7 @@
 | 메시지 | 내용 | 비고 |
 |---|---|---|
 | input | `{ seq, t, mx, my, run }` | mx·my ∈ {−1,0,1}. seq는 1씩 증가. run = 클라이언트가 두 번 누르기로 판정한 달리기 (서버는 간격을 다시 재지 않음) |
-| action | `{ seq, t, kind, skillId?, x, y, facing }` | kind: basic / dash / skill / ultimate / backstep / chargeStart / chargeRelease. x·y는 클라이언트가 본 내 위치 |
+| action | `{ seq, t, kind, skillId?, x, y, facing }` | kind: basic / dash / skill / ultimate / backstep / chargeStart / chargeRelease. x·y는 클라이언트가 본 내 위치. chargeRelease = 보낸 스킬 키를 뗌 (대검 충전: 서버는 skill을 받은 뒤 이 메시지까지 누르고 있다고 보고, 어떤 상태에서도 받음). chargeStart는 쓰지 않음 |
 | item | `{ seq, t, slot }` | 물약 Z / X |
 | interact | `{ targetId }` | 부활, 줍기, 레버. "chest" (클리어 뒤, interactRange 안, 방마다 한 번), "revive:<pid>" (E를 누르는 동안 150ms마다, 300ms 안에 안 오면 손 뗀 것) |
 
@@ -79,7 +79,7 @@
 ### 검증과 제한
 - 모든 메시지는 서버에서 형식 검사 (shared/src/messages.ts의 zod 스키마)
 - 횟수 제한: input 초당 30, action 초당 10, 섬 메시지 초당 5, chat 3초에 3회. 넘으면 무시, 계속되면 연결 종료
-- 서버가 거절한 행동은 `rejected { seq, reason }`으로 알린다 (쿨타임, MP 부족, 지구력 부족 stamina, 상태 불가). 받을 때 검사: 장착하지 않은 스킬·필살기·충전(MVP 이후)은 state
+- 서버가 거절한 행동은 `rejected { seq, reason }`으로 알린다 (쿨타임, MP 부족, 지구력 부족 stamina, 상태 불가). 받을 때 검사: 장착하지 않은 스킬·필살기(MVP 이후)·chargeStart는 state
 - 회피 보관: 회피는 쿨타임·지구력은 되는데 서버 캐릭터가 아직 후딜레이 전(적중 역경직으로 클라이언트보다 늦음)이면 거절하지 않고 보관했다가, 후딜레이에 들어가는 틱에 그때 누른 방향으로 실행한다. 보관 중에는 lastInputSeq를 회피 앞까지만 올린다. 보관 중 맞거나 NET.dodgeBufferMs(500ms)가 지나면 state로 거절하고, 보관 중 또 회피를 보내도 state로 거절한다. 클라이언트는 다시 적용할 때 회피 누름을 시작될 때까지 이어 눌러 서버와 맞춘다 (이전에는 거절되어 화면에서 살짝 떴다가 제자리로 돌아감)
 - 형식이 틀린 메시지도 횟수에 든다. 5초 안에 30개를 버리면 연결 종료 (NET.limits)
 - 구현: server/src/systems/ (dungeonGame = 진행, inputs = 입력 대기열·거절, rateLimit, sync = 상태 반영, events = 이벤트). rooms/DungeonRoom은 연결·전송만
@@ -205,6 +205,7 @@ IslandState
 - 서버 확인: PlayerState.actionId/actionStart가 오면 그 시각 기준으로 맞춘다 (차이가 작으면 그대로)
 - 서버 거절(rejected): 행동을 취소하고 대기 포즈로 (드문 경우). 다시 적용할 때도 그 누름은 뺀다
 - 행동 중 이동(대시 공격, 돌진 스킬)도 같은 공유 함수로 예측
+- 대검 충전도 예측: 키를 누르고 있는 동안 준비 끝에서 멈춘다. 서버는 충전 중 행동 시간이 멈춰 actionStart를 다시 보내므로 다른 사람 화면에서도 준비 자세로 보인다
 
 ### 예측하지 않는 것
 - 내가 맞는 것(경직·넉백·다운): 서버 상태가 오면 반영. 넉백은 서버 위치를 향해 부드럽게

@@ -1,4 +1,4 @@
-// 계열 보조 노드 (skills.md 1~3장): 택1·포인트 규칙, 스킬 정의 변경(withPerks), 판정 효과(공중 피해·연소·무중력·받는 피해·회피) (Lv1 ATK 10)
+// 계열 보조 노드 (skills.md 1~3장): 택1·포인트 규칙, 스킬 정의 변경(withPerks), 판정 효과(공중 피해·연소·무중력·회피). 무거운 손은 charge.test.ts (Lv1 ATK 10)
 import { describe, expect, it } from 'vitest';
 import { skillDef, weaponDef, type ActionDef } from '../actions';
 import { TICK } from '../constants';
@@ -46,11 +46,6 @@ describe('보조 노드 규칙', () => {
 });
 
 describe('스킬 정의 변경', () => {
-  it('무거운 손: 스킬 준비 ×0.77', () => {
-    const d = buildSkill(gs, { gs_heavyhand: { points: 1 } }, 'gs_launch')!;
-    expect(d.phases.windup).toBeCloseTo(skillDef('gs_launch').phases.windup * 0.77);
-  });
-
   it('굳건함: 모든 스킬 슈퍼아머', () => {
     expect(skillDef('gs_launch').superArmor).toBeFalsy();
     expect(buildSkill(gs, { gs_steadfast: { points: 1 } }, 'gs_launch')!.superArmor).toBe(true);
@@ -98,14 +93,6 @@ describe('판정 효과', () => {
     m.body.state = 'idle';
     hitMonster(player(), plain(1000), m, 1);
     expect(m.lifted).toBe(0);
-  });
-
-  it('무거운 손: 스킬 쓰는 중 받는 피해 -30%', () => {
-    const sim = new RoomSim(gs, { minX: 0, maxX: 1000, minY: 0, maxY: 100 }, { x: 100, y: 50 }, { ai: false, skills: { gs_heavyhand: { points: 1 } } });
-    sim.tick(TICK, { x: 0, y: 0, attack: false, skill: buildSkill(gs, { gs_heavyhand: { points: 1 }, gs_launch: { points: 1 } }, 'gs_launch')!, backstep: false });
-    const p = sim.player, hp = p.hp;
-    hurtPlayer(p, 10, 'light');
-    expect(p.hp).toBe(hp - 7);
   });
 
   it('가벼운 발: 회피 거리 ×1.5, 쿨 0.6 → 0.4', () => {

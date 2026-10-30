@@ -29,7 +29,7 @@ import { enterFadeMs } from '../fx/wellArrival';
 
 const FLOOR = 1;
 const floorRooms = () => ROOMS.floor1!.rooms;
-const NO_KEYS: KeyInput = { x: 0, y: 0, attack: false, skill: null, backstep: false, potion: null };
+const NO_KEYS: KeyInput = { x: 0, y: 0, attack: false, skill: null, backstep: false, potion: null, hold: false };
 /** 카메라 데드존 ±2타일 (art.md 1장) */
 const DEADZONE = 2 * TILE;
 /** 배경을 화면 아래까지 채울 여유 (창이 세로로 길 때) */
@@ -50,6 +50,8 @@ export class Dungeon extends Phaser.Scene {
   private room = floorRoom('floor1', Number(this.params.get('room') ?? 1));
   private onlineMode = this.params.get('online') === '1';
   private weapon = 'greatsword';
+  /** 마지막에 누른 스킬 키 (누르고 있으면 대검 충전) */
+  private skillKey: 'skill1' | 'skill2' | 'skill3' | 'skill4' | null = null;
   /** 섬 우물에서 출발한 던전 방 번호 (registry dungeonRoom, 정산 뒤 섬으로) */
   private islandRoom: string | null = null;
   /** 다시 시작해도 이어 쓰는 접속 (방 진행) */
@@ -231,12 +233,16 @@ export class Dungeon extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     const k = this.keys, dt = delta / 1000, sk = skillsOf(this.weapon, this.online ? this.online.conn.mySkills : this.params.get('skills') ?? '');
+    // U I O P = 슬롯 순서 (기본 스킬 2개 + A·B 계열, skillTree.slotSkills). 마지막에 누른 스킬 키를 누르고 있으면 대검 충전
+    const slots = ['skill1', 'skill2', 'skill3', 'skill4'] as const;
+    const pressed = slots.findIndex((n, i) => Phaser.Input.Keyboard.JustDown(k[n]) && sk[i]);
+    if (pressed >= 0) this.skillKey = slots[pressed]!;
     const input: KeyInput = {
       x: (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0),
       y: (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0),
       attack: Phaser.Input.Keyboard.JustDown(k.attack),
-      // U I O P = 슬롯 순서 (기본 스킬 2개 + A·B 계열, skillTree.slotSkills)
-      skill: (['skill1', 'skill2', 'skill3', 'skill4'] as const).map((n, i) => (Phaser.Input.Keyboard.JustDown(k[n]) ? sk[i] ?? null : null)).find((s) => s) ?? null,
+      skill: pressed >= 0 ? sk[pressed]! : null,
+      hold: !!this.skillKey && k[this.skillKey].isDown,
       backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
       potion: Phaser.Input.Keyboard.JustDown(k.potionHp) ? 'hp' : Phaser.Input.Keyboard.JustDown(k.potionMp) ? 'mp' : null,
     };

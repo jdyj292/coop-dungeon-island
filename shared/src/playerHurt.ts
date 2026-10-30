@@ -1,5 +1,6 @@
 // 플레이어 피격·다운·기상·쓰러짐, HP·MP·물약 (docs/combat.md 4장, docs/balance.md 5·6장, docs/dungeon.md 3장 쓰러짐)
 import { newFighter, type Strength } from './actions';
+import { isCharging } from './charge';
 import { PLAYER } from './data/load';
 import { atkFor } from './hit';
 import type { PlayerState } from './player';
@@ -50,11 +51,12 @@ export function isInvulnerable(p: PlayerState): boolean {
 /** 몬스터 공격 적중. 약·중 → 경직, 강 → 다운. 하던 행동은 끊긴다. pushDir = 밀려날 방향 (1 오른쪽, -1 왼쪽, 0 = 밀리지 않음) */
 export function hurtPlayer(p: PlayerState, damage: number, strength: Strength = 'light', pushDir = 0): HurtEvent[] {
   if (isInvulnerable(p)) return [];
-  // 보조 노드 무거운 손: 스킬을 쓰는 중 받는 피해 감소
-  const taken = p.fighter.run?.kind === 'skill' ? (p.perks?.skillTakenMul ?? 1) : 1;
+  // 대검 충전 중: 슈퍼아머, 보조 노드 무거운 손이면 받는 피해 감소 (charge.ts)
+  const run = p.fighter.run, charging = isCharging(run);
+  const taken = charging ? (p.perks?.chargeTakenMul ?? 1) : 1;
   p.hp = Math.max(0, p.hp - Math.round(damage * taken));
-  // 슈퍼아머 스킬 시전 중: 피해만 받고 계속 (쓰러질 피해면 아래 규칙대로)
-  if (p.hp > 0 && p.fighter.run?.kind === 'skill' && p.fighter.run.def.superArmor) return ['armor'];
+  // 슈퍼아머 스킬 시전 중·충전 중: 피해만 받고 계속 (쓰러질 피해면 아래 규칙대로)
+  if (p.hp > 0 && run?.kind === 'skill' && (run.def.superArmor || (charging && run.charge!.armor))) return ['armor'];
   p.fighter = newFighter();
   p.backstep = null;
   p.run.running = false;

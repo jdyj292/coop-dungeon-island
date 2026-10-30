@@ -3,6 +3,7 @@ export * from './color';
 export * from './palettePath';
 export * from './movement';
 export * from './actions';
+export * from './charge';
 export * from './skillTree';
 export * from './passives';
 export * from './hit';
