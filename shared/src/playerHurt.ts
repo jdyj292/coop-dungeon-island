@@ -4,7 +4,8 @@ import { PLAYER } from './data/load';
 import { atkFor } from './hit';
 import type { PlayerState } from './player';
 
-export type HurtEvent = 'stun' | 'down' | 'getup' | 'revive' | 'wipe';
+/** armor = 스킬 슈퍼아머로 피해만 받음 (행동이 끊기지 않음) */
+export type HurtEvent = 'stun' | 'down' | 'getup' | 'revive' | 'wipe' | 'armor';
 export type PotionKind = 'hp' | 'mp';
 
 /** 최대 HP = base × (1 + perLevel × (숙련도 - 1)) */
@@ -50,6 +51,8 @@ export function isInvulnerable(p: PlayerState): boolean {
 export function hurtPlayer(p: PlayerState, damage: number, strength: Strength = 'light', pushDir = 0): HurtEvent[] {
   if (isInvulnerable(p)) return [];
   p.hp = Math.max(0, p.hp - damage);
+  // 슈퍼아머 스킬 시전 중: 피해만 받고 계속 (쓰러질 피해면 아래 규칙대로)
+  if (p.hp > 0 && p.fighter.run?.kind === 'skill' && p.fighter.run.def.superArmor) return ['armor'];
   p.fighter = newFighter();
   p.backstep = null;
   p.run.running = false;

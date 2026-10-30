@@ -1,6 +1,6 @@
 // 스킬 노드 저장 (docs/skills.md 1장, db.md skill_nodes): 받은 SP = 숙련도 레벨 − 1 + weapon_mastery.sp(보너스), 쓴 SP = 노드 포인트에서 계산
 // 검사는 shared/skillTree.checkNode (클라이언트 신고값은 믿지 않는다), 던전 입장 때 이 값으로 판정 (skillBuild)
-import { checkNode, decodeBuild, encodeBuild, MVP_WEAPONS, nodeOf, spSpent, spTotal, weaponDef, type NodeFail, type SkillBuild, type SkillNode } from '@game/shared';
+import { applyNode, checkNode, decodeBuild, encodeBuild, MVP_WEAPONS, nodeOf, spSpent, spTotal, treeSkills, weaponDef, type NodeFail, type SkillBuild, type SkillNode } from '@game/shared';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { Db } from './client';
 import { skillNodes, weaponMastery } from './schema';
@@ -27,25 +27,33 @@ export function skillsView(db: Db, userId: number): { weapon: string; sp: number
   const b = skillBuild(db, userId);
   return MVP_WEAPONS.map((weapon) => {
     const w = weaponDef(weapon), mine: SkillBuild = {};
-    for (const id of w.baseSkills) mine[id] = nodeOf(b, id);
+    for (const id of treeSkills(w)) mine[id] = nodeOf(b, id);
     return { weapon, sp: spOf(db, userId, weapon), spent: spSpent(w, mine), build: encodeBuild(mine) };
   });
 }
 
-/** 노드 하나 바꾸기. 안 되면 사유 */
+/** 노드 하나 바꾸기 (계열 스킬을 배우면 같은 단계 택1 상대는 지움). 안 되면 사유 */
 export function setSkillNode(db: Db, userId: number, weapon: string, id: string, node: SkillNode): NodeFail | null {
-  const fail = checkNode(weaponDef(weapon), skillBuild(db, userId), id, node, spOf(db, userId, weapon));
+  const w = weaponDef(weapon), before = skillBuild(db, userId);
+  const fail = checkNode(w, before, id, node, spOf(db, userId, weapon));
   if (fail) return fail;
-  if (node.points === 1 && !node.variant) {
-    db.delete(skillNodes).where(and(eq(skillNodes.userId, userId), eq(skillNodes.nodeId, id))).run();
-    return null;
-  }
-  const row = { points: node.points, variant: node.variant ?? null };
-  db.insert(skillNodes).values({ userId, nodeId: id, ...row }).onConflictDoUpdate({ target: [skillNodes.userId, skillNodes.nodeId], set: row }).run();
+  const after = applyNode(w, before, id, node);
+  db.transaction((tx) => {
+    for (const k of treeSkills(w)) {
+      const n = after[k];
+      if (!n) {
+        if (before[k]) tx.delete(skillNodes).where(and(eq(skillNodes.userId, userId), eq(skillNodes.nodeId, k))).run();
+        continue;
+      }
+      if (k !== id) continue;
+      const row = { points: n.points, variant: n.variant ?? null };
+      tx.insert(skillNodes).values({ userId, nodeId: k, ...row }).onConflictDoUpdate({ target: [skillNodes.userId, skillNodes.nodeId], set: row }).run();
+    }
+  });
   return null;
 }
 
 /** 무기 스킬 전체 초기화 (섬에서 무료, skills.md 1장) */
 export function resetSkills(db: Db, userId: number, weapon: string): void {
-  db.delete(skillNodes).where(and(eq(skillNodes.userId, userId), inArray(skillNodes.nodeId, weaponDef(weapon).baseSkills))).run();
+  db.delete(skillNodes).where(and(eq(skillNodes.userId, userId), inArray(skillNodes.nodeId, treeSkills(weaponDef(weapon))))).run();
 }

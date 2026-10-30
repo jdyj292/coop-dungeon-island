@@ -30,9 +30,13 @@ const area = z.object({
 
 const projectile = z.object({
   speed: pos, range: pos, radius: pos, pierce: z.boolean(), reflectable: z.boolean().optional(),
+  // 플레이어: 한 번에 여러 줄 (깊이 오프셋 목록), 연발 (첫 발 뒤 count−1발을 interval마다)
+  lanes: z.array(z.number()).min(1).optional(),
+  burst: z.object({ count: z.number().int().min(2), interval: pos }).strict().optional(),
 }).strict();
 
-const statusType = z.enum(['freeze', 'slow', 'stun']);
+// hold = 공중 대상 체공 유지 (time 동안 중력 없음, combat.md 3장)
+const statusType = z.enum(['freeze', 'slow', 'stun', 'hold']);
 const zone = z.object({
   shape: z.enum(['circle', 'rect']), at: point, radius: pos.optional(), width: pos.optional(), depth: pos.optional(),
   duration: pos,
@@ -80,15 +84,27 @@ function oneShape(a: Shape, ctx: z.RefinementCtx): void {
 const playerActionObj = z.object({ ...actionFields, coef: z.number().nonnegative(), poses: actionFields.poses.unwrap() }).strict();
 export const playerAction = playerActionObj.superRefine(oneShape);
 
+/**
+ * 반복 판정 (data.md 3장): 시전한 자리에 count번 (첫 판정 포함). step = 판정마다 바라보는 쪽으로 옮기는 거리(px),
+ * seek = 판정마다 가장 가까운 맞을 수 있는 몬스터 쪽으로 옮기는 거리(px), copies = 같은 반복을 이 오프셋([앞, 깊이])에 하나씩 더
+ */
+export const repeat = z.object({
+  count: z.number().int().positive(), interval: pos, step: z.number().optional(), seek: pos.optional(), copies: z.array(point).optional(),
+}).strict();
+/** 이 행동의 knockback으로 벽에 부딪힌 몬스터: 다운 + 추가 판정 coef (변형 벽꿍) */
+const onWall = z.object({ coef: z.number().nonnegative() }).strict();
+
 /** 스킬 변형의 특수 필드 (data.md 3장). 나머지 필드는 기본 스킬에 덮어써서 검사 */
 export const variantExtra = z.object({
   name: z.string(),
   /** 스킬 창(K) 설명 (기본 스킬과 무엇이 다른지) */
   desc: z.string().min(1),
   reinput: z.number().int().positive().optional(),
-  repeat: z.object({ count: z.number().int().positive(), interval: pos }).strict().optional(),
+  // 기본 스킬에 repeat가 있으면 일부만 덮어써도 된다 (합친 결과는 crossCheck가 검사)
+  repeat: repeat.partial().optional(),
   after: z.object({ delay: pos, coef: z.number().nonnegative() }).strict().optional(),
   onStatusEnd: z.object({ coef: z.number().nonnegative() }).strict().optional(),
+  onWall: onWall.optional(),
 });
 
 export const skill = playerActionObj.extend({
@@ -102,6 +118,10 @@ export const skill = playerActionObj.extend({
   mp: z.number().int().nonnegative(),
   variants: z.record(z.object({ name: z.string(), desc: z.string() }).passthrough()).optional(),
   note: z.string().optional(),
+  // 스킬 시전 중 슈퍼아머: 맞아도 피해만 받고 행동이 끊기지 않음 (combat.md 3장)
+  superArmor: z.boolean().optional(),
+  repeat: repeat.optional(),
+  onWall: onWall.optional(),
 }).strict().superRefine(oneShape);
 
 export const monsterAttack = z.object({

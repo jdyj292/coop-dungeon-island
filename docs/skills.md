@@ -11,7 +11,8 @@
 - 무기마다 숙련도 Lv 1~20. 레벨업마다 SP 1 (Lv20까지 19), 각 층 보스 첫 처치 시 SP +1 (5층까지 5)
 - 경험치 곡선은 balance.md
 - 숙련도와 SP는 무기별로 따로
-- **MVP 보충 구현 범위 (SK-1)**: 기본 스킬 2개의 포인트(1~3)·변형 택1·섬에서 무료 초기화만. 섬 스킬 창(K)(hud.md 8장)에서 바꾸고, 던전 입장 때 서버가 DB 값(skill_nodes)으로 판정. 계열·공용 패시브·슬롯 장착·필살기는 MVP 이후
+- **MVP 보충 구현 범위 (SK-1)**: 기본 스킬 2개의 포인트(1~3)·변형 택1·섬에서 무료 초기화만. 섬 스킬 창(K)(hud.md 8장)에서 바꾸고, 던전 입장 때 서버가 DB 값(skill_nodes)으로 판정
+- **SK-2 (계열 1단계 액티브)**: 대검·스태프의 A·B 계열 1단계 액티브 2개씩(무기당 4개). 계열 스킬은 0포인트(안 배움)에서 시작해 1포인트마다 SP 1, 최대 3, 3포인트에서 변형 택1. 같은 계열·단계는 하나만: 다른 쪽을 배우면 먼저 배운 쪽은 지워지고 SP가 돌아옴(옮겨 배우기 무료). 슬롯 장착 대신 고정 배치: U I = 기본 스킬, O = A 계열, P = B 계열에서 배운 스킬. 보조 노드·2단계 이상·공용 패시브·슬롯 장착·필살기는 아직
 
 ### 세 번의 선택
 1. **단계마다 택1**: 각 계열의 각 단계에는 액티브 2개, 보조(패시브 또는 강화) 2개가 있고 각각 하나씩만 배울 수 있다
@@ -260,7 +261,7 @@
   → 템플릿을 코드로, 개별 스킬과 변형은 skills.json 파라미터로
 - 변형은 "기본 스킬 파라미터 덮어쓰기 + 플래그 추가"로 표현 (새 코드 최소화)
 - 서버는 DB에 저장된 노드·변형·슬롯 기준으로 판정 (클라이언트 신고값 신뢰 금지)
-- 코드: 노드 규칙·변형 적용·레벨 배율 shared/src/skillTree.ts, 변형 특수 판정(반복·후속·해제) shared/src/sim/skillExtras.ts, 재입력 shared/src/player.ts, 저장 server/src/db/skillStore.ts. 변형 연출은 새 그림 없이 기존 이펙트 재사용 (fx/spellCast castEcho: 연쇄 = 화염 폭발, 균열 = 판정 줄 먼지·충격 링, 빙결 폭발 = 마법탄 적중 섬광)
+- 코드: 노드 규칙·변형 적용·레벨 배율·택1·슬롯 shared/src/skillTree.ts, 특수 판정(반복·후속·해제·연발, 반복 이동 step·seek·copies) shared/src/sim/skillExtras.ts, 다단히트 판정 번호·끌어당김·체공 shared/src/sim/strike.ts·body.ts, 벽꿍·여러 줄 투사체 shared/src/sim/room.ts, 슈퍼아머 shared/src/playerHurt.ts, 재입력 shared/src/player.ts, 저장 server/src/db/skillStore.ts. 변형 연출은 새 그림 없이 기존 이펙트 재사용 (fx/spellCast castEcho: 연쇄 = 화염 폭발, 균열 = 판정 줄 먼지·충격 링, 빙결 폭발 = 마법탄 적중 섬광)
 - 테이블: docs/db.md
 - MVP 범위는 docs/roadmap.md
 

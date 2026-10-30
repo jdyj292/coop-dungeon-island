@@ -9,7 +9,7 @@ import type { HurtEvent, PotionKind } from '../playerHurt';
 import type { Bolt } from './bolts';
 import type { HitLog } from './hitLog';
 import type { SkillBuild } from '../skillTree';
-import type { Echo } from './skillExtras';
+import type { Echo, EchoKind } from './skillExtras';
 
 export interface Spawn {
   kind: string;
@@ -59,7 +59,7 @@ export type SimEvent =
   | { type: 'bolt'; bolt: Bolt }
   | { type: 'boltEnd'; bolt: Bolt }
   /** 변형 예약 판정 (반복·후속·해제) 순간: 맞힌 몬스터가 없어도 */
-  | { type: 'echo'; echo: Echo };
+  | { type: 'echo'; echo: Echo & { kind: EchoKind } };
 
 export interface SimOptions {
   /** false면 몬스터가 움직이거나 공격하지 않음 (tools/motion-preview) */

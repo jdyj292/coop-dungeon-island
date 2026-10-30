@@ -7,7 +7,7 @@ import { damageOf } from '../hit';
 import { freezeMonster, slowMonster, type Monster } from '../monster/state';
 import type { PlayerState } from '../player';
 import { gainMpOnHit, gainUlt } from '../playerHurt';
-import { actionHits } from '../shapes';
+import { actionHits, areaCenter, type Origin } from '../shapes';
 
 export interface StrikeHit {
   m: Monster;
@@ -20,9 +20,13 @@ export interface StrikeHit {
 export type PosOf = (m: Monster) => { x: number; y: number; airborne: boolean };
 const current: PosOf = (m) => ({ x: m.body.x, y: m.body.y, airborne: m.body.state === 'air' });
 
-/** 한 몬스터에 적중: 반응(경직·띄우기), 피해(내 ATK × 계수), 체력 0이면 기절, 상태 이상(빙결), MP·필살기 게이지. dir = 밀려나는 방향 */
-export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: number): StrikeHit {
+/**
+ * 한 몬스터에 적중: 반응(경직·띄우기·끌어당김), 피해(내 ATK × 계수), 체력 0이면 기절, 상태 이상(빙결·감속·체공), MP·필살기 게이지.
+ * dir = 밀려나는 방향, from = 판정 기준 (pull은 area 중심, 없으면 기준 자리로 끌어옴)
+ */
+export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: number, from?: Origin): StrikeHit {
   applyHit(m.body, { dir, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });
+  if (def.flags?.includes('pull') && from) pullToward(m, def.area ? areaCenter(from, def.area.at) : from);
   // 잠든 몬스터는 맞으면 바로 깨어남 (그 몬스터만, dungeon.md 5장)
   m.sleep = 0;
   const damage = damageOf(def.coef, p.atk);
@@ -31,21 +35,37 @@ export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: numb
   if (m.hp === 0) m.body.ko = true;
   if (def.status?.type === 'freeze' && !m.body.ko) freezeMonster(m, def.status.time);
   if (def.status?.type === 'slow' && !m.body.ko) slowMonster(m, def.status.time, def.status.amount ?? 0);
+  if (def.status?.type === 'hold' && m.body.state === 'air' && !m.body.armor) m.body.hold = Math.max(m.body.hold, def.status.time);
   gainMpOnHit(p);
   gainUlt(p, PLAYER.ultimate.onHit);
   return { m, damage, ko };
 }
 
-/** 판정에 든 몬스터 모두에게 적중. 체력 0이면 기절 (combat.md 3장). done = 이 행동에 이미 맞은 몬스터 id */
+/** 끌어당김: 몬스터를 기준점 쪽으로 (좌우는 밀림, 깊이는 pushY). 슈퍼아머·고정형은 안 끌려옴 */
+function pullToward(m: Monster, to: { x: number; y: number }): void {
+  if (m.body.armor || m.body.weight === 'fixed') return;
+  m.body.push = to.x - m.body.x;
+  m.body.pushY = to.y - m.body.y;
+  m.body.knockback = false;
+}
+
+/** 다단히트(hits) 몇 번째 판정인가: active 시작부터 interval마다 한 번 (같은 행동에 한 대상은 판정마다 한 번) */
+export function waveOf(def: ActionDef, t: number): number {
+  if (!def.hits) return 0;
+  return Math.min(def.hits.count - 1, Math.max(0, Math.floor((t - def.phases.windup) / def.hits.interval)));
+}
+
+/** 판정에 든 몬스터 모두에게 적중. 체력 0이면 기절 (combat.md 3장). done = 이 행동에 이미 맞은 (판정 번호, 몬스터 id) */
 export function strike(p: PlayerState, run: ActionRun, monsters: Monster[], done: Set<number>, posOf: PosOf = current): StrikeHit[] {
   const def = run.def, out: StrikeHit[] = [];
   const a = { x: p.pos.x, y: p.pos.y, facing: p.facing };
+  const wave = waveOf(def, run.t) * 1e6;
   for (const m of monsters) {
-    if (done.has(m.id) || !canBeHit(m.body, def.flags)) continue;
+    if (done.has(wave + m.id) || !canBeHit(m.body, def.flags)) continue;
     const t = { ...posOf(m), hurtbox: m.def.hurtbox };
     if (!actionHits(a, def, t)) continue;
-    done.add(m.id);
-    out.push(hitMonster(p, def, m, p.facing));
+    done.add(wave + m.id);
+    out.push(hitMonster(p, def, m, p.facing, a));
   }
   return out;
 }

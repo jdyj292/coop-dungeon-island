@@ -1,32 +1,74 @@
-// 변형 특수 판정 (data.md 3장 변형 특수 필드, skills.md 1장): 반복(repeat)·후속(after)은 시전한 자리·방향에 같은 판정을 예약,
-// 해제 판정(onStatusEnd)은 그 행동이 건 빙결이 풀릴 때 그 몬스터에게 한 번. 재입력(reinput)은 player.ts
+// 특수 판정 (data.md 3장 특수 필드, skills.md 1장): 반복(repeat)·후속(after)은 시전한 자리·방향에 같은 판정을 예약
+// (반복은 판정마다 앞으로 옮기거나(step) 가까운 몬스터 쪽으로 따라가고(seek), copies 자리에 같은 반복을 더),
+// 연발 투사체(projectile.burst)는 나머지 발을 예약, 해제 판정(onStatusEnd)은 그 행동이 건 빙결이 풀릴 때 그 몬스터에게 한 번.
+// 재입력(reinput)은 player.ts, 벽꿍(onWall)은 room.ts
 import type { ActionDef } from '../actions';
 import { canBeHit } from '../body';
 import type { Monster } from '../monster/state';
 import type { PlayerState } from '../player';
-import { actionHits } from '../shapes';
+import { actionHits, areaCenter } from '../shapes';
 import { hitMonster, type StrikeHit } from './strike';
 
-/** 예약 판정. kind = 반복 / 후속 / 해제 (그리기 구분) */
+/** 연출 사건이 있는 예약 판정 종류: 반복 / 후속(벽꿍 포함) / 해제 */
+export type EchoKind = 'repeat' | 'after' | 'shatter';
+
+/** 예약 판정. shot = 연발 투사체 (판정 대신 발사, 연출은 마법탄 사건) */
 export interface Echo {
   pid: string;
-  kind: 'repeat' | 'after' | 'shatter';
+  kind: EchoKind | 'shot';
   def: ActionDef;
   x: number;
   y: number;
   facing: number;
   /** 시뮬레이션 시각 (초) */
   at: number;
+  /** 반복 묶음이 함께 쓰는 자리 (step·seek로 옮겨 감)와 이 판정이 묶음의 몇 번째인지 */
+  spot?: { x: number; y: number };
+  k?: number;
+  /** 반복 규칙 (def에서는 빠짐) */
+  rep?: NonNullable<ActionDef['repeat']>;
 }
 
-/** active 순간: 이 행동이 예약하는 판정들 (반복은 첫 판정을 뺀 나머지). now = 시뮬레이션 시각 */
+/** active 순간: 이 행동이 예약하는 판정들 (반복은 첫 판정을 뺀 나머지, copies는 첫 판정부터). now = 시뮬레이션 시각 */
 export function echoesOf(pid: string, def: ActionDef, p: PlayerState, now: number): Echo[] {
   const { repeat, after, ...plain } = def;
   const at = { pid, x: p.pos.x, y: p.pos.y, facing: p.facing };
   const out: Echo[] = [];
-  if (repeat) for (let k = 1; k < repeat.count; k++) out.push({ ...at, kind: 'repeat', def: plain, at: now + k * repeat.interval });
+  if (repeat) {
+    const group = (dx: number, dy: number, from: number) => {
+      const spot = { x: at.x + dx * at.facing, y: at.y + dy };
+      for (let k = from; k < repeat.count; k++) out.push({ ...at, ...spot, kind: 'repeat', def: plain, at: now + k * repeat.interval, spot, k, rep: repeat });
+    };
+    group(0, 0, 1);
+    for (const [dx, dy] of repeat.copies ?? []) group(dx, dy, 0);
+  }
   if (after) out.push({ ...at, kind: 'after', def: { ...plain, coef: after.coef }, at: now + after.delay });
+  const burst = def.projectile?.burst;
+  if (burst) for (let k = 1; k < burst.count; k++) out.push({ ...at, kind: 'shot', def: plain, at: now + k * burst.interval });
   return out;
+}
+
+/** 반복 판정 직전: 묶음 자리를 앞으로(step) 옮기고 가까운 몬스터 쪽으로(seek) 따라간 뒤, 판정 자리를 정한다 */
+export function placeEcho(e: Echo, monsters: Monster[]): void {
+  const r = e.rep, spot = e.spot;
+  if (!spot || !r) return;
+  if (r.step && e.k) spot.x += r.step * e.facing;
+  if (r.seek && e.def.area) {
+    const c = areaCenter({ ...spot, facing: e.facing }, e.def.area.at);
+    let best: { dx: number; dy: number; d: number } | null = null;
+    for (const m of monsters) {
+      if (!canBeHit(m.body, e.def.flags) || (e.def.area.z === 'air' && m.body.state !== 'air')) continue;
+      const dx = m.body.x - c.x, dy = m.body.y - c.y, d = Math.hypot(dx, dy);
+      if (!best || d < best.d) best = { dx, dy, d };
+    }
+    if (best && best.d > 0) {
+      const k = Math.min(1, r.seek / best.d);
+      spot.x += best.dx * k;
+      spot.y += best.dy * k;
+    }
+  }
+  e.x = spot.x;
+  e.y = spot.y;
 }
 
 /** 예약 판정 한 번: 범위 안의 맞을 수 있는 몬스터 모두 */
@@ -35,7 +77,7 @@ export function strikeEcho(e: Echo, p: PlayerState, monsters: Monster[]): Strike
   for (const m of monsters) {
     if (!canBeHit(m.body, e.def.flags)) continue;
     if (!actionHits(e, e.def, { x: m.body.x, y: m.body.y, airborne: m.body.state === 'air', hurtbox: m.def.hurtbox })) continue;
-    out.push(hitMonster(p, e.def, m, e.facing));
+    out.push(hitMonster(p, e.def, m, e.facing, e));
   }
   return out;
 }
@@ -44,6 +86,12 @@ export function strikeEcho(e: Echo, p: PlayerState, monsters: Monster[]): Strike
 export function shatterDef(def: ActionDef): ActionDef {
   const { status, onStatusEnd, ...rest } = def;
   return { ...rest, coef: onStatusEnd?.coef ?? 0, flags: [] };
+}
+
+/** 벽꿍 판정: 추가 판정 (다시 밀거나 벽꿍을 걸지 않음. 다운은 room.ts가 knockDown) */
+export function wallDef(def: ActionDef): ActionDef {
+  const { onWall, ...rest } = def;
+  return { ...rest, coef: onWall?.coef ?? 0, flags: ['downhit'] };
 }
 
 /** 빙결이 풀린 몬스터 (해제 판정을 걸어둔). 기절했으면 기록만 지운다 */

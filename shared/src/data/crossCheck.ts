@@ -114,6 +114,8 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
       if (!extra.success) err(vat, extra.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', '));
       const merged = S.skill.safeParse(applyVariant(s as unknown as Record<string, unknown>, v));
       if (!merged.success) err(vat, `적용 결과가 스킬 형식이 아님: ${merged.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ')}`);
+      const rep = (v as { repeat?: object }).repeat;
+      if (rep && !S.repeat.safeParse({ ...s.repeat, ...rep }).success) err(`${vat}.repeat`, '기본 스킬에 repeat가 없으면 count·interval 필요');
     }
   }
 

@@ -33,9 +33,9 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | strength | | light / medium / heavy → 경직·밀림(combat.md 3장). 몬스터 공격이 heavy면 플레이어 다운 |
 | flags | | combat.md 2장 속성 플래그 (launch, knockback, down, downhit, pull, hold, grab, multi, projectile) |
 | launchVz | | launch 세기. 생략 시 combat.md 기본값 |
-| hits | | 다단히트 `{ "count": 6, "interval": 0.1 }` (multi 플래그와 함께) |
+| hits | | 다단히트 `{ "count": 6, "interval": 0.1 }` (multi 플래그와 함께). active 시작부터 interval마다 판정 한 번, active 길이 ≥ count × interval |
 | move | | 행동 중 이동 `{ "distance": 32, "during": "active" }` 또는 `{ "speed": 160, "maxDistance": 96, "during": "active", "stopOnWall": true }` |
-| status | | 상태이상 `{ "type": "freeze", "time": 1.5 }` (freeze / slow / stun) |
+| status | | 상태이상 `{ "type": "freeze", "time": 1.5 }` (freeze / slow / stun / hold = 공중 대상 체공 유지) |
 | poses | 플레이어 | 구간별 포즈 이름 (poses.json의 해당 무기 세트) |
 | fx | | `{ "grade": "light|medium|heavy|ultimate", "shake": "vertical|horizontal" }` 연출 등급은 combat.md 5장 |
 | sfx | | `{ "windup"?, "active"?, "hit"? }` 소리 이름 (client/data/sfx.json, docs/audio.md) |
@@ -47,7 +47,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 |---|---|---|
 | hitbox | `{ forward, width, depth, z, back? }` 사각형 | 바라보는 방향으로 forward만큼 떨어진 곳부터 width 길이. back은 뒤쪽 추가 |
 | area | `{ shape: "circle|rect|fan", at: [x, y], radius / width·depth / angle, z }` | at = 행동자 기준 상대 위치 (x는 바라보는 방향 +) |
-| projectile | `{ speed, range, radius, pierce, reflectable? }` | 손 위치에서 바라보는 방향으로 발사 |
+| projectile | `{ speed, range, radius, pierce, reflectable?, lanes?, burst? }` | 손 위치에서 바라보는 방향으로 발사. 플레이어: lanes = 깊이 오프셋마다 한 발씩 동시에, burst `{count, interval}` = 연발 |
 | zone | `{ shape, at, radius, duration, effect }` | 바닥에 남는 지속 장판 |
 
 - z: ground / air / both (combat.md 2장)
@@ -100,15 +100,19 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | name | 표시 이름 |
 | desc | 스킬 창(K) 설명 (필수, 2줄 안: 패널 폭 196px). 변형에도 desc 필수 = 기본 스킬과 무엇이 다른지. 변형 desc는 판정에 덮어쓰지 않음 |
 | branch | base / A / B |
-| tier | 계열 스킬의 단계 (1~3, 각성 4) |
+| tier | 계열 스킬의 단계 (1~3, 각성 4). 같은 무기·계열·단계 액티브는 하나만 배움 |
+| superArmor | 시전 중 슈퍼아머 (combat.md 3장) |
+| repeat | 기본 스킬에도 둘 수 있는 반복 판정 (아래 특수 필드) |
+| onWall | 벽꿍 `{coef}` (아래 특수 필드) |
 | cooldown | 기준 쿨 (실제 = × COOLDOWN_SCALE) |
 | mp | 기준 쿨 × 2 (반올림). 검증 대상 |
 | variants | 변형. 기본 스킬 필드를 덮어쓰는 객체 `{ "name": ..., 덮어쓸 필드 }`. 값이 null이면 기본 필드 제거 (예: hitbox → area로 바꿀 때 `"hitbox": null`) |
 | note | 예산 규칙(balance.md 3장)을 벗어난 이유 |
 
-- 변형의 특수 필드: reinput(재입력 횟수), repeat(`{count, interval}` 반복), after(`{delay, coef}` 후속 판정), onStatusEnd(상태이상 해제 시 판정)
+- 특수 필드: reinput(재입력 횟수), repeat(`{count, interval, step?, seek?, copies?}` 반복: step = 판정마다 앞으로 px, seek = 판정마다 가까운 맞을 몬스터 쪽으로 px, copies = `[[앞, 깊이], ...]` 자리에 같은 반복을 첫 판정부터 더), after(`{delay, coef}` 후속 판정), onStatusEnd(상태이상 해제 시 판정), onWall(`{coef}` 벽꿍). 기본 스킬에 repeat가 있으면 변형은 일부 키만 덮어써도 됨
 - 적용은 shared/src/skillTree.ts resolveSkill (덮어쓰기 + 특수 필드 + 계수에 레벨 배율), 특수 판정은 shared/src/sim/skillExtras.ts: 반복·후속 = 시전한 자리·방향에 같은 판정을 예약(반복은 count번 중 첫 판정 뒤 나머지), 해제 = 그 행동이 건 빙결이 풀릴 때 그 몬스터에 한 번(빙결·띄우기 없이), 재입력 = 같은 스킬을 쿨타임·MP 없이 (스킬 recovery 또는 끝난 뒤 combat.json skillTree.reinputWindow 안). status slow = 몬스터 걷는 속도 × (1 − amount)
-- 현재 파일: MVP 범위(대검·스태프 공용 기본 스킬). 나머지는 skills.md 표를 이 형식으로 옮겨 추가
+- 현재 파일: 대검·스태프 공용 기본 스킬 + A·B 계열 1단계 액티브(SK-2). 나머지는 skills.md 표를 이 형식으로 옮겨 추가
+- 예산 검사(balance-check)는 한 번 쓸 때 계수 합 = coef × hits·repeat(copies 포함)·burst·lanes 수
 
 ---
 

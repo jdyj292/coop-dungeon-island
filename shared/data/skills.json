@@ -1,5 +1,5 @@
 {
-  "_note": "스킬 정의 (MVP: 대검·스태프 공용 기본만). cooldown은 기준 쿨 (실제 = ×COOLDOWN_SCALE), mp = 기준 쿨 × 2. 형식은 docs/data.md",
+  "_note": "스킬 정의 (대검·스태프: 공용 기본 + A·B 계열 1단계 액티브). cooldown은 기준 쿨 (실제 = ×COOLDOWN_SCALE), mp = 기준 쿨 × 2. 형식은 docs/data.md",
   "gs_launch": {
     "id": "gs_launch",
     "phases": {
@@ -52,7 +52,10 @@
         }
       }
     },
-    "sfx": { "active": "launch", "hit": "hitLight" }
+    "sfx": {
+      "active": "launch",
+      "hit": "hitLight"
+    }
   },
   "gs_earthsplit": {
     "id": "gs_earthsplit",
@@ -93,7 +96,7 @@
         "name": "균열",
         "desc": "1초 뒤 같은 자리가 한 번 더 터진다 (300%)",
         "after": {
-          "delay": 1.0,
+          "delay": 1,
           "coef": 300
         }
       },
@@ -114,7 +117,10 @@
         }
       }
     },
-    "sfx": { "active": "skill_slash", "hit": "hitHeavy" }
+    "sfx": {
+      "active": "skill_slash",
+      "hit": "hitHeavy"
+    }
   },
   "st_fireburst": {
     "id": "st_fireburst",
@@ -146,7 +152,9 @@
     "fx": {
       "grade": "medium"
     },
-    "sfx": { "windup": "skill_fireburst" },
+    "sfx": {
+      "windup": "skill_fireburst"
+    },
     "weapon": "staff",
     "name": "화염 폭발",
     "desc": "4타일 앞이 잠시 뒤 폭발해 적을 띄운다",
@@ -205,7 +213,10 @@
     "fx": {
       "grade": "medium"
     },
-    "sfx": { "active": "skill_icefield", "hit": "hitLight" },
+    "sfx": {
+      "active": "skill_icefield",
+      "hit": "hitLight"
+    },
     "weapon": "staff",
     "name": "얼음 장판",
     "desc": "얼음 장판을 깔아 땅의 적을 1.5초 얼린다",
@@ -235,5 +246,517 @@
       }
     },
     "note": "예산 대비 크게 낮음: 빙결 1.5초 제어가 주 가치, 딜은 의도적으로 낮게"
+  },
+  "gs_whirl": {
+    "id": "gs_whirl",
+    "phases": {
+      "windup": 0.2,
+      "active": 0.9,
+      "recovery": 0.35
+    },
+    "coef": 100,
+    "hits": {
+      "count": 6,
+      "interval": 0.15
+    },
+    "area": {
+      "shape": "circle",
+      "at": [
+        0,
+        0
+      ],
+      "radius": 26,
+      "z": "both"
+    },
+    "strength": "light",
+    "flags": [
+      "multi"
+    ],
+    "move": {
+      "distance": 32,
+      "during": "active"
+    },
+    "poses": {
+      "windup": "ready",
+      "active": "sweep",
+      "recovery": "sweep"
+    },
+    "fx": {
+      "grade": "light"
+    },
+    "sfx": {
+      "active": "swingHeavy",
+      "hit": "hitLight"
+    },
+    "weapon": "greatsword",
+    "name": "회전베기",
+    "desc": "검을 휘두르며 앞으로 돌아 주변 적을 6번 벤다",
+    "branch": "A",
+    "tier": 1,
+    "cooldown": 9,
+    "mp": 18,
+    "variants": {
+      "suck": {
+        "name": "흡입",
+        "desc": "돌 때마다 주변 적을 내 쪽으로 끌어당긴다",
+        "flags": [
+          "multi",
+          "pull"
+        ]
+      },
+      "rush": {
+        "name": "질주",
+        "desc": "회전 중 50% 더 멀리 나아간다",
+        "move": {
+          "distance": 48
+        }
+      }
+    }
+  },
+  "gs_shoulder": {
+    "id": "gs_shoulder",
+    "phases": {
+      "windup": 0.15,
+      "active": 0.25,
+      "recovery": 0.4
+    },
+    "coef": 450,
+    "hitbox": {
+      "forward": 0,
+      "width": 16,
+      "depth": 13,
+      "z": "both"
+    },
+    "strength": "heavy",
+    "flags": [
+      "knockback"
+    ],
+    "move": {
+      "distance": 48,
+      "during": "active"
+    },
+    "superArmor": true,
+    "poses": {
+      "windup": "ready",
+      "active": "draw",
+      "recovery": "ready"
+    },
+    "fx": {
+      "grade": "heavy"
+    },
+    "sfx": {
+      "active": "dash",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "어깨 들이받기",
+    "desc": "3타일 돌진해 적을 밀어낸다. 시전 중 슈퍼아머",
+    "branch": "A",
+    "tier": 1,
+    "cooldown": 6,
+    "mp": 12,
+    "variants": {
+      "wall": {
+        "name": "벽꿍",
+        "desc": "밀린 적이 벽에 부딪히면 쓰러지며 한 번 더 (200%)",
+        "onWall": {
+          "coef": 200
+        }
+      },
+      "again": {
+        "name": "연속 돌진",
+        "desc": "한 번 더 눌러 다시 돌진한다",
+        "reinput": 1
+      }
+    }
+  },
+  "gs_wave": {
+    "id": "gs_wave",
+    "phases": {
+      "windup": 0.2,
+      "active": 0.1,
+      "recovery": 0.35
+    },
+    "coef": 350,
+    "projectile": {
+      "speed": 200,
+      "range": 80,
+      "radius": 6,
+      "pierce": true
+    },
+    "strength": "medium",
+    "flags": [
+      "projectile"
+    ],
+    "poses": {
+      "windup": "ready",
+      "active": "sweep",
+      "recovery": "sweep"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "skill_slash",
+      "hit": "hitLight"
+    },
+    "weapon": "greatsword",
+    "name": "검기 날리기",
+    "desc": "앞 5타일을 꿰뚫는 검기를 날린다",
+    "branch": "B",
+    "tier": 1,
+    "cooldown": 4,
+    "mp": 8,
+    "variants": {
+      "three": {
+        "name": "세 갈래",
+        "desc": "검기 3줄을 나란히 날린다 (각 150%)",
+        "coef": 150,
+        "projectile": {
+          "lanes": [
+            -14,
+            0,
+            14
+          ]
+        }
+      },
+      "big": {
+        "name": "대형",
+        "desc": "느리지만 크고 센 검기 (500%)",
+        "coef": 500,
+        "projectile": {
+          "speed": 120,
+          "radius": 12
+        }
+      }
+    }
+  },
+  "gs_draw": {
+    "id": "gs_draw",
+    "phases": {
+      "windup": 0.1,
+      "active": 0.1,
+      "recovery": 0.4
+    },
+    "coef": 400,
+    "hitbox": {
+      "forward": 0,
+      "width": 30,
+      "depth": 13,
+      "z": "both"
+    },
+    "strength": "medium",
+    "move": {
+      "distance": 32,
+      "during": "active"
+    },
+    "poses": {
+      "windup": "ready",
+      "active": "draw",
+      "recovery": "draw"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "dash",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "발도",
+    "desc": "2타일을 순식간에 나아가며 벤다",
+    "branch": "B",
+    "tier": 1,
+    "cooldown": 5,
+    "mp": 10,
+    "variants": {
+      "double": {
+        "name": "2연속",
+        "desc": "한 번 더 눌러 다시 벤다",
+        "reinput": 1
+      },
+      "back": {
+        "name": "후퇴 발도",
+        "desc": "앞을 베면서 뒤로 빠진다",
+        "move": {
+          "distance": -32
+        }
+      }
+    }
+  },
+  "st_pillar": {
+    "id": "st_pillar",
+    "phases": {
+      "windup": 0.45,
+      "active": 0.1,
+      "recovery": 0.3
+    },
+    "coef": 90,
+    "area": {
+      "shape": "circle",
+      "at": [
+        56,
+        0
+      ],
+      "radius": 14,
+      "z": "both"
+    },
+    "repeat": {
+      "count": 8,
+      "interval": 0.25
+    },
+    "strength": "light",
+    "poses": {
+      "windup": "ready",
+      "active": "plant",
+      "recovery": "plant"
+    },
+    "fx": {
+      "grade": "light"
+    },
+    "sfx": {
+      "windup": "skill_fireburst",
+      "hit": "hitLight"
+    },
+    "weapon": "staff",
+    "name": "불꽃 기둥",
+    "desc": "앞에 2초 동안 불기둥을 세워 8번 태운다",
+    "branch": "A",
+    "tier": 1,
+    "cooldown": 8,
+    "mp": 16,
+    "variants": {
+      "march": {
+        "name": "행진",
+        "desc": "불기둥이 조금씩 앞으로 나아간다",
+        "repeat": {
+          "step": 8
+        }
+      },
+      "twin": {
+        "name": "쌍기둥",
+        "desc": "위아래 불기둥 2개, 각 5번",
+        "area": {
+          "at": [
+            56,
+            -12
+          ]
+        },
+        "repeat": {
+          "count": 5,
+          "interval": 0.4,
+          "copies": [
+            [
+              0,
+              24
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "st_icelance": {
+    "id": "st_icelance",
+    "phases": {
+      "windup": 0.3,
+      "active": 0.05,
+      "recovery": 0.3
+    },
+    "coef": 400,
+    "projectile": {
+      "speed": 260,
+      "range": 112,
+      "radius": 5,
+      "pierce": true
+    },
+    "strength": "light",
+    "flags": [
+      "projectile"
+    ],
+    "status": {
+      "type": "freeze",
+      "time": 0.5
+    },
+    "poses": {
+      "windup": "ready",
+      "active": "bolt",
+      "recovery": "bolt"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "bolt_cast",
+      "hit": "bolt_hit"
+    },
+    "weapon": "staff",
+    "name": "얼음 창",
+    "desc": "꿰뚫는 얼음 창을 쏴 0.5초 얼린다",
+    "branch": "A",
+    "tier": 1,
+    "cooldown": 4,
+    "mp": 8,
+    "variants": {
+      "triple": {
+        "name": "3연발",
+        "desc": "창 3개를 이어 쏜다 (각 170%)",
+        "coef": 170,
+        "projectile": {
+          "burst": {
+            "count": 3,
+            "interval": 0.15
+          }
+        }
+      },
+      "big": {
+        "name": "대형 창",
+        "desc": "크고 센 창이 적을 밀어낸다 (550%)",
+        "coef": 550,
+        "flags": [
+          "projectile",
+          "knockback"
+        ],
+        "projectile": {
+          "radius": 9
+        }
+      }
+    },
+    "note": "예산 약 270 대비 +48%: 빙결 0.5초는 짧아 제어 보정(×0.75)만큼의 가치가 없음"
+  },
+  "st_orb": {
+    "id": "st_orb",
+    "phases": {
+      "windup": 0.4,
+      "active": 0.1,
+      "recovery": 0.3
+    },
+    "coef": 50,
+    "area": {
+      "shape": "circle",
+      "at": [
+        48,
+        0
+      ],
+      "radius": 22,
+      "z": "air"
+    },
+    "repeat": {
+      "count": 8,
+      "interval": 0.375
+    },
+    "strength": "light",
+    "flags": [
+      "hold"
+    ],
+    "status": {
+      "type": "hold",
+      "time": 0.6
+    },
+    "poses": {
+      "windup": "ready",
+      "active": "area",
+      "recovery": "area"
+    },
+    "fx": {
+      "grade": "light"
+    },
+    "sfx": {
+      "active": "bolt_cast",
+      "hit": "hitLight"
+    },
+    "weapon": "staff",
+    "name": "부유 구슬",
+    "desc": "구슬 안의 공중 적을 3초 동안 띄워 둔다 (8번)",
+    "branch": "B",
+    "tier": 1,
+    "cooldown": 8,
+    "mp": 16,
+    "variants": {
+      "seek": {
+        "name": "유도",
+        "desc": "구슬이 가까운 공중 적을 따라간다",
+        "repeat": {
+          "seek": 10
+        }
+      },
+      "twin": {
+        "name": "쌍구슬",
+        "desc": "작은 구슬 2개를 나란히 띄운다",
+        "area": {
+          "radius": 14
+        },
+        "repeat": {
+          "copies": [
+            [
+              24,
+              0
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "st_lift": {
+    "id": "st_lift",
+    "phases": {
+      "windup": 0.45,
+      "active": 0.1,
+      "recovery": 0.3
+    },
+    "coef": 300,
+    "area": {
+      "shape": "circle",
+      "at": [
+        56,
+        0
+      ],
+      "radius": 28,
+      "z": "ground"
+    },
+    "strength": "medium",
+    "flags": [
+      "pull",
+      "launch"
+    ],
+    "launchVz": 150,
+    "poses": {
+      "windup": "ready",
+      "active": "area",
+      "recovery": "area"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "launch",
+      "hit": "hitLight"
+    },
+    "weapon": "staff",
+    "name": "끌어올림",
+    "desc": "앞 자리로 적을 끌어모아 살짝 띄운다",
+    "branch": "B",
+    "tier": 1,
+    "cooldown": 6,
+    "mp": 12,
+    "variants": {
+      "wide": {
+        "name": "광역",
+        "desc": "끌어모으는 범위가 2배",
+        "area": {
+          "radius": 40
+        }
+      },
+      "double": {
+        "name": "이중",
+        "desc": "0.6초 뒤 한 번 더 끌어올린다 (공중 적도)",
+        "repeat": {
+          "count": 2,
+          "interval": 0.6
+        },
+        "area": {
+          "z": "both"
+        }
+      }
+    }
   }
 }

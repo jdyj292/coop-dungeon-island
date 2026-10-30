@@ -7,8 +7,8 @@ export type Strength = 'light' | 'medium' | 'heavy';
 export type FxGrade = 'light' | 'medium' | 'heavy' | 'ultimate';
 
 
-/** 플레이어 행동 (평타·대시·스킬). 스킬이면 mp가 있고, 변형을 적용한 스킬이면 변형 특수 필드(재입력·후속·반복·해제 판정)가 있음. 형식은 data/schema.ts */
-export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp'>> & Partial<Omit<VariantExtra, 'name'>>;
+/** 플레이어 행동 (평타·대시·스킬). 스킬이면 mp·슈퍼아머가 있고, 특수 필드(재입력·후속·반복·해제·벽꿍 판정)가 있을 수 있음. 형식은 data/schema.ts */
+export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp' | 'superArmor' | 'repeat'>> & Partial<Omit<VariantExtra, 'name' | 'desc' | 'repeat'>>;
 export type WeaponDef = Weapon;
 
 export function weaponDef(id: string): WeaponDef {

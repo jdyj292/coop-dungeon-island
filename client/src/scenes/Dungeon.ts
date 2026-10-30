@@ -43,7 +43,7 @@ const REVIVE_SEND_MS = 150;
 /** 스킬 키 순서대로 (code = 스킬 노드: 온라인은 서버 값, 로컬은 개발 옵션 ?skills=) */
 const skillsOf = (weapon: string, code: string) => weaponSkills(weaponDef(weapon), buildFrom(code));
 
-type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2' | 'potionHp' | 'potionMp' | 'interact';
+type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2' | 'skill3' | 'skill4' | 'potionHp' | 'potionMp' | 'interact';
 
 export class Dungeon extends Phaser.Scene {
   private params = new URLSearchParams(location.search);
@@ -114,7 +114,7 @@ export class Dungeon extends Phaser.Scene {
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({
       up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D,
-      attack: K.J, backstep: K.K, skill1: K.U, skill2: K.I, potionHp: K.Z, potionMp: K.X, interact: K.E,
+      attack: K.J, backstep: K.K, skill1: K.U, skill2: K.I, skill3: K.O, skill4: K.P, potionHp: K.Z, potionMp: K.X, interact: K.E,
     }) as typeof this.keys;
   }
 
@@ -235,7 +235,8 @@ export class Dungeon extends Phaser.Scene {
       x: (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0),
       y: (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0),
       attack: Phaser.Input.Keyboard.JustDown(k.attack),
-      skill: Phaser.Input.Keyboard.JustDown(k.skill1) ? sk[0] ?? null : Phaser.Input.Keyboard.JustDown(k.skill2) ? sk[1] ?? null : null,
+      // U I O P = 슬롯 순서 (기본 스킬 2개 + A·B 계열, skillTree.slotSkills)
+      skill: (['skill1', 'skill2', 'skill3', 'skill4'] as const).map((n, i) => (Phaser.Input.Keyboard.JustDown(k[n]) ? sk[i] ?? null : null)).find((s) => s) ?? null,
       backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
       potion: Phaser.Input.Keyboard.JustDown(k.potionHp) ? 'hp' : Phaser.Input.Keyboard.JustDown(k.potionMp) ? 'mp' : null,
     };
@@ -274,7 +275,7 @@ export class Dungeon extends Phaser.Scene {
     const { width, height } = this.scale.gameSize;
     if (view.player) {
       this.hud.draw({
-        player: view.player, weapon: this.weapon, skills: [sk[0] ?? null, sk[1] ?? null, null, null],
+        player: view.player, weapon: this.weapon, skills: [0, 1, 2, 3].map((i) => sk[i] ?? null),
         level: 1, coins: view.coins, materials: view.materials, colorIndex: view.look.color, hair: view.look.hair,
       }, dt, width, height - HUD_HEIGHT);
     }

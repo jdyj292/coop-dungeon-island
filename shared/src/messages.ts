@@ -49,7 +49,7 @@ export const C2S = {
   /** 섬: 스킬 포인트·변형 바꾸기, 무기 스킬 초기화 (skills.md 1장, 스킬 창(K)). 검사는 서버 */
   skill: z.object({
     weapon: z.enum(MVP_WEAPONS), op: z.enum(['set', 'reset']), skillId: z.string().max(40).optional(),
-    points: z.number().int().min(1).max(9).optional(), variant: z.string().max(24).optional(),
+    points: z.number().int().min(0).max(9).optional(), variant: z.string().max(24).optional(),
   }).strict(),
   /** 외형 바꾸기 (섬에서, 설정 외형 탭) */
   look: z.object({ hair: z.number().int().min(0).max(LOOK.hairStyles - 1), hairColor: z.number().int().min(0).max(LOOK.hairColors - 1) }).strict(),

@@ -16,6 +16,10 @@ export interface Body {
   timer: number;
   /** 아직 덜 밀린 거리 (부호 = 방향) */
   push: number;
+  /** 아직 덜 끌려간 깊이 거리 (pull, combat.md 2장) */
+  pushY: number;
+  /** 체공 유지 남은 시간 (status hold): 공중에서 중력 없이 멈춤 */
+  hold: number;
   /** 마지막으로 맞은 방향 (다운 미끄러짐·눕는 방향) */
   hitDir: number;
   knockback: boolean;
@@ -33,7 +37,7 @@ export interface Body {
 }
 
 export const newBody = (x: number, y: number, weight: Weight): Body => ({
-  x, y, z: 0, vz: 0, state: 'idle', timer: 0, push: 0, hitDir: 1, knockback: false,
+  x, y, z: 0, vz: 0, state: 'idle', timer: 0, push: 0, pushY: 0, hold: 0, hitDir: 1, knockback: false,
   bounced: false, forceDown: false, airHits: 0, gravityMul: 1, weight, ko: false, gone: false, armor: false,
 });
 
@@ -65,8 +69,12 @@ export function applyHit(b: Body, hit: HitInfo): void {
   b.push = fixed ? 0 : hit.dir * stun.push * mul;
   b.knockback = !fixed && flags.includes('knockback');
   if (b.state === 'air') {
-    if (!flags.includes('hold')) b.vz = Math.max(b.vz, 0) + COMBAT.airHitVz;
-    else b.vz = 0;
+    // hold: 띄워 올리지 않고 그 자리에 붙잡음. 공중 콤보 보정(낙하 가속·강제 다운)도 쌓지 않는다
+    if (flags.includes('hold')) {
+      b.vz = 0;
+      return;
+    }
+    b.vz = Math.max(b.vz, 0) + COMBAT.airHitVz;
     b.airHits++;
     b.gravityMul *= COMBAT.airGravityMul;
     if (b.airHits > COMBAT.maxAirHits || flags.includes('down')) b.forceDown = true;
@@ -76,6 +84,17 @@ export function applyHit(b: Body, hit: HitInfo): void {
     b.state = 'hitstun';
     b.timer = stun.time * mul;
   }
+}
+
+/** 바로 다운 (벽꿍 변형 등): 공중이면 강제 다운으로 떨어뜨린다 */
+export function knockDown(b: Body): void {
+  if (b.armor || b.weight === 'fixed' || b.ko) return;
+  if (b.state === 'air') {
+    b.forceDown = true;
+    b.hold = 0;
+    return;
+  }
+  Object.assign(b, { state: 'down', vz: 0, z: 0, timer: COMBAT.downSec });
 }
 
 /** 한 틱 진행. minX·maxX는 방 벽 */
@@ -96,8 +115,19 @@ export function stepBody(b: Body, dt: number, minX: number, maxX: number): BodyE
       b.knockback = false;
     }
   }
+  if (b.pushY !== 0) {
+    let d = b.pushY * Math.min(1, COMBAT.pushRate * dt);
+    if (Math.abs(b.pushY - d) < 0.05) d = b.pushY;
+    b.y += d;
+    b.pushY -= d;
+  }
   switch (b.state) {
     case 'air':
+      if (b.hold > 0) {
+        b.hold = Math.max(0, b.hold - dt);
+        b.vz = 0;
+        break;
+      }
       b.vz -= COMBAT.gravity * b.gravityMul * dt;
       b.z += b.vz * dt;
       if (b.z <= 0 && b.vz < 0) {

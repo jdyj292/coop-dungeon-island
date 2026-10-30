@@ -51,6 +51,8 @@ export interface Monster {
   frozen: number;
   /** 빙결을 건 사람과 행동 (변형 onStatusEnd: 풀릴 때 판정, sim/skillExtras.ts) */
   frozenBy?: { pid: string; def: ActionDef };
+  /** 벽꿍 판정을 건 행동 (변형 onWall): 이 몬스터가 밀려 벽에 닿으면 다운 + 추가 판정. 다음 피격·착지 전까지 */
+  wallBy?: { pid: string; def: ActionDef };
   /** 감속 (status slow, 변형 동토): 남은 시간·줄이는 비율. 걷는 속도만 줄어든다 */
   slow: { left: number; amount: number };
   /** 잠든 채 남은 시간 (첫 방 rooms.json wakeSec, dungeon.md 5장): 움직이지도 공격하지도 않음, 맞으면 바로 깨어남. 줄이는 건 RoomSim (누군가 착지한 뒤부터) */
@@ -105,9 +107,14 @@ export const monsterHalf = (m: Monster): Half => ({ x: m.def.hurtbox.width / 2, 
 export function stepBodyIn(m: Monster, dt: number, bounds: Bounds): BodyEvent[] {
   m.frozen = Math.max(0, m.frozen - dt);
   m.slow.left = Math.max(0, m.slow.left - dt);
-  const bd = monsterBounds(m, bounds), x0 = m.body.x;
+  const bd = monsterBounds(m, bounds), x0 = m.body.x, y0 = m.body.y;
   const ev = stepBody(m.body, dt, bd.minX, bd.maxX);
-  if (hitsBlock(m.body, monsterHalf(m), bounds)) m.body.x = x0;
+  // 깊이 끌림(pull)은 방 위아래 끝에서 멈춤
+  m.body.y = Math.min(bd.maxY, Math.max(bd.minY, m.body.y));
+  if (hitsBlock(m.body, monsterHalf(m), bounds)) {
+    m.body.x = x0;
+    m.body.y = y0;
+  }
   return ev;
 }
 

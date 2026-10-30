@@ -31,22 +31,30 @@ export function budgetFactors(s: Skill, r: BudgetRules): (keyof BudgetRules['fac
   const out: (keyof BudgetRules['factors'])[] = [];
   const flags = s.flags ?? [];
   for (const f of ['launch', 'hold', 'pull'] as const) if (flags.includes(f)) out.push(f);
-  // 제어: 빙결·정지(경직 연장 포함). 감속은 제외 (balance.md 3장 "빙결·정지·경직 연장")
-  if (s.status && s.status.type !== 'slow') out.push('control');
+  // 제어: 빙결·정지(경직 연장 포함). 감속은 제외, 체공(hold)은 hold 보정으로 (balance.md 3장 "빙결·정지·경직 연장")
+  if (s.status && s.status.type !== 'slow' && s.status.type !== 'hold') out.push('control');
   // 넓은 범위: 원·사각·부채꼴 판정 (문서 검산 예시의 화염 폭발 = 범위와 맞춤)
   if (s.area || s.zone) out.push('area');
   const reach = Math.max(s.hitbox?.forward ?? 0, s.area?.at[0] ?? 0, s.projectile?.range ?? 0);
   if (reach >= r.rangedPx) out.push('ranged');
   if (s.move) out.push('movement');
+  if (s.superArmor) out.push('superArmor');
   if (s.phases.windup >= r.longPhaseSec) out.push('longWindup');
   if (s.phases.recovery >= r.longPhaseSec) out.push('longRecovery');
   return out;
 }
 
+/** 한 번 쓸 때 계수 합: 다단(hits)·반복(repeat)·연발(burst)·여러 줄(lanes)은 판정 수만큼 */
+export function totalCoef(s: Skill): number {
+  const pr = s.projectile;
+  return s.coef * (s.hits?.count ?? 1) * (s.repeat?.count ?? 1) * (1 + (s.repeat?.copies?.length ?? 0)) * (pr?.burst?.count ?? 1) * (pr?.lanes?.length ?? 1);
+}
+
 export function checkSkill(s: Skill, r: BudgetRules): BudgetResult {
   const names = budgetFactors(s, r);
   const budget = names.reduce((b, n) => b * r.factors[n], s.cooldown * 100);
-  const diff = s.coef / budget - 1;
+  const coef = totalCoef(s);
+  const diff = coef / budget - 1;
   const ok = Math.abs(diff) <= r.tolerance;
-  return { id: s.id, name: s.name, coef: s.coef, budget, factors: names, diff, ok, noted: !ok && !!s.note };
+  return { id: s.id, name: s.name, coef, budget, factors: names, diff, ok, noted: !ok && !!s.note };
 }

@@ -6,6 +6,7 @@ import type { MonsterAttack } from '../data/schema';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
 import { spawnProjectile, zoneSpeedMul, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
 import { newMonster, stepBodyIn, type Monster } from '../monster/state';
+import { knockDown } from '../body';
 import { recordGroggyHit } from '../monster/groggy';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
@@ -20,7 +21,7 @@ import { PositionHistory, type PastPos } from './history';
 import { HitLog } from './hitLog';
 import { hitMonster, phaseIsActive, strike, type PosOf, type StrikeHit } from './strike';
 import { spawnBolt, stepBolt, type Bolt } from './bolts';
-import { echoesOf, shatterDef, strikeEcho, thawed, type Echo } from './skillExtras';
+import { echoesOf, placeEcho, shatterDef, strikeEcho, thawed, wallDef, type Echo } from './skillExtras';
 
 export type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
 import type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
@@ -185,6 +186,7 @@ export class RoomSim {
         if (e.type === 'playerHit') this.hitPlayer(events, e.pid, m, e.def, e.damage, this.awayFrom(m, e.pid));
         if (e.type === 'shoot') this.projectiles.push(spawnProjectile(this.ids++, m.id, e.def, m.body.x, m.body.y, m.attack?.dir ?? m.facing, ctx.player));
         if (e.type === 'zone') this.zones.push(spawnZone(this.ids++, e.def, { x: m.body.x, y: m.body.y, facing: m.facing }));
+        if (e.type === 'body' && e.e === 'wall' && m.wallBy) this.slam(m, events);
       }
     }
     // 2. 투사체·장판
@@ -290,7 +292,12 @@ export class RoomSim {
     for (const e of due) {
       const sp = this.players.get(e.pid);
       if (!sp || sp.away) continue;
-      events.push({ type: 'echo', echo: e });
+      if (e.kind === 'shot') {
+        this.shoot(sp, e.def, events);
+        continue;
+      }
+      placeEcho(e, this.alive);
+      events.push({ type: 'echo', echo: { ...e, kind: e.kind } });
       this.countCombo(sp, this.landHits(sp, e.def, strikeEcho(e, sp.state, this.alive), events, true), events);
     }
     for (const m of thawed(this.alive)) {
@@ -303,11 +310,25 @@ export class RoomSim {
     }
   }
 
-  /** 마법탄 발사 */
+  /** 벽꿍 (변형 onWall): 밀려 벽에 닿은 몬스터를 다운시키고 추가 판정 (연출은 후속 판정과 같은 echo) */
+  private slam(m: Monster, events: SimEvent[]): void {
+    const by = m.wallBy!, sp = this.players.get(by.pid);
+    delete m.wallBy;
+    if (!sp || sp.away || m.body.ko) return;
+    const def = wallDef(by.def);
+    events.push({ type: 'echo', echo: { pid: by.pid, kind: 'after', def, x: m.body.x, y: m.body.y, facing: sp.state.facing, at: this.time } });
+    const hit = hitMonster(sp.state, def, m, sp.state.facing);
+    knockDown(m.body);
+    this.countCombo(sp, this.landHits(sp, def, [hit], events, true), events);
+  }
+
+  /** 마법탄 발사 (lanes면 깊이마다 한 발씩) */
   private shoot(sp: SimPlayer, def: ActionDef, events: SimEvent[]): void {
-    const b = spawnBolt(this.ids++, sp.pid, def, sp.state.pos.x, sp.state.pos.y, sp.state.facing);
-    this.bolts.push(b);
-    events.push({ type: 'bolt', bolt: b });
+    for (const dy of def.projectile?.lanes ?? [0]) {
+      const b = spawnBolt(this.ids++, sp.pid, def, sp.state.pos.x, sp.state.pos.y + dy, sp.state.facing);
+      this.bolts.push(b);
+      events.push({ type: 'bolt', bolt: b });
+    }
   }
 
   /** 적중 사건·기절·보스 졸음 연장(파티: 서로 다른 2명, 솔로: 15히트)·히트스톱. 적중 수. echo = 예약 판정 (공격자는 멈추지 않음) */
@@ -321,8 +342,10 @@ export class RoomSim {
       events.push({ type: 'hit', pid: sp.pid, m: h.m, def, damage: h.damage, recoil, act: run?.def.id ?? '', actT: run?.t ?? -1 });
       if (h.ko) events.push({ type: 'ko', pid: sp.pid, m: h.m });
       recordGroggyHit(h.m, sp.pid, (this.opts.partySize ?? 1) >= 2);
-      // 해제 판정을 걸어둠 (그 행동이 건 빙결이 풀릴 때)
+      // 해제 판정을 걸어둠 (그 행동이 건 빙결이 풀릴 때), 벽꿍은 다음 적중이 덮어쓴다
       if (def.onStatusEnd && h.m.frozen > 0) h.m.frozenBy = { pid: sp.pid, def };
+      if (def.onWall) h.m.wallBy = { pid: sp.pid, def };
+      else delete h.m.wallBy;
       if (this.opts.hitstop === 'entity') {
         sp.stop = Math.max(sp.stop, recoil);
         this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, recoil || sec));

@@ -1,5 +1,5 @@
 // 스킬 창(K) (skills.md 1장): 섬에서 포인트·변형 저장(서버 검사)·초기화, 던전 파티 정보·입력 검사에 반영
-import { decodeBuild, resolveSkill, type S2C } from '@game/shared';
+import { decodeBuild, resolveSkill, weaponDef, type S2C } from '@game/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
 import { IslandStore } from '../db/islandStore';
@@ -66,6 +66,17 @@ describe('스킬 탭', () => {
     expect(gs(lastSkills(a))).toMatchObject({ spent: 0, build: '' });
   });
 
+  it('계열 스킬: 배우면 같은 키의 다른 스킬은 지워지고 포인트가 옮겨감, 0으로 내리면 안 배움', () => {
+    const a = user(3), g = game();
+    enter(g, a);
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_whirl', points: 2 });
+    expect(gs(lastSkills(a))).toMatchObject({ spent: 2, build: 'gs_whirl:2' });
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_shoulder', points: 2 });
+    expect(skillBuild(db, Number(a))).toEqual({ gs_shoulder: { points: 2 } });
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_shoulder', points: 0 });
+    expect(gs(lastSkills(a))).toMatchObject({ spent: 0, build: '' });
+  });
+
   it('출발 카운트다운 중인 대기자는 못 바꿈', () => {
     const a = user(4), g = game();
     enter(g, a);
@@ -86,6 +97,12 @@ describe('던전 입력 검사', () => {
     const w = { baseSkills: ['gs_launch', 'gs_earthsplit'] } as never;
     expect(q.onAction(action('gs_launch'), player() as never, w, build)).toBeNull();
     expect(q.take().input.skill).toBe(resolveSkill('gs_launch', { points: 3, variant: 'double' }));
+  });
+
+  it('안 배운 계열 스킬은 거절', () => {
+    const q = new InputQueue(), w = weaponDef('greatsword');
+    expect(q.onAction(action('gs_whirl'), player() as never, w, {})).not.toBeNull();
+    expect(q.onAction(action('gs_whirl'), player() as never, w, decodeBuild('gs_whirl:1'))).toBeNull();
   });
 
   it('재입력 대기 중이면 쿨타임이어도 받는다', () => {
