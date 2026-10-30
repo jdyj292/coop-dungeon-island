@@ -1,6 +1,6 @@
 // motion-preview: 게임과 같은 전투 코드로 모션을 반복 재생하고, 값을 바꿔 보고, 바꾼 값을 JSON으로 복사 (docs/motion.md 9장)
 import Phaser from 'phaser';
-import { SKILLS, weaponDef } from '@game/shared';
+import { SKILLS, treeSkills, weaponDef } from '@game/shared';
 import { el, select, slider } from '../../sprite-preview/src/ui';
 import { applyPreset, changedJson, DEMO_TIMING, getValue, isChanged, PARAMS, resetAll, setValue } from './params';
 import { controls, MotionScene, VIEW_H, VIEW_W } from './scene';
@@ -30,9 +30,13 @@ function stepFrame(): void {
 const speed = select('속도', [['1', '1배'], ['0.5', '1/2'], ['0.25', '1/4'], ['0.125', '1/8']], '1', (v) => {
   controls.speed = Number(v);
 });
-/** 변형 고르기: 그 무기 기본 스킬의 변형마다 "스킬:3:변형" (게임 ?skills=와 같은 형식) */
-const variantOptions = (w: string): [string, string][] => [['', '기본 (변형 없음)'], ...weaponDef(w).baseSkills.flatMap((id) =>
-  Object.entries(SKILLS[id]?.variants ?? {}).map(([v, d]): [string, string] => [`${id}:3:${v}`, `${SKILLS[id]!.name} · ${d.name}`]))];
+/** 변형 고르기: 그 무기 기본 스킬의 변형마다 "스킬:3:변형", 계열 스킬은 "스킬:1"(변형 없음)과 변형마다 (게임 ?skills=와 같은 형식) */
+const variantOptions = (w: string): [string, string][] => {
+  const base = weaponDef(w).baseSkills;
+  const variants = (id: string) => Object.entries(SKILLS[id]?.variants ?? {}).map(([v, d]): [string, string] => [`${id}:3:${v}`, `${SKILLS[id]!.name} · ${d.name}`]);
+  return [['', '기본 (변형 없음)'], ...base.flatMap(variants),
+    ...treeSkills(weaponDef(w)).filter((id) => !base.includes(id)).flatMap((id): [string, string][] => [[`${id}:1`, `[${SKILLS[id]!.branch}] ${SKILLS[id]!.name}`], ...variants(id)])];
+};
 const variant = select('변형', variantOptions('greatsword'), '', (v) => {
   controls.skills = v;
   controls.restart = true;

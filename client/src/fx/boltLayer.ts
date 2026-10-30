@@ -4,6 +4,7 @@ import type Phaser from 'phaser';
 import fx from '../../data/fx.json';
 import { project } from '../view/layout';
 import { dot } from './layer';
+import { drawShot, type ShotView } from './shotDraw';
 import { col, orb, px } from './spellDraw';
 
 /** 이펙트 층(5000)보다 아래, 캐릭터(깊이 = y)보다 위 */
@@ -16,11 +17,13 @@ export class BoltLayer {
     this.g = scene.add.graphics().setDepth(DEPTH);
   }
 
-  draw(list: { x: number; y: number; dir: number }[]): void {
+  draw(list: ShotView[]): void {
     const g = this.g, b = fx.spell.bolt, { sky, white, deep } = col();
     g.clear();
     for (const p of list) {
       const { sx, sy } = project(p.x, p.y, b.height), back = -p.dir;
+      // 계열 스킬 투사체 (검기·얼음 창)는 자기 그림
+      if (drawShot(g, sx, sy, p)) continue;
       // 꼬리: 앞 두 칸은 3px 두께, 뒤로 갈수록 1px·진한 색·바둑판으로 옅어짐
       for (let i = 1; i <= b.tail; i++) {
         const tx = sx + back * (b.radius + i - 1), a = 1 - i / (b.tail + 1);

@@ -18,7 +18,8 @@ import { FX_GROUND_DEPTH, FxLayer } from '../fx/layer';
 import { dust, ring } from '../fx/particles';
 import { Rhythm } from '../fx/rhythm';
 import { SleepMarks } from '../fx/wellArrival';
-import { boltFizzle, boltHit, teleportPuff } from '../fx/spell';
+import { shotEnd } from '../fx/shotDraw';
+import { teleportPuff } from '../fx/spell';
 import { castActive, castEcho, castStart } from '../fx/spellCast';
 import { HitStop, Shake } from '../fx/timing';
 import { spriteData } from '../sprites/data';
@@ -182,8 +183,7 @@ export class CombatStage {
       }
     } else if (e.type === 'boltEnd') {
       const b = e.bolt, { sx, sy } = project(b.x, b.y, fx.spell.bolt.height);
-      if (b.hit.length) this.fx.layer.add(boltHit(sx, sy));
-      else add(boltFizzle(sx, sy));
+      shotEnd(this.fx.layer, b.def.id, sx, sy, b.hit.length > 0);
     } else if (e.type === 'echo') {
       castEcho(this.fx, e.echo.kind, e.echo.def, e.echo);
     } else if (e.type === 'backstep' && this.playerView.teleport) {
@@ -250,7 +250,7 @@ export class CombatStage {
     // 순간이동이 끝나는 순간: 나타나는 자리에 점
     if (this.wasBackstep && !p.backstep && this.playerView.teleport) this.teleportAt(p);
     this.wasBackstep = !!p.backstep;
-    this.bolts.draw(this.sim.bolts);
+    this.bolts.draw(this.sim.bolts.map((b) => ({ x: b.x, y: b.y, dir: b.dir, id: b.def.id, r: b.def.projectile?.radius })));
     this.drawDt = 0;
 
     this.sim.alive.forEach((m, i) => placeMonster(this.scene, this.view(m), data, m, this.clock, i));

@@ -7,9 +7,11 @@ export type ScriptMode = 'all' | 'combo' | 'launch';
 /** 동작 사이 쉬는 시간 (게임 시간 초) */
 const REST = 0.6;
 
-/** 대본에 쓰는 스킬: 무기 기본 스킬 모두, build = 스킬 노드 코드(변형 미리보기, 게임 ?skills=와 같은 형식) */
-const scriptSkills = (stage: CombatStage, build: string): ActionDef[] =>
-  stage.weapon.baseSkills.map((id) => buildSkill(stage.weapon, buildFrom(build), id) ?? skillDef(id));
+/** 대본에 쓰는 스킬: 무기 기본 스킬 모두, build = 스킬 노드 코드(변형 미리보기, 게임 ?skills=와 같은 형식). 계열 스킬을 고르면 그 스킬만 */
+const scriptSkills = (stage: CombatStage, build: string): ActionDef[] => {
+  const b = buildFrom(build), base = stage.weapon.baseSkills, branch = Object.keys(b).filter((id) => !base.includes(id));
+  return (branch.length ? branch : base).map((id) => buildSkill(stage.weapon, b, id) ?? skillDef(id));
+};
 
 export class Script {
   private part: 'combo' | 'launch' | 'backstep' | 'rest' = 'combo';

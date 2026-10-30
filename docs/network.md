@@ -167,7 +167,7 @@ IslandState
 |---|---|---|
 | hit | `{ attacker, target, damage, strength, flags, hitstop, recoil, act, actT, x, y, z, t }` (recoil = 공격자 멈춤 초, act·actT = 맞힌 행동 id·진행 시간, 히트스톱 동기화) | 데미지 숫자, 섬광, 흰색 번쩍임, 히트스톱, 흔들림 |
 | projSpawn / projEnd | 위 참고 | 투사체 그리기 |
-| bolt / boltEnd | 플레이어 마법탄 `bolt { id, kind(행동 id), pid, x, y, dir, t0 }`, `boltEnd { id, reason, x, y }` | 마법탄 그리기 (MVP 보충 ST-2) |
+| bolt / boltEnd | 플레이어 투사체 (스태프 평타·검기·얼음 창) `bolt { id, kind(행동 id), pid, x, y, dir, t0, speed, r }` (speed·r = 변형까지 적용한 값), `boltEnd { id, reason, x, y }` | 투사체 그리기 (MVP 보충 ST-2, 계열 스킬 그림 SK-2 2차) |
 | echo | 변형 예약 판정 순간 `{ pid, kind: repeat·after·shatter, act(스킬 id), x, y, facing, t }` (반복·후속은 시전 자리, 해제는 몬스터 자리) | 그 사람의 skills로 정의를 찾아 로컬과 같은 연출·소리 (fx/spellCast castEcho), 그리는 시각이 t에 닿을 때 |
 | playerHit | 내가 맞음 `{ damage, strength, from }` | 피격 표정, 화면 붉은 테두리 없이 흔들림 |
 | reward | `{ coins, material, exp }` 본인에게 (몬스터 기절·보물상자) | coin 효과음, HUD 숫자 튐 |
