@@ -74,6 +74,7 @@ export function withPerks(def: ActionDef, perks: Perks): ActionDef {
   if (lm && def.lasting) {
     if (def.repeat) out.repeat = { ...def.repeat, count: Math.round(def.repeat.count * lm) };
     if (def.status?.time) out.status = { ...def.status, time: def.status.time * lm };
+    if (def.allyBuff) out.allyBuff = { ...def.allyBuff, time: def.allyBuff.time * lm };
   }
   byKey.set(key, out);
   return out;

@@ -23,6 +23,9 @@ export class PlayerPrivate extends Schema {
   @type('string') reinputId = '';
   @type('uint8') reinputLeft = 0;
   @type('float64') reinputEnd = 0;
+  /** 가속 (가속장): 끝나는 서버 시각(ms, 없으면 0)과 쿨이 도는 배율 */
+  @type('float64') hasteEnd = 0;
+  @type('float32') hasteMul = 1;
 }
 
 export class PlayerState extends Schema {

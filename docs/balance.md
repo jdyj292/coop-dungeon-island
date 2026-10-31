@@ -106,8 +106,9 @@
 보정은 skills.json에서 읽는다. 배율·기준은 tools/balance-check/rules.json (이 표와 같게 유지)
 - launch·hold·pull: flags
 - 제어: status가 freeze·stun (slow는 제외)
-- 넓은 범위: 판정이 area·zone이면 붙인다 (검산 예시의 화염 폭발과 맞춤. 넓은 hitbox는 범위로 보지 않음)
-- 원거리: hitbox forward, area 중심 x, projectile range 중 하나가 64px(4타일) 이상
+- 넓은 범위: 판정이 area·zone이거나 투사체 끝 폭발(projectile.blast)·연쇄(chain)면 붙인다 (검산 예시의 화염 폭발과 맞춤. 넓은 hitbox는 범위로 보지 않음)
+- 원거리: hitbox forward, area 중심 x, projectile range, chain range 중 하나가 64px(4타일) 이상
+- 계수 합: 왕복 투사체(projectile.back)는 갈 때·올 때 판정 2번 × 왕복 수. 검흔 터짐(mark)·끝 폭발 계수는 조건부라 빠짐 (검흔 베기는 note)
 - 이동기: move가 있으면. 선딜·후딜: phases.windup·recovery가 0.5초 이상
 - 도발·팀 버프·슈퍼아머·조건부는 아직 데이터 필드가 없어 자동으로 붙지 않음 (해당 스킬이 생길 때 추가)
 - 유틸이 강한 스킬(hold, 도발)은 예산보다 낮게 잡아도 됨. 딜이 예산을 넘는 건 신중하게

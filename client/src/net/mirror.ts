@@ -48,6 +48,7 @@ export function mirrorPlayer(s: PlayerSnap, t: number, weaponId: string, priv?: 
     p.potions = { hp: priv.potionHp, mp: priv.potionMp };
     p.feathers = priv.feathers;
     priv.cooldowns.forEach((end, id) => { p.cooldowns[id] = sec(end - now); });
+    if (priv.hasteEnd && priv.hasteEnd > now) p.haste = { left: sec(priv.hasteEnd - now), mul: priv.hasteMul ?? 1 };
     if (priv.reinputId) p.reinput = { id: priv.reinputId, left: priv.reinputLeft ?? 0, window: sec((priv.reinputEnd ?? 0) - now) };
   }
   return p;

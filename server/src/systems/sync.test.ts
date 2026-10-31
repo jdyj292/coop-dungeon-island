@@ -16,4 +16,16 @@ describe('syncPlayer', () => {
     syncPlayer(s, sp, 0, 1005);
     expect(s.actionStart).toBeCloseTo(855);
   });
+
+  it('가속(가속장)은 끝나는 시각·배율을 본인에게 보낸다', () => {
+    const p = newPlayerState({ x: 100, y: 50 });
+    p.haste = { left: 2, mul: 1.2 };
+    const sp = { state: p, away: false } as unknown as SimPlayer;
+    const s = new PlayerState();
+    syncPlayer(s, sp, 0, 1000);
+    expect([s.priv.hasteEnd, s.priv.hasteMul]).toEqual([3000, expect.closeTo(1.2)]);
+    delete p.haste;
+    syncPlayer(s, sp, 0, 1100);
+    expect(s.priv.hasteEnd).toBe(0);
+  });
 });

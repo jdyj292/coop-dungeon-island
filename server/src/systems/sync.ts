@@ -43,6 +43,9 @@ export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: nu
   v.reinputLeft = re?.left ?? 0;
   const reEnd = re ? now + re.window * 1000 : 0;
   if (!reEnd || Math.abs(reEnd - v.reinputEnd) > TIME_EPS_MS) v.reinputEnd = reEnd;
+  const hasteEnd = p.haste ? now + p.haste.left * 1000 : 0;
+  if (!hasteEnd || Math.abs(hasteEnd - v.hasteEnd) > TIME_EPS_MS) v.hasteEnd = hasteEnd;
+  v.hasteMul = p.haste?.mul ?? 1;
   for (const [id, left] of Object.entries(p.cooldowns)) {
     if (left <= 0) {
       if (v.cooldowns.has(id)) v.cooldowns.delete(id);

@@ -1,7 +1,7 @@
 // 행동 → 마법 연출 연결 (MVP 보충 ST-2a). 무엇을 그릴지는 데이터로 고른다:
 // 포즈 fx(poses.json: ready = spark, bolt = bolt, area·plant = circle) + 행동 판정(area 원 = 화염 폭발, status freeze = 얼음 장판, slow = 동토 장판).
 // 계열 스킬(fx.json branch.looks: 불꽃 기둥·부유 구슬·끌어올림)은 원 판정 자리에 자기 그림 (spellBranch), 반복 판정마다 하나씩
-import { areaCenter, type ActionDef, type WeaponDef } from '@game/shared';
+import { areaCenter, blastDef, type ActionDef, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
 import fx from '../../data/fx.json';
@@ -72,9 +72,11 @@ export function castActive(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Ca
 
 /**
  * 변형 예약 판정 순간 (반복·후속·해제, shared sim/skillExtras.ts): 새 그림 없이 기존 이펙트를 그 자리에.
- * 해제(빙결 폭발) = 마법탄 적중 섬광, 원형 마법(연쇄) = 화염 폭발, 근접 판정(균열) = 판정 줄을 따라 먼지·충격 링·흔들림
+ * 해제(빙결 폭발)·번개 연쇄·검흔 터짐 = 마법탄 적중 섬광, 원형 마법(연쇄)·투사체 끝 폭발(화염구·꽂기, 원격은 스킬 정의로 와서 blastDef로 바꿈) = 화염 폭발,
+ * 근접 판정(균열) = 판정 줄을 따라 먼지·충격 링·흔들림 (SK-4 1차b 새 스킬은 임시, 정식 연출은 SK-4 2차)
  */
-export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' | 'after' | 'shatter', def: ActionDef, at: Caster): void {
+export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' | 'after' | 'shatter', skill: ActionDef, at: Caster): void {
+  const def = skill.projectile?.blast && kind !== 'shatter' ? blastDef(skill) : skill;
   if (kind === 'shatter') {
     const { sx, sy } = project(at.x, at.y, fx.spell.bolt.height);
     c.layer.add(boltHit(sx, sy));

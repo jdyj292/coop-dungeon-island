@@ -61,6 +61,8 @@ export interface Monster {
   burn: { left: number; mul: number };
   /** 중압 (보조 노드): 감속이 남은 동안 받는 피해 배율 (0 = 없음). 감속이 끝나면 효과 없음 (sim/strike.ts) */
   pressed: number;
+  /** 검흔 (검흔 베기, sim/scar.ts): 건 사람·남은 시간·건 스킬 정의·남은 옮겨가기 횟수 */
+  scar?: { pid: string; left: number; def: ActionDef; hops: number };
 }
 
 /** 빙결 (얼음 장판 등 status freeze). 더 긴 쪽으로 */
@@ -112,6 +114,7 @@ export function stepBodyIn(m: Monster, dt: number, bounds: Bounds): BodyEvent[] 
   m.frozen = Math.max(0, m.frozen - dt);
   m.slow.left = Math.max(0, m.slow.left - dt);
   m.burn.left = Math.max(0, m.burn.left - dt);
+  if (m.scar && (m.scar.left -= dt) <= 0) delete m.scar;
   const bd = monsterBounds(m, bounds), x0 = m.body.x, y0 = m.body.y;
   const ev = stepBody(m.body, dt, bd.minX, bd.maxX);
   // 깊이 끌림(pull)은 방 위아래 끝에서 멈춤

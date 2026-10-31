@@ -55,7 +55,7 @@ describe('던전용 빌드', () => {
     const e = effectiveBuild(gs, b, lo);
     expect(e).toEqual({
       gs_launch: { points: 3, variant: 'double', slot: 1 }, gs_earthsplit: { points: 1 }, gs_whirl: { points: 2, variant: 'rush', slot: 0 },
-      gs_shoulder: { points: 1 }, gs_quake: { points: 1, slot: 3 }, gs_heavyhand: { points: 2 }, 'greatsword.cancel': { points: 1 },
+      gs_shoulder: { points: 1 }, gs_quake: { points: 1, slot: 3 }, gs_throw: { points: 1 }, gs_heavyhand: { points: 2 }, 'greatsword.cancel': { points: 1 },
     });
     expect(slotSkills(gs, e)).toEqual(['gs_whirl', 'gs_launch', null, 'gs_quake']);
     expect(slotSkills(gs, decodeBuild(encodeBuild(e)))).toEqual(slotSkills(gs, e));

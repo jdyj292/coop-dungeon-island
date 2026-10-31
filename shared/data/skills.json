@@ -158,7 +158,8 @@
     "weapon": "staff",
     "name": "화염 폭발",
     "desc": "4타일 앞이 잠시 뒤 폭발해 적을 띄운다",
-    "element": "fire", "branch": "base",
+    "element": "fire",
+    "branch": "base",
     "cooldown": 6,
     "mp": 12,
     "variants": {
@@ -220,7 +221,9 @@
     "weapon": "staff",
     "name": "얼음 장판",
     "desc": "얼음 장판을 깔아 땅의 적을 1.5초 얼린다",
-    "element": "ice", "lasting": true, "branch": "base",
+    "element": "ice",
+    "lasting": true,
+    "branch": "base",
     "cooldown": 10,
     "mp": 20,
     "variants": {
@@ -549,6 +552,128 @@
       }
     }
   },
+  "gs_throw": {
+    "id": "gs_throw",
+    "phases": {
+      "windup": 0.3,
+      "active": 0.05,
+      "recovery": 0.35
+    },
+    "coef": 300,
+    "projectile": {
+      "speed": 180,
+      "range": 96,
+      "radius": 8,
+      "pierce": true,
+      "back": 1
+    },
+    "strength": "medium",
+    "flags": [
+      "projectile"
+    ],
+    "poses": {
+      "windup": "ready",
+      "active": "sweep",
+      "recovery": "sweep"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "skill_wave",
+      "hit": "hitLight"
+    },
+    "weapon": "greatsword",
+    "name": "대검 투척",
+    "desc": "대검을 던져 꿰뚫으며 6타일 날아갔다가 나에게 돌아온다 (갈 때·올 때 각 300%)",
+    "branch": "A",
+    "unlockLevel": 8,
+    "cooldown": 8,
+    "mp": 16,
+    "variants": {
+      "stick": {
+        "name": "꽂기",
+        "desc": "돌아오지 않고 끝에 꽂혀 2초 동안 둘레를 8번 벤다 (각 60%)",
+        "projectile": {
+          "back": null,
+          "blast": {
+            "radius": 20,
+            "coef": 60,
+            "repeat": {
+              "count": 8,
+              "interval": 0.25
+            }
+          }
+        }
+      },
+      "boomerang": {
+        "name": "부메랑",
+        "desc": "두 번 왕복한다",
+        "projectile": {
+          "back": 2
+        }
+      }
+    }
+  },
+  "gs_scar": {
+    "id": "gs_scar",
+    "phases": {
+      "windup": 0.15,
+      "active": 0.1,
+      "recovery": 0.35
+    },
+    "coef": 300,
+    "hitbox": {
+      "forward": 0,
+      "width": 36,
+      "depth": 16,
+      "z": "both"
+    },
+    "strength": "medium",
+    "mark": {
+      "time": 3,
+      "coef": 200
+    },
+    "poses": {
+      "windup": "slash",
+      "active": "sweep",
+      "recovery": "sweep"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "skill_draw",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "검흔 베기",
+    "desc": "앞을 베어 맞은 적에 3초 검흔을 남긴다. 검흔 있는 적을 내 검기(투사체)가 맞히면 터진다 (200%)",
+    "branch": "B",
+    "unlockLevel": 6,
+    "cooldown": 8,
+    "mp": 16,
+    "note": "예산 대비 −62%: 검흔 터짐(200%)은 내 투사체를 맞혀야 하는 조건부라 자동 계산에서 빠짐, 터짐까지 더해도 표식 준비 스킬",
+    "variants": {
+      "chain": {
+        "name": "연쇄 검흔",
+        "desc": "터지면 가까운 적(4타일 안) 1마리에 검흔이 옮겨간다 (최대 3번)",
+        "mark": {
+          "hop": {
+            "range": 64,
+            "count": 3
+          }
+        }
+      },
+      "deep": {
+        "name": "깊은 검흔",
+        "desc": "터질 때 400%, 옮겨가지 않는다",
+        "mark": {
+          "coef": 400
+        }
+      }
+    }
+  },
   "gs_cyclone": {
     "id": "gs_cyclone",
     "phases": {
@@ -667,7 +792,9 @@
     "weapon": "staff",
     "name": "불꽃 기둥",
     "desc": "앞에 2초 동안 불기둥을 세워 8번 태운다",
-    "element": "fire", "lasting": true, "branch": "A",
+    "element": "fire",
+    "lasting": true,
+    "branch": "A",
     "unlockLevel": 2,
     "cooldown": 8,
     "mp": 16,
@@ -738,7 +865,8 @@
     "weapon": "staff",
     "name": "얼음 창",
     "desc": "꿰뚫는 얼음 창을 쏴 0.5초 얼린다",
-    "element": "ice", "branch": "A",
+    "element": "ice",
+    "branch": "A",
     "unlockLevel": 4,
     "cooldown": 4,
     "mp": 8,
@@ -811,7 +939,8 @@
     "weapon": "staff",
     "name": "부유 구슬",
     "desc": "3초 동안 구슬 안의 적을 8번 때리고 30% 느리게 한다",
-    "lasting": true, "branch": "B",
+    "lasting": true,
+    "branch": "B",
     "unlockLevel": 2,
     "cooldown": 8,
     "mp": 16,
@@ -1014,6 +1143,14 @@
     "mp": 20,
     "note": "예산 대비 크게 낮음: 4초 감속(걷기·공격 사이 쉬는 시간)이 주 가치, 딜은 의도적으로 낮게",
     "variants": {
+      "haste": {
+        "name": "가속장",
+        "desc": "나와 범위 안 동료의 스킬 쿨이 4초 동안 20% 빨리 돈다 (적 감속은 그대로)",
+        "allyBuff": {
+          "cooldownMul": 1.2,
+          "time": 4
+        }
+      },
       "crush": {
         "name": "압축장",
         "desc": "더 세게 짧게: 2초 동안 60% 느리게 한다",
@@ -1021,6 +1158,133 @@
           "type": "slow",
           "time": 2,
           "amount": 0.6
+        }
+      }
+    }
+  },
+  "st_chain": {
+    "id": "st_chain",
+    "phases": {
+      "windup": 0.35,
+      "active": 0.05,
+      "recovery": 0.3
+    },
+    "coef": 600,
+    "chain": {
+      "range": 112,
+      "jump": 56,
+      "count": 5,
+      "interval": 0.06
+    },
+    "strength": "light",
+    "poses": {
+      "windup": "ready",
+      "active": "bolt",
+      "recovery": "bolt"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "skill_icelance",
+      "hit": "bolt_hit"
+    },
+    "weapon": "staff",
+    "name": "번개 연쇄",
+    "desc": "앞쪽 7타일 안 가장 가까운 적부터 번개가 최대 5마리까지 튄다",
+    "branch": "A",
+    "unlockLevel": 6,
+    "cooldown": 7,
+    "mp": 14,
+    "variants": {
+      "spread": {
+        "name": "확산",
+        "desc": "8마리까지 튄다 (각 420%)",
+        "coef": 420,
+        "chain": {
+          "count": 8
+        }
+      },
+      "focus": {
+        "name": "집중",
+        "desc": "한 마리에 모은다 (900%)",
+        "coef": 900,
+        "chain": {
+          "count": 1
+        }
+      }
+    }
+  },
+  "st_fireball": {
+    "id": "st_fireball",
+    "phases": {
+      "windup": 0.45,
+      "active": 0.05,
+      "recovery": 0.35
+    },
+    "coef": 800,
+    "projectile": {
+      "speed": 150,
+      "range": 128,
+      "radius": 9,
+      "pierce": false,
+      "blast": {
+        "radius": 28
+      }
+    },
+    "strength": "medium",
+    "flags": [
+      "projectile"
+    ],
+    "poses": {
+      "windup": "ready",
+      "active": "bolt",
+      "recovery": "bolt"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "windup": "skill_fireburst",
+      "hit": "hitHeavy"
+    },
+    "weapon": "staff",
+    "name": "화염구",
+    "desc": "큰 화염구가 처음 닿은 적이나 8타일 끝에서 폭발한다 (반경 1.75타일)",
+    "element": "fire",
+    "branch": "A",
+    "unlockLevel": 8,
+    "cooldown": 9,
+    "mp": 18,
+    "variants": {
+      "split": {
+        "name": "분열",
+        "desc": "폭발한 자리에서 작은 화염구 4개가 앞뒤로 흩어진다 (각 150%)",
+        "projectile": {
+          "blast": {
+            "radius": 28,
+            "shards": {
+              "coef": 150,
+              "speed": 160,
+              "range": 48,
+              "radius": 5,
+              "lanes": [
+                -10,
+                10
+              ]
+            }
+          }
+        }
+      },
+      "pierce": {
+        "name": "관통",
+        "desc": "느린 화염구가 꿰뚫으며 0.25초마다 다시 태운다 (각 120%, 폭발 없음)",
+        "coef": 120,
+        "projectile": {
+          "speed": 70,
+          "pierce": true,
+          "rehit": 0.25,
+          "blast": null
         }
       }
     }

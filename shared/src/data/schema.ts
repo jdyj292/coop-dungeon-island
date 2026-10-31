@@ -33,6 +33,16 @@ const projectile = z.object({
   // 플레이어: 한 번에 여러 줄 (깊이 오프셋 목록), 연발 (첫 발 뒤 count−1발을 interval마다)
   lanes: z.array(z.number()).min(1).optional(),
   burst: z.object({ count: z.number().int().min(2), interval: pos }).strict().optional(),
+  // 플레이어 (SK-4 1차b, data.md 3장): back = 사거리 끝에서 던진 사람에게 돌아오는 왕복 횟수, rehit = 관통하며 같은 적을 이 초마다 다시,
+  // blast = 끝나는 자리(처음 닿은 적·사거리 끝·벽) 원형 판정 (관통이 아니면 닿은 적에게 직접 피해 없이 폭발만)
+  back: z.number().int().positive().optional(),
+  rehit: pos.optional(),
+  blast: z.object({
+    radius: pos, coef: z.number().nonnegative().optional(),
+    // 같은 자리에 여러 번 (꽂기 장판), 폭발 뒤 작은 투사체 (분열: 각 깊이 줄에서 앞뒤로 한 발씩)
+    repeat: z.object({ count: z.number().int().positive(), interval: pos }).strict().optional(),
+    shards: z.object({ coef: z.number().nonnegative(), speed: pos, range: pos, radius: pos, lanes: z.array(z.number()).min(1) }).strict().optional(),
+  }).strict().optional(),
 }).strict();
 
 // hold = 공중 대상 체공 유지 (time 동안 중력 없음, combat.md 3장)
@@ -73,8 +83,8 @@ export const actionFields = {
   cooldown: sec.optional(),
 };
 
-type Shape = { hitbox?: unknown; area?: unknown; projectile?: unknown; zone?: unknown; damage?: number };
-const SHAPES = ['hitbox', 'area', 'projectile', 'zone'] as const;
+type Shape = { hitbox?: unknown; area?: unknown; projectile?: unknown; zone?: unknown; chain?: unknown; damage?: number };
+const SHAPES = ['hitbox', 'area', 'projectile', 'zone', 'chain'] as const;
 function oneShape(a: Shape, ctx: z.RefinementCtx): void {
   const n = SHAPES.filter((k) => a[k] !== undefined).length;
   if (n > 1) ctx.addIssue({ code: 'custom', message: `판정은 ${SHAPES.join(' / ')} 중 하나만` });
@@ -126,6 +136,15 @@ export const skill = playerActionObj.extend({
   // 원소 (보조 노드 연소 등이 본다). lasting = 장판·지속 스킬 (원소 친화가 지속시간·반복 횟수를 늘림)
   element: z.enum(['fire', 'ice']).optional(),
   lasting: z.boolean().optional(),
+  // 연쇄 (번개 연쇄): 앞쪽 range 안 가장 가까운 적부터, jump 안의 아직 안 맞은 가장 가까운 적으로 interval마다 최대 count마리
+  chain: z.object({ range: pos, jump: pos, count: z.number().int().positive(), interval: sec }).strict().optional(),
+  // 검흔 (검흔 베기): 맞은 적에 time초 표식, 그 적을 내 투사체가 맞히면 터지며 coef. hop = 터지면 range 안 가장 가까운 적에게 옮겨감 (최대 count번)
+  mark: z.object({
+    time: pos, coef: z.number().nonnegative(),
+    hop: z.object({ range: pos, count: z.number().int().positive() }).strict().optional(),
+  }).strict().optional(),
+  // 아군 버프 (가속장): 시전할 때 나와 판정 범위 안 동료의 스킬 쿨이 time초 동안 cooldownMul배 빨리 돈다
+  allyBuff: z.object({ cooldownMul: pos, time: pos }).strict().optional(),
 }).strict().superRefine(oneShape);
 
 /** 숫자 하나 또는 포인트별 값 배열 (길이 = combat.json skillTree.maxPoints, crossCheck) */

@@ -1,6 +1,6 @@
 // 대검 충전 (docs/skills.md 2장, combat.md 1장): 스킬 키를 누르고 있으면 준비(windup) 끝에서 멈춰 충전, 떼거나 최대가 되면 발동.
 // 충전한 시간에 비례해 피해·판정 범위가 커진다 (weapons.json trait charge). 충전 중 슈퍼아머, 보조 노드 무거운 손 = 충전 속도·받는 피해
-import type { ActionDef, ActionRun } from './actions';
+import { scaleExtraCoefs, type ActionDef, type ActionRun } from './actions';
 
 /** 충전 진행 (ActionRun.charge). t = 충전한 초, done = 끝남(발동했거나 충전 없이 지나감), armor = 충전 중 슈퍼아머 */
 export interface ChargeState {
@@ -50,7 +50,7 @@ export function stepCharge(run: ActionRun, c: ChargeInput, dt: number): number {
   return toEnd;
 }
 
-/** 충전 보너스(0~bonusMax)만큼 피해(coef·후속·벽꿍)와 판정 범위(상자 길이·깊이, 원·부채꼴 반지름, 투사체 반지름)를 키운 정의 (id는 그대로) */
+/** 충전 보너스(0~bonusMax)만큼 피해(coef·후속·벽꿍·투사체 끝 판정·검흔)와 판정 범위(상자 길이·깊이, 원·부채꼴 반지름, 투사체 반지름)를 키운 정의 (id는 그대로) */
 export function chargedDef(def: ActionDef, bonus: number): ActionDef {
   if (bonus <= 0) return def;
   const k = 1 + bonus;
@@ -64,5 +64,6 @@ export function chargedDef(def: ActionDef, bonus: number): ActionDef {
   if (def.after) out.after = { ...def.after, coef: def.after.coef * k };
   if (def.onWall) out.onWall = { ...def.onWall, coef: def.onWall.coef * k };
   if (def.onStatusEnd) out.onStatusEnd = { ...def.onStatusEnd, coef: def.onStatusEnd.coef * k };
+  scaleExtraCoefs(out, k);
   return out;
 }

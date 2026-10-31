@@ -115,6 +115,7 @@ PlayerState
 PlayerPrivate (본인에게만 필터링해서 전송)
   mp, stamina, tired (달리다 지구력이 바닥나 걷는 중), cooldowns (skillId → 끝나는 서버 시각 ms, 20ms 이상 바뀔 때만 갱신), potionHp, potionMp, feathers, coins, materials, exp, bonusPct (이번 판 보상),
   reinputId·reinputLeft·reinputEnd (변형 재입력 대기: 스킬 id·남은 횟수·받는 시간이 끝나는 서버 시각, 본인 예측이 쿨타임 중 재입력을 받게)
+  hasteEnd·hasteMul (가속장 가속: 끝나는 서버 시각(0 = 없음)·쿨이 도는 배율, 본인 예측도 쿨을 같이 빨리 돌림)
 
 MonsterState
   id, type, x, y, z, facing
@@ -167,7 +168,7 @@ IslandState
 |---|---|---|
 | hit | `{ attacker, target, damage, strength, flags, hitstop, recoil, act, actT, x, y, z, t }` (recoil = 공격자 멈춤 초, act·actT = 맞힌 행동 id·진행 시간, 히트스톱 동기화) | 데미지 숫자, 섬광, 흰색 번쩍임, 히트스톱, 흔들림 |
 | projSpawn / projEnd | 위 참고 | 투사체 그리기 |
-| bolt / boltEnd | 플레이어 투사체 (스태프 평타·검기·얼음 창) `bolt { id, kind(행동 id), pid, x, y, dir, t0, speed, r }` (speed·r = 변형까지 적용한 값), `boltEnd { id, reason, x, y }` | 투사체 그리기 (MVP 보충 ST-2, 계열 스킬 그림 SK-2 2차) |
+| bolt / boltEnd | 플레이어 투사체 (스태프 평타·검기·얼음 창) `bolt { id, kind(행동 id), pid, x, y, dir, t0, speed, r }` (speed·r = 변형까지 적용한 값), `boltEnd { id, reason, x, y }`. 왕복 투사체(대검 투척)는 돌아설 때 같은 id로 bolt를 다시 보냄(그 자리·새 방향), 분열 조각은 새 bolt | 투사체 그리기 (MVP 보충 ST-2, 계열 스킬 그림 SK-2 2차) |
 | echo | 변형 예약 판정 순간 `{ pid, kind: repeat·after·shatter, act(스킬 id), x, y, facing, t }` (반복·후속은 시전 자리, 해제는 몬스터 자리) | 그 사람의 skills로 정의를 찾아 로컬과 같은 연출·소리 (fx/spellCast castEcho), 그리는 시각이 t에 닿을 때 |
 | playerHit | 내가 맞음 `{ damage, strength, from }` | 피격 표정, 화면 붉은 테두리 없이 흔들림 |
 | reward | `{ coins, material, exp }` 본인에게 (몬스터 기절·보물상자) | coin 효과음, HUD 숫자 튐 |

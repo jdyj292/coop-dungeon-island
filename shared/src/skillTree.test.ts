@@ -53,7 +53,7 @@ describe('변형·레벨 배율 적용', () => {
 
 describe('레벨로 열림 (skills.md 1장)', () => {
   it('트리 = 기본 스킬 뒤 계열 스킬을 열리는 레벨 순', () => {
-    expect(treeSkills(gs)).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_wave', 'gs_shoulder', 'gs_draw', 'gs_quake', 'gs_cyclone']);
+    expect(treeSkills(gs)).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_wave', 'gs_shoulder', 'gs_draw', 'gs_quake', 'gs_scar', 'gs_throw', 'gs_cyclone']);
     expect(['gs_launch', 'gs_whirl', 'gs_shoulder', 'gs_quake', 'gs_heavyhand', 'greatsword.cancel'].map(unlockLevelOf)).toEqual([1, 2, 4, 6, 3, 5]);
     expect([isOpen('gs_whirl', 1), isOpen('gs_whirl', 2)]).toEqual([false, true]);
   });

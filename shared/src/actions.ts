@@ -9,7 +9,7 @@ export type FxGrade = 'light' | 'medium' | 'heavy' | 'ultimate';
 
 
 /** 플레이어 행동 (평타·대시·스킬). 스킬이면 mp·슈퍼아머가 있고, 특수 필드(재입력·후속·반복·해제·벽꿍 판정)가 있을 수 있음. 형식은 data/schema.ts */
-export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp' | 'superArmor' | 'repeat' | 'element' | 'lasting'>> & Partial<Omit<VariantExtra, 'name' | 'desc' | 'repeat'>>;
+export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp' | 'superArmor' | 'repeat' | 'element' | 'lasting' | 'chain' | 'mark' | 'allyBuff'>> & Partial<Omit<VariantExtra, 'name' | 'desc' | 'repeat'>>;
 export type WeaponDef = Weapon;
 
 export function weaponDef(id: string): WeaponDef {
@@ -22,6 +22,18 @@ export function skillDef(id: string): ActionDef {
   const s = SKILLS[id];
   if (!s) throw new Error(`스킬 '${id}' 없음`);
   return s;
+}
+
+/** 투사체 끝 판정·분열·검흔 계수 × k (레벨 배율·충전 보너스, SK-4 1차b). out = def를 얕게 복사한 정의 */
+export function scaleExtraCoefs(out: ActionDef, k: number): void {
+  const bl = out.projectile?.blast;
+  if (bl && (bl.coef !== undefined || bl.shards)) {
+    out.projectile = {
+      ...out.projectile!,
+      blast: { ...bl, ...(bl.coef !== undefined ? { coef: bl.coef * k } : {}), ...(bl.shards ? { shards: { ...bl.shards, coef: bl.shards.coef * k } } : {}) },
+    };
+  }
+  if (out.mark) out.mark = { ...out.mark, coef: out.mark.coef * k };
 }
 
 /** 행동 시작부터 t초 지났을 때의 구간. 끝났으면 null */

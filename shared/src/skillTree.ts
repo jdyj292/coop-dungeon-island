@@ -2,7 +2,7 @@
 // 스킬·패시브는 숙련도 레벨(skills.json·passives.json unlockLevel)에 열린다. 액티브는 열리면 1포인트(공짜), SP로 maxPoints까지 강화(레벨 배율).
 // 패시브(계열 보조·공용)는 0포인트(안 배움)에서 SP로 maxPoints까지. 변형은 열린 스킬이면 포인트와 상관없이 택1.
 // 무기마다 계열(A·B) 하나를 골라 그 계열 스킬만 쓴다 (계열 선택·계열별 장착·던전용 빌드는 skillLoadout.ts)
-import { skillDef, type ActionDef, type WeaponDef } from './actions';
+import { scaleExtraCoefs, skillDef, type ActionDef, type WeaponDef } from './actions';
 import { applyVariant } from './data/crossCheck';
 import { COMBAT, PASSIVES, SKILLS, WEAPONS } from './data/load';
 import { isPassive, weaponPassives } from './passives';
@@ -99,6 +99,7 @@ export function resolveSkill(id: string, node: SkillNode = { points: 1 }): Actio
     def = { ...def, coef: def.coef * mul };
     if (def.after) def.after = { ...def.after, coef: def.after.coef * mul };
     if (def.onStatusEnd) def.onStatusEnd = { coef: def.onStatusEnd.coef * mul };
+    scaleExtraCoefs(def, mul);
   }
   cache.set(key, def);
   return def;

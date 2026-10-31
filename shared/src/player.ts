@@ -28,6 +28,8 @@ export interface PlayerState extends Vitals {
   cooldowns: Record<string, number>;
   /** 재입력 대기 (변형 reinput, skills.md 1장): 같은 스킬을 쿨타임·MP 없이 남은 횟수만큼. window = 스킬이 끝난 뒤 받는 남은 시간 */
   reinput: { id: string; left: number; window: number } | null;
+  /** 가속 (가속장 allyBuff, skills.md 3장): 남은 시간 동안 스킬 쿨이 mul배 빨리 돈다 */
+  haste?: { left: number; mul: number };
   /** 배운 보조 노드 효과 (passives.ts perksOf). 서버 상태로 보내지 않음: RoomSim·예측이 빌드에서 채운다 */
   perks?: Perks;
 }
@@ -96,7 +98,9 @@ export function stepPlayerState(
   const bs = PLAYER.backstep, st = PLAYER.stamina;
   // 보조 노드 가벼운 발: 회피 거리·쿨
   const dg = p.perks?.dodge, far = dg?.distanceMul ?? 1;
-  for (const id of Object.keys(p.cooldowns)) p.cooldowns[id] = Math.max(0, p.cooldowns[id]! - dt);
+  const cd = dt * (p.haste ? p.haste.mul : 1);
+  for (const id of Object.keys(p.cooldowns)) p.cooldowns[id] = Math.max(0, p.cooldowns[id]! - cd);
+  if (p.haste && (p.haste.left -= dt) <= 0) delete p.haste;
   p.backstepCd = Math.max(0, p.backstepCd - dt);
   // 재입력 시간은 그 스킬이 끝난 뒤부터 흐른다
   if (p.reinput && p.fighter.run?.def.id !== p.reinput.id && (p.reinput.window -= dt) <= 0) p.reinput = null;
@@ -187,6 +191,11 @@ function chargeInput(p: PlayerState, weapon: WeaponDef, input: PlayerInput): Cha
   const tr = weapon.trait;
   if (tr?.type !== 'charge') return undefined;
   return { hold: !!input.hold, maxTime: tr.maxTime / (p.perks?.chargeSpeedMul ?? 1), bonusMax: tr.bonusMax, armor: tr.superArmorWhileCharging };
+}
+
+/** 가속 걸기 (가속장): 더해지지 않고 더 센 배율·더 긴 시간으로 */
+export function hastePlayer(p: PlayerState, sec: number, mul: number): void {
+  p.haste = { left: Math.max(p.haste?.left ?? 0, sec), mul: Math.max(p.haste?.mul ?? 1, mul) };
 }
 
 /** 스킬 시작: 재입력이면 횟수만 줄이고(충전 없음), 아니면 쿨타임·MP를 쓰고 재입력 변형이면 대기를 연다 */

@@ -29,7 +29,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | phases | O | windup / active / recovery 길이. 몬스터는 windup = 예고 시간 |
 | coef | 플레이어 | ATK 대비 % (balance.md 공식) |
 | damage | 몬스터 | 고정 데미지. 0이면 판정 없이 효과만 |
-| 판정 (아래 중 하나) | O* | hitbox / area / projectile / zone (*damage 0이고 zone도 없으면 생략 가능) |
+| 판정 (아래 중 하나) | O* | hitbox / area / projectile / zone / chain(스킬만, 3장) (*damage 0이고 zone도 없으면 생략 가능) |
 | strength | | light / medium / heavy → 경직·밀림(combat.md 3장). 몬스터 공격이 heavy면 플레이어 다운 |
 | flags | | combat.md 2장 속성 플래그 (launch, knockback, down, downhit, pull, hold, grab, multi, projectile) |
 | launchVz | | launch 세기. 생략 시 combat.md 기본값 |
@@ -47,7 +47,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 |---|---|---|
 | hitbox | `{ forward, width, depth, z, back? }` 사각형 | 바라보는 방향으로 forward만큼 떨어진 곳부터 width 길이. back은 뒤쪽 추가 |
 | area | `{ shape: "circle|rect|fan", at: [x, y], radius / width·depth / angle, z }` | at = 행동자 기준 상대 위치 (x는 바라보는 방향 +) |
-| projectile | `{ speed, range, radius, pierce, reflectable?, lanes?, burst? }` | 손 위치에서 바라보는 방향으로 발사. 플레이어: lanes = 깊이 오프셋마다 한 발씩 동시에, burst `{count, interval}` = 연발 |
+| projectile | `{ speed, range, radius, pierce, reflectable?, lanes?, burst?, back?, rehit?, blast? }` | 손 위치에서 바라보는 방향으로 발사. 플레이어: lanes = 깊이 오프셋마다 한 발씩 동시에, burst `{count, interval}` = 연발, back = 사거리 끝에서 던진 사람 쪽으로 같은 줄을 따라 돌아오는 왕복 횟수(지나치면 왕복 1번, 다리마다 같은 적을 다시 한 번, 못 따라잡으면 사거리 3배에서 끝), rehit = 관통하며 같은 적을 이 초마다 다시, blast `{radius, coef?, repeat? {count, interval}, shards? {coef, speed, range, radius, lanes}}` = 끝나는 자리(관통 아니면 처음 닿은 적 자리, 아니면 사거리 끝·벽) 원형 판정(coef 없으면 투사체 계수, 관통이 아니면 닿은 적에게 직접 피해 없이 폭발만), repeat = 그 자리에 여러 번, shards = 폭발 뒤 각 깊이 줄에서 앞뒤로 작은 투사체 한 발씩 (SK-4 1차b) |
 | zone | `{ shape, at, radius, duration, effect }` | 바닥에 남는 지속 장판 |
 
 - z: ground / air / both (combat.md 2장)
@@ -107,16 +107,19 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | onWall | 벽꿍 `{coef}` (아래 특수 필드) |
 | cooldown | 기준 쿨 (실제 = × COOLDOWN_SCALE) |
 | mp | 기준 쿨 × 2 (반올림). 검증 대상 |
-| variants | 변형. 기본 스킬 필드를 덮어쓰는 객체 `{ "name": ..., 덮어쓸 필드 }`. 값이 null이면 기본 필드 제거 (예: hitbox → area로 바꿀 때 `"hitbox": null`) |
+| variants | 변형. 기본 스킬 필드를 덮어쓰는 객체 `{ "name": ..., 덮어쓸 필드 }`. 값이 null이면 기본 필드 제거 (예: hitbox → area로 바꿀 때 `"hitbox": null`), 객체 필드는 얕게 합치고 안쪽 null도 그 키를 지움 (예: `"projectile": {"back": null}`) |
 | note | 예산 규칙(balance.md 3장)을 벗어난 이유 |
 | element | 원소 fire / ice (보조 노드 연소가 봄) |
-| lasting | 장판·지속 스킬 (보조 노드 원소 친화가 상태 이상 시간·repeat 횟수를 늘림) |
+| lasting | 장판·지속 스킬 (보조 노드 원소 친화가 상태 이상 시간·repeat 횟수·allyBuff 시간을 늘림) |
+| chain | 연쇄 판정 `{range, jump, count, interval}` (번개 연쇄): 앞쪽 range px 안 가장 가까운 적부터, 지난 대상에서 jump px 안의 아직 안 맞은 가장 가까운 적으로 interval초마다 최대 count마리. 판정 모양 하나로 셈 (sim/chain.ts) |
+| mark | 검흔 `{time, coef, hop? {range, count}}` (검흔 베기): 맞은 적에 time초 표식, 표식을 건 사람의 투사체가 그 적을 맞히면 터지며 coef(표식은 사라짐), hop = 터질 때 range px 안 가장 가까운 다른 적에게 옮겨감(최대 count번) (sim/scar.ts) |
+| allyBuff | 아군 버프 `{cooldownMul, time}` (가속장): active 순간 나와 판정 범위 안 동료의 스킬 쿨이 time초 동안 cooldownMul배 빨리 돎 (겹치면 더 센 배율·긴 시간, 물약·회피 쿨은 그대로) |
 
 - 특수 필드: reinput(재입력 횟수), repeat(`{count, interval, step?, seek?, copies?}` 반복: step = 판정마다 앞으로 px, seek = 판정마다 가까운 맞을 몬스터 쪽으로 px, copies = `[[앞, 깊이], ...]` 자리에 같은 반복을 첫 판정부터 더), after(`{delay, coef}` 후속 판정), onStatusEnd(상태이상 해제 시 판정), onWall(`{coef}` 벽꿍). 기본 스킬에 repeat가 있으면 변형은 일부 키만 덮어써도 됨
 - 적용은 shared/src/skillTree.ts resolveSkill (덮어쓰기 + 특수 필드 + 계수에 레벨 배율), 특수 판정은 shared/src/sim/skillExtras.ts: 반복·후속 = 시전한 자리·방향에 같은 판정을 예약(반복은 count번 중 첫 판정 뒤 나머지), 해제 = 그 행동이 건 빙결이 풀릴 때 그 몬스터에 한 번(빙결·띄우기 없이), 재입력 = 같은 스킬을 쿨타임·MP 없이 (스킬 recovery 또는 끝난 뒤 combat.json skillTree.reinputWindow 안). status slow = 몬스터 걷는 속도·공격 쿨타임·공격 사이 쉬는 시간이 × (1 − amount)로 흐름
 - 현재 파일: 대검·스태프 공용 기본 스킬 + A·B 계열 1단계 액티브(SK-2). 나머지는 skills.md 표를 이 형식으로 옮겨 추가
 - **passives.json (패시브: 계열 보조·공용)**: `{ id, weapon, branch: A|B|common, unlockLevel, name, desc, pointDesc: [1·2·3포인트 줄], effect }`. 0~maxPoints(combat.json skillTree) 포인트, effect 값이 배열이면 포인트별(길이 = maxPoints, data-validate), 숫자 하나면 포인트와 상관없음 (passives.ts perksOf). effect 키: chargeSpeedMul(대검 충전 속도 배율, 최대까지 maxTime / 값), chargeTakenMul(충전 중 받는 피해 배율), skillArmor(모든 스킬 슈퍼아머), skillTakenMul(스킬 시전 중 받는 피해 배율), far `{minDist, mul}`(나와 적 거리가 minDist px 넘으면 피해 배율), projectileRangeMul(투사체 스킬 사거리 배율), lastingMul(lasting 스킬 상태 이상 시간·repeat count 배율, 횟수는 반올림), burn `{element, time, takenMul}`(그 원소 스킬 적중 대상이 time초 동안 받는 피해 배율), press `{takenMul}`(내 status slow에 맞은 적이 감속 동안 받는 피해 배율), dodge `{distanceMul, cooldownAdd}`(회피 거리 배율·쿨 더하기), cancel `{windupMul: [포인트별]}`(스킬 캔슬: 스킬 recovery → 다른 스킬, 이은 스킬 windup 배율), quickRise(다운 중 회피로 기상), quickRiseCooldownAdd(기상 회피로 시작한 회피의 쿨 더하기). 공용 패시브 = weapon "*"·branch common, 무기마다 `<무기>.<id>` 노드로 펼침 (load.ts). 노드 id는 행동 id와 겹치면 안 됨 (data-validate). 예산 검사 대상 아님
-- 예산 검사(balance-check)는 한 번 쓸 때 계수 합 = coef × hits·repeat(copies 포함)·burst·lanes 수
+- 예산 검사(balance-check)는 한 번 쓸 때 계수 합 = coef × hits·repeat(copies 포함)·burst·lanes 수 × 왕복(back × 2). 연쇄는 한 대상 기준, blast·mark 계수는 빠짐. 레벨 배율·대검 충전은 blast·shards·mark 계수도 키움 (actions.ts scaleExtraCoefs)
 
 ---
 
@@ -168,7 +171,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 ## 5. 검증 (로드 시 zod + `pnpm data-validate`)
 
 - **형식 (로드 시)**: shared/src/data/schema.ts. 게임·서버는 shared/src/data/load.ts의 `WEAPONS`·`SKILLS`·`MONSTERS`·`ROOMS`·`PLAYER`·`COMBAT`만 쓴다 (JSON 직접 import 금지). 틀리면 로드할 때 파일·경로와 함께 오류
-  - 모르는 키(오타) 금지, 플래그·strength·판정 모양·telegraph 값은 정의된 것만, 판정은 hitbox / area / projectile / zone 중 하나 (damage 0이면 생략 가능)
+  - 모르는 키(오타) 금지, 플래그·strength·판정 모양·telegraph 값은 정의된 것만, 판정은 hitbox / area / projectile / zone / chain 중 하나 (damage 0이면 생략 가능)
 - **교차 참조 (`pnpm data-validate`, shared/src/data/crossCheck.ts)**. 오류:
   - 포즈 이름이 무기 poseSet 세트(poses.json)에 있는지, visual이 weapons_visual.json에 있는지
   - 스킬 mp = 기준 쿨 × 2 (반올림), 스킬의 weapon이 있는지, 변형을 적용한 결과도 스킬 형식인지

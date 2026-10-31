@@ -47,7 +47,10 @@ export function applyVariant(base: Record<string, unknown>, variant: Record<stri
     if (VARIANT_ONLY.includes(k)) continue;
     const b = out[k];
     if (v === null) delete out[k];
-    else if (typeof v === 'object' && !Array.isArray(v) && typeof b === 'object' && b && !Array.isArray(b)) out[k] = { ...b, ...v };
+    // 안쪽 null도 그 키를 지운다 (예: projectile.back: null)
+    else if (typeof v === 'object' && !Array.isArray(v) && typeof b === 'object' && b && !Array.isArray(b)) {
+      out[k] = Object.fromEntries(Object.entries({ ...b, ...v }).filter(([, x]) => x !== null));
+    }
     else out[k] = v;
   }
   return out;

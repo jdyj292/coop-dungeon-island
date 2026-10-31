@@ -73,6 +73,9 @@ export interface PrivateView {
   reinputId?: string;
   reinputLeft?: number;
   reinputEnd?: number;
+  /** 가속 (가속장): 끝나는 서버 시각(0 = 없음)·쿨이 도는 배율 */
+  hasteEnd?: number;
+  hasteMul?: number;
 }
 
 /** 서버 상태 모양 (colyseus.js가 디코드한 객체) */
