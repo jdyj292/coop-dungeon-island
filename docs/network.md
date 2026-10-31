@@ -111,6 +111,7 @@ PlayerState
   hp, maxHp, ultGauge
   reviveProgress            쓰러진 동안 동료 부활 진행도 (0~255)
   hasted, shielded          가속장 가속 중·역장 보호막이 있음 (모두에게 보이는 표시용, 시간·배율은 priv·서버만)
+  aura                      전장 장악 둘레 반지름 px (0 = 없음, 발밑 고리 표시용, SK-7)
   lastInputSeq              서버가 처리한 마지막 입력 번호 (본인 보정용, 작아서 전원에게 보냄)
   priv: PlayerPrivate       @filter로 본인에게만
 

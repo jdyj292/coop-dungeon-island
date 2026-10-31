@@ -36,6 +36,18 @@
     "pointDesc": ["다운 대상 피해 ×0.8", "다운 대상 피해 ×0.9", "다운 대상 피해 ×1.0"],
     "effect": { "downDamage": [0.8, 0.9, 1] }
   },
+  "gs_giant": {
+    "id": "gs_giant", "weapon": "greatsword", "branch": "A", "unlockLevel": 12, "name": "거인의 힘",
+    "desc": "끝까지 충전한 스킬이 더 세진다\n(기본 충전 최대 +50%)",
+    "pointDesc": ["충전 최대 +80%", "충전 최대 +90%", "충전 최대 +100%"],
+    "effect": { "chargeBonusAdd": [0.3, 0.4, 0.5] }
+  },
+  "gs_dominate": {
+    "id": "gs_dominate", "weapon": "greatsword", "branch": "A", "unlockLevel": 14, "name": "전장 장악",
+    "desc": "내 둘레 3타일 안 적이 느려진다\n(이동·공격 간격, 둘레를 벗어나면 0.2초 뒤 풀림)",
+    "pointDesc": ["감속 30%", "감속 35%", "감속 40%"],
+    "effect": { "aura": { "radius": 48, "amount": [0.3, 0.35, 0.4] } }
+  },
   "gs_risingwave": {
     "id": "gs_risingwave", "weapon": "greatsword", "branch": "B", "unlockLevel": 7, "name": "올려 검기",
     "desc": "올려베기를 휘두르면 앞으로 꿰뚫는\n검기가 함께 날아간다 (4타일)",

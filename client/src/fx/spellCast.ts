@@ -16,6 +16,7 @@ import { fireBurst, fireTarget } from './spellFire';
 import { gravField, gravityWell } from './spellGravity';
 import { iceField, slowField } from './spellIce';
 import { chainBolt, orbBurst, quakeRing, scarBurst, stickSlash } from './tier2Fx';
+import { collapseField, collapsePulse, risePillars } from './tier3Fx';
 
 /** 시전자 (논리 좌표) */
 export interface Caster {
@@ -71,6 +72,12 @@ export function castActive(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Ca
     fxl.ground.add(stampImpact(a.x, a.y));
     dust(a.x, a.y, fx.spell.stamp.dust).forEach((e) => fxl.layer.add(e));
   }
+  // 대지붕괴: 판정 사각형에 반복 시간 동안 깨진 땅 (바닥 층)
+  if (lookOf(def.id) === 'collapse' && def.area) {
+    const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y), rep = def.repeat;
+    fxl.ground.add(collapseField(sx, sy, def.area.width ?? 64, def.area.depth ?? 32, rep ? rep.count * rep.interval + 0.2 : 0.6));
+    return;
+  }
   if (!def.area || !isSpell(weapon, def, c)) return;
   const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y);
   if (def.status?.type === 'freeze') fxl.ground.add(iceField(sx, sy, def.area.width ?? 32, def.area.depth ?? 16));
@@ -92,6 +99,11 @@ export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' |
   if (kind === 'shatter') {
     const { sx, sy } = project(at.x, at.y, fx.spell.bolt.height);
     c.layer.add(boltHit(sx, sy));
+    return;
+  }
+  if (lookOf(def.id) === 'collapse' && def.area) {
+    const a = areaCenter(at, def.area.at), { sx, sy } = project(a.x, a.y);
+    collapsePulse(sx, sy, def.area.width ?? 64, def.area.depth ?? 32, Math.round(at.x + at.y * 7 + performance.now())).forEach((e) => c.layer.add(e));
     return;
   }
   if (def.area?.shape === 'circle') {
@@ -123,6 +135,11 @@ function tier2Echo(c: Pick<FxContext, 'layer' | 'shake'>, look: EchoLook, def: A
     c.layer.add(quakeRing(sx, sy, r));
     dust(sx, sy, fx.tier2.quake.dust).forEach((e) => c.layer.add(e));
   } else if (look === 'orbEnd') c.layer.add(orbBurst(sx, sy, r));
+  else if (look === 'rise' && def.area) {
+    const a = areaCenter(at, def.area.at), p = project(a.x, a.y);
+    risePillars(p.sx, p.sy, def.area.width ?? 64, def.area.depth ?? 32).forEach((e) => c.layer.add(e));
+    c.shake.start(fx.downShake.sec * 2, fx.downShake.px * 2);
+  }
   else if (look === 'blast') {
     fireBurst(sx, sy, r).forEach((e) => c.layer.add(e));
     c.shake.start(fx.downShake.sec, fx.downShake.px);

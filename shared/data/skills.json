@@ -1,5 +1,5 @@
 {
-  "_note": "스킬 정의 (대검·스태프: 공용 기본 + A·B 계열 1단계 액티브). cooldown은 기준 쿨 (실제 = ×COOLDOWN_SCALE), mp = 기준 쿨 × 2. 형식은 docs/data.md",
+  "_note": "스킬 정의 (대검·스태프: 공용 기본 + A·B 계열 액티브). cooldown은 기준 쿨 (실제 = ×COOLDOWN_SCALE), mp = 기준 쿨 × 2. 형식은 docs/data.md",
   "gs_launch": {
     "id": "gs_launch",
     "phases": {
@@ -617,6 +617,142 @@
         "desc": "두 번 왕복한다",
         "projectile": {
           "back": 2
+        }
+      }
+    }
+  },
+  "gs_crush": {
+    "id": "gs_crush",
+    "phases": {
+      "windup": 0.5,
+      "active": 0.1,
+      "recovery": 0.6
+    },
+    "coef": 1500,
+    "hitbox": {
+      "forward": 0,
+      "width": 56,
+      "depth": 20,
+      "z": "both"
+    },
+    "strength": "heavy",
+    "flags": [
+      "knockback"
+    ],
+    "armorBreak": 0.3,
+    "poses": {
+      "windup": "overhead",
+      "active": "slam",
+      "recovery": "slam",
+      "charge": "overhead"
+    },
+    "fx": {
+      "grade": "heavy",
+      "shake": "vertical"
+    },
+    "sfx": {
+      "active": "skill_crush",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "파쇄참",
+    "desc": "대검을 크게 내리찍는 전방 일격. 슈퍼아머 적도 0.3초 경직",
+    "branch": "A",
+    "unlockLevel": 11,
+    "cooldown": 15,
+    "mp": 30,
+    "variants": {
+      "tri": {
+        "name": "3단 충전",
+        "desc": "충전을 2초까지 3단계로 모은다 (기본 1000%, 끝까지 모으면 2000%)",
+        "coef": 1000,
+        "chargeRule": {
+          "timeMul": 2,
+          "bonusMul": 2
+        }
+      },
+      "instant": {
+        "name": "즉발",
+        "desc": "충전 없이 빨리 내리찍는다 (1100%)",
+        "coef": 1100,
+        "chargeRule": {
+          "off": true
+        },
+        "phases": {
+          "windup": 0.3
+        }
+      }
+    }
+  },
+  "gs_collapse": {
+    "id": "gs_collapse",
+    "phases": {
+      "windup": 0.45,
+      "active": 0.1,
+      "recovery": 0.5
+    },
+    "coef": 120,
+    "area": {
+      "shape": "rect",
+      "at": [
+        40,
+        0
+      ],
+      "width": 64,
+      "depth": 32,
+      "z": "ground"
+    },
+    "repeat": {
+      "count": 12,
+      "interval": 0.25
+    },
+    "strength": "light",
+    "flags": [
+      "downhit"
+    ],
+    "keepDown": true,
+    "lasting": true,
+    "poses": {
+      "windup": "overhead",
+      "active": "slam",
+      "recovery": "slam",
+      "charge": "overhead"
+    },
+    "fx": {
+      "grade": "medium",
+      "shake": "vertical"
+    },
+    "sfx": {
+      "active": "skill_collapse",
+      "hit": "hitLight"
+    },
+    "weapon": "greatsword",
+    "name": "대지붕괴",
+    "desc": "앞 땅을 무너뜨려 3초 동안 12번 (각 120%). 땅의 적은 계속 다운",
+    "branch": "A",
+    "unlockLevel": 13,
+    "cooldown": 18,
+    "mp": 36,
+    "variants": {
+      "spread": {
+        "name": "확산",
+        "desc": "무너지는 땅이 두 배로 넓다 (각 90%)",
+        "coef": 90,
+        "area": {
+          "at": [
+            56,
+            0
+          ],
+          "width": 96,
+          "depth": 44
+        }
+      },
+      "rise": {
+        "name": "솟구침",
+        "desc": "끝날 때 땅이 솟구쳐 다운된 적까지 모두 띄운다 (300%)",
+        "repeatEnd": {
+          "coef": 300,
+          "launch": true
         }
       }
     }

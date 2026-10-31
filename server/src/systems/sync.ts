@@ -39,6 +39,7 @@ export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: nu
   s.ultGauge = int(p.ult);
   s.hasted = !!p.haste;
   s.shielded = (p.shield ?? 0) > 0;
+  s.aura = int(p.perks?.aura?.radius ?? 0);
   const v = s.priv;
   v.mp = int(p.mp);
   v.stamina = int(p.stamina);

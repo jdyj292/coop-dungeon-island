@@ -147,6 +147,15 @@ export const skill = playerActionObj.extend({
   }).strict().optional(),
   // 아군 버프 (가속장): 시전할 때 나와 판정 범위 안 동료의 스킬 쿨이 time초 동안 cooldownMul배 빨리 돈다
   allyBuff: z.object({ cooldownMul: pos, time: pos }).strict().optional(),
+  // 계열 3단계 (SK-7, skills.md 2장)
+  // 충전 규칙 (대검 충전, charge.ts): 최대 충전 시간 × timeMul, 최대 보너스 × bonusMul, off = 충전 없음 (파쇄참 3단 충전·즉발)
+  chargeRule: z.object({ timeMul: pos.optional(), bonusMul: pos.optional(), off: z.literal(true).optional() }).strict().optional(),
+  // 슈퍼아머 대상도 이 초만큼 경직 (파쇄참)
+  armorBreak: sec.optional(),
+  // 땅에 있는 적을 맞히면 바로 다운 (다시 맞으면 다운 시간 처음부터, 대지붕괴)
+  keepDown: z.literal(true).optional(),
+  // 반복이 끝날 때 마지막 판정 자리에서 한 번 더 coef. launch = 그 판정이 띄움 (대지붕괴 솟구침, 보조 구슬 확장도 같은 필드)
+  repeatEnd: z.object({ coef: z.number().nonnegative(), launch: z.literal(true).optional() }).strict().optional(),
 }).strict().superRefine(oneShape);
 
 /** 숫자 하나 또는 포인트별 값 배열 (길이 = combat.json skillTree.maxPoints, crossCheck) */
@@ -166,6 +175,10 @@ export const passive = z.object({
   effect: z.object({
     chargeSpeedMul: perPoint(pos).optional(),
     chargeTakenMul: perPoint(pos).optional(),
+    /** 거인의 힘: 대검 충전 최대 보너스 더하기 (weapons.json trait bonusMax 0.5 + 이 값) */
+    chargeBonusAdd: perPoint(pos).optional(),
+    /** 전장 장악: 내 둘레 radius(px) 안 적 감속 amount (매 틱 짧게 다시 걺, 감속 규칙은 status slow와 같음) */
+    aura: z.object({ radius: pos, amount: perPoint(pos) }).strict().optional(),
     skillArmor: z.literal(true).optional(),
     /** 스킬 시전 중 받는 피해 배율 (굳건함 2·3포인트) */
     skillTakenMul: perPoint(pos).optional(),

@@ -4,7 +4,7 @@
 import { skillDef, type ActionDef } from '../actions';
 import { knockDown } from '../body';
 import { PLAYER } from '../data/load';
-import type { Monster } from '../monster/state';
+import { slowMonster, type Monster } from '../monster/state';
 import { hastePlayer, type PlayerState } from '../player';
 import { actionHits } from '../shapes';
 import { blastDef, shardDef, spawnBolt, stepBolt, type Bolt, type Cast } from './bolts';
@@ -68,6 +68,19 @@ function cycle(sp: SimPlayer, cast: Cast | undefined): void {
   const cds = sp.state.cooldowns;
   for (const id of Object.keys(cds)) if (id !== cast.skill) cds[id] = Math.max(0, cds[id]! - c.sec);
 }
+
+/** 전장 장악: 내 둘레 radius 안 적을 짧게 감속 (매 틱 다시 걸어 둘레에 있는 동안만) */
+export function auraSlow(room: RoomSim, sp: SimPlayer): void {
+  const a = sp.state.perks?.aura;
+  if (!a || sp.away) return;
+  const p = sp.state.pos;
+  for (const m of room.alive) {
+    if (!m.body.ko && Math.hypot(m.body.x - p.x, m.body.y - p.y) <= a.radius) slowMonster(m, AURA_SEC, a.amount);
+  }
+}
+
+/** 전장 장악 감속이 둘레를 벗어난 뒤 남는 초 */
+export const AURA_SEC = 0.2;
 
 /** 보조 노드 시간 (과열·보호막·역장 내부 쿨) */
 export function tickPerkTimers(p: PlayerState, dt: number): void {
@@ -148,11 +161,12 @@ export function stepEchoes(room: RoomSim, events: SimEvent[]): void {
     placeEcho(e, room.alive);
     events.push({ type: 'echo', echo: { ...e, kind: e.kind } });
     room.countCombo(sp, room.landHits(sp, e.def, strikeEcho(e, sp.state, room.alive), events, true), events);
-    // 구슬 확장: 반복 묶음의 마지막 판정 뒤 그 자리에서 한 번 더 (감속 없이)
+    // 구슬 확장·솟구침: 반복 묶음의 마지막 판정 뒤 그 자리에서 한 번 더 (감속·다운 유지 없이, 솟구침은 다운된 적까지 띄움)
     const end = e.def.repeatEnd;
     if (end && e.rep && e.k === e.rep.count - 1) {
-      const { repeatEnd, status, ...rest } = e.def;
-      const burst: Echo = { ...e, kind: 'after', def: { ...rest, coef: end.coef }, look: 'orbEnd' };
+      const { repeatEnd, status, keepDown, ...rest } = e.def;
+      const def: ActionDef = end.launch ? { ...rest, coef: end.coef, flags: ['launch', 'downhit'], area: rest.area && { ...rest.area, z: 'both' } } : { ...rest, coef: end.coef };
+      const burst: Echo = { ...e, kind: 'after', def, look: end.launch ? 'rise' : 'orbEnd' };
       events.push({ type: 'echo', echo: { ...burst, kind: 'after' } });
       room.countCombo(sp, room.landHits(sp, burst.def, strikeEcho(burst, sp.state, room.alive), events, true), events);
     }

@@ -15,9 +15,9 @@ export type EchoKind = 'repeat' | 'after' | 'shatter';
 
 /**
  * 연출 그림 (SK-4 2차, art.md 7장): 없으면 종류·행동 판정으로 기존 그림. chain = 번개 줄(from → 대상), scar = 검흔 터짐,
- * blast = 화염구 끝 폭발, stick = 꽂힌 대검 둘레 베기, quake = 여진 충격파, orbEnd = 구슬 확장 끝 폭발
+ * blast = 화염구 끝 폭발, stick = 꽂힌 대검 둘레 베기, quake = 여진 충격파, orbEnd = 구슬 확장 끝 폭발, rise = 대지붕괴 솟구침 (돌기둥)
  */
-export type EchoLook = 'chain' | 'scar' | 'blast' | 'stick' | 'quake' | 'orbEnd';
+export type EchoLook = 'chain' | 'scar' | 'blast' | 'stick' | 'quake' | 'orbEnd' | 'rise';
 
 /** 예약 판정. shot = 연발 투사체 (판정 대신 발사, 연출은 마법탄 사건), chain = 연쇄 다음 대상 (sim/echoes.ts, 연출은 해제와 같은 shatter) */
 export interface Echo {

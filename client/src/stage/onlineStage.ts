@@ -195,7 +195,7 @@ export class OnlineStage {
       r.last = { x: p.pos.x, y: p.pos.y };
       r.view.draw(p, moved, 0, this.clock);
       const lv = mine ? chargeLevel(p, w) : (s.chargeLv ?? 0) / 255;
-      this.statusViews.push({ id, x: p.pos.x, y: p.pos.y, haste: !!s.hasted, shield: !!s.shielded, charge: chargeView(id, p, w, lv) });
+      this.statusViews.push({ id, x: p.pos.x, y: p.pos.y, haste: !!s.hasted, shield: !!s.shielded, aura: s.aura ?? 0, charge: chargeView(id, p, w, lv) });
       // 접속이 끊긴 동료는 반투명 (network.md 10장)
       r.view.actor.img.setAlpha(s.state === 'disconnected' ? DISCONNECTED_ALPHA : 1);
       r.ghosts.update(realDt, !!p.backstep && !r.view.teleport, r.view.actor.img);

@@ -20,11 +20,14 @@ export interface ChargeView {
   level: number;
   weapon: WeaponDef;
   pose: string | null;
+  /** 충전 단계 수 (파쇄참 3단 충전 = 3, 보통 1): 단계마다 손 둘레를 도는 금빛 점 + 소리 charge_stage */
+  stages: number;
 }
 
 /** 플레이어 상태 → 그릴 것 (충전 중이 아니면 level 0). level = 충전 비율 (본인 chargeLevel, 다른 사람은 서버 chargeLv) */
 export function chargeView(id: string, p: PlayerState, weapon: WeaponDef, level: number): ChargeView {
-  return { id, x: p.pos.x, y: p.pos.y, facing: p.facing, level, weapon, pose: fighterPose(p.fighter) };
+  const stages = (p.fighter.run?.def.chargeRule?.timeMul ?? 1) > 1 ? 3 : 1;
+  return { id, x: p.pos.x, y: p.pos.y, facing: p.facing, level, weapon, pose: fighterPose(p.fighter), stages };
 }
 
 interface Burst {
@@ -45,7 +48,7 @@ export function handAt(v: Pick<ChargeView, 'x' | 'y' | 'facing' | 'weapon' | 'po
 export class ChargeLayer {
   private g: Phaser.GameObjects.Graphics;
   /** 지난 프레임 충전 비율·손 위치 (떼는 순간 별 자리) */
-  private last = new Map<string, { level: number; x: number; y: number }>();
+  private last = new Map<string, { level: number; x: number; y: number; stage?: number }>();
   private bursts: Burst[] = [];
 
   constructor(scene: Phaser.Scene) {
@@ -66,8 +69,11 @@ export class ChargeLayer {
       }
       const h = handAt(v);
       if (!prev) cues.push('charge_start');
-      this.last.set(v.id, { level: v.level, ...h });
+      const stage = v.stages > 1 ? Math.min(v.stages, Math.floor(v.level * v.stages + 1e-6)) : 0;
+      if (stage > (prev?.stage ?? 0)) cues.push('charge_stage');
+      this.last.set(v.id, { level: v.level, ...h, stage });
       this.gather(h.x, h.y, v.level, now);
+      if (stage) this.pips(h.x, h.y, stage, now);
     }
     for (const [id, prev] of this.last) if (!seen.has(id)) this.release(id, prev, cues);
     this.bursts = this.bursts.filter((b) => (b.left -= dt) > 0);
@@ -95,6 +101,15 @@ export class ChargeLayer {
     for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
       const q = Math.hypot(dx, dy);
       if (q <= r) px(g, x + dx, y + dy, q <= r * 0.5 ? white : q <= r - 0.5 ? gold : amber, clamp01(0.5 + level));
+    }
+  }
+
+  /** 3단 충전: 다다른 단계 수만큼 손 둘레를 도는 금빛 점 (흰 심) */
+  private pips(x: number, y: number, n: number, now: number): void {
+    const g = this.g, S = fx.tier3.stages, { gold, white } = col();
+    for (let i = 0; i < n; i++) {
+      const q = now * S.spin + (i / n) * Math.PI * 2, px0 = x + Math.cos(q) * S.radius, py0 = y + Math.sin(q) * S.radius * 0.7;
+      star4(g, Math.round(px0), Math.round(py0), 1, white, gold);
     }
   }
 

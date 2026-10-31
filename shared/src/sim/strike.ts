@@ -1,7 +1,7 @@
 // 플레이어 행동 → 몬스터 적중 (active 동안 매 틱, 같은 행동에 한 대상은 한 번: combat.md 2장)
 // 마법탄(bolts.ts)도 맞힐 때는 같은 hitMonster (피해·반응·MP·필살기·상태 이상)
 import type { ActionDef, ActionRun } from '../actions';
-import { applyHit, canBeHit } from '../body';
+import { applyHit, canBeHit, knockDown } from '../body';
 import { COMBAT, PLAYER } from '../data/load';
 import { damageOf } from '../hit';
 import { freezeMonster, slowMonster, type Monster } from '../monster/state';
@@ -30,6 +30,13 @@ export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: numb
   // 다운 상태 대상은 피해 감소 (balance.md 1장, 보조 짓밟기가 올림). 맞기 전 상태로
   const mul = takenMul(p, m) * (m.body.state === 'down' ? (p.perks?.downDamage ?? COMBAT.downDamageMul) : 1);
   applyHit(m.body, { dir, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });
+  // 파쇄참: 슈퍼아머 대상도 잠깐 경직 (공격은 끊긴다, ai.ts). 다운 유지(대지붕괴): 땅의 적은 바로 다운
+  if (def.armorBreak && m.body.armor && !m.body.ko && m.body.state === 'idle') Object.assign(m.body, { state: 'hitstun', timer: def.armorBreak });
+  // 다운 유지는 밀어내지 않음 (장판 밖으로 미끄러지지 않게)
+  if (def.keepDown && m.body.state !== 'air' && !m.body.armor) {
+    Object.assign(m.body, { push: 0, pushY: 0 });
+    knockDown(m.body);
+  }
   if (def.flags?.includes('pull') && from) pullToward(m, def.area ? areaCenter(from, def.area.at) : from);
   // 잠든 몬스터는 맞으면 바로 깨어남 (그 몬스터만, dungeon.md 5장)
   m.sleep = 0;

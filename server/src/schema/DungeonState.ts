@@ -64,6 +64,8 @@ export class PlayerState extends Schema {
   /** 가속장 가속 중·역장 보호막이 있음 (모두에게 보이는 표시용) */
   @type('boolean') hasted = false;
   @type('boolean') shielded = false;
+  /** 전장 장악 둘레 반지름 px (0 = 없음, 발밑 고리 표시용) */
+  @type('uint8') aura = 0;
   /** 서버가 처리한 마지막 입력 번호 (예측 보정용, network.md 7장) */
   @type('uint32') lastInputSeq = 0;
   @filter(function (this: PlayerState, client: Client) {

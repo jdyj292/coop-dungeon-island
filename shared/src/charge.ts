@@ -32,8 +32,12 @@ export const isCharging = (run: ActionRun | null | undefined): boolean => !!run?
  */
 export function stepCharge(run: ActionRun, c: ChargeInput, dt: number): number {
   if (run.kind !== 'skill') return dt;
-  const ch = (run.charge ??= { t: 0, done: false, armor: c.armor });
+  const rule = run.def.chargeRule;
+  // 충전 없는 스킬(즉발 변형)은 처음부터 끝난 것으로
+  const ch = (run.charge ??= rule?.off ? noCharge() : { t: 0, done: false, armor: c.armor });
   if (ch.done) return dt;
+  // 스킬별 충전 규칙 (파쇄참 3단 충전: 최대 시간·보너스 ×2)
+  if (rule) c = { ...c, maxTime: c.maxTime * (rule.timeMul ?? 1), bonusMax: c.bonusMax * (rule.bonusMul ?? 1) };
   const end = run.def.phases.windup - CHARGE_HOLD_EPS;
   if (run.t + dt < end) return dt;
   if (!c.hold) {

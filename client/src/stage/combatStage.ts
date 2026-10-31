@@ -264,7 +264,7 @@ export class CombatStage {
     if (this.sleepMarks.draw(this.sim.alive.map((m) => ({ m, v: this.view(m) })), this.clock)) this.sound('monWake');
     this.hazards.draw(this.sim);
     const views = [...this.sim.players.values()].map(({ pid, state: q }) => ({
-      id: pid, x: q.pos.x, y: q.pos.y, haste: !!q.haste, shield: (q.shield ?? 0) > 0, charge: chargeView(pid, q, this.weapon, chargeLevel(q, this.weapon)),
+      id: pid, x: q.pos.x, y: q.pos.y, haste: !!q.haste, shield: (q.shield ?? 0) > 0, aura: q.perks?.aura?.radius ?? 0, charge: chargeView(pid, q, this.weapon, chargeLevel(q, this.weapon)),
     }));
     this.status.draw(this.sim.alive, views, dt).forEach((n) => this.sound(n));
     if (shieldsRaised(this.shielded, new Set(views.filter((v) => v.shield).map((v) => v.id)))) this.sound('shield_up');

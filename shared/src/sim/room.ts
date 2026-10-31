@@ -22,7 +22,7 @@ import { HitLog } from './hitLog';
 import { perksOf } from '../passives';
 import { phaseIsActive, strike, type PosOf, type StrikeHit } from './strike';
 import { spawnBolt, type Bolt, type Cast } from './bolts';
-import { afterLand, overheatShot, skillActive, slam, stepEchoes, stepPlayerBolts, tickPerkTimers } from './echoes';
+import { afterLand, auraSlow, overheatShot, skillActive, slam, stepEchoes, stepPlayerBolts, tickPerkTimers } from './echoes';
 import { markScar } from './scar';
 import type { Echo } from './skillExtras';
 
@@ -254,6 +254,7 @@ export class RoomSim {
     sp.held = null;
     p.perks = perksOf(sp.weapon, sp.skills);
     tickPerkTimers(p, dt);
+    auraSlow(this, sp);
     const res = stepPlayerState(p, sp.weapon, input, dt, this.bounds, zoneSpeedMul(this.zones, p.pos, PLAYER.hurtbox));
     if (res.backstepStarted) events.push({ type: 'backstep', pid });
     res.hurt.forEach((e) => events.push({ type: 'playerHurt', pid, e }));

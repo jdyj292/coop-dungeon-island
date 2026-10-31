@@ -1,5 +1,5 @@
 // SK-4 2차 상태 표시 (art.md 7장): 검흔 표식(몬스터 머리 위 칼자국 두 줄), 가속(발 양옆 위로 흐르는 속도선),
-// 역장 보호막(몸을 감싼 점선 타원 + 도는 반짝임), 대검 충전 모이는 빛(chargeFx.ts). 매 프레임 다시 그린다. 온라인은 서버 상태의 표시용 값(scarred·hasted·shielded·chargeLv)
+// 역장 보호막(몸을 감싼 점선 타원 + 도는 반짝임), 전장 장악(발밑 점선 고리, tier3Fx), 대검 충전 모이는 빛(chargeFx.ts). 매 프레임 다시 그린다. 온라인은 서버 상태의 표시용 값(scarred·hasted·shielded·chargeLv)
 import type Phaser from 'phaser';
 import type { Monster } from '@game/shared';
 import fx from '../../data/fx.json';
@@ -8,6 +8,7 @@ import { project } from '../view/layout';
 import { ChargeLayer, type ChargeView } from './chargeFx';
 import { dot } from './layer';
 import { col, px } from './spellDraw';
+import { auraRing } from './tier3Fx';
 
 /** 캐릭터 위 (BoltLayer 4100 아래) */
 const DEPTH = 4050;
@@ -20,6 +21,8 @@ export interface StatusView {
   y: number;
   haste: boolean;
   shield: boolean;
+  /** 전장 장악 둘레 반지름 px (0·없음 = 안 그림) */
+  aura?: number;
   /** 대검 충전 (chargeFx.chargeView) */
   charge?: ChargeView;
 }
@@ -49,6 +52,7 @@ export class StatusLayer {
     }
     for (const p of players) {
       const { sx, sy } = project(p.x, p.y);
+      if (p.aura) auraRing(g, sx, sy, p.aura, now);
       if (p.haste) {
         const H = T.haste;
         for (let i = 0; i < H.lines; i++) {

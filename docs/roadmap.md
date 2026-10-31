@@ -20,7 +20,7 @@ MVP 범위, 마일스톤별 목표·읽을 문서·완료 기준, 세션 단위 
 - 운영: HTTPS·WSS, 백업, 관리자 명령줄 도구
 
 ### 제외 (MVP 이후)
-- 2층 이상, 주먹·쌍검, 계열 스킬·공용 패시브·슬롯 장착, 필살기 (기본 스킬 포인트·변형은 MVP 보충 SK-1, 계열 1단계 액티브는 SK-2, 계열 2단계·슬롯 장착은 SK-4, 공용 패시브는 SK-5, 레벨 열림·계열 선택으로 개편은 SK-6)
+- 2층 이상, 주먹·쌍검, 계열 스킬·공용 패시브·슬롯 장착, 필살기 (기본 스킬 포인트·변형은 MVP 보충 SK-1, 계열 1단계 액티브는 SK-2, 계열 2단계·슬롯 장착은 SK-4, 공용 패시브는 SK-5, 레벨 열림·계열 선택으로 개편은 SK-6, 계열 3단계는 SK-7)
 - 폭탄 버섯 등 환경 기믹, 층 해금 건물·연마, 공방 제작, 낚시
 - 의상 판매·장착(마법사·도적·기사), 무기 외형(제작·보스 드롭·색 변형), 개인 집, 섬 방문·확장
 - 계정 삭제 화면, 소셜 로그인, 모바일·게임패드, Steam, 2층 이후 BGM
@@ -131,3 +131,4 @@ MVP 범위, 마일스톤별 목표·읽을 문서·완료 기준, 세션 단위 
 | SK-3 | 대검 충전(skills.md 2장): 스킬 키 누르고 있기 → 준비 끝에서 충전 최대 1초, 피해·범위 최대 +50%, 충전 중 슈퍼아머, 무거운 손 원래 효과(충전 속도 +30%·충전 중 받는 피해 −30%), 온라인 chargeRelease. 1차: 규칙·판정·네트워크 (완료). 2차: 충전 포즈(허리 옆 쥐기, 머리 위 준비 스킬은 그대로)·모이는 빛·충전 효과음(charge_start·charge_full)·온라인 chargeMs·chargeLv (완료, 미리보기 생략 요청) | 테스트, ?weapon=greatsword 길게·짧게, ?online=1&lag=100 |
 | SK-5 | 공용 패시브(skills.md 1장): 스킬 캔슬 1~3(스킬 recovery → 다른 스킬, 이은 스킬 windup ×1.5/1.3/1.15)·기상 회피 1(다운 중 회피 키로 기상, 기상 무적 대신 회피 무적), passives.json weapon "*" → 무기마다 노드, 스킬 창 맨 위 (완료) | 테스트, ?skills=greatsword.cancel:1,greatsword.quickrise:1 로 U 후딜레이에 I, 다운 중 K |
 | SK-6 | 스킬 창 개편(skills.md 1장, 승인 데모 docs/refs/demos/skill_window.html): 단계·택1 없앰 → 스킬·패시브는 숙련도 레벨로 열림(unlockLevel, 액티브 Lv2·4·6·8·보조 Lv3·5·7·9), 무기마다 계열 하나 선택(weapon_mastery.branch)·계열마다 장착 기억(skill_slots), SP로 액티브 2·3포인트·패시브 1~3포인트(포인트별 값, 굳건함·기상 회피 2·3포인트 새 효과), 변형은 열리면 바로, 던전은 출발 때 effectiveBuild. 1차: 규칙·저장·메시지(마이그레이션 0011), 스킬 창은 임시 목록 (완료). 2차: 트리형 스킬 창(계열 버튼·액티브/패시브 탭·상세·끌어다 장착, 임시 10×10 그림 hud_icons.json glyphs·패널 명암 색 palette.json global.ui.skill*, hud.md 8장) (완료). 3차: 아이콘 없는 스킬·패시브 정식 16×16 아이콘 14개(sprite-preview 승인, hud_icons.json, 임시 그림 glyphs 없앰, hud.md 2·8장) (완료) | 테스트·data-validate·balance-check·net-smoke, 섬 K에서 계열 바꾸기·장착 기억, ?online=1 출발 → 고른 계열 스킬만 U I O P |
+| SK-7 | 계열 3단계 (skills.md 1·2장): 액티브 Lv11·13·보조 Lv12·14. 1차: 대검 A 파쇄참(슈퍼아머 경직 armorBreak·3단 충전/즉발 chargeRule)·대지붕괴(다운 유지 keepDown·확산·솟구침 repeatEnd launch)·거인의 힘(chargeBonusAdd)·전장 장악(aura), 연출(fx/tier3Fx.ts·3단 충전 단계 점·온라인 aura)·효과음 4개·아이콘 4개·스킬 창 6칸 (완료, 미리보기 생략 요청). 다음: 대검 B 십자 검기·일섬·잔상·검의 춤, 스태프 A·B 3단계 | 테스트·data-validate·balance-check·net-smoke, ?skills=gs_crush:1:tri,gs_giant:1 길게 누르기, ?skills=gs_collapse:1:rise,gs_dominate:3 |

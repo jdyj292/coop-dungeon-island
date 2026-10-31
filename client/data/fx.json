@@ -79,7 +79,7 @@
   },
   "branch": {
     "_note": "계열 스킬 연출 (SK-2 2차, art.md 7장). looks = 행동 id → 그림. 위치 px(발밑 기준, 위가 -), 시간 초, spin = rad/초. 사라짐은 4×4 바둑판",
-    "looks": { "gs_whirl": "whirl", "gs_shoulder": "shoulder", "gs_wave": "wave", "gs_throw": "throw", "gs_draw": "draw", "gs_cyclone": "cyclone", "st_pillar": "pillar", "st_icelance": "lance", "st_orb": "orb", "st_lift": "lift", "st_fireball": "fireball", "st_well": "well", "st_gravfield": "gravfield" },
+    "looks": { "gs_whirl": "whirl", "gs_shoulder": "shoulder", "gs_wave": "wave", "gs_throw": "throw", "gs_draw": "draw", "gs_cyclone": "cyclone", "gs_crush": "crush", "gs_collapse": "collapse", "st_pillar": "pillar", "st_icelance": "lance", "st_orb": "orb", "st_lift": "lift", "st_fireball": "fireball", "st_well": "well", "st_gravfield": "gravfield" },
     "whirl": { "_note": "몸을 도는 납작한 고리 위 초승달 arcs개, 몸 뒤 반은 몸 폭 body만큼 가려짐. 흡입(pull)이면 바깥에서 빨려드는 바람 줄", "y": -8, "flat": 0.4, "scale": 0.8, "spin": 16, "arcs": 2, "span": 1.9, "width": 3, "body": 4, "tail": 0.1, "suckLines": 6, "suckFrom": 1.8, "groundEvery": 3, "groundSpin": 6 },
     "shoulder": { "_note": "몸 뒤 속도선 (y, 길이) + 몸 앞 충격 괄호 front px", "lines": [[-13, 9], [-10, 14], [-7, 11], [-4, 15], [-1, 8]], "back": -6, "front": 9, "top": -14, "bottom": -1, "tail": 0.12, "burstSec": 0.16, "burstR": 10, "puffEvery": 4 },
     "draw": { "_note": "발도: 출발 자리에서 벤 자리까지 한 줄 섬광. thickSec 동안 3px 흰 줄 → 1px 금색 → 바둑판", "y": -8, "sec": 0.32, "thickSec": 0.05, "ticks": 4, "cuts": 3, "cutDelay": 0.07, "cutSec": 0.16, "cutLen": 6 },
@@ -118,6 +118,14 @@
   },
   "_islandShadow": "섬 사물 땅 그림자 (art.md 6장 섬, client/src/sprites/castShadow.ts). 빛이 왼쪽 위라 사물 실루엣을 높이 h만큼 오른쪽 h × shear·뒤(화면 위) h × lift로 옮겨 바닥에 눕히고 맨 아래 줄 밑에 접지 줄 1px. 안쪽 채움·경계 바둑판, 색 global.outline, 진하기 alpha. 바닥·구름 그림자 위, 사물·캐릭터 아래",
   "islandShadow": { "shear": 0.5, "lift": 0.2, "alpha": 0.28 },
+  "_tier3": "SK-7 계열 3단계 연출 (art.md 7장, client/src/fx/tier3Fx.ts). crush = 파쇄참: 판정 앞쪽 at(판정 폭 비율)에 하늘에서 떨어지는 칼빛 기둥(height px, beamSec 동안 3px → 1px) + 균열 lines줄을 spread rad로 펼쳐 판정 폭만큼 + 충격파 고리 2겹 + 돌 조각 rocks개. collapse = 대지붕괴: 판정 사각형에 깨진 땅(tile px 칸, 칸마다 꺼진 칸 sunk 비율)이 반복 시간 동안 남고, 반복 판정마다 돌 조각 pulseRocks개 + 먼지. rise = 솟구침: 판정 사각형에 돌기둥 spikes개가 riseSec 동안 솟았다(높이 height px) 무너짐. aura = 전장 장악: 발밑 반지름(passives aura.radius) 밝은 점선 타원(every 점마다) + 둘레를 spin rad/초로 도는 금빛 점 motes개, 바둑판 진하기 alpha. stages = 3단 충전: 단계마다 손 둘레를 도는 금빛 점(radius px), 시간 초",
+  "tier3": {
+    "crush": { "at": 0.55, "height": 46, "beamSec": 0.3, "thickSec": 0.1, "lines": 3, "spread": 0.45, "rocks": 8, "rockSec": 0.55, "rockLift": [40, 75], "rockSpread": 50, "gravity": 220 },
+    "collapse": { "tile": 6, "sunk": 0.3, "fadeLast": 0.15, "pulseRocks": 3, "pulseDust": 2 },
+    "rise": { "spikes": 6, "sec": 0.6, "riseSec": 0.1, "height": 16, "width": 4 },
+    "aura": { "every": 2, "alpha": 0.6, "motes": 4, "spin": 0.8 },
+    "stages": { "radius": 7, "spin": 5 }
+  },
   "_chargeGlow": "대검 충전 모이는 빛 (SK-3 2차, art.md 7장, client/src/fx/chargeFx.ts). 손(포즈 front.hand) 둘레 from px에서 빛 점 motes개가 gatherSec마다 소용돌이(swirl 바퀴)치며 빨려듦, 충전 비율이 오를수록 보이는 점 수 minShare → 1. 손 빛 반지름 core[0] → core[1], pulseSec마다 1px 밝게. 떼는 순간 별 release(비율 fullAt 이상이면 full: 별 + 빛살 rays개가 rayLen px까지 퍼짐), 시간 초",
   "chargeGlow": {
     "motes": 8, "from": 13, "swirl": 0.35, "gatherSec": 0.4, "minShare": 0.4,

@@ -1512,6 +1512,141 @@
     "wet": 0.4
    }
   ],
+  "skill_crush": [
+   {
+    "k": "noise",
+    "f": [
+     400,
+     1800
+    ],
+    "dur": 0.12,
+    "v": 0.45,
+    "filter": "bandpass",
+    "q": 1.5,
+    "at": 0,
+    "swell": true,
+    "wet": 0.2
+   },
+   {
+    "k": "boom",
+    "f": 70,
+    "dur": 0.6,
+    "v": 1,
+    "at": 0.02
+   },
+   {
+    "k": "metal",
+    "f": 740,
+    "dur": 0.6,
+    "v": 0.18,
+    "at": 0.02,
+    "wet": 0.6
+   },
+   {
+    "k": "noise",
+    "f": [
+     1400,
+     120
+    ],
+    "dur": 0.6,
+    "v": 0.45,
+    "filter": "lowpass",
+    "q": 1,
+    "at": 0.02,
+    "wet": 0.3,
+    "dist": true
+   }
+  ],
+  "skill_collapse": [
+   {
+    "k": "thump",
+    "f": [
+     80,
+     45
+    ],
+    "dur": 0.22,
+    "v": 0.45,
+    "at": 0
+   },
+   {
+    "k": "noise",
+    "f": [
+     700,
+     120
+    ],
+    "dur": 0.25,
+    "v": 0.3,
+    "filter": "lowpass",
+    "q": 1,
+    "at": 0
+   },
+   {
+    "k": "click",
+    "v": 0.25,
+    "at": 0.04
+   }
+  ],
+  "collapse_rise": [
+   {
+    "k": "boom",
+    "f": 60,
+    "dur": 0.5,
+    "v": 0.9,
+    "at": 0
+   },
+   {
+    "k": "noise",
+    "f": [
+     300,
+     2400
+    ],
+    "dur": 0.3,
+    "v": 0.4,
+    "filter": "bandpass",
+    "q": 1.2,
+    "at": 0,
+    "swell": true,
+    "dist": true
+   },
+   {
+    "k": "thump",
+    "f": [
+     120,
+     60
+    ],
+    "dur": 0.25,
+    "v": 0.5,
+    "at": 0.08
+   }
+  ],
+  "charge_stage": [
+   {
+    "k": "click",
+    "v": 0.2,
+    "at": 0
+   },
+   {
+    "k": "metal",
+    "f": 1240,
+    "dur": 0.3,
+    "v": 0.12,
+    "at": 0,
+    "wet": 0.5
+   },
+   {
+    "k": "tone",
+    "wave": "sine",
+    "f": [
+     660,
+     990
+    ],
+    "dur": 0.12,
+    "v": 0.08,
+    "at": 0,
+    "atk": 0.005,
+    "wet": 0.4
+   }
+  ],
   "aftershock": [
    {
     "k": "thump",
