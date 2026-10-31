@@ -87,6 +87,18 @@ describe('노드 규칙', () => {
     expect(checkNode(gs, { gs_earthsplit: { points: 3 } }, 'gs_earthsplit', { points: 2 }, 0, lv(1))).toBeNull();
   });
 
+  it('SP는 계열마다 따로: 다른 계열 노드는 안 세고, 기본·공용은 양쪽에서 센다', () => {
+    const b = { gs_launch: { points: 2 }, gs_whirl: { points: 3 }, gs_wave: { points: 3 } };
+    expect(spSpent(gs, b)).toBe(5);
+    expect(spSpent(gs, b, 'A')).toBe(3);
+    expect(spSpent(gs, b, 'B')).toBe(3);
+    // A에 SP 3을 다 써도 B 계열은 자기 SP로 찍는다
+    expect(checkNode(gs, b, 'gs_whirl', { points: 3 }, 3, lv(9))).toBeNull();
+    expect(checkNode(gs, { gs_whirl: { points: 3 } }, 'gs_launch', { points: 2 }, 2, lv(9))).toBe('sp');
+    expect(checkNode(gs, { gs_whirl: { points: 3 } }, 'gs_wave', { points: 3 }, 2, lv(9, 'B'))).toBeNull();
+    expect(checkNode(gs, { gs_whirl: { points: 3 }, gs_launch: { points: 2 } }, 'gs_wave', { points: 3 }, 2, lv(9, 'B'))).toBe('sp');
+  });
+
   it('포인트 범위·변형·다른 무기 스킬 (변형은 포인트와 상관없이)', () => {
     expect(checkNode(gs, {}, 'gs_launch', { points: 4 }, 9, lv(1))).toBe('points');
     expect(checkNode(gs, {}, 'gs_launch', { points: 0 }, 9, lv(1))).toBe('points');

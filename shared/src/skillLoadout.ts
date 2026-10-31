@@ -1,5 +1,6 @@
 // 계열 선택·노드 바꾸기·계열별 장착·던전용 빌드 (docs/skills.md 1장): 클라이언트·서버 공용
 // 무기마다 계열(A·B) 하나를 고른다. 고른 계열의 계열 스킬·보조와 기본 스킬·공용 패시브만 쓴다 (다른 계열에 찍은 포인트는 남지만 효과 없음).
+// SP는 계열마다 따로 받는다: 계열 노드는 자기 계열 SP에서만, 기본·공용 노드는 두 계열 SP 모두에서 빠진다.
 // 장착(U I O P)은 계열마다 따로 기억한다. 저장한 장착이 없으면 기본 배치 = 기본 스킬 U I, 그 계열에서 열린 액티브를 열리는 순서로 O P.
 // 던전에는 effectiveBuild(고른 계열·열린 것만, 장착한 칸이 slot)를 보내고, 던전 판정은 그 빌드의 slot만 본다 (slotSkills)
 import type { ActionDef, WeaponDef } from './actions';
@@ -40,15 +41,15 @@ export function applyNode(b: SkillBuild, id: string, node: SkillNode): SkillBuil
   return out;
 }
 
-/** 이 노드로 바꿔도 되나 (sp = 받은 SP). 열린 노드·고른 계열만, 액티브 1~최대·패시브 0~최대, 변형은 액티브만. SP는 늘어날 때만 본다 */
+/** 이 노드로 바꿔도 되나 (sp = 받은 SP, 고른 계열 기준으로 셈). 열린 노드·고른 계열만, 액티브 1~최대·패시브 0~최대, 변형은 액티브만. SP는 늘어날 때만 본다 */
 export function checkNode(weapon: WeaponDef, b: SkillBuild, id: string, node: SkillNode, sp: number, lo: Loadout): NodeFail | null {
   if (!treeNodes(weapon).includes(id)) return 'skill';
   if (!Number.isInteger(node.points) || node.points < (SKILLS[id] ? 1 : 0) || node.points > maxPointsOf(id)) return 'points';
   if (node.variant !== undefined && !SKILLS[id]?.variants?.[node.variant]) return 'variant';
   if (!isOpen(id, lo.level)) return 'locked';
   if (!inBranch(id, lo.branch)) return 'branch';
-  const after = spSpent(weapon, applyNode(b, id, node));
-  if (after > sp && after > spSpent(weapon, b)) return 'sp';
+  const after = spSpent(weapon, applyNode(b, id, node), lo.branch);
+  if (after > sp && after > spSpent(weapon, b, lo.branch)) return 'sp';
   return null;
 }
 

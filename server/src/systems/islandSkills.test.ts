@@ -74,18 +74,18 @@ describe('스킬 탭', () => {
     expect(gs(lastSkills(a))).toMatchObject({ spent: 0, build: '' });
   });
 
-  it('계열 바꾸기: 장착은 계열마다 따로 기억, 다른 계열에 찍은 포인트는 남음', () => {
+  it('계열 바꾸기: 장착·SP는 계열마다 따로, 다른 계열에 찍은 포인트는 남음', () => {
     const a = user(9), g = game();
     enter(g, a);
     set(g, a, 'gs_whirl', 3);
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_quake', slot: 0 });
     expect(gs(lastSkills(a)).slots).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder']);
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'branch', branch: 'B' });
-    expect(gs(lastSkills(a))).toMatchObject({ branch: 'B', spent: 2, slots: ['gs_launch', 'gs_earthsplit', 'gs_wave', 'gs_draw'] });
+    expect(gs(lastSkills(a))).toMatchObject({ branch: 'B', spent: 0, slots: ['gs_launch', 'gs_earthsplit', 'gs_wave', 'gs_draw'] });
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_whirl', slot: 2 });
     expect(lastSkills(a).fail).toBe('branch');
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'branch', branch: 'A' });
-    expect(gs(lastSkills(a))).toMatchObject({ branch: 'A', slots: ['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder'] });
+    expect(gs(lastSkills(a))).toMatchObject({ branch: 'A', spent: 2, slots: ['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder'] });
   });
 
   it('던전 파티 정보: 고른 계열·장착만 실리고, 장착 안 한 스킬은 던전에서 거절', () => {

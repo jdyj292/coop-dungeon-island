@@ -69,9 +69,10 @@ export const treeNodes = (weapon: WeaponDef): string[] => [...treeSkills(weapon)
 /** 받은 SP: 숙련도 레벨업마다 1 + 보너스 (보스 첫 처치, MVP 이후) */
 export const spTotal = (level: number, bonus = 0): number => Math.max(0, level - 1) + bonus;
 
-/** 쓴 SP: 액티브는 1포인트가 공짜, 패시브는 포인트마다 1. 다른 계열에 찍은 포인트도 센다 (초기화로 돌려받음) */
-export const spSpent = (weapon: WeaponDef, b: SkillBuild): number =>
-  treeNodes(weapon).reduce((s, id) => s + Math.max(0, nodeOf(b, id).points - (SKILLS[id] ? 1 : 0)), 0);
+/** 쓴 SP: 액티브는 1포인트가 공짜, 패시브는 포인트마다 1. SP는 계열마다 따로: branch를 주면 기본·공용 + 그 계열 노드만 센다 (없으면 전부) */
+export const spSpent = (weapon: WeaponDef, b: SkillBuild, branch?: Branch): number =>
+  treeNodes(weapon).filter((id) => !branch || inBranch(id, branch))
+    .reduce((s, id) => s + Math.max(0, nodeOf(b, id).points - (SKILLS[id] ? 1 : 0)), 0);
 
 export const levelMul = (points: number): number => TREE.levelMul[Math.min(Math.max(points, 1), TREE.levelMul.length) - 1] ?? 1;
 

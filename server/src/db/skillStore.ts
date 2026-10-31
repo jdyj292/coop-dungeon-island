@@ -42,14 +42,14 @@ export function loadoutOf(db: Db, userId: number, weapon: string): Loadout {
   return { level: r?.level ?? 1, branch, slots };
 }
 
-/** 스킬 창(K)에 보낼 값: 무기마다 레벨·받은 SP·쓴 SP·노드 문자열·고른 계열·그 계열 장착(빈칸 '') */
+/** 스킬 창(K)에 보낼 값: 무기마다 레벨·받은 SP·쓴 SP(고른 계열 기준)·노드 문자열·고른 계열·그 계열 장착(빈칸 '') */
 export function skillsView(db: Db, userId: number): { weapon: string; level: number; sp: number; spent: number; build: string; branch: Branch; slots: string[] }[] {
   const b = skillBuild(db, userId);
   return MVP_WEAPONS.map((weapon) => {
     const w = weaponDef(weapon), mine: SkillBuild = {}, lo = loadoutOf(db, userId, weapon);
     for (const id of treeNodes(w)) if (b[id]) mine[id] = b[id];
     return {
-      weapon, level: lo.level, sp: spOf(db, userId, weapon), spent: spSpent(w, mine), build: encodeBuild(mine), branch: lo.branch,
+      weapon, level: lo.level, sp: spOf(db, userId, weapon), spent: spSpent(w, mine, lo.branch), build: encodeBuild(mine), branch: lo.branch,
       slots: loadoutSlots(w, lo).map((id) => id ?? ''),
     };
   });
