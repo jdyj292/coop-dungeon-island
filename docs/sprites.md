@@ -190,7 +190,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 
 ## 10. 초안 검토 (그림 추가·수정)
 - 승인 데이터는 바로 고치지 않는다. 새 그림은 client/data/sprites/drafts/에 먼저 그린다
-  - drafts/monsters.json: 몬스터 프레임 초안 (monsters.json과 같은 형식, frames·states만)
+  - drafts/monsters.json: 몬스터 프레임 초안 (monsters.json과 같은 형식, frames·states, 새 재질 글자가 필요하면 materials도 — 승인 재질에 더해진다)
   - drafts/poses.json: 포즈 초안 (무기 종류 → 포즈 이름 → 포즈), 모션 초안 (motions → 모션 이름 → 모션)
   - drafts/props.json: 소품 초안 (새 소품은 통째로, 있는 소품은 frames·states만)
   - drafts/island.json: 섬 사물 초안 (새 사물은 통째로, 있는 사물은 frames를 겹치고 rot·animSec은 바꿈)
