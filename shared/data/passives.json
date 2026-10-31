@@ -14,9 +14,9 @@
   },
   "gs_keenedge": {
     "id": "gs_keenedge", "weapon": "greatsword", "branch": "B", "unlockLevel": 3, "name": "날 선 칼날",
-    "desc": "공중에 뜬 적에게 주는 피해 증가\n(평타·대시 공격 포함)",
-    "pointDesc": ["공중 적 피해 +15%", "공중 적 피해 +22%", "공중 적 피해 +30%"],
-    "effect": { "airDamageMul": [1.15, 1.22, 1.3] }
+    "desc": "3타일(48px) 넘게 떨어진 적에게 주는 피해 증가\n(검기 같은 투사체가 맞힐 때 거리)",
+    "pointDesc": ["먼 적 피해 +15%", "먼 적 피해 +22%", "먼 적 피해 +30%"],
+    "effect": { "far": { "minDist": 48, "mul": [1.15, 1.22, 1.3] } }
   },
   "gs_honing": {
     "id": "gs_honing", "weapon": "greatsword", "branch": "B", "unlockLevel": 5, "name": "검기 연마",
@@ -37,10 +37,10 @@
     "effect": { "burn": { "element": "fire", "time": 3, "takenMul": [1.15, 1.22, 1.3] } }
   },
   "st_weightless": {
-    "id": "st_weightless", "weapon": "staff", "branch": "B", "unlockLevel": 3, "name": "무중력",
-    "desc": "내가 띄우거나 체공시킨 적은 떠 있는 동안\n모두에게 받는 피해 증가",
+    "id": "st_weightless", "weapon": "staff", "branch": "B", "unlockLevel": 3, "name": "중압",
+    "desc": "내가 느리게 한 적은 느려진 동안\n모두에게 받는 피해 증가",
     "pointDesc": ["받는 피해 +10%", "받는 피해 +15%", "받는 피해 +20%"],
-    "effect": { "lift": { "takenMul": [1.1, 1.15, 1.2] } }
+    "effect": { "press": { "takenMul": [1.1, 1.15, 1.2] } }
   },
   "st_lightfoot": {
     "id": "st_lightfoot", "weapon": "staff", "branch": "B", "unlockLevel": 5, "name": "가벼운 발",

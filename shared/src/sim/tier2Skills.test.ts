@@ -42,6 +42,7 @@ describe('회오리 검기', () => {
     const [m] = sim.spawn([{ kind: 'capknight', x: 200, y: 50 }]);
     tough(m!);
     expect(hits(run(sim, cast('gs_cyclone'), 2.5)).length).toBeGreaterThan(0);
+    expect(m!.slow.amount).toBeCloseTo(0.3);
     const still = room('greatsword');
     const [far] = still.spawn([{ kind: 'capknight', x: 200, y: 50 }]);
     tough(far!);
@@ -74,9 +75,8 @@ describe('중력장', () => {
     expect(m!.slow.amount).toBeCloseTo(0.4);
   });
 
-  it('부양장: 느리게 하는 대신 공중 적을 붙잡아 둔다', () => {
-    const def = resolveSkill('st_gravfield', { points: 3, variant: 'float' });
-    expect(def.status).toMatchObject({ type: 'hold', time: 2 });
-    expect(def.flags).toContain('hold');
+  it('압축장: 2초 동안 60% 느리게', () => {
+    const def = resolveSkill('st_gravfield', { points: 3, variant: 'crush' });
+    expect(def.status).toMatchObject({ type: 'slow', time: 2, amount: 0.6 });
   });
 });

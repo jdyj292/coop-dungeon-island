@@ -572,12 +572,10 @@
       "step": 8
     },
     "strength": "light",
-    "flags": [
-      "hold"
-    ],
     "status": {
-      "type": "hold",
-      "time": 0.4
+      "type": "slow",
+      "time": 1,
+      "amount": 0.3
     },
     "poses": {
       "windup": "ready",
@@ -593,12 +591,12 @@
     },
     "weapon": "greatsword",
     "name": "회오리 검기",
-    "desc": "2초 동안 앞으로 나아가는 회오리가 10번 베고 공중 적을 붙잡아 둔다",
+    "desc": "2초 동안 앞으로 나아가는 회오리가 10번 베고 맞은 적을 1초 동안 30% 느리게 한다",
     "branch": "B",
     "unlockLevel": 8,
     "cooldown": 10,
     "mp": 20,
-    "note": "예산 대비 +25%: 회오리가 앞으로 나아가 10번을 다 맞히기 어렵고 hold는 공중 적에게만",
+    "note": "예산 대비 +25%: 회오리가 앞으로 나아가 10번을 다 맞히기 어렵고 감속은 짧음",
     "variants": {
       "still": {
         "name": "정지형",
@@ -786,19 +784,17 @@
         0
       ],
       "radius": 22,
-      "z": "air"
+      "z": "both"
     },
     "repeat": {
       "count": 8,
       "interval": 0.375
     },
     "strength": "light",
-    "flags": [
-      "hold"
-    ],
     "status": {
-      "type": "hold",
-      "time": 0.6
+      "type": "slow",
+      "time": 0.6,
+      "amount": 0.3
     },
     "poses": {
       "windup": "ready",
@@ -814,15 +810,16 @@
     },
     "weapon": "staff",
     "name": "부유 구슬",
-    "desc": "구슬 안의 공중 적을 3초 동안 띄워 둔다 (8번)",
+    "desc": "3초 동안 구슬 안의 적을 8번 때리고 30% 느리게 한다",
     "lasting": true, "branch": "B",
     "unlockLevel": 2,
     "cooldown": 8,
     "mp": 16,
+    "note": "예산 대비 낮음: 3초 감속(중압 표식)이 주 가치, 딜은 의도적으로 낮게",
     "variants": {
       "seek": {
         "name": "유도",
-        "desc": "구슬이 가까운 공중 적을 따라간다",
+        "desc": "구슬이 가까운 적을 따라간다",
         "repeat": {
           "seek": 10
         }
@@ -1017,15 +1014,13 @@
     "mp": 20,
     "note": "예산 대비 크게 낮음: 4초 감속(걷기·공격 사이 쉬는 시간)이 주 가치, 딜은 의도적으로 낮게",
     "variants": {
-      "float": {
-        "name": "부양장",
-        "desc": "느리게 하는 대신 범위 안 공중 적을 2초 붙잡아 둔다",
-        "flags": [
-          "hold"
-        ],
+      "crush": {
+        "name": "압축장",
+        "desc": "더 세게 짧게: 2초 동안 60% 느리게 한다",
         "status": {
-          "type": "hold",
-          "time": 2
+          "type": "slow",
+          "time": 2,
+          "amount": 0.6
         }
       }
     }

@@ -37,7 +37,7 @@ const variantOptions = (w: string): [string, string][] => {
   return [['', '기본 (변형 없음)'], ...base.flatMap(variants),
     ...treeSkills(weaponDef(w)).filter((id) => !base.includes(id)).flatMap((id): [string, string][] => [[`${id}:1`, `[${SKILLS[id]!.branch}] ${SKILLS[id]!.name}`], ...variants(id)])];
 };
-/** 보조 노드 고르기: 무대 플레이어에 실제로 배워 판정·표식(연소·무중력)까지 걸린다 */
+/** 보조 노드 고르기: 무대 플레이어에 실제로 배워 판정·표식(연소·중압)까지 걸린다 */
 const passiveOptions = (w: string): [string, string][] => [['', '보조 없음'], ...weaponPassives(weaponDef(w)).map((id): [string, string] => [`${id}:1`, `[${PASSIVES[id]!.branch}] ${PASSIVES[id]!.name}`])];
 let picked = { variant: '', passive: '' };
 const setBuild = (): void => {

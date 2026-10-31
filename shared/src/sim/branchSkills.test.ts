@@ -103,25 +103,25 @@ describe('반복 판정 이동', () => {
   });
 });
 
-describe('체공 유지 (부유 구슬)', () => {
-  it('구슬 안 공중 적은 3초 가까이 떠 있다', () => {
+describe('부유 구슬', () => {
+  it('구슬 안 땅의 적을 8번 때리고 느리게 한다 (가벼운 적은 밀려 나가므로 무거운 적으로)', () => {
     const sim = room('staff');
-    const [m] = sim.spawn([{ kind: 'mushroom', x: 148, y: 50 }]);
+    const [m] = sim.spawn([{ kind: 'capknight', x: 148, y: 50 }]);
     tough(m!);
-    Object.assign(m!.body, { state: 'air', z: 20, vz: 0 });
-    run(sim, cast('st_orb'), 0.5);
-    const z = m!.body.z;
-    run(sim, none, 2);
-    expect(m!.body.state).toBe('air');
-    expect(m!.body.z).toBeCloseTo(z, 0);
-    expect(m!.body.airHits).toBe(0);
+    const first = hits(run(sim, cast('st_orb'), 1.5)).length;
+    expect(m!.slow.left).toBeGreaterThan(0);
+    expect(m!.slow.amount).toBeCloseTo(0.3);
+    expect(first + hits(run(sim, none, 2)).length).toBe(8);
   });
 
-  it('땅의 적은 맞지 않는다', () => {
+  it('보스(뜨지 않음)도 8번 맞고 느려진다', () => {
     const sim = room('staff');
-    const [m] = sim.spawn([{ kind: 'mushroom', x: 148, y: 50 }]);
-    expect(hits(run(sim, cast('st_orb'), 3.5))).toEqual([]);
-    expect(m!.body.state).toBe('idle');
+    const [m] = sim.spawn([{ kind: 'mossbear', x: 148, y: 50 }]);
+    tough(m!);
+    const first = hits(run(sim, cast('st_orb'), 1.5)).length;
+    expect(m!.body.state).not.toBe('air');
+    expect(m!.slow.amount).toBeCloseTo(0.3);
+    expect(first + hits(run(sim, none, 2)).length).toBe(8);
   });
 });
 

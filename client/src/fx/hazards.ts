@@ -127,10 +127,10 @@ export class HazardLayer {
       });
     }
 
-    // 무중력: 떠 있는 동안 하늘색 반짝이가 몸 둘레 납작한 궤도를 돈다. 뒤쪽 반은 진한 1px, 몸 폭 body 안은 가려짐
+    // 중압: 감속 동안 하늘색 반짝이가 몸 둘레 납작한 궤도를 돈다 (그림은 옛 무중력 fx.spell.weightless 그대로). 뒤쪽 반은 진한 1px, 몸 폭 body 안은 가려짐
     const wl = fx.spell.weightless, deep = colorInt('global.fx.spellDeep');
     for (const m of sim.alive) {
-      if (!(m.lifted > 0) || m.body.state !== 'air') continue;
+      if (!(m.pressed > 0) || m.slow.left <= 0) continue;
       const { sx, sy } = project(m.body.x, m.body.y, m.body.z);
       for (let i = 0; i < wl.sparks; i++) {
         const ang = now * wl.spin + (i / wl.sparks) * Math.PI * 2;

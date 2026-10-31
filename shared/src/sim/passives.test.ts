@@ -1,4 +1,4 @@
-// 계열 보조 노드 (skills.md 1~3장): 열림·포인트 규칙, 스킬 정의 변경(withPerks), 판정 효과(공중 피해·연소·무중력·회피·스킬 중 받는 피해). 무거운 손은 charge.test.ts (Lv1 ATK 10)
+// 계열 보조 노드 (skills.md 1~3장): 열림·포인트 규칙, 스킬 정의 변경(withPerks), 판정 효과(먼 적 피해·연소·중압·회피·스킬 중 받는 피해). 무거운 손은 charge.test.ts (Lv1 ATK 10)
 import { describe, expect, it } from 'vitest';
 import { skillDef, weaponDef, type ActionDef } from '../actions';
 import { TICK } from '../constants';
@@ -13,11 +13,7 @@ import { hitMonster } from './strike';
 
 const gs = weaponDef('greatsword'), st = weaponDef('staff');
 const player = (weapon = gs, ids: string[] = []) => ({ ...newPlayerState({ x: 100, y: 50 }), perks: perksOf(weapon, Object.fromEntries(ids.map((id) => [id, { points: 1 }]))) });
-const mon = (air = false) => {
-  const m = Object.assign(newMonster(1, 'capknight', 116, 50), { hp: 5000, maxHp: 5000 });
-  if (air) m.body.state = 'air';
-  return m;
-};
+const mon = (x = 116, kind = 'capknight') => Object.assign(newMonster(1, kind, x, 50), { hp: 5000, maxHp: 5000 });
 const plain = (coef: number): ActionDef => ({ ...skillDef('gs_launch'), coef, flags: [] });
 
 describe('보조 노드 규칙', () => {
@@ -50,7 +46,7 @@ describe('보조 노드 규칙', () => {
 
   it('효과는 포인트별 값 (배열이 아니면 그대로)', () => {
     const at = (id: string, points: number) => perksOf(gs, { [id]: { points } });
-    expect([1, 2, 3].map((n) => at('gs_keenedge', n).airDamageMul)).toEqual([1.15, 1.22, 1.3]);
+    expect([1, 2, 3].map((n) => at('gs_keenedge', n).far?.mul)).toEqual([1.15, 1.22, 1.3]);
     expect(at('gs_heavyhand', 3)).toEqual({ chargeSpeedMul: 1.6, chargeTakenMul: 0.5 });
     expect(at('gs_steadfast', 2)).toEqual({ skillArmor: true, skillTakenMul: 0.9 });
     expect(perksOf(st, { st_burn: { points: 2 } }).burn).toEqual({ element: 'fire', time: 3, takenMul: 1.22 });
@@ -79,10 +75,11 @@ describe('스킬 정의 변경', () => {
 });
 
 describe('판정 효과', () => {
-  it('날 선 칼날: 공중 대상 피해 +15% (땅 대상은 그대로)', () => {
+  it('날 선 칼날: 48px 넘게 떨어진 적 피해 +15% (가까운 적은 그대로, 보스도 됨)', () => {
     const p = player(gs, ['gs_keenedge']);
-    expect(hitMonster(p, plain(1000), mon(true), 1).damage).toBe(115);
-    expect(hitMonster(p, plain(1000), mon(), 1).damage).toBe(100);
+    expect(hitMonster(p, plain(1000), mon(160), 1).damage).toBe(115);
+    expect(hitMonster(p, plain(1000), mon(160, 'mossbear'), 1).damage).toBe(115);
+    expect(hitMonster(p, plain(1000), mon(140), 1).damage).toBe(100);
   });
 
   it('연소: 화염 스킬에 맞은 몬스터는 3초 동안 누구에게나 +15%', () => {
@@ -97,15 +94,19 @@ describe('판정 효과', () => {
     expect(m2.burn.left).toBe(0);
   });
 
-  it('무중력: 내가 띄운 몬스터는 떠 있는 동안 +10%, 땅에서 다시 맞으면 지워짐', () => {
-    const m = mon();
-    hitMonster(player(st, ['st_weightless']), skillDef('st_lift'), m, 1);
-    expect(m.body.state).toBe('air');
-    expect(m.lifted).toBeCloseTo(1.1);
+  it('중압: 내가 느리게 한 몬스터(보스 포함)는 느려진 동안 누구에게나 +10%, 감속이 끝나면 지워짐', () => {
+    const m = mon(116, 'mossbear');
+    hitMonster(player(st, ['st_weightless']), skillDef('st_gravfield'), m, 1);
+    expect(m.slow.left).toBeGreaterThan(0);
+    expect(m.pressed).toBeCloseTo(1.1);
     expect(hitMonster(player(), plain(1000), m, 1).damage).toBe(110);
-    m.body.state = 'idle';
-    hitMonster(player(), plain(1000), m, 1);
-    expect(m.lifted).toBe(0);
+    m.slow.left = 0;
+    expect(hitMonster(player(), plain(1000), m, 1).damage).toBe(100);
+    expect(m.pressed).toBe(0);
+    // 감속 없는 스킬은 표식을 걸지 않음
+    const m2 = mon();
+    hitMonster(player(st, ['st_weightless']), skillDef('st_lift'), m2, 1);
+    expect(m2.pressed).toBe(0);
   });
 
   it('가벼운 발: 회피 거리 ×1.5, 쿨 0.6 → 0.4', () => {

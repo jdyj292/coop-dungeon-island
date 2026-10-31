@@ -69,7 +69,7 @@
     "frozen": { "shards": [[-4, -14], [1, -16], [5, -13]] },
     "slowed": { "_note": "감속 중 몬스터 발밑 눈송이 (차례로 반짝임)", "flakes": [[-8, -1], [0, 2], [8, -1]], "twinkleSec": 0.2 },
     "burning": { "_note": "보조 노드 연소: 표식 동안 몸 둘레 불씨 [dx, dy](발밑·높이 기준)가 riseSec마다 rise px 떠오름, 좌우 sway px 흔들림. bigUntil까지 2×2, fadeFrom부터 바둑판으로 사라짐. 머리 위 flame(W 흰·G 금·O 주황, 맨 아랫줄이 flameY) 끝이 flickerSec마다 일렁임", "embers": [[-8, -6], [6, -10], [-3, -3], [9, -4]], "riseSec": 0.8, "rise": 14, "sway": 1, "bigUntil": 0.45, "fadeFrom": 0.6, "flame": ["..G..", ".GW..", ".GWG.", "OGWGO", ".OGO."], "flameY": -15, "flickerSec": 0.12 },
-    "weightless": { "_note": "보조 노드 무중력: 떠 있는 동안 반짝이 sparks개가 몸 둘레 납작한 궤도(가로 rx·세로 ry, 몸 높이 y)를 spin rad/초로 돎. 뒤쪽 반은 진한 1px, 몸 폭 body 안은 가려짐", "sparks": 3, "rx": 10, "ry": 3, "y": -7, "spin": 3, "body": 5 },
+    "weightless": { "_note": "보조 노드 중압(옛 무중력 그림 그대로): 감속 동안 반짝이 sparks개가 몸 둘레 납작한 궤도(가로 rx·세로 ry, 몸 높이 y)를 spin rad/초로 돎. 뒤쪽 반은 진한 1px, 몸 폭 body 안은 가려짐", "sparks": 3, "rx": 10, "ry": 3, "y": -7, "spin": 3, "body": 5 },
     "teleport": { "sec": 0.26, "count": 6, "spread": 7, "column": 14, "columnSec": 0.1, "visibleStart": 0.15, "visibleEnd": 0.8 }
   },
   "branch": {

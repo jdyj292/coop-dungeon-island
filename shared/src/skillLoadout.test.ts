@@ -62,7 +62,7 @@ describe('던전용 빌드', () => {
     expect(buildSkill(gs, e, 'gs_shoulder')).toBeUndefined();
     expect(weaponSkills(gs, e)[0]?.id).toBe('gs_whirl');
     // 다른 계열 보조는 효과 없음
-    expect(perksOf(gs, e).airDamageMul).toBeUndefined();
+    expect(perksOf(gs, e).far).toBeUndefined();
     expect(perksOf(gs, e).chargeSpeedMul).toBe(1.45);
   });
 
@@ -70,7 +70,7 @@ describe('던전용 빌드', () => {
     const e = effectiveBuild(gs, b, { level: 3, branch: 'B' });
     expect(Object.keys(e)).toEqual(['gs_launch', 'gs_earthsplit', 'gs_wave', 'gs_keenedge']);
     expect(slotSkills(gs, e)).toEqual(['gs_launch', 'gs_earthsplit', 'gs_wave', null]);
-    expect(perksOf(gs, e).airDamageMul).toBe(1.3);
+    expect(perksOf(gs, e).far?.mul).toBe(1.3);
   });
 
   it('다른 무기 노드는 들어가지 않음', () => {

@@ -73,7 +73,7 @@ export function mirrorMonster(s: MonsterSnap, t: number, prev?: Monster): Monste
   m.sleep = s.state === 'sleep' ? 1 : 0;
   m.slow = { left: s.slowed ? 1 : 0, amount: 0 };
   m.burn = { left: s.burning ? 1 : 0, mul: 1 };
-  m.lifted = s.weightless ? 1 : 0;
+  m.pressed = s.pressed ? 1 : 0;
   m.hopT = m.moving ? el : 0;
   m.hp = Math.round((s.hpRatio / 255) * m.maxHp);
   return m;

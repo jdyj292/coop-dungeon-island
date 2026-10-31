@@ -81,7 +81,7 @@ export function syncMonster(s: MonsterState, m: Monster, now: number): void {
   s.superArmor = hasArmor(m);
   s.slowed = m.slow.left > 0;
   s.burning = m.burn.left > 0;
-  s.weightless = m.lifted > 0 && m.body.state === 'air';
+  s.pressed = m.pressed > 0 && m.slow.left > 0;
 }
 
 /** 몬스터·장판 목록 맞추기 (새로 생기면 추가, 퇴장하면 삭제) */

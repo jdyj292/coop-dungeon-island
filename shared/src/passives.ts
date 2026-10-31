@@ -1,6 +1,6 @@
 // 패시브 효과 (docs/skills.md 1~3장, 데이터 shared/data/passives.json): 배운 패시브의 effect(포인트별 값)를 모은 perks,
 // 스킬 정의에 붙는 효과(슈퍼아머·투사체 사거리·지속)는 withPerks로 정의를 바꾸고,
-// 나머지(충전 속도·충전 중·스킬 중 받는 피해·공중 피해·연소·무중력·회피, 공용 패시브 스킬 캔슬·기상 회피와 그 쿨)는 PlayerState.perks를 판정에서 본다 (sim/strike.ts, playerHurt.ts, player.ts·charge.ts)
+// 나머지(충전 속도·충전 중·스킬 중 받는 피해·먼 적 피해·연소·중압·회피, 공용 패시브 스킬 캔슬·기상 회피와 그 쿨)는 PlayerState.perks를 판정에서 본다 (sim/strike.ts, playerHurt.ts, player.ts·charge.ts)
 import type { ActionDef, WeaponDef } from './actions';
 import { PASSIVES, WEAPONS } from './data/load';
 import type { PassiveEffect } from './data/schema';

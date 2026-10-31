@@ -25,10 +25,9 @@ const current: PosOf = (m) => ({ x: m.body.x, y: m.body.y, airborne: m.body.stat
  * dir = 밀려나는 방향, from = 판정 기준 (pull은 area 중심, 없으면 기준 자리로 끌어옴)
  */
 export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: number, from?: Origin): StrikeHit {
-  const wasAir = m.body.state === 'air';
-  // 무중력 표식은 떠 있는 동안만: 땅에 있던 몬스터가 맞으면 지운다 (다시 띄운 사람 기준으로 새로 건다)
-  if (!wasAir) m.lifted = 0;
-  const mul = takenMul(p, m, wasAir);
+  // 중압 표식은 감속 동안만: 감속이 끝났으면 지운다 (다시 느리게 한 사람 기준으로 새로 건다)
+  if (m.slow.left <= 0) m.pressed = 0;
+  const mul = takenMul(p, m);
   applyHit(m.body, { dir, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });
   if (def.flags?.includes('pull') && from) pullToward(m, def.area ? areaCenter(from, def.area.at) : from);
   // 잠든 몬스터는 맞으면 바로 깨어남 (그 몬스터만, dungeon.md 5장)
@@ -46,20 +45,22 @@ export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: numb
   return { m, damage, ko };
 }
 
-/** 피해 배율 (skills.md 보조 노드): 날 선 칼날(공중 대상, 내 노드), 연소·무중력(몬스터에 걸린 표식, 누가 때려도) */
-function takenMul(p: PlayerState, m: Monster, wasAir: boolean): number {
+/** 피해 배율 (skills.md 보조 노드): 날 선 칼날(떨어진 적, 내 노드), 연소·중압(몬스터에 걸린 표식, 누가 때려도) */
+function takenMul(p: PlayerState, m: Monster): number {
   let mul = 1;
-  if (wasAir) mul *= (p.perks?.airDamageMul ?? 1) * (m.lifted || 1);
+  const far = p.perks?.far;
+  if (far && Math.hypot(m.body.x - p.pos.x, m.body.y - p.pos.y) > far.minDist) mul *= far.mul;
   if (m.burn.left > 0) mul *= m.burn.mul;
+  if (m.slow.left > 0 && m.pressed > 0) mul *= m.pressed;
   return mul;
 }
 
-/** 표식 걸기: 연소 = 그 원소 스킬 적중, 무중력 = 띄우기·체공 판정으로 떠 있게 됨 */
+/** 표식 걸기: 연소 = 그 원소 스킬 적중, 중압 = 감속 판정 적중 */
 function markMonster(p: PlayerState, def: ActionDef, m: Monster): void {
   if (m.body.ko) return;
-  const burn = p.perks?.burn, lift = p.perks?.lift;
+  const burn = p.perks?.burn, press = p.perks?.press;
   if (burn && def.element === burn.element) m.burn = { left: burn.time, mul: burn.takenMul };
-  if (lift && m.body.state === 'air' && (def.flags?.includes('launch') || def.flags?.includes('hold'))) m.lifted = lift.takenMul;
+  if (press && def.status?.type === 'slow') m.pressed = press.takenMul;
 }
 
 /** 끌어당김: 몬스터를 기준점 쪽으로 (좌우는 밀림, 깊이는 pushY). 슈퍼아머·고정형은 안 끌려옴 */

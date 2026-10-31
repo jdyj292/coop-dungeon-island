@@ -148,11 +148,13 @@ export const passive = z.object({
     skillArmor: z.literal(true).optional(),
     /** 스킬 시전 중 받는 피해 배율 (굳건함 2·3포인트) */
     skillTakenMul: perPoint(pos).optional(),
-    airDamageMul: perPoint(pos).optional(),
+    /** 떨어진 적 피해 (날 선 칼날): 나와 적의 거리 minDist(px) 넘으면 × mul */
+    far: z.object({ minDist: pos, mul: perPoint(pos) }).strict().optional(),
     projectileRangeMul: perPoint(pos).optional(),
     lastingMul: perPoint(pos).optional(),
     burn: z.object({ element: z.enum(['fire', 'ice']), time: perPoint(sec), takenMul: perPoint(pos) }).strict().optional(),
-    lift: z.object({ takenMul: perPoint(pos) }).strict().optional(),
+    /** 중압: 내가 감속시킨 적은 감속 동안 받는 피해 × takenMul */
+    press: z.object({ takenMul: perPoint(pos) }).strict().optional(),
     dodge: z.object({ distanceMul: perPoint(pos), cooldownAdd: perPoint(z.number()) }).strict().optional(),
     cancel: z.object({ windupMul: z.array(pos).min(1) }).strict().optional(),
     quickRise: z.literal(true).optional(),
