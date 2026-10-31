@@ -60,6 +60,18 @@
     "pointDesc": ["다른 스킬 쿨 -0.5초", "다른 스킬 쿨 -0.75초", "다른 스킬 쿨 -1초"],
     "effect": { "cycle": { "sec": [0.5, 0.75, 1] } }
   },
+  "gs_phantom": {
+    "id": "gs_phantom", "weapon": "greatsword", "branch": "B", "unlockLevel": 12, "name": "잔상",
+    "desc": "베기·검기 스킬이 0.5초 뒤 같은 자리에서\n반투명 잔상으로 한 번 더 (회오리 같은 원 판정 제외)",
+    "pointDesc": ["잔상 50%", "잔상 55%", "잔상 60%"],
+    "effect": { "phantom": { "delay": 0.5, "mul": [0.5, 0.55, 0.6] } }
+  },
+  "gs_dance": {
+    "id": "gs_dance", "weapon": "greatsword", "branch": "B", "unlockLevel": 14, "name": "검의 춤",
+    "desc": "스킬 캔슬로 이은 스킬이 세진다\n(공용 패시브 스킬 캔슬이 있어야 이을 수 있음)",
+    "pointDesc": ["이은 스킬 +20%", "이은 스킬 +25%", "이은 스킬 +30%"],
+    "effect": { "dance": { "mul": [1.2, 1.25, 1.3] } }
+  },
   "st_affinity": {
     "id": "st_affinity", "weapon": "staff", "branch": "A", "unlockLevel": 3, "name": "원소 친화",
     "desc": "장판·지속 스킬(불꽃 기둥·부유 구슬·얼음\n장판)의 지속시간·횟수 증가",

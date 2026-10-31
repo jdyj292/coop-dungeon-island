@@ -13,7 +13,7 @@ interface Flying {
   x0: number;
   y0: number;
   dir: number;
-  /** 깊이 방향 성분 (마법탄은 0) */
+  /** 깊이 방향 성분 (마법탄은 십자 검기 사방·교차점만) */
   dy: number;
   t0: number;
   endAt: number;
@@ -21,7 +21,7 @@ interface Flying {
 
 export class RemoteShots {
   private monster = new Map<number, Flying & { p: Projectile }>();
-  private bolts = new Map<number, Flying & { kind: string; r: number; end?: S2C['boltEnd'] }>();
+  private bolts = new Map<number, Flying & { kind: string; r: number; ghost?: boolean; end?: S2C['boltEnd'] }>();
 
   /** 처리했으면 true */
   on(type: string, msg: unknown, now: number): boolean {
@@ -33,7 +33,7 @@ export class RemoteShots {
       if (pr) pr.endAt = now;
     } else if (type === 'bolt') {
       const m = msg as S2C['bolt'];
-      this.bolts.set(m.id, { kind: m.kind, r: m.r, speed: m.speed, x0: m.x, y0: m.y, dir: m.dir, dy: 0, t0: m.t0, endAt: Infinity });
+      this.bolts.set(m.id, { kind: m.kind, r: m.r, ghost: m.ghost, speed: m.speed, x0: m.x, y0: m.y, dir: m.dir, dy: m.dy ?? 0, t0: m.t0, endAt: Infinity });
     } else if (type === 'boltEnd') {
       const m = msg as S2C['boltEnd'], b = this.bolts.get(m.id);
       if (b) Object.assign(b, { endAt: now, end: m });
@@ -52,7 +52,7 @@ export class RemoteShots {
     const bolts: ShotView[] = [];
     for (const [id, b] of this.bolts) {
       if (t < b.endAt) {
-        bolts.push({ x: x(b), y: b.y0, dir: b.dir, id: b.kind, r: b.r });
+        bolts.push({ x: x(b), y: b.y0 + b.dy * d(b), dir: b.dir, id: b.kind, r: b.r, ghost: b.ghost });
         continue;
       }
       this.bolts.delete(id);

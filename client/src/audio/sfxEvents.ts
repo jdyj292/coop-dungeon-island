@@ -3,7 +3,7 @@ import type { SimEvent } from '@game/shared';
 
 /** 전용 그림이 있는 예약 판정의 소리 (SK-4 2b, look → 효과음) */
 const LOOK_SOUNDS: Record<string, string> = {
-  chain: 'chain_hop', scar: 'scar_burst', blast: 'fire_blast', stick: 'throw_stick', quake: 'aftershock', orbEnd: 'orb_burst', rise: 'collapse_rise',
+  chain: 'chain_hop', scar: 'scar_burst', blast: 'fire_blast', stick: 'throw_stick', quake: 'aftershock', orbEnd: 'orb_burst', rise: 'collapse_rise', meet: 'cross_meet', cut: 'flash_cut', phantom: 'phantom_slash',
 };
 
 /** 변형 예약 판정 (look이 있으면 그 소리, 아니면 반복·후속 = 그 행동의 active 소리, 해제 = 적중 소리). 온라인 echo 메시지도 같은 규칙 */

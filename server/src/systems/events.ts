@@ -21,7 +21,7 @@ export function eventsFor(events: SimEvent[], now: number, combos: Map<string, n
       out.push({ type: 'teamMilestone', msg: { count: e.count } });
     } else if (e.type === 'bolt') {
       const b = e.bolt;
-      out.push({ type: 'bolt', msg: { id: b.id, kind: b.def.id, pid: b.pid, x: int(b.x), y: int(b.y), dir: b.dir, t0: now, speed: b.def.projectile!.speed, r: b.def.projectile!.radius } });
+      out.push({ type: 'bolt', msg: { id: b.id, kind: b.def.id, pid: b.pid, x: int(b.x), y: int(b.y), dir: b.dir, t0: now, speed: b.def.projectile!.speed, r: b.def.projectile!.radius, ...(b.dy ? { dy: b.dy } : {}), ...(b.ghost ? { ghost: true } : {}) } });
     } else if (e.type === 'boltEnd') {
       const b = e.bolt;
       out.push({ type: 'boltEnd', msg: { id: b.id, reason: b.hit.length ? 'hit' : 'range', x: int(b.x), y: int(b.y) } });

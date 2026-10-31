@@ -9,7 +9,7 @@ export type FxGrade = 'light' | 'medium' | 'heavy' | 'ultimate';
 
 
 /** 플레이어 행동 (평타·대시·스킬). 스킬이면 mp·슈퍼아머가 있고, 특수 필드(재입력·후속·반복·해제·벽꿍 판정)가 있을 수 있음. 형식은 data/schema.ts */
-export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp' | 'superArmor' | 'repeat' | 'element' | 'lasting' | 'chain' | 'mark' | 'allyBuff' | 'chargeRule' | 'armorBreak' | 'keepDown' | 'repeatEnd'>> & Partial<Omit<VariantExtra, 'name' | 'desc' | 'repeat'>>;
+export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp' | 'superArmor' | 'repeat' | 'element' | 'lasting' | 'chain' | 'mark' | 'allyBuff' | 'chargeRule' | 'armorBreak' | 'keepDown' | 'repeatEnd' | 'trail'>> & Partial<Omit<VariantExtra, 'name' | 'desc' | 'repeat'>>;
 export type WeaponDef = Weapon;
 
 export function weaponDef(id: string): WeaponDef {
@@ -34,6 +34,9 @@ export function scaleExtraCoefs(out: ActionDef, k: number): void {
     };
   }
   if (out.mark) out.mark = { ...out.mark, coef: out.mark.coef * k };
+  if (out.trail) out.trail = { ...out.trail, coef: out.trail.coef * k };
+  const meet = out.projectile?.meet;
+  if (meet) out.projectile = { ...out.projectile!, meet: { ...meet, coef: meet.coef * k } };
 }
 
 /** 행동 시작부터 t초 지났을 때의 구간. 끝났으면 null */
@@ -82,6 +85,8 @@ export interface FighterInput {
   charge?: ChargeInput;
   /** 공용 패시브 스킬 캔슬: 스킬 recovery에서 다른 스킬을 받고, 그 스킬의 windup에 이 배율 (없으면 스킬 → 스킬 불가) */
   cancelWindupMul?: number;
+  /** 보조 검의 춤: 스킬 캔슬로 이은 스킬 계수 배율 (없으면 1) */
+  cancelCoefMul?: number;
 }
 
 export type FighterEvent =
@@ -103,7 +108,7 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
   // 캔슬: 평타·대시 recovery → 스킬만 가능, 스킬 → 스킬은 공용 패시브 스킬 캔슬이 있을 때만 (combat.md 2장). 재입력은 스킬 recovery에서도
   const cancel = !!input.skill && phase === 'recovery' && f.run!.kind === 'skill' && !input.chain && !!input.cancelWindupMul;
   if (input.skill && (!f.run || (phase === 'recovery' && (f.run.kind !== 'skill' || input.chain || cancel)))) {
-    start(cancel ? withWindupMul(input.skill, input.cancelWindupMul!) : input.skill, 'skill', 0);
+    start(cancel ? withWindupMul(input.skill, input.cancelWindupMul!, input.cancelCoefMul) : input.skill, 'skill', 0);
   } else if (input.attack) {
     if (!f.run && input.dashing) start(weapon.dash, 'dash', 0);
     else if (!f.run) start(weapon.basic[f.nextStep]!, 'basic', f.nextStep);
@@ -134,15 +139,16 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
   return events;
 }
 
-const windupCache = new WeakMap<ActionDef, Map<number, ActionDef>>();
+const windupCache = new WeakMap<ActionDef, Map<string, ActionDef>>();
 
-/** 준비(windup)만 mul배 늘린 정의 (스킬 캔슬로 이은 스킬, id·쿨·MP는 그대로) */
-export function withWindupMul(def: ActionDef, mul: number): ActionDef {
-  if (mul === 1) return def;
+/** 준비(windup)만 mul배 늘린 정의 (스킬 캔슬로 이은 스킬, id·쿨·MP는 그대로). coefMul = 검의 춤 계수 배율 (반복·연발 판정도 이 계수) */
+export function withWindupMul(def: ActionDef, mul: number, coefMul = 1): ActionDef {
+  if (mul === 1 && coefMul === 1) return def;
   let byMul = windupCache.get(def);
   if (!byMul) windupCache.set(def, (byMul = new Map()));
-  let out = byMul.get(mul);
-  if (!out) byMul.set(mul, (out = { ...def, phases: { ...def.phases, windup: def.phases.windup * mul } }));
+  const key = `${mul}/${coefMul}`;
+  let out = byMul.get(key);
+  if (!out) byMul.set(key, (out = { ...def, coef: def.coef * coefMul, phases: { ...def.phases, windup: def.phases.windup * mul } }));
   return out;
 }
 

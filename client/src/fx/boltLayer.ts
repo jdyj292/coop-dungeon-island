@@ -5,6 +5,7 @@ import fx from '../../data/fx.json';
 import { project } from '../view/layout';
 import { dot } from './layer';
 import { drawShot, type ShotView } from './shotDraw';
+import { checker } from './tier3bFx';
 import { col, orb, px } from './spellDraw';
 
 /** 이펙트 층(5000)보다 아래, 캐릭터(깊이 = y)보다 위 */
@@ -22,8 +23,8 @@ export class BoltLayer {
     g.clear();
     for (const p of list) {
       const { sx, sy } = project(p.x, p.y, b.height), back = -p.dir;
-      // 계열 스킬 투사체 (검기·얼음 창)는 자기 그림
-      if (drawShot(g, sx, sy, p)) continue;
+      // 계열 스킬 투사체 (검기·얼음 창)는 자기 그림, 보조 잔상이 다시 쏜 것은 바둑판 반쪽
+      if (drawShot(p.ghost ? checker(g) : g, sx, sy, p)) continue;
       // 꼬리: 앞 두 칸은 3px 두께, 뒤로 갈수록 1px·진한 색·바둑판으로 옅어짐
       for (let i = 1; i <= b.tail; i++) {
         const tx = sx + back * (b.radius + i - 1), a = 1 - i / (b.tail + 1);

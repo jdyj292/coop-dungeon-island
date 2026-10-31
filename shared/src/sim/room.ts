@@ -21,7 +21,7 @@ import { PositionHistory, type PastPos } from './history';
 import { HitLog } from './hitLog';
 import { perksOf } from '../passives';
 import { phaseIsActive, strike, type PosOf, type StrikeHit } from './strike';
-import { spawnBolt, type Bolt, type Cast } from './bolts';
+import { spawnBolt, volley, type Bolt, type Cast } from './bolts';
 import { afterLand, auraSlow, overheatShot, skillActive, slam, stepEchoes, stepPlayerBolts, tickPerkTimers } from './echoes';
 import { markScar } from './scar';
 import type { Echo } from './skillExtras';
@@ -294,10 +294,13 @@ export class RoomSim {
     } else comboHit(sp.combo, hits);
   }
 
-  /** 마법탄 발사 (lanes면 깊이마다 한 발씩) */
-  shoot(sp: SimPlayer, def: ActionDef, events: SimEvent[], cast?: Cast): void {
-    for (const dy of def.projectile?.lanes ?? [0]) {
-      const b = spawnBolt(this.nextId(), sp.pid, def, sp.state.pos.x, sp.state.pos.y + dy, sp.state.facing, undefined, cast);
+  /** 마법탄 발사 (lanes면 깊이마다, aims면 방향마다 한 발씩, bolts.volley). from = 쏘는 자리 (보조 잔상: 처음 쏜 자리, 반투명) */
+  shoot(sp: SimPlayer, def: ActionDef, events: SimEvent[], cast?: Cast, from?: { x: number; y: number; facing: number }): void {
+    const o = from ?? { ...sp.state.pos, facing: sp.state.facing };
+    for (const l of volley(def, o.x, o.y, o.facing)) {
+      const b = spawnBolt(this.nextId(), sp.pid, def, l.x, l.y, l.dir, undefined, cast);
+      if (l.dy) b.dy = l.dy;
+      if (from) b.ghost = true;
       this.bolts.push(b);
       events.push({ type: 'bolt', bolt: b });
     }

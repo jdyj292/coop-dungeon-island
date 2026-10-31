@@ -257,7 +257,7 @@ export class CombatStage {
     // 순간이동이 끝나는 순간: 나타나는 자리에 점
     if (this.wasBackstep && !p.backstep && this.playerView.teleport) this.teleportAt(p);
     this.wasBackstep = !!p.backstep;
-    this.bolts.draw(this.sim.bolts.map((b) => ({ x: b.x, y: b.y, dir: b.dir, id: b.def.id, r: b.def.projectile?.radius })));
+    this.bolts.draw(this.sim.bolts.map((b) => ({ x: b.x, y: b.y, dir: b.dir, id: b.def.id, r: b.def.projectile?.radius, ghost: b.ghost })));
     this.drawDt = 0;
 
     this.sim.alive.forEach((m, i) => placeMonster(this.scene, this.view(m), data, m, this.clock, i));

@@ -81,7 +81,7 @@ export interface S2C {
   projSpawn: { id: number; kind: string; owner: number; x: number; y: number; z: number; dir: number; dy: number; t0: number };
   projEnd: { id: number; reason: 'hit' | 'range'; x: number; y: number };
   /** 플레이어 투사체 (스태프 평타·검기·얼음 창). kind = 행동 id, pid = 쏜 사람, speed·r = 변형까지 적용한 속도·판정 반지름 (그리기용) */
-  bolt: { id: number; kind: string; pid: string; x: number; y: number; dir: number; t0: number; speed: number; r: number };
+  bolt: { id: number; kind: string; pid: string; x: number; y: number; dir: number; t0: number; speed: number; r: number; dy?: number; ghost?: boolean };
   boltEnd: { id: number; reason: 'hit' | 'range'; x: number; y: number };
   /** 변형 예약 판정 순간 (반복·후속·해제, sim/skillExtras.ts). act = 스킬 id, 자리·방향은 판정 기준 */
   echo: { pid: string; kind: 'repeat' | 'after' | 'shatter'; act: string; x: number; y: number; facing: number; t: number; look?: EchoLook; fx?: number; fy?: number };

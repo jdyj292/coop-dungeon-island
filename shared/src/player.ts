@@ -162,7 +162,7 @@ export function stepPlayerState(
   // 대시 공격은 좌우를 누르며 달릴 때만 (위아래만 누르며 달리면 평타, combat.md 1장)
   const chain = !!skill && canReinput(p, skill);
   out.events = stepFighter(p.fighter, weapon, {
-    attack: input.attack, skill, dashing: running && input.x !== 0, chain, charge: chargeInput(p, weapon, input), cancelWindupMul: p.perks?.cancelWindupMul,
+    attack: input.attack, skill, dashing: running && input.x !== 0, chain, charge: chargeInput(p, weapon, input), cancelWindupMul: p.perks?.cancelWindupMul, cancelCoefMul: p.perks?.dance?.mul,
   }, dt);
   for (const e of out.events) {
     // 쿨타임은 windup 진입 시점부터 (balance.md 2장)

@@ -1,13 +1,13 @@
 // 행동 → 마법 연출 연결 (MVP 보충 ST-2a). 무엇을 그릴지는 데이터로 고른다:
 // 포즈 fx(poses.json: ready·gather·skyRaise 등 준비 = spark, bolt·thrust = bolt, area·channel = circle, plantDeep = stamp) + 행동 판정(area 원 = 화염 폭발, status freeze = 얼음 장판, slow = 동토 장판).
 // 계열 스킬(fx.json branch.looks: 불꽃 기둥·부유 구슬·끌어올림·중력 우물·중력장)은 원 판정 자리에 자기 그림 (spellBranch·spellGravity), 반복 판정마다 하나씩.
-// 원형 마법 준비 표적은 불 속성이면 금색, 아니면 하늘색
+// 원형 마법 준비 표적은 불 속성이면 금색, 아니면 하늘색. 대검 B 3단계 예약 판정(교차점·반환·잔상·이중 일섬)은 tier3bFx
 import { areaCenter, blastDef, type ActionDef, type EchoLook, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
 import fx from '../../data/fx.json';
 import type { FxContext } from './hitPackage';
-import type { Effect } from './layer';
+import type { Effect, FxLayer } from './layer';
 import { dust, ring, sparks } from './particles';
 import { cyclone, lookOf } from './branchFx';
 import { boltHit, magicCircle, muzzle, spark, stampImpact } from './spell';
@@ -17,6 +17,8 @@ import { gravField, gravityWell } from './spellGravity';
 import { iceField, slowField } from './spellIce';
 import { chainBolt, orbBurst, quakeRing, scarBurst, stickSlash } from './tier2Fx';
 import { collapseField, collapsePulse, risePillars } from './tier3Fx';
+import { flashCut, flashLine, ghosted, meetBurst } from './tier3bFx';
+import { actionSmear } from './actionSmear';
 
 /** 시전자 (논리 좌표) */
 export interface Caster {
@@ -112,6 +114,13 @@ export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' |
   }
   const box = def.hitbox;
   if (!box) return;
+  // 이중 일섬 두 번째: 같은 한 줄 섬광
+  if (lookOf(def.id) === 'flash') {
+    const { sx, sy } = project(at.x, at.y);
+    c.layer.add(flashLine(sx, sy, at.facing, box.width));
+    c.shake.start(fx.downShake.sec, fx.downShake.px);
+    return;
+  }
   for (let d = box.forward; d <= box.forward + box.width; d += 16) {
     const { sx, sy } = project(at.x + d * at.facing, at.y);
     dust(sx, sy, fx.dust.bounce).forEach((e) => c.layer.add(e));
@@ -139,6 +148,15 @@ function tier2Echo(c: Pick<FxContext, 'layer' | 'shake'>, look: EchoLook, def: A
     const a = areaCenter(at, def.area.at), p = project(a.x, a.y);
     risePillars(p.sx, p.sy, def.area.width ?? 64, def.area.depth ?? 32).forEach((e) => c.layer.add(e));
     c.shake.start(fx.downShake.sec * 2, fx.downShake.px * 2);
+  }
+  else if (look === 'meet') {
+    meetBurst(sx, sy, r).forEach((e) => c.layer.add(e));
+    c.shake.start(fx.downShake.sec, fx.downShake.px);
+  } else if (look === 'cut') c.layer.add(flashCut(sx, sy, at.facing));
+  // 잔상: 그 스킬의 베기 그림을 처음 자리에 바둑판 반쪽으로
+  else if (look === 'phantom') {
+    const ghost = { add: (e: Effect) => c.layer.add(ghosted(e)) } as unknown as FxLayer;
+    actionSmear(ghost, def, () => ({ sx, sy, facing: at.facing }));
   }
   else if (look === 'blast') {
     fireBurst(sx, sy, r).forEach((e) => c.layer.add(e));

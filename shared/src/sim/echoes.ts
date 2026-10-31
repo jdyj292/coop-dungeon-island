@@ -1,6 +1,6 @@
 // RoomSim 특수 판정 연결 (room.ts에서 분리): 예약 판정(반복·후속·연발·해제·벽꿍, skillExtras.ts)과
 // SK-4 1차b 새 판정 — 투사체 왕복·끝 폭발·분열(bolts.ts), 검흔 터짐(scar.ts), 번개 연쇄(chain.ts), 가속장(아군 버프),
-// SK-4 3차 보조 — 여진·올려 검기·검기 순환·과열·구슬 확장 끝 폭발·역장 (효과 값은 PlayerState.perks)
+// SK-4 3차 보조 — 여진·올려 검기·검기 순환·과열·구슬 확장 끝 폭발·역장 (효과 값은 PlayerState.perks), SK-7 잔상·교차점·반환 (phantom.ts)
 import { skillDef, type ActionDef } from '../actions';
 import { knockDown } from '../body';
 import { PLAYER } from '../data/load';
@@ -13,12 +13,14 @@ import type { RoomSim } from './room';
 import { hopTarget, markScar, scarBurstDef, takeScars } from './scar';
 import { echoesOf, placeEcho, shatterDef, strikeEcho, thawed, wallDef, type Echo } from './skillExtras';
 import { hitMonster, type StrikeHit } from './strike';
+import { strikeTarget, tier3bEchoes, trailEchoes } from './phantom';
 import type { SimEvent, SimPlayer } from './types';
 
 /** 스킬 active 순간: 예약 판정(연발은 같은 시전), 연쇄 첫 판정 예약, 아군 버프, 보조 올려 검기·역장 */
 export function skillActive(room: RoomSim, sp: SimPlayer, def: ActionDef, cast: Cast, events: SimEvent[]): void {
   const p = sp.state;
   room.echoes.push(...echoesOf(sp.pid, def, p, room.time).map((e) => (e.kind === 'shot' ? { ...e, cast } : e)));
+  room.echoes.push(...tier3bEchoes(sp.pid, def, p, room.time));
   const lw = p.perks?.launchWave;
   if (lw && def.id === lw.skill) {
     const wave = skillDef('gs_wave');
@@ -92,6 +94,7 @@ export function tickPerkTimers(p: PlayerState, dt: number): void {
 /** 적중 뒤 보조 노드: 여진(down 판정이 맞힌 적 자리 충격파 예약), 과열(스킬 적중이면 시간 채움) */
 export function afterLand(room: RoomSim, sp: SimPlayer, def: ActionDef, hits: StrikeHit[]): void {
   const perks = sp.state.perks;
+  if (hits.length && def.trail) room.echoes.push(...trailEchoes(sp.pid, def, hits, sp.state.facing, room.time));
   if (!hits.length || !perks) return;
   if (perks.overheat && def.mp !== undefined) sp.state.overheat = perks.overheat.time;
   const as = perks.aftershock;
@@ -151,11 +154,19 @@ export function stepEchoes(room: RoomSim, events: SimEvent[]): void {
     const sp = room.players.get(e.pid);
     if (!sp || sp.away) continue;
     if (e.kind === 'shot') {
-      room.shoot(sp, e.def, events, e.cast);
+      // 잔상은 처음 쏜 자리·방향에서 (반투명)
+      room.shoot(sp, e.def, events, e.cast, e.look === 'phantom' ? e : undefined);
       continue;
     }
     if (e.kind === 'chain') {
       chainHop(room, sp, e, events);
+      continue;
+    }
+    if (e.target !== undefined) {
+      const hit = strikeTarget(e, sp.state, room.alive);
+      if (!hit.length) continue;
+      events.push({ type: 'echo', echo: { ...e, kind: e.kind } });
+      room.countCombo(sp, room.landHits(sp, e.def, hit, events, true), events);
       continue;
     }
     placeEcho(e, room.alive);

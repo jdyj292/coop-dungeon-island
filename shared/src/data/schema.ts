@@ -45,6 +45,10 @@ const projectile = z.object({
     repeat: z.object({ count: z.number().int().positive(), interval: pos }).strict().optional(),
     shards: z.object({ coef: z.number().nonnegative(), speed: pos, range: pos, radius: pos, lanes: z.array(z.number()).min(1) }).strict().optional(),
   }).strict().optional(),
+  // 플레이어 (SK-7 십자 검기, data.md 3장): aims = 나가는 방향 목록 [앞, 깊이] (바라보는 쪽 기준, [1,0] 앞·[-1,0] 뒤·[0,-1] 위·[0,1] 아래),
+  // meet = 여러 줄(lanes)이 앞 at px 가운데 줄 한 점으로 비스듬히 모여 엇갈리고, 엇갈리는 순간 그 자리 원형 폭발 (반지름 radius, coef)
+  aims: z.array(point).min(1).optional(),
+  meet: z.object({ at: pos, coef: z.number().nonnegative(), radius: pos }).strict().optional(),
 }).strict();
 
 // hold = 공중 대상 체공 유지 (time 동안 중력 없음, combat.md 3장)
@@ -156,6 +160,8 @@ export const skill = playerActionObj.extend({
   keepDown: z.literal(true).optional(),
   // 반복이 끝날 때 마지막 판정 자리에서 한 번 더 coef. launch = 그 판정이 띄움 (대지붕괴 솟구침, 보조 구슬 확장도 같은 필드)
   repeatEnd: z.object({ coef: z.number().nonnegative(), launch: z.literal(true).optional() }).strict().optional(),
+  // 맞힌 적마다 delay초 뒤 그 적에게 한 번 더 coef (어디로 움직였든, 일섬 반환)
+  trail: z.object({ delay: pos, coef: z.number().nonnegative() }).strict().optional(),
 }).strict().superRefine(oneShape);
 
 /** 숫자 하나 또는 포인트별 값 배열 (길이 = combat.json skillTree.maxPoints, crossCheck) */
@@ -211,6 +217,11 @@ export const passive = z.object({
     repeatEnd: z.object({ skill: z.string(), radiusMul: perPoint(pos), coef: perPoint(z.number().nonnegative()) }).strict().optional(),
     /** 역장: 스킬을 쓰면 나와 radius 안 동료에게 피해 1회 무효 보호막 time초 (내부 쿨 cooldown초) */
     aegis: z.object({ radius: pos, time: pos, cooldown: perPoint(pos) }).strict().optional(),
+    // 계열 3단계 보조 (SK-7, skills.md 2장)
+    /** 잔상: 근접(hitbox)·투사체 스킬이 delay초 뒤 같은 자리·방향에서 한 번 더 (계수 × mul, 후속·반복·표식 없이) */
+    phantom: z.object({ delay: pos, mul: perPoint(pos) }).strict().optional(),
+    /** 검의 춤: 스킬 캔슬로 이은 스킬 계수 × mul (스킬 캔슬을 배워야 이을 수 있음) */
+    dance: z.object({ mul: perPoint(pos) }).strict().optional(),
   }).strict(),
 }).strict();
 

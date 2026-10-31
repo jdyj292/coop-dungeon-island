@@ -899,6 +899,152 @@
       }
     }
   },
+  "gs_cross": {
+    "id": "gs_cross",
+    "phases": {
+      "windup": 0.5,
+      "active": 0.1,
+      "recovery": 0.4
+    },
+    "coef": 700,
+    "projectile": {
+      "speed": 180,
+      "range": 96,
+      "radius": 10,
+      "pierce": true,
+      "burst": {
+        "count": 2,
+        "interval": 0.25
+      }
+    },
+    "strength": "medium",
+    "flags": [
+      "projectile"
+    ],
+    "poses": {
+      "windup": "spinBack",
+      "active": "cleave",
+      "recovery": "cleave",
+      "charge": "charge"
+    },
+    "fx": {
+      "grade": "heavy"
+    },
+    "sfx": {
+      "active": "skill_cross",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "십자 검기",
+    "desc": "십자 모양 검기를 두 번 날린다 (각 700%, 6타일 관통, 공중 적도)",
+    "branch": "B",
+    "unlockLevel": 11,
+    "cooldown": 12,
+    "mp": 24,
+    "variants": {
+      "four": {
+        "name": "사방",
+        "desc": "앞·뒤·위·아래 네 방향으로 한 번에 날린다 (각 450%)",
+        "coef": 450,
+        "projectile": {
+          "burst": null,
+          "aims": [
+            [
+              1,
+              0
+            ],
+            [
+              -1,
+              0
+            ],
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        }
+      },
+      "meet": {
+        "name": "교차점",
+        "desc": "위아래 두 줄 검기가 앞 4타일에서 엇갈리며 폭발한다 (각 700% + 폭발 500%)",
+        "projectile": {
+          "burst": null,
+          "lanes": [
+            -20,
+            20
+          ],
+          "meet": {
+            "at": 64,
+            "coef": 500,
+            "radius": 24
+          }
+        }
+      }
+    }
+  },
+  "gs_flash": {
+    "id": "gs_flash",
+    "phases": {
+      "windup": 0.35,
+      "active": 0.1,
+      "recovery": 0.9
+    },
+    "coef": 1300,
+    "hitbox": {
+      "forward": 0,
+      "width": 192,
+      "depth": 12,
+      "z": "both"
+    },
+    "strength": "heavy",
+    "flags": [
+      "knockback"
+    ],
+    "poses": {
+      "windup": "charge",
+      "active": "iai",
+      "recovery": "iai",
+      "charge": "charge"
+    },
+    "fx": {
+      "grade": "heavy",
+      "shake": "horizontal"
+    },
+    "sfx": {
+      "active": "skill_flash",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "일섬",
+    "desc": "화면 끝까지 가로로 한 줄 벤다 (12타일). 후딜레이가 길다",
+    "branch": "B",
+    "unlockLevel": 13,
+    "cooldown": 14,
+    "mp": 28,
+    "variants": {
+      "double": {
+        "name": "이중 일섬",
+        "desc": "0.3초 뒤 한 번 더 벤다 (각 750%)",
+        "coef": 750,
+        "after": {
+          "delay": 0.3,
+          "coef": 750
+        }
+      },
+      "trail": {
+        "name": "반환",
+        "desc": "벤 적마다 0.5초 뒤 늦게 한 번 더 베인다 (400%, 적이 움직여도)",
+        "trail": {
+          "delay": 0.5,
+          "coef": 400
+        }
+      }
+    }
+  },
   "st_pillar": {
     "id": "st_pillar",
     "phases": {
