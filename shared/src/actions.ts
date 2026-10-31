@@ -68,9 +68,11 @@ export interface Fighter {
   nextStep: number;
   /** recovery 뒤 다음 평타를 받아주는 남은 시간 */
   windowLeft: number;
+  /** 스킬이 끝난 뒤 검의 춤이 다음 스킬을 받아주는 남은 시간 */
+  danceLeft: number;
 }
 
-export const newFighter = (): Fighter => ({ run: null, queued: false, nextStep: 0, windowLeft: 0 });
+export const newFighter = (): Fighter => ({ run: null, queued: false, nextStep: 0, windowLeft: 0, danceLeft: 0 });
 
 export interface FighterInput {
   /** 이번 틱에 평타 키를 눌렀나 */
@@ -83,10 +85,8 @@ export interface FighterInput {
   chain?: boolean;
   /** 충전 무기: 지금 스킬 키를 누르고 있나 등 (없으면 충전 없음) */
   charge?: ChargeInput;
-  /** 공용 패시브 스킬 캔슬: 스킬 recovery에서 다른 스킬을 받고, 그 스킬의 windup에 이 배율 (없으면 스킬 → 스킬 불가) */
-  cancelWindupMul?: number;
-  /** 보조 검의 춤: 스킬 캔슬로 이은 스킬 계수 배율 (없으면 1) */
-  cancelCoefMul?: number;
+  /** 보조 검의 춤: 스킬이 끝나고 window초 안에 시작한 스킬 계수 × mul (없으면 효과 없음) */
+  dance?: { window: number; mul: number };
 }
 
 export type FighterEvent =
@@ -105,16 +105,18 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
   };
   const phase = f.run && phaseAt(f.run.def, f.run.t);
 
-  // 캔슬: 평타·대시 recovery → 스킬만 가능, 스킬 → 스킬은 공용 패시브 스킬 캔슬이 있을 때만 (combat.md 2장). 재입력은 스킬 recovery에서도
-  const cancel = !!input.skill && phase === 'recovery' && f.run!.kind === 'skill' && !input.chain && !!input.cancelWindupMul;
-  if (input.skill && (!f.run || (phase === 'recovery' && (f.run.kind !== 'skill' || input.chain || cancel)))) {
-    start(cancel ? withWindupMul(input.skill, input.cancelWindupMul!, input.cancelCoefMul) : input.skill, 'skill', 0);
+  // 캔슬: 평타·대시 recovery → 스킬만 가능, 스킬 → 스킬은 불가 (combat.md 2장). 재입력은 스킬 recovery에서도
+  if (input.skill && (!f.run || (phase === 'recovery' && (f.run.kind !== 'skill' || input.chain)))) {
+    const danced = f.danceLeft > 0 && !!input.dance;
+    f.danceLeft = 0;
+    start(danced ? withCoefMul(input.skill, input.dance!.mul) : input.skill, 'skill', 0);
   } else if (input.attack) {
     if (!f.run && input.dashing) start(weapon.dash, 'dash', 0);
     else if (!f.run) start(weapon.basic[f.nextStep]!, 'basic', f.nextStep);
     else if (f.run.kind === 'basic' && phase !== 'windup' && f.run.step < weapon.basic.length - 1) f.queued = true;
   }
 
+  f.danceLeft = Math.max(0, f.danceLeft - dt);
   const run = f.run;
   if (!run) {
     f.windowLeft = Math.max(0, f.windowLeft - dt);
@@ -128,6 +130,7 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
   if (after === null) {
     events.push({ type: 'end', run });
     f.run = null;
+    if (run.kind === 'skill' && input.dance) f.danceLeft = input.dance.window;
     const next = run.kind === 'basic' && run.step + 1 < weapon.basic.length ? run.step + 1 : 0;
     if (f.queued && next > 0) start(weapon.basic[next]!, 'basic', next);
     else {
@@ -139,16 +142,15 @@ export function stepFighter(f: Fighter, weapon: WeaponDef, input: FighterInput, 
   return events;
 }
 
-const windupCache = new WeakMap<ActionDef, Map<string, ActionDef>>();
+const coefCache = new WeakMap<ActionDef, Map<number, ActionDef>>();
 
-/** 준비(windup)만 mul배 늘린 정의 (스킬 캔슬로 이은 스킬, id·쿨·MP는 그대로). coefMul = 검의 춤 계수 배율 (반복·연발 판정도 이 계수) */
-export function withWindupMul(def: ActionDef, mul: number, coefMul = 1): ActionDef {
-  if (mul === 1 && coefMul === 1) return def;
-  let byMul = windupCache.get(def);
-  if (!byMul) windupCache.set(def, (byMul = new Map()));
-  const key = `${mul}/${coefMul}`;
-  let out = byMul.get(key);
-  if (!out) byMul.set(key, (out = { ...def, coef: def.coef * coefMul, phases: { ...def.phases, windup: def.phases.windup * mul } }));
+/** 계수만 mul배 한 정의 (검의 춤으로 이은 스킬, id·쿨·MP·준비는 그대로, 반복·연발 판정도 이 계수) */
+export function withCoefMul(def: ActionDef, mul: number): ActionDef {
+  if (mul === 1) return def;
+  let byMul = coefCache.get(def);
+  if (!byMul) coefCache.set(def, (byMul = new Map()));
+  let out = byMul.get(mul);
+  if (!out) byMul.set(mul, (out = { ...def, coef: def.coef * mul }));
   return out;
 }
 

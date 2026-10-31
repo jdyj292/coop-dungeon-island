@@ -196,7 +196,6 @@ export const passive = z.object({
     /** 중압: 내가 감속시킨 적은 감속 동안 받는 피해 × takenMul */
     press: z.object({ takenMul: perPoint(pos) }).strict().optional(),
     dodge: z.object({ distanceMul: perPoint(pos), cooldownAdd: perPoint(z.number()) }).strict().optional(),
-    cancel: z.object({ windupMul: z.array(pos).min(1) }).strict().optional(),
     quickRise: z.literal(true).optional(),
     /** 기상 회피로 시작한 회피의 쿨 더하기 (기상 회피 2·3포인트) */
     quickRiseCooldownAdd: perPoint(z.number()).optional(),
@@ -220,8 +219,8 @@ export const passive = z.object({
     // 계열 3단계 보조 (SK-7, skills.md 2장)
     /** 잔상: 근접(hitbox)·투사체 스킬이 delay초 뒤 같은 자리·방향에서 한 번 더 (계수 × mul, 후속·반복·표식 없이) */
     phantom: z.object({ delay: pos, mul: perPoint(pos) }).strict().optional(),
-    /** 검의 춤: 스킬 캔슬로 이은 스킬 계수 × mul (스킬 캔슬을 배워야 이을 수 있음) */
-    dance: z.object({ mul: perPoint(pos) }).strict().optional(),
+    /** 검의 춤: 스킬이 끝나고 window초 안에 시작한 다음 스킬 계수 × mul */
+    dance: z.object({ window: pos, mul: perPoint(pos) }).strict().optional(),
   }).strict(),
 }).strict();
 

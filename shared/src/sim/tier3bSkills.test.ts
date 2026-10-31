@@ -1,4 +1,4 @@
-// 대검 B 계열 3단계 (SK-7, skills.md 2장): 십자 검기(2연발·사방·교차점)·일섬(이중·반환)·잔상·검의 춤 (Lv1 ATK 10)
+// 대검 B 계열 3단계 (SK-7, skills.md 2장): 십자 검기(2연발·사방·교차점)·일섬(이중·반환)·잔상·검의 춤(스킬 끝 1초 안 다음 스킬) (Lv1 ATK 10)
 import { describe, expect, it } from 'vitest';
 import { weaponDef } from '../actions';
 import { TICK } from '../constants';
@@ -99,16 +99,17 @@ describe('잔상', () => {
 });
 
 describe('검의 춤', () => {
-  /** 검흔 베기 후딜레이에 검기 날리기를 캔슬로 잇는다 */
-  const chain = (b: SkillBuild) => {
+  /** 검흔 베기가 끝나고 gap초 뒤 검기 날리기 */
+  const chain = (b: SkillBuild, gap: number) => {
     const sim = room(b);
     const [m] = spawn(sim, [180, 50]);
-    const ev = run(sim, 1.5, { 0: cast(b, 'gs_scar'), [tick(0.32)]: cast(b, 'gs_wave') });
+    const { windup, active, recovery } = resolveSkill('gs_scar', { points: 1 }).phases;
+    const ev = run(sim, 3, { 0: cast(b, 'gs_scar'), [tick(windup + active + recovery + gap)]: cast(b, 'gs_wave') });
     return hitsOn(ev, m!);
   };
-  it('스킬 캔슬로 이은 스킬 +20% (캔슬이 없으면 이어지지 않음)', () => {
-    expect(chain({ 'greatsword.cancel': { points: 1 } })).toEqual([35]);
-    expect(chain({ 'greatsword.cancel': { points: 1 }, gs_dance: { points: 1 } })).toEqual([42]);
-    expect(chain({ gs_dance: { points: 1 } })).toEqual([]);
+  it('스킬이 끝나고 1초 안에 쓴 다음 스킬 +20% (1초 넘으면 그대로)', () => {
+    expect(chain({}, 0.3)).toEqual([35]);
+    expect(chain({ gs_dance: { points: 1 } }, 0.3)).toEqual([42]);
+    expect(chain({ gs_dance: { points: 1 } }, 1.2)).toEqual([35]);
   });
 });

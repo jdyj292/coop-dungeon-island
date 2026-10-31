@@ -10,7 +10,7 @@ const gs = weaponDef('greatsword'), st = weaponDef('staff');
 describe('계열', () => {
   it('고른 계열 노드와 기본·공용만 씀, 안 열린 노드는 못 씀', () => {
     const a = { level: 9, branch: 'A' as const };
-    expect(['gs_launch', 'gs_whirl', 'gs_wave', 'gs_heavyhand', 'gs_keenedge', 'greatsword.cancel'].map((id) => usable(id, a))).toEqual([true, true, false, true, false, true]);
+    expect(['gs_launch', 'gs_whirl', 'gs_wave', 'gs_heavyhand', 'gs_keenedge', 'greatsword.quickrise'].map((id) => usable(id, a))).toEqual([true, true, false, true, false, true]);
     expect(usable('gs_quake', { level: 5, branch: 'A' })).toBe(false);
     expect(usable('greatsword.quickrise', { level: 6, branch: 'B' })).toBe(false);
   });
@@ -48,14 +48,14 @@ describe('장착 (계열마다 따로)', () => {
 });
 
 describe('던전용 빌드', () => {
-  const b = decodeBuild('gs_launch:3:double,gs_whirl:2:rush,gs_wave:3,gs_heavyhand:2,gs_keenedge:3,greatsword.cancel:1');
+  const b = decodeBuild('gs_launch:3:double,gs_whirl:2:rush,gs_wave:3,gs_heavyhand:2,gs_keenedge:3,greatsword.quickrise:1');
 
   it('고른 계열·열린 노드만, 액티브는 1포인트부터, 장착한 칸이 slot', () => {
     const lo = { level: 9, branch: 'A' as const, slots: ['gs_whirl', 'gs_launch', null, 'gs_quake'] };
     const e = effectiveBuild(gs, b, lo);
     expect(e).toEqual({
       gs_launch: { points: 3, variant: 'double', slot: 1 }, gs_earthsplit: { points: 1 }, gs_whirl: { points: 2, variant: 'rush', slot: 0 },
-      gs_shoulder: { points: 1 }, gs_quake: { points: 1, slot: 3 }, gs_throw: { points: 1 }, gs_heavyhand: { points: 2 }, 'greatsword.cancel': { points: 1 },
+      gs_shoulder: { points: 1 }, gs_quake: { points: 1, slot: 3 }, gs_throw: { points: 1 }, gs_heavyhand: { points: 2 }, 'greatsword.quickrise': { points: 1 },
     });
     expect(slotSkills(gs, e)).toEqual(['gs_whirl', 'gs_launch', null, 'gs_quake']);
     expect(slotSkills(gs, decodeBuild(encodeBuild(e)))).toEqual(slotSkills(gs, e));

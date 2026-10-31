@@ -1,4 +1,4 @@
-// 공용 패시브: 스킬 캔슬·기상 회피 (skills.md 1장, combat.md 2·4장)
+// 공용 패시브: 기상 회피 (skills.md 1장, combat.md 2·4장)
 import { describe, expect, it } from 'vitest';
 import { skillDef, weaponDef } from './actions';
 import { TICK } from './constants';
@@ -33,44 +33,36 @@ function toRecovery(p: PlayerState) {
 }
 
 describe('공용 노드', () => {
-  it('무기마다 따로, 둘 다 최대 3, SP 계산·저장 문자열', () => {
-    expect(treeNodes(gs)).toEqual(expect.arrayContaining(['greatsword.cancel', 'greatsword.quickrise']));
-    expect(treeNodes(weaponDef('staff'))).toContain('staff.cancel');
-    expect(treeNodes(gs)).not.toContain('staff.cancel');
-    expect([maxPointsOf('greatsword.cancel'), maxPointsOf('greatsword.quickrise')]).toEqual([3, 3]);
-    const b = decodeBuild('greatsword.cancel:3,greatsword.quickrise:2');
-    expect(spSpent(gs, b)).toBe(5);
-    expect(encodeBuild(b)).toBe('greatsword.cancel:3,greatsword.quickrise:2');
-    expect(decodeBuild('greatsword.cancel:4')).toEqual({});
+  it('무기마다 따로, 최대 3, SP 계산·저장 문자열 (스킬 캔슬은 없앰)', () => {
+    expect(treeNodes(gs)).toContain('greatsword.quickrise');
+    expect(treeNodes(weaponDef('staff'))).toContain('staff.quickrise');
+    expect(treeNodes(gs)).not.toContain('staff.quickrise');
+    expect(treeNodes(gs)).not.toContain('greatsword.cancel');
+    expect(maxPointsOf('greatsword.quickrise')).toBe(3);
+    const b = decodeBuild('greatsword.quickrise:2');
+    expect(spSpent(gs, b)).toBe(2);
+    expect(encodeBuild(b)).toBe('greatsword.quickrise:2');
+    expect(decodeBuild('greatsword.quickrise:4')).toEqual({});
+    expect(decodeBuild('greatsword.cancel:1')).toEqual({});
   });
-  it('열리는 레벨(스킬 캔슬 5·기상 회피 7)부터 어느 계열에서나, SP가 모자라면 안 됨', () => {
+  it('열리는 레벨(기상 회피 7)부터 어느 계열에서나, SP가 모자라면 안 됨', () => {
     let b: SkillBuild = {};
-    expect(checkNode(gs, b, 'greatsword.cancel', { points: 1 }, 9, { level: 4, branch: 'A' })).toBe('locked');
-    expect(checkNode(gs, b, 'greatsword.cancel', { points: 1 }, 1, { level: 5, branch: 'B' })).toBeNull();
-    b = applyNode(b, 'greatsword.cancel', { points: 1 });
-    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 2, { level: 7, branch: 'A' })).toBeNull();
-    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 1, { level: 7, branch: 'A' })).toBe('sp');
+    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 9, { level: 6, branch: 'A' })).toBe('locked');
+    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 1, { level: 7, branch: 'B' })).toBeNull();
+    b = applyNode(b, 'greatsword.quickrise', { points: 1 });
+    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 2 }, 2, { level: 7, branch: 'A' })).toBeNull();
+    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 2 }, 1, { level: 7, branch: 'A' })).toBe('sp');
   });
-  it('스킬 캔슬 준비 배율·기상 회피 쿨은 포인트별', () => {
-    expect([1, 2, 3].map((n) => perksOf(gs, { 'greatsword.cancel': { points: n } }).cancelWindupMul)).toEqual([1.5, 1.3, 1.15]);
+  it('기상 회피 쿨은 포인트별', () => {
     expect([1, 2, 3].map((n) => perksOf(gs, { 'greatsword.quickrise': { points: n } }).quickRiseCooldownAdd)).toEqual([0, -0.1, -0.2]);
   });
 });
 
-describe('스킬 캔슬', () => {
-  it('없으면 스킬 후딜레이에 다른 스킬 불가', () => {
+describe('스킬 → 스킬', () => {
+  it('스킬 후딜레이에 다른 스킬 불가', () => {
     const p = withBuild({});
     toRecovery(p);
     expect(ticks(p, 1, { skill: split })).toEqual([]);
-  });
-  it('있으면 후딜레이에서 끊고 다음 스킬, 준비 시간 × 배율 (선딜·판정 중엔 불가)', () => {
-    const p = withBuild({ 'greatsword.cancel': { points: 1 } });
-    ticks(p, 1, { skill: launch });
-    expect(ticks(p, 1, { skill: split })).toEqual([]);
-    ticks(p, Math.ceil((launch.phases.windup + launch.phases.active) / TICK));
-    expect(ticks(p, 1, { skill: split })).toEqual(['gs_earthsplit']);
-    expect(p.fighter.run!.def.phases.windup).toBeCloseTo(split.phases.windup * 1.5);
-    expect(p.cooldowns.gs_earthsplit).toBeGreaterThan(0);
   });
 });
 

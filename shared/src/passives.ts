@@ -1,6 +1,6 @@
 // 패시브 효과 (docs/skills.md 1~3장, 데이터 shared/data/passives.json): 배운 패시브의 effect(포인트별 값)를 모은 perks,
 // 스킬 정의에 붙는 효과(슈퍼아머·투사체 사거리·지속)는 withPerks로 정의를 바꾸고,
-// 나머지(충전 속도·충전 중·스킬 중 받는 피해·먼 적 피해·연소·중압·회피, 공용 패시브 스킬 캔슬·기상 회피와 그 쿨)는 PlayerState.perks를 판정에서 본다 (sim/strike.ts, playerHurt.ts, player.ts·charge.ts)
+// 나머지(충전 속도·충전 중·스킬 중 받는 피해·먼 적 피해·연소·중압·회피, 공용 패시브 기상 회피와 그 쿨)는 PlayerState.perks를 판정에서 본다 (sim/strike.ts, playerHurt.ts, player.ts·charge.ts)
 import type { ActionDef, WeaponDef } from './actions';
 import { PASSIVES, WEAPONS } from './data/load';
 import type { PassiveEffect } from './data/schema';
@@ -8,8 +8,8 @@ import type { PassiveEffect } from './data/schema';
 /** 포인트별 값 배열을 그 포인트의 값 하나로 */
 type AtPoint<T> = T extends readonly (infer U)[] ? U : T extends object ? { [K in keyof T]: AtPoint<T[K]> } : T;
 
-/** 패시브 효과 (포인트에 맞는 값). 공용 패시브 스킬 캔슬은 준비 배율 하나(cancelWindupMul)로 */
-export type Perks = Omit<AtPoint<PassiveEffect>, 'cancel'> & { cancelWindupMul?: number };
+/** 패시브 효과 (포인트에 맞는 값) */
+export type Perks = AtPoint<PassiveEffect>;
 
 /** 배운 보조 노드가 없을 때 (같은 객체를 돌려 정의 캐시를 그대로 쓴다) */
 export const NO_PERKS: Perks = Object.freeze({});
@@ -48,8 +48,7 @@ export function perksOf(weapon: WeaponDef, build: Record<string, { points: numbe
     if (!points) continue;
     for (const [k, raw] of Object.entries(PASSIVES[id]!.effect)) {
       const v = atPoint(raw, points);
-      if (k === 'cancel') out.cancelWindupMul = (v as { windupMul: number }).windupMul;
-      else out[k] = k.endsWith('Mul') && typeof out[k] === 'number' ? (out[k] as number) * (v as number) : v;
+      out[k] = k.endsWith('Mul') && typeof out[k] === 'number' ? (out[k] as number) * (v as number) : v;
     }
   }
   const perks = Object.keys(out).length ? (out as Perks) : NO_PERKS;
