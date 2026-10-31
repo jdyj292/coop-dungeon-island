@@ -36,7 +36,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | hits | | 다단히트 `{ "count": 6, "interval": 0.1 }` (multi 플래그와 함께). active 시작부터 interval마다 판정 한 번, active 길이 ≥ count × interval |
 | move | | 행동 중 이동 `{ "distance": 32, "during": "active" }` 또는 `{ "speed": 160, "maxDistance": 96, "during": "active", "stopOnWall": true }` |
 | status | | 상태이상 `{ "type": "freeze", "time": 1.5 }` (freeze / slow / stun / hold = 공중 대상 체공 유지) |
-| poses | 플레이어 | 구간별 포즈 이름 (poses.json의 해당 무기 세트) |
+| poses | 플레이어 | 구간별 포즈 이름 (poses.json의 해당 무기 세트). 몬스터: 구간별 스프라이트 상태 이름 — 다른 공격 그림을 같이 쓸 때 (예: `"windup:bear_paw"`, 없으면 `구간:공격 id`, 그것도 없으면 idle) |
 | fx | | `{ "grade": "light|medium|heavy|ultimate", "shake": "vertical|horizontal" }` 연출 등급은 combat.md 5장 |
 | sfx | | `{ "windup"?, "active"?, "hit"? }` 소리 이름 (client/data/sfx.json, docs/audio.md) |
 | telegraph | 몬스터 | 예고 표시 `{ "type": "shake|area|line|glow|shake+line", "length": 96 }`. area는 판정 모양을 그대로 표시 |
@@ -47,7 +47,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 |---|---|---|
 | hitbox | `{ forward, width, depth, z, back? }` 사각형 | 바라보는 방향으로 forward만큼 떨어진 곳부터 width 길이. back은 뒤쪽 추가 |
 | area | `{ shape: "circle|rect|fan", at: [x, y], radius / width·depth / angle, z }` | at = 행동자 기준 상대 위치 (x는 바라보는 방향 +) |
-| projectile | `{ speed, range, radius, pierce, reflectable?, lanes?, burst?, back?, rehit?, blast? }` | 손 위치에서 바라보는 방향으로 발사. 플레이어: lanes = 깊이 오프셋마다 한 발씩 동시에, burst `{count, interval}` = 연발, back = 사거리 끝에서 던진 사람 쪽으로 같은 줄을 따라 돌아오는 왕복 횟수(지나치면 왕복 1번, 다리마다 같은 적을 다시 한 번, 못 따라잡으면 사거리 3배에서 끝), rehit = 관통하며 같은 적을 이 초마다 다시, blast `{radius, coef?, repeat? {count, interval}, shards? {coef, speed, range, radius, lanes}}` = 끝나는 자리(관통 아니면 처음 닿은 적 자리, 아니면 사거리 끝·벽) 원형 판정(coef 없으면 투사체 계수, 관통이 아니면 닿은 적에게 직접 피해 없이 폭발만), repeat = 그 자리에 여러 번, shards = 폭발 뒤 각 깊이 줄에서 앞뒤로 작은 투사체 한 발씩 (SK-4 1차b) |
+| projectile | `{ speed, range, radius, pierce, reflectable?, lanes?, burst?, back?, rehit?, blast?, fan? }` | 손 위치에서 바라보는 방향으로 발사. 플레이어: lanes = 깊이 오프셋마다 한 발씩 동시에, burst `{count, interval}` = 연발, back = 사거리 끝에서 던진 사람 쪽으로 같은 줄을 따라 돌아오는 왕복 횟수(지나치면 왕복 1번, 다리마다 같은 적을 다시 한 번, 못 따라잡으면 사거리 3배에서 끝), rehit = 관통하며 같은 적을 이 초마다 다시, blast `{radius, coef?, repeat? {count, interval}, shards? {coef, speed, range, radius, lanes}}` = 끝나는 자리(관통 아니면 처음 닿은 적 자리, 아니면 사거리 끝·벽) 원형 판정(coef 없으면 투사체 계수, 관통이 아니면 닿은 적에게 직접 피해 없이 폭발만), repeat = 그 자리에 여러 번, shards = 폭발 뒤 각 깊이 줄에서 앞뒤로 작은 투사체 한 발씩 (SK-4 1차b). 몬스터: fan `{count, angle}` = 조준 방향을 가운데로 angle도 부채꼴 안에 count발을 한 번에 (이끼곰 가시) |
 | zone | `{ shape, at, radius, duration, effect }` | 바닥에 남는 지속 장판 |
 
 - z: ground / air / both (combat.md 2장)
@@ -152,18 +152,18 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | superArmor | none / attack(windup~active 동안) / always(그로기 때만 해제) |
 | ai.type | melee(다가가서 때림) / charger(거리 두고 돌진) / turret(제자리 발사) / boss |
 | ai.preferRange | 공격 준비를 시작하는 거리 범위 |
-| ai.idleBetween | 보스: 공격 사이 쉬는 시간 범위 |
+| ai.idleBetween | 보스: 공격 사이 쉬는 시간 범위 (pattern phase에 idleBetween이 있으면 그 단계는 그 값) |
 | attacks | 행동 목록 (예고 = windup) |
 | pattern | 공격 선택 규칙 (아래) |
 | groggy | 보스 그로기 `{ duration, superArmor, extend }` (dungeon.md 연장 규칙) |
-| onWallHit | 공격 중 벽 충돌 시 `{ "selfStun": 1.0 }` 또는 `{ "groggy": true }` |
+| onWallHit | 공격 중 벽 충돌 시 `{ "selfStun": 1.0 }` 또는 `{ "groggy": true, "bounce"?: n }` (bounce = n번은 방향을 뒤집어 이동 구간 처음부터 다시 구르고 그다음 벽에서 그로기) |
 | reward | coins `[최소, 최대]`, exp, material(확률, 1 이상이면 개수), trophy, firstClear, skinDrop `{skin, chance, pity, perPlayer}` (보스 무기 외형, {weapon} = 쓰던 무기 종류) |
 
 ### pattern
 - choose: 조건이 맞는 규칙 중 무작위 선택. 조건 = range(거리 범위), alignDepth(깊이 차이 이내일 때만, 돌진·발사형에 사용), hp 조건
-- loop: 보스용. phases 배열을 순서대로, 각 phase는 sequence를 반복. `until: "hp<0.5"`를 만족하면 다음 phase로
+- loop: 보스용. phases 배열을 순서대로, 각 phase는 sequence를 반복. `until: "hp<0.5"`를 만족하면 다음 phase로. phase마다 idleBetween을 따로 둘 수 있다 (분노)
 - 깊이 조건: alignDepth가 없으면 공격 판정 깊이의 절반 (hitbox.depth / 2, area면 radius / 2) 안에서만 공격
-- loop 공격은 거리 조건이 없으므로 닿을 수 있을 때(판정에 들어옴, 돌진형은 깊이 정렬)까지 다가간 뒤 쓴다. 공격 사이 ai.idleBetween 쉼
+- loop 공격은 거리 조건이 없으므로 닿을 수 있을 때(판정에 들어옴, 돌진형은 깊이 정렬)까지 다가간 뒤 쓴다. 투사체 공격은 사거리 안이면 쏜다. 공격 사이 ai.idleBetween(또는 phase idleBetween) 쉼
 - 공격이 없을 때 위치: melee는 첫 규칙 range 가운데 거리, charger는 combat.json ai.chargerDistance, turret은 제자리, 토큰이 없으면 ai.orbitDistance에서 맴돌기
 
 ---

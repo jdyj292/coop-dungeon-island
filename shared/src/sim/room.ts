@@ -5,7 +5,7 @@ import type { ActionDef, ActionRun, WeaponDef } from '../actions';
 import { COMBAT, PLAYER } from '../data/load';
 import type { MonsterAttack } from '../data/schema';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
-import { spawnProjectile, zoneSpeedMul, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
+import { spawnProjectiles, zoneSpeedMul, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
 import { newMonster, stepBodyIn, type Monster } from '../monster/state';
 import { recordGroggyHit } from '../monster/groggy';
 import { AttackTokens } from '../monster/tokens';
@@ -187,7 +187,7 @@ export class RoomSim {
       for (const e of evs) {
         events.push({ type: 'monster', m, e });
         if (e.type === 'playerHit') this.hitPlayer(events, e.pid, m, e.def, e.damage, this.awayFrom(m, e.pid));
-        if (e.type === 'shoot') this.projectiles.push(spawnProjectile(this.ids++, m.id, e.def, m.body.x, m.body.y, m.attack?.dir ?? m.facing, ctx.player));
+        if (e.type === 'shoot') this.projectiles.push(...spawnProjectiles(() => this.ids++, m.id, e.def, m.body.x, m.body.y, m.attack?.dir ?? m.facing, ctx.player));
         if (e.type === 'zone') this.zones.push(spawnZone(this.ids++, e.def, { x: m.body.x, y: m.body.y, facing: m.facing }));
         if (e.type === 'body' && e.e === 'wall' && m.wallBy) slam(this, m, events);
       }

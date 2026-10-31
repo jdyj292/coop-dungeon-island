@@ -33,6 +33,8 @@ const projectile = z.object({
   // 플레이어: 한 번에 여러 줄 (깊이 오프셋 목록), 연발 (첫 발 뒤 count−1발을 interval마다)
   lanes: z.array(z.number()).min(1).optional(),
   burst: z.object({ count: z.number().int().min(2), interval: pos }).strict().optional(),
+  // 몬스터 (이끼곰 가시, dungeon.md 5장): 조준 방향을 가운데로 angle도 부채꼴 안에 count발을 한 번에
+  fan: z.object({ count: z.number().int().min(2), angle: pos }).strict().optional(),
   // 플레이어 (SK-4 1차b, data.md 3장): back = 사거리 끝에서 던진 사람에게 돌아오는 왕복 횟수, rehit = 관통하며 같은 적을 이 초마다 다시,
   // blast = 끝나는 자리(처음 닿은 적·사거리 끝·벽) 원형 판정 (관통이 아니면 닿은 적에게 직접 피해 없이 폭발만)
   back: z.number().int().positive().optional(),
@@ -203,7 +205,8 @@ export const monsterAttack = z.object({
   ...actionFields,
   damage: z.number().nonnegative(),
   onWallHit: z.union([
-    z.object({ selfStun: pos }).strict(), z.object({ groggy: z.literal(true) }).strict(),
+    // bounce = 벽에 이 횟수만큼은 튕겨 되돌아 구르고, 그다음 벽에서 그로기 (이끼곰 3단계 구르기)
+    z.object({ selfStun: pos }).strict(), z.object({ groggy: z.literal(true), bounce: z.number().int().positive().optional() }).strict(),
   ]).optional(),
 }).strict().superRefine(oneShape);
 
@@ -242,7 +245,8 @@ const pattern = z.discriminatedUnion('type', [
   }).strict(),
   z.object({
     type: z.literal('loop'),
-    phases: z.array(z.object({ until: z.string().optional(), sequence: z.array(z.string()).min(1) }).strict()).min(1),
+    // idleBetween: 이 단계의 공격 사이 쉬는 시간 (없으면 ai.idleBetween, 분노 단계)
+    phases: z.array(z.object({ until: z.string().optional(), sequence: z.array(z.string()).min(1), idleBetween: range.optional() }).strict()).min(1),
   }).strict(),
 ]);
 

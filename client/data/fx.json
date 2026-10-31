@@ -48,7 +48,7 @@
   "rhythm": { "back": 1, "forward": { "light": 2, "medium": 3, "heavy": 3 }, "returnSec": 0.12 },
   "reaction": { "hurtSec": 0.1, "airSpinSec": 0.08, "getupSquashSec": 0.1, "airShadowZ": 30, "airShadowMin": 0.4, "stunBlink": 0.08 },
   "hazard": {
-    "projectile": { "spore_shot": { "fill": "floors.1.monster.sporeGlow", "edge": "floors.1.monster.sporeFlower", "height": 7 } },
+    "projectile": { "spore_shot": { "fill": "floors.1.monster.sporeGlow", "edge": "floors.1.monster.sporeFlower", "height": 7 }, "bear_thorns": { "fill": "floors.1.monster.mossLight", "edge": "floors.1.monster.moss", "height": 14 } },
     "zone": { "bear_yawn": { "fill": "floors.1.monster.sleepCloud", "alpha": 0.45 } },
     "telegraphDash": 2
   },

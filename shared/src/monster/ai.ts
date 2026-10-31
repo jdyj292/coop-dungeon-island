@@ -16,6 +16,8 @@ const sideOf = (m: Monster, px: number) => (m.body.x >= px ? 1 : -1);
 function canReach(m: Monster, def: MonsterAttack, ctx: AiContext): boolean {
   const p = ctx.player, dx = p.x - m.body.x, dy = p.y - m.body.y;
   if (def.zone || def.damage === 0) return true;
+  // 투사체 (이끼곰 가시): 사거리 안이면 쏜다 (부채꼴이 깊이를 덮음)
+  if (def.projectile) return Math.hypot(dx, dy) <= def.projectile.range;
   const mv = def.move;
   if (mv && 'speed' in mv) return Math.abs(dy) <= (def.hitbox?.depth ?? 0) / 2 && Math.abs(dx) <= mv.maxDistance;
   const target = ctx.target ?? { x: p.x, y: p.y, airborne: false, hurtbox: { width: 1, depth: 1 } };

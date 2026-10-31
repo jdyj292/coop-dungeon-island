@@ -51,7 +51,9 @@
           "type": "shake"
         },
         "cooldown": 1.5,
-        "sfx": { "windup": "mon_mushroom_windup" }
+        "sfx": {
+          "windup": "mon_mushroom_windup"
+        }
       }
     ],
     "pattern": {
@@ -132,7 +134,9 @@
           "selfStun": 1.0
         },
         "cooldown": 2.5,
-        "sfx": { "active": "mon_boar_charge" }
+        "sfx": {
+          "active": "mon_boar_charge"
+        }
       }
     ],
     "pattern": {
@@ -200,7 +204,9 @@
           "type": "glow"
         },
         "cooldown": 0,
-        "sfx": { "active": "mon_spore_shot" }
+        "sfx": {
+          "active": "mon_spore_shot"
+        }
       }
     ],
     "pattern": {
@@ -405,7 +411,141 @@
         "telegraph": {
           "type": "glow"
         },
-        "sfx": { "windup": "bearYawn" }
+        "sfx": {
+          "windup": "bearYawn"
+        }
+      },
+      {
+        "id": "bear_paw_quick",
+        "phases": {
+          "windup": 0.5,
+          "active": 0.12,
+          "recovery": 0.5
+        },
+        "damage": 150,
+        "area": {
+          "shape": "circle",
+          "at": [
+            24,
+            0
+          ],
+          "radius": 35,
+          "z": "ground"
+        },
+        "strength": "heavy",
+        "telegraph": {
+          "type": "area"
+        },
+        "fx": {
+          "grade": "heavy",
+          "shake": "vertical"
+        },
+        "poses": {
+          "windup": "windup:bear_paw",
+          "active": "active:bear_paw",
+          "recovery": "recovery:bear_paw"
+        }
+      },
+      {
+        "id": "bear_quake",
+        "phases": {
+          "windup": 1.0,
+          "active": 0.15,
+          "recovery": 0.8
+        },
+        "damage": 160,
+        "area": {
+          "shape": "circle",
+          "at": [
+            0,
+            0
+          ],
+          "radius": 72,
+          "z": "ground"
+        },
+        "strength": "heavy",
+        "telegraph": {
+          "type": "area"
+        },
+        "fx": {
+          "grade": "heavy",
+          "shake": "vertical"
+        },
+        "poses": {
+          "windup": "windup:bear_paw",
+          "active": "active:bear_paw",
+          "recovery": "recovery:bear_paw"
+        }
+      },
+      {
+        "id": "bear_thorns",
+        "phases": {
+          "windup": 0.7,
+          "active": 0.05,
+          "recovery": 0.7
+        },
+        "damage": 70,
+        "projectile": {
+          "speed": 100,
+          "range": 280,
+          "radius": 5,
+          "pierce": false,
+          "reflectable": true,
+          "fan": {
+            "count": 5,
+            "angle": 60
+          }
+        },
+        "strength": "light",
+        "flags": [
+          "projectile"
+        ],
+        "telegraph": {
+          "type": "glow"
+        },
+        "sfx": {
+          "active": "mon_spore_shot"
+        },
+        "poses": {
+          "windup": "windup:bear_yawn",
+          "active": "active:bear_yawn",
+          "recovery": "recovery:bear_yawn"
+        }
+      },
+      {
+        "id": "bear_roll_bounce",
+        "phases": {
+          "windup": 0.5,
+          "active": 2.5,
+          "recovery": 0.5
+        },
+        "damage": 150,
+        "hitbox": {
+          "forward": 0,
+          "width": 40,
+          "depth": 24,
+          "z": "ground"
+        },
+        "strength": "heavy",
+        "move": {
+          "speed": 180,
+          "maxDistance": 400,
+          "during": "active",
+          "stopOnWall": true
+        },
+        "telegraph": {
+          "type": "shake+line",
+          "length": 400
+        },
+        "onWallHit": {
+          "groggy": true,
+          "bounce": 1
+        },
+        "poses": {
+          "windup": "windup:bear_roll",
+          "active": "active:bear_roll",
+          "recovery": "recovery:bear_roll"
+        }
       }
     ],
     "pattern": {
@@ -415,17 +555,45 @@
           "until": "hp<0.5",
           "sequence": [
             "bear_paw",
+            "bear_quake",
             "bear_paw",
+            "bear_thorns",
             "bear_roll"
           ]
         },
         {
+          "until": "hp<0.25",
+          "idleBetween": [
+            0.3,
+            0.6
+          ],
           "sequence": [
             "bear_paw",
+            "bear_paw_quick",
             "bear_yawn",
+            "bear_quake",
+            "bear_thorns",
             "bear_roll",
             "bear_paw",
+            "bear_paw_quick",
             "bear_roll"
+          ]
+        },
+        {
+          "idleBetween": [
+            0.25,
+            0.5
+          ],
+          "sequence": [
+            "bear_paw",
+            "bear_paw_quick",
+            "bear_quake",
+            "bear_thorns",
+            "bear_roll_bounce",
+            "bear_yawn",
+            "bear_thorns",
+            "bear_paw_quick",
+            "bear_roll_bounce"
           ]
         }
       ]

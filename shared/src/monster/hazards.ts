@@ -41,6 +41,20 @@ export function spawnProjectile(
   return { id, ownerId, def, x: mx, y, dir, dy, traveled: 0, done: false, hitPids: [] };
 }
 
+/** 부채꼴(projectile.fan)이면 조준 방향을 가운데로 count발, 아니면 한 발 — 이끼곰 가시 (dungeon.md 5장) */
+export function spawnProjectiles(
+  nextId: () => number, ownerId: number, def: MonsterAttack, x: number, y: number, dir: number, aim?: { x: number; y: number },
+): Projectile[] {
+  const first = spawnProjectile(nextId(), ownerId, def, x, y, dir, aim), fan = def.projectile?.fan;
+  if (!fan) return [first];
+  const mid = Math.asin(first.dy), step = (fan.angle * Math.PI) / 180 / (fan.count - 1);
+  return Array.from({ length: fan.count }, (_, i) => {
+    const p = i === 0 ? first : { ...first, id: nextId(), hitPids: [] };
+    const a = Math.max(-1.4, Math.min(1.4, mid + (i - (fan.count - 1) / 2) * step));
+    return Object.assign(p, { dy: Math.sin(a) });
+  });
+}
+
 /** 한 틱: 날아가고, 사거리·벽에서 사라짐. 맞으면 true (맞은 뒤 사라짐, pierce면 계속) */
 /** 이번 틱에 맞은 플레이어 id (관통하지 않으면 첫 한 명) */
 export function stepProjectile(p: Projectile, dt: number, b: Bounds, targets: PlayerTarget[]): string[] {

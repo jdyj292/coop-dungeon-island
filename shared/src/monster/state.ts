@@ -18,6 +18,8 @@ export interface AttackRun {
   dy: number;
   /** 이번 공격에 이미 맞은 플레이어 id (한 공격에 한 사람은 한 번) */
   struck: string[];
+  /** 벽에 튕긴 횟수 (onWallHit.bounce) */
+  bounced?: number;
 }
 
 export interface Monster {
