@@ -13,6 +13,12 @@ import { hitMonster, type StrikeHit } from './strike';
 /** 연출 사건이 있는 예약 판정 종류: 반복 / 후속(벽꿍 포함) / 해제 */
 export type EchoKind = 'repeat' | 'after' | 'shatter';
 
+/**
+ * 연출 그림 (SK-4 2차, art.md 7장): 없으면 종류·행동 판정으로 기존 그림. chain = 번개 줄(from → 대상), scar = 검흔 터짐,
+ * blast = 화염구 끝 폭발, stick = 꽂힌 대검 둘레 베기, quake = 여진 충격파, orbEnd = 구슬 확장 끝 폭발
+ */
+export type EchoLook = 'chain' | 'scar' | 'blast' | 'stick' | 'quake' | 'orbEnd';
+
 /** 예약 판정. shot = 연발 투사체 (판정 대신 발사, 연출은 마법탄 사건), chain = 연쇄 다음 대상 (sim/echoes.ts, 연출은 해제와 같은 shatter) */
 export interface Echo {
   pid: string;
@@ -32,6 +38,9 @@ export interface Echo {
   chain?: { left: number; hit: number[] };
   /** 연발 투사체(shot)의 시전 (보조 검기 순환) */
   cast?: Cast;
+  /** 연출 그림, 번개 줄이 시작하는 자리 (연쇄) */
+  look?: EchoLook;
+  from?: { x: number; y: number };
 }
 
 /** active 순간: 이 행동이 예약하는 판정들 (반복은 첫 판정을 뺀 나머지, copies는 첫 판정부터). now = 시뮬레이션 시각 */

@@ -85,7 +85,7 @@ export function afterLand(room: RoomSim, sp: SimPlayer, def: ActionDef, hits: St
   if (!as || !def.flags?.includes('down')) return;
   const { hitbox, area, projectile, repeat, after, onWall, onStatusEnd, mark, chain, status, ...rest } = def;
   const wave: ActionDef = { ...rest, coef: as.coef, area: { shape: 'circle', at: [0, 0], radius: as.radius, z: 'both' }, flags: ['downhit'] };
-  for (const h of hits) room.echoes.push({ pid: sp.pid, kind: 'after', def: wave, x: h.m.body.x, y: h.m.body.y, facing: sp.state.facing, at: room.time });
+  for (const h of hits) room.echoes.push({ pid: sp.pid, kind: 'after', def: wave, x: h.m.body.x, y: h.m.body.y, facing: sp.state.facing, at: room.time, look: 'quake' });
 }
 
 /** 과열: 평타 투사체 뒤 delay초에 한 발 더 */
@@ -99,7 +99,7 @@ export function overheatShot(room: RoomSim, sp: SimPlayer, def: ActionDef): void
 /** 끝 판정: 그 자리 원형 판정 (repeat면 나머지를 예약), 분열 조각 발사 */
 function blast(room: RoomSim, sp: SimPlayer, b: Bolt, events: SimEvent[]): number {
   const bl = b.def.projectile!.blast!, def = blastDef(b.def);
-  const at = { pid: sp.pid, def, x: b.x, y: b.y, facing: b.dir };
+  const at = { pid: sp.pid, def, x: b.x, y: b.y, facing: b.dir, look: bl.repeat ? 'stick' as const : 'blast' as const };
   for (let k = 1; k < (bl.repeat?.count ?? 1); k++) room.echoes.push({ ...at, kind: 'repeat', at: room.time + k * bl.repeat!.interval });
   if (bl.shards) {
     const sd = shardDef(b.def);
@@ -122,7 +122,7 @@ function burstScars(room: RoomSim, sp: SimPlayer, ms: Monster[], events: SimEven
   for (const { m, scar } of takeScars(sp.pid, ms)) {
     if (m.body.ko) continue;
     const def = scarBurstDef(scar.def);
-    events.push({ type: 'echo', echo: { pid: sp.pid, kind: 'shatter', def, x: m.body.x, y: m.body.y, facing: sp.state.facing, at: room.time } });
+    events.push({ type: 'echo', echo: { pid: sp.pid, kind: 'shatter', def, x: m.body.x, y: m.body.y, facing: sp.state.facing, at: room.time, look: 'scar' } });
     hits += room.landHits(sp, def, [hitMonster(sp.state, def, m, sp.state.facing)], events, true);
     const to = scar.hops > 0 ? hopTarget(m, scar.def, room.alive) : null;
     if (to) markScar(sp.pid, scar.def, to, scar.hops - 1);
@@ -152,7 +152,7 @@ export function stepEchoes(room: RoomSim, events: SimEvent[]): void {
     const end = e.def.repeatEnd;
     if (end && e.rep && e.k === e.rep.count - 1) {
       const { repeatEnd, status, ...rest } = e.def;
-      const burst: Echo = { ...e, kind: 'after', def: { ...rest, coef: end.coef } };
+      const burst: Echo = { ...e, kind: 'after', def: { ...rest, coef: end.coef }, look: 'orbEnd' };
       events.push({ type: 'echo', echo: { ...burst, kind: 'after' } });
       room.countCombo(sp, room.landHits(sp, burst.def, strikeEcho(burst, sp.state, room.alive), events, true), events);
     }
@@ -172,7 +172,7 @@ function chainHop(room: RoomSim, sp: SimPlayer, e: Echo, events: SimEvent[]): vo
   const c = e.chain!, m = chainTarget(e, e.def, room.alive, c.hit);
   if (!m) return;
   c.hit.push(m.id);
-  events.push({ type: 'echo', echo: { ...e, kind: 'shatter', x: m.body.x, y: m.body.y } });
+  events.push({ type: 'echo', echo: { ...e, kind: 'shatter', x: m.body.x, y: m.body.y, look: 'chain', from: { x: e.x, y: e.y } } });
   room.countCombo(sp, room.landHits(sp, e.def, [hitMonster(sp.state, e.def, m, e.facing)], events, true), events);
   if (c.left > 1) room.echoes.push({ ...e, x: m.body.x, y: m.body.y, at: e.at + e.def.chain!.interval, chain: { left: c.left - 1, hit: c.hit } });
 }

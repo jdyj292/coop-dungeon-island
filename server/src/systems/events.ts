@@ -27,7 +27,8 @@ export function eventsFor(events: SimEvent[], now: number, combos: Map<string, n
       out.push({ type: 'boltEnd', msg: { id: b.id, reason: b.hit.length ? 'hit' : 'range', x: int(b.x), y: int(b.y) } });
     } else if (e.type === 'echo') {
       const c = e.echo;
-      out.push({ type: 'echo', msg: { pid: c.pid, kind: c.kind, act: c.def.id, x: int(c.x), y: int(c.y), facing: c.facing, t: now } });
+      const extra = c.look ? { look: c.look, ...(c.from ? { fx: int(c.from.x), fy: int(c.from.y) } : {}) } : {};
+      out.push({ type: 'echo', msg: { pid: c.pid, kind: c.kind, act: c.def.id, x: int(c.x), y: int(c.y), facing: c.facing, t: now, ...extra } });
     } else if (e.type === 'playerHit') {
       out.push({ type: 'playerHit', msg: { pid: e.pid, damage: e.damage, strength: e.def.strength ?? 'light', from: e.from?.id ?? null } });
     }

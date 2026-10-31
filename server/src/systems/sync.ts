@@ -31,6 +31,8 @@ export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: nu
   s.hp = int(p.hp);
   s.maxHp = p.maxHp;
   s.ultGauge = int(p.ult);
+  s.hasted = !!p.haste;
+  s.shielded = (p.shield ?? 0) > 0;
   const v = s.priv;
   v.mp = int(p.mp);
   v.stamina = int(p.stamina);
@@ -85,6 +87,7 @@ export function syncMonster(s: MonsterState, m: Monster, now: number): void {
   s.slowed = m.slow.left > 0;
   s.burning = m.burn.left > 0;
   s.pressed = m.pressed > 0 && m.slow.left > 0;
+  s.scarred = !!m.scar && m.scar.left > 0;
 }
 
 /** 몬스터·장판 목록 맞추기 (새로 생기면 추가, 퇴장하면 삭제) */

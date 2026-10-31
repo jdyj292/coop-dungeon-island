@@ -21,6 +21,7 @@ export * from './monster/ai';
 export * from './monster/spacing';
 export * from './sim/room';
 export { blastDef } from './sim/bolts';
+export type { EchoLook } from './sim/skillExtras';
 export * from './data/load';
 export * from './data/crossCheck';
 export type * from './data/schema';

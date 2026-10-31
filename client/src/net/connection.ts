@@ -35,6 +35,9 @@ export interface PlayerSnap extends Pos {
   weapon: string;
   /** 스킬 노드 (skillTree.encodeBuild): 변형에 따라 행동 시간·판정이 다름 */
   skills: string;
+  /** 가속장 가속 중·역장 보호막 (표시용) */
+  hasted?: boolean;
+  shielded?: boolean;
 }
 
 export interface MonsterSnap extends Pos {
@@ -54,6 +57,7 @@ export interface MonsterSnap extends Pos {
   /** 보조 노드 표식 (연소, 중압) */
   burning?: boolean;
   pressed?: boolean;
+  scarred?: boolean;
 }
 
 /** 본인 전용 값 (보간 없이 최신) */
@@ -283,11 +287,12 @@ export class Connection {
     s.players.forEach((p, id) => players.set(id, {
       id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, dodgeDir: p.dodgeDir ?? 0, dodgeDy: p.dodgeDy ?? 0, dodgeStart: p.dodgeStart ?? 0, state: p.state, since: since(prevP?.get(id), p.state),
       actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0, look: p.look ?? '', weapon: p.weapon || 'greatsword', skills: p.skills ?? '',
+      hasted: !!p.hasted, shielded: !!p.shielded,
     }));
     const monsters = new Map<string, MonsterSnap>();
     s.monsters.forEach((m, id) => monsters.set(id, {
       id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, state: m.state, since: since(prevM?.get(id), m.state),
-      actionId: m.actionId, actionStart: m.actionStart, aimY: m.aimY, hpRatio: m.hpRatio, superArmor: m.superArmor, slowed: !!m.slowed, burning: !!m.burning, pressed: !!m.pressed,
+      actionId: m.actionId, actionStart: m.actionStart, aimY: m.aimY, hpRatio: m.hpRatio, superArmor: m.superArmor, slowed: !!m.slowed, burning: !!m.burning, pressed: !!m.pressed, scarred: !!m.scarred,
     }));
     // 상태 객체는 계속 바뀌므로 값은 지금 복사하고, 버퍼에 넣는 것만 지연
     const roomIndex = s.roomIndex ?? 0;

@@ -2,6 +2,7 @@
 import { z } from 'zod';
 import { LOOK, MVP_WEAPONS, NET } from './constants';
 import type { Branch } from './skillTree';
+import type { EchoLook } from './sim/skillExtras';
 
 const seq = z.number().int().nonnegative();
 /** 서버 기준 시각(추정, ms) */
@@ -83,7 +84,7 @@ export interface S2C {
   bolt: { id: number; kind: string; pid: string; x: number; y: number; dir: number; t0: number; speed: number; r: number };
   boltEnd: { id: number; reason: 'hit' | 'range'; x: number; y: number };
   /** 변형 예약 판정 순간 (반복·후속·해제, sim/skillExtras.ts). act = 스킬 id, 자리·방향은 판정 기준 */
-  echo: { pid: string; kind: 'repeat' | 'after' | 'shatter'; act: string; x: number; y: number; facing: number; t: number };
+  echo: { pid: string; kind: 'repeat' | 'after' | 'shatter'; act: string; x: number; y: number; facing: number; t: number; look?: EchoLook; fx?: number; fy?: number };
   /** 한 판 끝 (hud.md 6장 정산 화면). kind: clear = 보스 처치, return = 귀환 지점, wipe = 전멸. 저장은 M4 */
   result: {
     kind: 'clear' | 'return' | 'wipe';

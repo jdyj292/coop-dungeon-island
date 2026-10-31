@@ -74,7 +74,7 @@
   },
   "branch": {
     "_note": "계열 스킬 연출 (SK-2 2차, art.md 7장). looks = 행동 id → 그림. 위치 px(발밑 기준, 위가 -), 시간 초, spin = rad/초. 사라짐은 4×4 바둑판",
-    "looks": { "gs_whirl": "whirl", "gs_shoulder": "shoulder", "gs_wave": "wave", "gs_throw": "wave", "gs_draw": "draw", "st_pillar": "pillar", "st_icelance": "lance", "st_orb": "orb", "st_lift": "lift" },
+    "looks": { "gs_whirl": "whirl", "gs_shoulder": "shoulder", "gs_wave": "wave", "gs_throw": "throw", "gs_draw": "draw", "st_pillar": "pillar", "st_icelance": "lance", "st_orb": "orb", "st_lift": "lift", "st_fireball": "fireball" },
     "whirl": { "_note": "몸을 도는 납작한 고리 위 초승달 arcs개, 몸 뒤 반은 몸 폭 body만큼 가려짐. 흡입(pull)이면 바깥에서 빨려드는 바람 줄", "y": -8, "flat": 0.4, "scale": 0.8, "spin": 16, "arcs": 2, "span": 1.9, "width": 3, "body": 4, "tail": 0.1, "suckLines": 6, "suckFrom": 1.8 },
     "shoulder": { "_note": "몸 뒤 속도선 (y, 길이) + 몸 앞 충격 괄호 front px", "lines": [[-13, 9], [-10, 14], [-7, 11], [-4, 15], [-1, 8]], "back": -6, "front": 9, "top": -14, "bottom": -1, "tail": 0.12 },
     "draw": { "_note": "발도: 출발 자리에서 벤 자리까지 한 줄 섬광. thickSec 동안 3px 흰 줄 → 1px 금색 → 바둑판", "y": -8, "sec": 0.32, "thickSec": 0.05, "ticks": 4 },
@@ -82,7 +82,20 @@
     "lance": { "_note": "얼음 창: 길이 = 반지름 × length, 두께 = 반지름 × thick, 가장 두꺼운 자리 widest(앞에서 비율)", "length": 3, "thick": 0.45, "widest": 0.3, "motes": 3 },
     "pillar": { "_note": "불기둥 한 번 (반복 판정마다 하나, 겹쳐서 이어짐). 폭 = 반지름 × width, riseSec 동안 솟음", "sec": 0.42, "height": 30, "width": 0.55, "riseSec": 0.06, "fadeLast": 0.35, "flicker": 18, "embers": 3 },
     "orb": { "_note": "부유 구슬 한 번 (반복 판정마다). 구슬 반지름 = 판정 반지름 × size, 공중 높이 z, 고리 = 판정 반지름 × ring", "sec": 0.45, "z": 18, "size": 0.22, "ring": 0.7, "spin": 4, "bob": 1.5 },
-    "lift": { "_note": "끌어올림: pullSec 동안 둘레의 점이 가운데로 빨려들고, 그 뒤 빛 점이 솟음", "sec": 0.6, "pullSec": 0.2, "motes": 12, "rise": 26, "risers": 6 }
+    "lift": { "_note": "끌어올림: pullSec 동안 둘레의 점이 가운데로 빨려들고, 그 뒤 빛 점이 솟음", "sec": 0.6, "pullSec": 0.2, "motes": 12, "rise": 26, "risers": 6 },
+    "throw": { "_note": "대검 투척 (SK-4 2차): 도는 대검. 날 길이 = 반지름 × blade, spin = 이동 1px당 회전 rad, 손잡이 hilt px, 공중 높이 lift, 둘레 바람 고리 = 반지름 × ring", "blade": 1.8, "spin": 0.16, "hilt": 4, "lift": 10, "ring": 1.4 },
+    "fireball": { "_note": "화염구 (SK-4 2차): 불덩이(흰 심·금·주황빛 금) + 뒤로 일렁이는 불꼬리 길이 = 반지름 × tail, 꼬리 불씨 embers개", "tail": 1.6, "embers": 3 }
+  },
+  "_tier2": "SK-4 2차 연출 (art.md 7장): 새 판정 순간 그림(echo look) chain·scar·stick·quake·orbEnd(blast = 기존 화염 폭발 + 흔들림)과 상태 표시 mark(검흔 표식)·haste(가속)·shield(역장 보호막). 위치 px(발밑 기준, 위가 -), 시간 초",
+  "tier2": {
+    "chain": { "_note": "번개 연쇄: 앞 대상(첫 번은 시전자)에서 이번 대상까지 꺾인 번개 줄 segs 마디, 마디가 좌우 jag px 흔들리고 reflash초마다 다시 꺾임", "sec": 0.2, "segs": 6, "jag": 4, "y": -10, "reflash": 0.04 },
+    "scar": { "_note": "검흔 터짐: 엇갈린 두 대각선 베기가 growSec 동안 len px까지 뻗고 흰 → 금 → 바둑판으로 사라짐", "sec": 0.3, "len": 9, "y": -10, "growSec": 0.06 },
+    "stick": { "_note": "꽂기: 끝 자리에 꽂힌 대검(날 blade px), 판정마다 둘레를 도는 베기 호 하나 (반지름 = 판정 반지름 × ring, 호 길이 span rad)", "sec": 0.24, "ring": 0.9, "span": 4.2, "blade": 12 },
+    "quake": { "_note": "여진: 땅 충격파 고리가 판정 반지름까지 퍼짐 + 먼지 dust개", "sec": 0.3, "dust": 3 },
+    "orbEnd": { "_note": "구슬 확장 끝 폭발: 공중 z 높이 구슬이 부풀었다 터지며 고리 rings겹이 판정 반지름까지 퍼지고 별", "sec": 0.36, "z": 18, "rings": 2 },
+    "mark": { "_note": "검흔 표식 (몬스터 머리 높이 y): 비스듬한 칼자국 두 줄 len px, pulseSec마다 밝은 줄이 바뀜", "y": -18, "len": 5, "pulseSec": 0.25 },
+    "haste": { "_note": "가속: 발 양옆(spread px)에서 위로 흐르는 속도선 lines개 (길이 len, 오르는 높이 rise, riseSec 주기)", "lines": 4, "len": 4, "rise": 18, "riseSec": 0.5, "spread": 7 },
+    "shield": { "_note": "역장 보호막: 몸을 감싼 점선 타원 (반지름 rx·ry, 가운데 높이 y, every점마다) + 둘레를 도는 흰 반짝임 spin rad/초", "rx": 9, "ry": 12, "y": -12, "every": 3, "spin": 2.5 }
   },
   "_wellHop": "우물 입장·복귀 연출 (art.md 0장, motion.md 6장). 뛰어들기: jumpSec 동안 앞 sinkAt 비율은 포물선(최고 jumpPeak)으로 구멍(시설 발밑에서 holeUp px 위) 위까지, 나머지는 sinkPx만큼 가라앉으며 사라짐 → fadeSec 동안 어두워짐. 튀어나오기: popSec 동안 반대로, 들어온 지 popWindowSec 안에 처음 보일 때만. 던전 첫 방: dropFrom px 위에서 shared combat.json arriveSec 동안 떨어지고(서버 판정) landSec 웅크림",
   "wellHop": {

@@ -1,12 +1,13 @@
 // 서버 스냅샷 → 그리기용 객체 (PlayerState·Monster 모양). 기존 PlayerView·MonsterView·HazardLayer를 그대로 쓰기 위해
 // 행동 포즈는 actionId + actionStart와 데이터로 계산한다 (docs/network.md 5·8장)
 import {
-  buildFrom, buildSkill, COMBAT, newMonster, newPlayerState, PLAYER, weaponDef,
+  buildFrom, buildSkill, COMBAT, newMonster, skillDef, newPlayerState, PLAYER, weaponDef,
   type ActionDef, type ActionRun, type Monster, type PlayerState, type SkillBuild, type WeaponDef,
 } from '@game/shared';
 import type { MonsterSnap, PlayerSnap, PrivateView } from './connection';
 
 const sec = (ms: number) => Math.max(0, ms / 1000);
+const SCAR_VIEW = () => skillDef('gs_scar');
 
 /** 행동 id → 정의와 종류 (평타 단계·대시·스킬). 스킬은 그 사람의 노드(변형·레벨 배율)로 */
 export function playerAction(weapon: WeaponDef, id: string, skills: SkillBuild = {}): Pick<ActionRun, 'def' | 'kind' | 'step'> | null {
@@ -75,6 +76,9 @@ export function mirrorMonster(s: MonsterSnap, t: number, prev?: Monster): Monste
   m.slow = { left: s.slowed ? 1 : 0, amount: 0 };
   m.burn = { left: s.burning ? 1 : 0, mul: 1 };
   m.pressed = s.pressed ? 1 : 0;
+  // 검흔: 그리기용 표시만 (터짐 판정은 서버)
+  if (s.scarred) m.scar ??= { pid: '', left: 1, def: SCAR_VIEW(), hops: 0 };
+  else delete m.scar;
   m.hopT = m.moving ? el : 0;
   m.hp = Math.round((s.hpRatio / 255) * m.maxHp);
   return m;

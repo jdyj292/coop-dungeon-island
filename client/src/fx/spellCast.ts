@@ -1,18 +1,19 @@
 // 행동 → 마법 연출 연결 (MVP 보충 ST-2a). 무엇을 그릴지는 데이터로 고른다:
 // 포즈 fx(poses.json: ready = spark, bolt = bolt, area·plant = circle) + 행동 판정(area 원 = 화염 폭발, status freeze = 얼음 장판, slow = 동토 장판).
 // 계열 스킬(fx.json branch.looks: 불꽃 기둥·부유 구슬·끌어올림)은 원 판정 자리에 자기 그림 (spellBranch), 반복 판정마다 하나씩
-import { areaCenter, blastDef, type ActionDef, type WeaponDef } from '@game/shared';
+import { areaCenter, blastDef, type ActionDef, type EchoLook, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
 import fx from '../../data/fx.json';
 import type { FxContext } from './hitPackage';
 import type { Effect } from './layer';
-import { dust, ring } from './particles';
+import { dust, ring, sparks } from './particles';
 import { lookOf } from './branchFx';
 import { boltHit, magicCircle, muzzle, spark } from './spell';
 import { firePillar, floatOrb, liftUp } from './spellBranch';
 import { fireBurst, fireTarget } from './spellFire';
 import { iceField, slowField } from './spellIce';
+import { chainBolt, orbBurst, quakeRing, scarBurst, stickSlash } from './tier2Fx';
 
 /** 시전자 (논리 좌표) */
 export interface Caster {
@@ -70,13 +71,17 @@ export function castActive(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Ca
   else if (def.area.shape === 'circle') areaBurst(fxl.layer, def, c);
 }
 
+/** 예약 판정 자리 + 전용 그림 (SK-4 2차 look, 번개 줄 시작 자리 from) */
+export type EchoAt = Caster & { look?: EchoLook; from?: { x: number; y: number } };
+
 /**
- * 변형 예약 판정 순간 (반복·후속·해제, shared sim/skillExtras.ts): 새 그림 없이 기존 이펙트를 그 자리에.
- * 해제(빙결 폭발)·번개 연쇄·검흔 터짐 = 마법탄 적중 섬광, 원형 마법(연쇄)·투사체 끝 폭발(화염구·꽂기, 원격은 스킬 정의로 와서 blastDef로 바꿈) = 화염 폭발,
- * 근접 판정(균열) = 판정 줄을 따라 먼지·충격 링·흔들림 (SK-4 1차b 새 스킬은 임시, 정식 연출은 SK-4 2차)
+ * 변형 예약 판정 순간 (반복·후속·해제, shared sim/skillExtras.ts): look이 있으면 전용 그림 (tier2Fx), 없으면 기존 이펙트를 그 자리에.
+ * 해제(빙결 폭발) = 마법탄 적중 섬광, 원형 마법(연쇄·구슬 반복) = 그 그림 또는 화염 폭발,
+ * 근접 판정(균열) = 판정 줄을 따라 먼지·충격 링·흔들림
  */
-export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' | 'after' | 'shatter', skill: ActionDef, at: Caster): void {
+export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' | 'after' | 'shatter', skill: ActionDef, at: EchoAt): void {
   const def = skill.projectile?.blast && kind !== 'shatter' ? blastDef(skill) : skill;
+  if (at.look && tier2Echo(c, at.look, def, at)) return;
   if (kind === 'shatter') {
     const { sx, sy } = project(at.x, at.y, fx.spell.bolt.height);
     c.layer.add(boltHit(sx, sy));
@@ -95,4 +100,25 @@ export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' |
   const mid = project(at.x + (box.forward + box.width / 2) * at.facing, at.y);
   c.layer.add(ring(mid.sx, mid.sy));
   c.shake.start(fx.downShake.sec, fx.downShake.px);
+}
+
+/** 전용 그림 (그렸으면 true) */
+function tier2Echo(c: Pick<FxContext, 'layer' | 'shake'>, look: EchoLook, def: ActionDef, at: EchoAt): boolean {
+  const { sx, sy } = project(at.x, at.y), r = def.area?.radius ?? 16;
+  if (look === 'chain') {
+    const f = project(at.from?.x ?? at.x, at.from?.y ?? at.y);
+    c.layer.add(chainBolt(f.sx, f.sy, sx, sy));
+  } else if (look === 'scar') {
+    c.layer.add(scarBurst(sx, sy));
+    sparks(sx, sy + fx.tier2.scar.y).slice(0, 4).forEach((e) => c.layer.add(e));
+  } else if (look === 'stick') c.layer.add(stickSlash(sx, sy, r, at.facing));
+  else if (look === 'quake') {
+    c.layer.add(quakeRing(sx, sy, r));
+    dust(sx, sy, fx.tier2.quake.dust).forEach((e) => c.layer.add(e));
+  } else if (look === 'orbEnd') c.layer.add(orbBurst(sx, sy, r));
+  else if (look === 'blast') {
+    fireBurst(sx, sy, r).forEach((e) => c.layer.add(e));
+    c.shake.start(fx.downShake.sec, fx.downShake.px);
+  } else return false;
+  return true;
 }

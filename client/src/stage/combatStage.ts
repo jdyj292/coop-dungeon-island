@@ -12,6 +12,7 @@ import { actionSmear } from '../fx/actionSmear';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
+import { StatusLayer } from '../fx/statusFx';
 import { HazardLayer } from '../fx/hazards';
 import { hitPackage, type FxContext } from '../fx/hitPackage';
 import { FX_GROUND_DEPTH, FxLayer } from '../fx/layer';
@@ -69,6 +70,7 @@ export class CombatStage {
   private wasRunning = false;
   private wasBackstep = false;
   private bolts: BoltLayer;
+  private status: StatusLayer;
   /** 잠든 몬스터 Zzz (층 첫 방) */
   private sleepMarks: SleepMarks;
 
@@ -79,6 +81,7 @@ export class CombatStage {
     this.playerView.weaponVisual = this.weapon.visual;
     this.playerView.teleport = this.weapon.backstepStyle === 'teleport';
     this.bolts = new BoltLayer(scene);
+    this.status = new StatusLayer(scene);
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), ground: new FxLayer(scene, FX_GROUND_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.hazards = new HazardLayer(scene);
     this.ghosts = new Afterimages(scene);
@@ -258,6 +261,7 @@ export class CombatStage {
     this.sim.alive.forEach((m, i) => placeMonster(this.scene, this.view(m), data, m, this.clock, i));
     if (this.sleepMarks.draw(this.sim.alive.map((m) => ({ m, v: this.view(m) })), this.clock)) this.sound('monWake');
     this.hazards.draw(this.sim);
+    this.status.draw(this.sim.alive, [...this.sim.players.values()].map(({ state: q }) => ({ x: q.pos.x, y: q.pos.y, haste: !!q.haste, shield: (q.shield ?? 0) > 0 })));
     this.fx.ground.draw();
     this.fx.layer.draw();
   }

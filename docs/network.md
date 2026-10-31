@@ -109,6 +109,7 @@ PlayerState
   actionId, actionStart     진행 중 행동과 시작 서버 시각 (구간은 데이터로 계산). 1ms 이상 바뀌면 갱신 (히트스톱으로 멈춘 동안만 바뀜. 20ms로 두면 본인 예측 재계산이 대시를 약 5px 앞서 계산했다가 뒤로 당겨짐)
   hp, maxHp, ultGauge
   reviveProgress            쓰러진 동안 동료 부활 진행도 (0~255)
+  hasted, shielded          가속장 가속 중·역장 보호막이 있음 (모두에게 보이는 표시용, 시간·배율은 priv·서버만)
   lastInputSeq              서버가 처리한 마지막 입력 번호 (본인 보정용, 작아서 전원에게 보냄)
   priv: PlayerPrivate       @filter로 본인에게만
 
@@ -124,6 +125,8 @@ MonsterState
   hpRatio                   체력 비율 (0~1, uint8로 양자화)
   superArmor
   slowed                    감속 중 (변형 동토, 발밑 눈송이 표시용)
+  burning, pressed          보조 연소·중압 표식 (표시용)
+  scarred                   검흔 표식이 있음 (표시용, 건 사람·계수는 서버만)
 
 ZoneState
   id, attackId, x, y, endsAt (사라지는 서버 시각 ms)
@@ -169,7 +172,7 @@ IslandState
 | hit | `{ attacker, target, damage, strength, flags, hitstop, recoil, act, actT, x, y, z, t }` (recoil = 공격자 멈춤 초, act·actT = 맞힌 행동 id·진행 시간, 히트스톱 동기화) | 데미지 숫자, 섬광, 흰색 번쩍임, 히트스톱, 흔들림 |
 | projSpawn / projEnd | 위 참고 | 투사체 그리기 |
 | bolt / boltEnd | 플레이어 투사체 (스태프 평타·검기·얼음 창) `bolt { id, kind(행동 id), pid, x, y, dir, t0, speed, r }` (speed·r = 변형까지 적용한 값), `boltEnd { id, reason, x, y }`. 왕복 투사체(대검 투척)는 돌아설 때 같은 id로 bolt를 다시 보냄(그 자리·새 방향), 분열 조각은 새 bolt | 투사체 그리기 (MVP 보충 ST-2, 계열 스킬 그림 SK-2 2차) |
-| echo | 변형 예약 판정 순간 `{ pid, kind: repeat·after·shatter, act(스킬 id), x, y, facing, t }` (반복·후속은 시전 자리, 해제는 몬스터 자리) | 그 사람의 skills로 정의를 찾아 로컬과 같은 연출·소리 (fx/spellCast castEcho), 그리는 시각이 t에 닿을 때 |
+| echo | 변형 예약 판정 순간 `{ pid, kind: repeat·after·shatter, act(스킬 id), x, y, facing, t, look?, fx?, fy? }` (반복·후속은 시전 자리, 해제는 몬스터 자리. look = 전용 그림 chain·scar·blast·stick·quake·orbEnd, fx·fy = 번개 줄 시작 자리) | 그 사람의 skills로 정의를 찾아 로컬과 같은 연출·소리 (fx/spellCast castEcho), 그리는 시각이 t에 닿을 때 |
 | playerHit | 내가 맞음 `{ damage, strength, from }` | 피격 표정, 화면 붉은 테두리 없이 흔들림 |
 | reward | `{ coins, material, exp }` 본인에게 (몬스터 기절·보물상자) | coin 효과음, HUD 숫자 튐 |
 | comboBonus | `{ count, rate }` 본인에게 | "+5%" 표시 |

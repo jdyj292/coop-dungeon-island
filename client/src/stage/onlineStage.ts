@@ -11,6 +11,7 @@ import { echoSound } from '../audio/sfxEvents';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
+import { StatusLayer, type StatusView } from '../fx/statusFx';
 import { HazardLayer } from '../fx/hazards';
 import { ATTACKS, RemoteShots } from '../net/remoteShots';
 import { monsterCue, playerCue } from './onlineCues';
@@ -63,6 +64,8 @@ export class OnlineStage {
   /** 몬스터 투사체·플레이어 마법탄 (이벤트로만 옴) */
   private shots = new RemoteShots();
   private boltLayer: BoltLayer;
+  private status: StatusLayer;
+  private statusViews: StatusView[] = [];
   private hits: S2C['hit'][] = [];
   private echoes: S2C['echo'][] = [];
   private clock = 0;
@@ -78,6 +81,7 @@ export class OnlineStage {
     this.local = new LocalPlayer(conn, bounds);
     this.hazards = new HazardLayer(scene);
     this.boltLayer = new BoltLayer(scene);
+    this.status = new StatusLayer(scene);
     this.reviveG = scene.add.graphics().setDepth(FX_DEPTH + 1);
     this.sleepMarks = new SleepMarks(scene, FX_DEPTH);
     conn.onEvent = (type, msg) => this.onEvent(type, msg);
@@ -188,6 +192,7 @@ export class OnlineStage {
       const moved = mine ? myMoved : r.last ? Math.hypot(p.pos.x - r.last.x, p.pos.y - r.last.y) : 0;
       r.last = { x: p.pos.x, y: p.pos.y };
       r.view.draw(p, moved, 0, this.clock);
+      this.statusViews.push({ x: p.pos.x, y: p.pos.y, haste: !!s.hasted, shield: !!s.shielded });
       // 접속이 끊긴 동료는 반투명 (network.md 10장)
       r.view.actor.img.setAlpha(s.state === 'disconnected' ? DISCONNECTED_ALPHA : 1);
       r.ghosts.update(realDt, !!p.backstep && !r.view.teleport, r.view.actor.img);
@@ -252,7 +257,7 @@ export class OnlineStage {
     const snap = this.conn.players.latest?.items.get(m.pid);
     const def = buildSkill(weaponDef(snap?.weapon ?? 'greatsword'), buildFrom(snap?.skills ?? ''), m.act);
     if (!def) return;
-    castEcho(this.fx, m.kind, def, m);
+    castEcho(this.fx, m.kind, def, { ...m, from: m.fx !== undefined && m.fy !== undefined ? { x: m.fx, y: m.fy } : undefined });
     echoSound(m.kind, def).forEach((n) => sfx.play(n));
   }
 
@@ -279,6 +284,8 @@ export class OnlineStage {
     const shots = this.shots.at(t, this.fx.layer);
     this.boltLayer.draw(shots.bolts);
     this.hazards.draw({ zones: this.zones, alive: alive.map((e) => e.m), projectiles: shots.projectiles });
+    this.status.draw(alive.map((e) => e.m), this.statusViews);
+    this.statusViews = [];
     this.fx.layer.update(dt);
     this.fx.ground.update(dt);
     this.fx.ground.draw();
