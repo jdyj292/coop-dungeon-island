@@ -670,7 +670,8 @@
         "coef": 1000,
         "chargeRule": {
           "timeMul": 2,
-          "bonusMul": 2
+          "bonusMul": 2,
+          "stages": 3
         }
       },
       "instant": {
@@ -992,21 +993,26 @@
   "gs_flash": {
     "id": "gs_flash",
     "phases": {
-      "windup": 0.35,
+      "windup": 0.45,
       "active": 0.1,
       "recovery": 0.9
     },
-    "coef": 300,
-    "hitbox": {
-      "forward": 0,
-      "width": 192,
-      "depth": 12,
+    "coef": 80,
+    "area": {
+      "shape": "fan",
+      "at": [
+        0,
+        0
+      ],
+      "radius": 96,
+      "angle": 100,
       "z": "both"
     },
     "repeat": {
       "count": 11,
       "interval": 0.08,
-      "coef": 100
+      "coef": 80,
+      "delay": 0.5
     },
     "strength": "heavy",
     "flags": [],
@@ -1014,9 +1020,12 @@
       "lead": "draw",
       "windup": "charge",
       "active": "iai",
-      "follow": "flashHold",
+      "follow": "draw",
       "recovery": "draw",
       "charge": "charge"
+    },
+    "chargeRule": {
+      "timeMul": 2
     },
     "fx": {
       "grade": "heavy",
@@ -1028,7 +1037,8 @@
     },
     "weapon": "greatsword",
     "name": "일섬",
-    "desc": "앞 12타일을 한 줄로 베고(300%), 그 줄에 칼바람이 0.08초마다 10번 몰아친다 (각 100%, 맞는 동안 묶임). 후딜레이가 길다",
+    "desc": "키를 누르는 동안(최대 2초) 앞 부채꼴 범위가 커지고, 떼면 한 번 베고 칼을 거둔다. 0.5초 뒤 범위 안 적을 검기가 사방에서 0.08초마다 11번 벤다 (각 80%, 맞는 동안 묶임). 후딜레이가 길다",
+    "note": "예산 대비 약 −33%: 검기 11번 모두 80%로 일부러 낮춤 (범위가 넓고 충전으로 ×1.5까지 커지며 맞는 동안 묶음)",
     "branch": "B",
     "unlockLevel": 13,
     "cooldown": 14,
@@ -1036,21 +1046,21 @@
     "variants": {
       "double": {
         "name": "이중 일섬",
-        "desc": "칼바람이 끝나면 같은 줄을 한 번 더 크게 벤다 (칼바람 각 60% + 마지막 400%)",
+        "desc": "검기가 끝나면 같은 부채꼴을 한 번 더 크게 벤다 (검기 각 50% + 마지막 300%)",
         "repeat": {
-          "coef": 60
+          "coef": 50
         },
         "after": {
-          "delay": 0.85,
-          "coef": 400
+          "delay": 1.45,
+          "coef": 300
         }
       },
       "trail": {
         "name": "반환",
-        "desc": "벤 적마다 0.5초 뒤 늦게 한 번 더 베인다 (400%, 적이 움직여도)",
+        "desc": "벤 적마다 0.5초 뒤 늦게 한 번 더 베인다 (300%, 적이 움직여도)",
         "trail": {
           "delay": 0.5,
-          "coef": 400
+          "coef": 300
         }
       }
     }

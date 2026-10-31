@@ -46,7 +46,7 @@ export interface Echo {
   target?: number;
 }
 
-/** active 순간: 이 행동이 예약하는 판정들 (반복은 첫 판정을 뺀 나머지, copies는 첫 판정부터). now = 시뮬레이션 시각 */
+/** active 순간: 이 행동이 예약하는 판정들 (반복은 첫 판정을 뺀 나머지, copies는 첫 판정부터, delay가 있으면 첫 판정부터 delay초 뒤). now = 시뮬레이션 시각 */
 export function echoesOf(pid: string, def: ActionDef, p: PlayerState, now: number): Echo[] {
   const { repeat, after, ...plain } = def;
   const at = { pid, x: p.pos.x, y: p.pos.y, facing: p.facing };
@@ -54,14 +54,16 @@ export function echoesOf(pid: string, def: ActionDef, p: PlayerState, now: numbe
   if (repeat) {
     // 묶음 첫 판정 뒤로는 repeat.coef (검의 장막·일섬 다단): 다단은 가벼운 경직·멈춤, 판정마다 시전 소리 없이 가벼운 적중 소리
     // (온라인은 서버 hit strength light로 같은 규칙, client onlineStage·sfxEvents)
+    // 일섬 반환(trail)은 묶음 첫 판정에서만 (다단마다 걸지 않음)
+    const { trail, ...rest } = plain;
     const tick: ActionDef = repeat.coef === undefined ? plain : {
-      ...plain, coef: repeat.coef, strength: 'light', fx: { ...plain.fx, grade: 'light' }, sfx: { hit: 'hitLight' },
+      ...rest, coef: repeat.coef, strength: 'light', fx: { ...plain.fx, grade: 'light' }, sfx: { hit: 'hitLight' },
     };
     const group = (dx: number, dy: number, from: number) => {
       const spot = { x: at.x + dx * at.facing, y: at.y + dy };
-      for (let k = from; k < repeat.count; k++) out.push({ ...at, ...spot, kind: 'repeat', def: k ? tick : plain, at: now + k * repeat.interval, spot, k, rep: repeat });
+      for (let k = from; k < repeat.count; k++) out.push({ ...at, ...spot, kind: 'repeat', def: k ? tick : plain, at: now + (repeat.delay ?? 0) + k * repeat.interval, spot, k, rep: repeat });
     };
-    group(0, 0, 1);
+    group(0, 0, repeat.delay ? 0 : 1);
     for (const [dx, dy] of repeat.copies ?? []) group(dx, dy, 0);
   }
   if (after) out.push({ ...at, kind: 'after', def: { ...plain, coef: after.coef }, at: now + after.delay });

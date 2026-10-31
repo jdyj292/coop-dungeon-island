@@ -1,10 +1,14 @@
 // 대검 충전 모이는 빛 (SK-3 2차, art.md 7장): 충전하는 동안 손 둘레의 금빛 점이 소용돌이치며 손으로 빨려들고,
-// 충전 비율만큼 손 빛이 커진다. 키를 떼는 순간 별, 최대(fullAt 이상)면 큰 별 + 퍼지는 빛살. 매 프레임 다시 그린다. 값 fx.json chargeGlow
+// 충전 비율만큼 손 빛이 커진다. 키를 떼는 순간 별, 최대(fullAt 이상)면 큰 별 + 퍼지는 빛살. 매 프레임 다시 그린다. 값 fx.json chargeGlow.
+// 일섬은 준비·충전 동안 발밑 앞 부채꼴 범위(충전한 만큼 커짐, 바닥 층, flashFx.drawFlashFan)와 기 모으기 바람(drawFlashGather)도
 import type Phaser from 'phaser';
-import { fighterPose, type PlayerState, type WeaponDef } from '@game/shared';
+import { fighterPose, phaseAt, type PlayerState, type WeaponDef } from '@game/shared';
 import fx from '../../data/fx.json';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
+import { lookOf } from './branchFx';
+import { drawFlashFan, drawFlashGather } from './flashFx';
+import { FX_GROUND_DEPTH } from './layer';
 import { clamp01, col, hash, px, star4 } from './spellDraw';
 
 /** 캐릭터 위 (상태 표시와 같은 층) */
@@ -22,12 +26,18 @@ export interface ChargeView {
   pose: string | null;
   /** 충전 단계 수 (파쇄참 3단 충전 = 3, 보통 1): 단계마다 손 둘레를 도는 금빛 점 + 소리 charge_stage */
   stages: number;
+  /** 일섬 준비·충전 중: 지금 부채꼴 범위 (반지름 논리 px = 기본 × (1 + 충전 비율 × 최대 보너스), 각도 도), 기 모으는 손 = 준비 포즈 앞손 */
+  fan?: { radius: number; angle: number; pose: string | null };
 }
 
 /** 플레이어 상태 → 그릴 것 (충전 중이 아니면 level 0). level = 충전 비율 (본인 chargeLevel, 다른 사람은 서버 chargeLv) */
 export function chargeView(id: string, p: PlayerState, weapon: WeaponDef, level: number): ChargeView {
-  const stages = (p.fighter.run?.def.chargeRule?.timeMul ?? 1) > 1 ? 3 : 1;
-  return { id, x: p.pos.x, y: p.pos.y, facing: p.facing, level, weapon, pose: fighterPose(p.fighter), stages };
+  const run = p.fighter.run, stages = run?.def.chargeRule?.stages ?? 1;
+  const area = run?.def.area, tr = weapon.trait;
+  const bonus = tr?.type === 'charge' ? tr.bonusMax + (p.perks?.chargeBonusAdd ?? 0) : 0;
+  const fan = run && area?.shape === 'fan' && lookOf(run.def.id) === 'flash' && phaseAt(run.def, run.t) === 'windup'
+    ? { radius: area.radius! * (1 + level * bonus), angle: area.angle!, pose: run.def.poses?.windup ?? null } : undefined;
+  return { id, x: p.pos.x, y: p.pos.y, facing: p.facing, level, weapon, pose: fighterPose(p.fighter), stages, fan };
 }
 
 interface Burst {
@@ -47,21 +57,30 @@ export function handAt(v: Pick<ChargeView, 'x' | 'y' | 'facing' | 'weapon' | 'po
 
 export class ChargeLayer {
   private g: Phaser.GameObjects.Graphics;
+  /** 바닥 층 (일섬 부채꼴 범위) */
+  private ground: Phaser.GameObjects.Graphics;
   /** 지난 프레임 충전 비율·손 위치 (떼는 순간 별 자리) */
   private last = new Map<string, { level: number; x: number; y: number; stage?: number }>();
   private bursts: Burst[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.g = scene.add.graphics().setDepth(DEPTH);
+    this.ground = scene.add.graphics().setDepth(FX_GROUND_DEPTH);
   }
 
   /** dt = 지난 그리기 뒤 흐른 초. 반환 = 낼 소리 (충전 시작 charge_start, 최대 충전으로 발동 charge_full) */
   draw(views: ChargeView[], dt: number): string[] {
     const g = this.g, now = performance.now() / 1000, cues: string[] = [];
     g.clear();
+    this.ground.clear();
     const seen = new Set<string>();
     for (const v of views) {
       seen.add(v.id);
+      if (v.fan) {
+        const { sx, sy } = project(v.x, v.y), h = handAt({ ...v, pose: v.fan.pose });
+        drawFlashFan(this.ground, sx, sy, v.facing, v.fan.radius, v.fan.angle, v.level, now);
+        drawFlashGather(g, sx, sy, h.x, h.y, v.facing, v.level, now);
+      }
       const prev = this.last.get(v.id);
       if (v.level <= 0) {
         if (prev) this.release(v.id, prev, cues);
@@ -127,5 +146,6 @@ export class ChargeLayer {
 
   destroy(): void {
     this.g.destroy();
+    this.ground.destroy();
   }
 }

@@ -88,6 +88,8 @@ export function waveOf(def: ActionDef, t: number): number {
 /** 판정에 든 몬스터 모두에게 적중. 체력 0이면 기절 (combat.md 3장). done = 이 행동에 이미 맞은 (판정 번호, 몬스터 id) */
 export function strike(p: PlayerState, run: ActionRun, monsters: Monster[], done: Set<number>, posOf: PosOf = current): StrikeHit[] {
   const def = run.def, out: StrikeHit[] = [];
+  // 늦은 반복(repeat.delay): active 순간에는 판정 없음, 첫 판정부터 예약 (skillExtras)
+  if (def.repeat?.delay) return out;
   const a = { x: p.pos.x, y: p.pos.y, facing: p.facing };
   const wave = waveOf(def, run.t) * 1e6;
   for (const m of monsters) {

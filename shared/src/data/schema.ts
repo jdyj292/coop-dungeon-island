@@ -106,11 +106,12 @@ export const playerAction = playerActionObj.superRefine(oneShape);
 /**
  * 반복 판정 (data.md 3장): 시전한 자리에 count번 (첫 판정 포함). step = 판정마다 바라보는 쪽으로 옮기는 거리(px),
  * seek = 판정마다 가장 가까운 맞을 수 있는 몬스터 쪽으로 옮기는 거리(px), copies = 같은 반복을 이 오프셋([앞, 깊이])에 하나씩 더,
- * coef = 묶음 첫 판정 뒤 판정들의 계수 (없으면 스킬 coef. 검의 장막·일섬 = 큰 첫 판정 + 작은 다단)
+ * coef = 묶음 첫 판정 뒤 판정들의 계수 (없으면 스킬 coef. 검의 장막·일섬 = 큰 첫 판정 + 작은 다단),
+ * delay = active 순간에는 판정 없이 이 초 뒤부터 첫 판정 (일섬: 베고 칼을 거둔 뒤 검기)
  */
 export const repeat = z.object({
   count: z.number().int().positive(), interval: pos, step: z.number().optional(), seek: pos.optional(), copies: z.array(point).optional(),
-  coef: z.number().nonnegative().optional(),
+  coef: z.number().nonnegative().optional(), delay: pos.optional(),
 }).strict();
 /** 이 행동의 knockback으로 벽에 부딪힌 몬스터: 다운 + 추가 판정 coef (변형 벽꿍) */
 const onWall = z.object({ coef: z.number().nonnegative() }).strict();
@@ -157,8 +158,8 @@ export const skill = playerActionObj.extend({
   // 아군 버프 (가속장): 시전할 때 나와 판정 범위 안 동료의 스킬 쿨이 time초 동안 cooldownMul배 빨리 돈다
   allyBuff: z.object({ cooldownMul: pos, time: pos }).strict().optional(),
   // 계열 3단계 (SK-7, skills.md 2장)
-  // 충전 규칙 (대검 충전, charge.ts): 최대 충전 시간 × timeMul, 최대 보너스 × bonusMul, off = 충전 없음 (파쇄참 3단 충전·즉발)
-  chargeRule: z.object({ timeMul: pos.optional(), bonusMul: pos.optional(), off: z.literal(true).optional() }).strict().optional(),
+  // 충전 규칙 (대검 충전, charge.ts): 최대 충전 시간 × timeMul, 최대 보너스 × bonusMul, off = 충전 없음, stages = 연출 단계 수 (파쇄참 3단 충전·즉발, 일섬 긴 충전)
+  chargeRule: z.object({ timeMul: pos.optional(), bonusMul: pos.optional(), off: z.literal(true).optional(), stages: z.number().int().positive().optional() }).strict().optional(),
   // 슈퍼아머 대상도 이 초만큼 경직 (파쇄참)
   armorBreak: sec.optional(),
   // 땅에 있는 적을 맞히면 바로 다운 (다시 맞으면 다운 시간 처음부터, 대지붕괴)

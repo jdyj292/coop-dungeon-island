@@ -6,7 +6,7 @@ import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
 import type { Effect } from './layer';
 import { sparks } from './particles';
-import { clamp01, col, hash, life, px, star4 } from './spellDraw';
+import { clamp01, col, life, px, star4 } from './spellDraw';
 import { quakeRing } from './tier2Fx';
 
 const T = fx.tier3b;
@@ -56,52 +56,6 @@ export function meetBurst(sx: number, sy: number, r: number): Effect[] {
     },
   };
   return [x, quakeRing(sx, sy, r), quakeRing(sx, sy, r * 0.5), ...sparks(sx, y).slice(0, M.sparks)];
-}
-
-/** 일섬: 발 앞에서 len px까지 한 줄 섬광. thickSec 동안 3줄 흰 + 위아래 금, 그 뒤 1px 금이 뒤에서부터 사라지고, 줄을 따라 베기 자국 cuts개가 차례로 */
-export function flashLine(sx: number, sy: number, facing: number, len: number): Effect {
-  const F = T.flash, { white, gold } = col(), edge = edgeCol(), y = sy + F.y;
-  return {
-    ...life(F.sec),
-    draw(g, k) {
-      const e = (1 - k) * F.sec, thick = e < F.thickSec, a = clamp01(k * 1.6);
-      for (let d = 0; d <= len; d++) {
-        const x = sx + d * facing, f = d / len;
-        if (thick) {
-          px(g, x, y, white); px(g, x, y - 1, white); px(g, x, y + 1, white);
-          if (f > 0.03 && f < 0.97) { px(g, x, y - 2, gold); px(g, x, y + 2, gold); }
-          continue;
-        }
-        if (f < 1 - k * 1.2) continue;
-        px(g, x, y, f > 0.9 ? white : f > 0.4 ? gold : edge, a);
-      }
-      for (let i = 0; i < F.cuts; i++) {
-        const t = (e - F.cutDelay - i * F.cutStep) / F.cutSec;
-        if (t < 0 || t >= 1) continue;
-        const cx = sx + Math.round((len * (i + 1)) / (F.cuts + 1)) * facing, n = Math.round(F.cutLen * Math.min(1, t * 4));
-        for (let j = -n; j <= n; j++) px(g, cx + Math.round(j * 0.6) * facing, y + j, Math.abs(j) < n * 0.5 && t < 0.5 ? white : gold, 1 - t);
-      }
-      if (thick) star4(g, sx + len * facing, y, 3, white, gold);
-    },
-  };
-}
-
-/** 칼바람 한 번: 줄(발 앞 len px) 위 cuts개 자리(seed로 정함)에 짧은 X자 베기, 그 둘레 glow px 줄이 다시 번쩍임 */
-export function flashTick(sx: number, sy: number, facing: number, len: number, seed: number): Effect {
-  const F = T.flash.tick, { white, gold } = col(), y = sy + T.flash.y;
-  const at = Array.from({ length: F.cuts }, (_, i) => Math.round(len * (0.08 + 0.88 * hash(seed + i * 17))));
-  return {
-    ...life(F.sec),
-    draw(g, k) {
-      const n = Math.max(1, Math.round(F.len * Math.min(1, (1 - k) * 4))), a = clamp01(k * 1.6);
-      for (const d of at) {
-        const cx = sx + d * facing;
-        for (let o = -F.glow; o <= F.glow; o++) px(g, cx + o, y, Math.abs(o) < F.glow / 2 ? white : gold, a * (1 - Math.abs(o) / F.glow));
-        line(g, cx - n, y - n, cx + n, y + n, k > 0.5 ? white : gold, a);
-        line(g, cx - n, y + n, cx + n, y - n, gold, a);
-      }
-    },
-  };
 }
 
 /** 반환: 맞은 적 자리 늦은 대각선 베기 (흰 → 금 → 바둑판) + 작은 별 */

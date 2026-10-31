@@ -1,7 +1,7 @@
 // 행동 → 마법 연출 연결 (MVP 보충 ST-2a). 무엇을 그릴지는 데이터로 고른다:
 // 포즈 fx(poses.json: ready·gather·skyRaise 등 준비 = spark, bolt·thrust = bolt, area·channel = circle, plantDeep = stamp) + 행동 판정(area 원 = 화염 폭발, status freeze = 얼음 장판, slow = 동토 장판).
 // 계열 스킬(fx.json branch.looks: 불꽃 기둥·부유 구슬·끌어올림·중력 우물·중력장)은 원 판정 자리에 자기 그림 (spellBranch·spellGravity), 반복 판정마다 하나씩.
-// 원형 마법 준비 표적은 불 속성이면 금색, 아니면 하늘색. 대검 B 3단계 예약 판정(교차점·반환·잔상·이중 일섬·칼바람)은 tier3bFx, 검의 장막은 curtainFx
+// 원형 마법 준비 표적은 불 속성이면 금색, 아니면 하늘색. 대검 B 3단계 예약 판정(교차점·반환·잔상)은 tier3bFx, 일섬(이중 일섬, 기 모으기는 chargeFx)은 flashFx, 검의 장막은 curtainFx
 import { areaCenter, blastDef, type ActionDef, type EchoLook, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
@@ -17,7 +17,8 @@ import { gravField, gravityWell } from './spellGravity';
 import { iceField, slowField } from './spellIce';
 import { chainBolt, orbBurst, quakeRing, scarBurst, stickSlash } from './tier2Fx';
 import { collapseField, collapsePulse, risePillars } from './tier3Fx';
-import { flashCut, flashLine, flashTick, ghosted, meetBurst } from './tier3bFx';
+import { flashCut, ghosted, meetBurst } from './tier3bFx';
+import { flashSlash } from './flashFx';
 import { curtainActive, curtainStart, curtainTick } from './curtainFx';
 import { actionSmear } from './actionSmear';
 
@@ -122,19 +123,16 @@ export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' |
     areaBurst(c.layer, def, at);
     return;
   }
-  const box = def.hitbox;
-  if (!box) return;
-  // 일섬: 칼바람 다단은 줄 위 짧은 X자 베기, 이중 일섬 마지막은 같은 한 줄 섬광
+  // 일섬: 검기 다단은 맞은 몬스터마다 긁기(적중 때 flashStab)라 자리 그림 없음, 이중 일섬 마지막은 같은 베기 초승달
   if (lookOf(def.id) === 'flash') {
+    if (kind === 'repeat') return;
     const { sx, sy } = project(at.x, at.y);
-    if (kind === 'repeat') {
-      c.layer.add(flashTick(sx, sy, at.facing, box.width, Math.round(performance.now())));
-      return;
-    }
-    c.layer.add(flashLine(sx, sy, at.facing, box.width));
+    flashSlash(sx, sy, at.facing, def.area?.radius ?? 96, def.area?.angle ?? 100).forEach((e) => c.layer.add(e));
     c.shake.start(fx.downShake.sec, fx.downShake.px);
     return;
   }
+  const box = def.hitbox;
+  if (!box) return;
   for (let d = box.forward; d <= box.forward + box.width; d += 16) {
     const { sx, sy } = project(at.x + d * at.facing, at.y);
     dust(sx, sy, fx.dust.bounce).forEach((e) => c.layer.add(e));

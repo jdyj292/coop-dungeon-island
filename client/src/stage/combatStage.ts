@@ -13,6 +13,7 @@ import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
 import { chargeView } from '../fx/chargeFx';
+import { flashHit, quietFlashTick } from '../fx/flashFx';
 import { setCurtainField } from '../fx/curtainFx';
 import { StatusLayer } from '../fx/statusFx';
 import { HazardLayer } from '../fx/hazards';
@@ -202,9 +203,10 @@ export class CombatStage {
       const [ax, ay] = fx.star.at as [number, number];
       const v = this.view(e.m);
       v.hurt = b.armor ? 0 : fx.reaction.hurtSec;
-      hitPackage(this.fx, e.def.fx?.grade ?? 'light', v, {
+      hitPackage(this.fx, e.def.fx?.grade ?? 'light', quietFlashTick(e.def.id, e.def.strength !== 'light') ? { flash: 0 } : v, {
         x: sx + ax * facing, y: sy + ay, numberX: sx, numberY: sy - fx.number.above,
       }, e.damage, e.def.fx?.shake);
+      flashHit(this.fx.layer, e.def.id, sx, sy, e.m.id * 31 + Math.round(performance.now()), e.def.strength !== 'light');
     } else if (e.type === 'playerHit') {
       // 플레이어 피격: 번쩍임 + 위험색 숫자 (경직·다운은 playerHurt 이벤트)
       const p = this.player, { sx, sy } = project(p.pos.x, p.pos.y);

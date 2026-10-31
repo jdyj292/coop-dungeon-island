@@ -1,7 +1,7 @@
 // 행동 active 진입 때의 무기 스미어 (motion.md 2장): 찌르기 행동은 직선 스미어 + 출발 먼지, 나머지는 포즈 모양의 초승달.
 // 땅을 내려치는 행동은 균열·충격 링·먼지를 더한다 (groundImpact, 부채꼴 판정이면 부채꼴 균열, 제자리 원 판정이면 사방 균열). 뒤쪽까지 베는 판정은 등 뒤 스미어.
 // 엇갈려 베는 스킬(smear.cross)은 X자 스미어를 더한다.
-// 파쇄참·대지붕괴(SK-7)는 tier3Fx, 일섬은 tier3bFx 그림 (검의 장막은 spellCast → curtainFx). 계열 근접 스킬(fx.json branch.looks)은 자기 그림: 회전베기·어깨 들이받기는 캐릭터를 따라감, 발도는 출발 자리에서 한 줄, 회오리 검기는 판정 원 자리에서 솟는 회오리, 검기 날리기는 칼끝 섬광 + 포즈 스미어
+// 파쇄참·대지붕괴(SK-7)는 tier3Fx, 일섬은 flashFx 그림 (검의 장막은 spellCast → curtainFx). 계열 근접 스킬(fx.json branch.looks)은 자기 그림: 회전베기·어깨 들이받기는 캐릭터를 따라감, 발도는 출발 자리에서 한 줄, 회오리 검기는 판정 원 자리에서 솟는 회오리, 검기 날리기는 칼끝 섬광 + 포즈 스미어
 import { DEPTH_RATIO, type ActionDef, type FxGrade } from '@game/shared';
 import fx from '../../data/fx.json';
 import { cyclone, drawSlash, lookOf, shoulder, waveLaunch, whirl } from './branchFx';
@@ -12,7 +12,7 @@ import { smear, smearShape } from './smear';
 import { isThrust, thrust } from './thrust';
 import { quakeRing } from './tier2Fx';
 import { collapsePulse, crushImpact } from './tier3Fx';
-import { flashLine } from './tier3bFx';
+import { flashSlash } from './flashFx';
 
 const LAUNCH_DUST = fx.branch.wave.launch.dust;
 
@@ -26,9 +26,9 @@ export function actionSmear(layer: FxLayer, def: ActionDef, foot: () => { sx: nu
     dust(sx, sy, fx.smear.thrust.dust).forEach((e) => layer.add(e));
     return;
   }
-  // 일섬: 판정 끝까지 한 줄 섬광 (tier3bFx)
+  // 일섬: 앞으로 한 번 베기 + 부채꼴(충전으로 커진 반지름)을 훑는 파란 칼빛 (flashFx, 검기는 적중 때 몬스터마다)
   if (look === 'flash') {
-    layer.add(flashLine(sx, sy, facing, def.hitbox?.width ?? 192));
+    flashSlash(sx, sy, facing, def.area?.radius ?? 96, def.area?.angle ?? 100).forEach((e) => layer.add(e));
     dust(sx, sy, fx.smear.thrust.dust).forEach((e) => layer.add(e));
     return;
   }

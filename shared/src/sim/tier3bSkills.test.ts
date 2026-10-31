@@ -69,33 +69,50 @@ describe('검의 장막', () => {
 });
 
 describe('일섬', () => {
-  it('앞 12타일 한 줄 300% + 칼바람 10번 (각 100%), 그 너머는 안 맞음', () => {
+  it('앞 부채꼴(반지름 96·100°): 벨 때는 판정 없고 0.5초 뒤 검기 11번 (각 80%), 부채꼴 밖은 안 맞음', () => {
     const sim = room();
-    const [near, far] = spawn(sim, [240, 50], [330, 50]);
-    const ev = run(sim, 1.5, { 0: cast({}, 'gs_flash') });
-    expect([hitsOn(ev, near!), hitsOn(ev, far!)]).toEqual([[30, ...Array(10).fill(10)], []]);
+    const [near, far, side] = spawn(sim, [160, 50], [260, 50], [125, 98]);
+    // active(0.45초) 직후에는 아직 안 맞음
+    expect(hitsOn(run(sim, 0.7, { 0: cast({}, 'gs_flash') }), near!)).toEqual([]);
+    const ev = run(sim, 1.3, {});
+    expect([hitsOn(ev, near!), hitsOn(ev, far!), hitsOn(ev, side!)]).toEqual([[...Array(11).fill(8)], [], []]);
   });
 
-  it('이중 일섬은 칼바람 각 60% 뒤 마지막 400%, 반환은 0.5초 뒤 맞은 적에게 400% (움직여도)', () => {
+  it('충전하면 부채꼴이 커짐 (최대 2초 충전, +50%: 반지름 144)', () => {
+    const sim = room();
+    const [m] = spawn(sim, [230, 50]);
+    const hold = cast({}, 'gs_flash');
+    const inputs: Record<number, PlayerInput> = {};
+    for (let i = 0; i < tick(2.6); i++) inputs[i] = { ...none, skill: i === 0 ? hold.skill : null, hold: true };
+    // 최대 충전: 피해도 ×1.5 (첫 검기 120%). 맞을 때마다 밀려 끝쪽 적은 다단 도중 범위를 벗어날 수 있음
+    expect(hitsOn(run(sim, 4, inputs), m!)[0]).toBe(12);
+    const sim2 = room();
+    const [m2] = spawn(sim2, [230, 50]);
+    expect(hitsOn(run(sim2, 2, { 0: hold }), m2!)).toEqual([]);
+  });
+
+  it('이중 일섬은 검기 각 50% 뒤 마지막 300%, 반환은 첫 검기 0.5초 뒤 맞은 적에게 한 번 300% (움직여도)', () => {
     const dbl = { gs_flash: { points: 1, variant: 'double' } };
     const sim = room(dbl);
-    const [m] = spawn(sim, [200, 50]);
-    expect(hitsOn(run(sim, 1.5, { 0: cast(dbl, 'gs_flash') }), m!)).toEqual([30, ...Array(10).fill(6), 40]);
+    const [m] = spawn(sim, [160, 50]);
+    expect(hitsOn(run(sim, 2.4, { 0: cast(dbl, 'gs_flash') }), m!)).toEqual([8, ...Array(10).fill(5), 30]);
     const tr = { gs_flash: { points: 1, variant: 'trail' } };
     const sim2 = room(tr);
-    const [a, b] = spawn(sim2, [200, 50], [200, 90]);
-    const first = run(sim2, 0.4, { 0: cast(tr, 'gs_flash') });
-    expect([hitsOn(first, a!), hitsOn(first, b!)]).toEqual([[30], []]);
+    const [a, b, c] = spawn(sim2, [160, 50], [300, 50], [170, 40]);
+    const first = run(sim2, 1.0, { 0: cast(tr, 'gs_flash') });
+    expect([hitsOn(first, a!), hitsOn(first, b!)]).toEqual([[8], []]);
     a!.body.x = 600;
-    const later = run(sim2, 0.7, {});
-    expect([hitsOn(later, a!), hitsOn(later, b!)]).toEqual([[40], []]);
+    const later = run(sim2, 1.2, {});
+    expect([hitsOn(later, a!), hitsOn(later, b!)]).toEqual([[30], []]);
     expect(later.some((e) => e.type === 'echo' && e.echo.look === 'cut')).toBe(true);
+    // 다단마다 반환이 걸리지 않음: 끝까지 범위 안에 있던 적도 300%는 한 번
+    expect(hitsOn([...first, ...later], c!).filter((d) => d === 30)).toEqual([30]);
   });
 
-  it('칼바람은 가볍게 (light 경직·시전 소리 없음)', () => {
+  it('검기 다단은 가볍게 (light 경직·시전 소리 없음)', () => {
     const sim = room();
-    const [m] = spawn(sim, [200, 50]);
-    const hits = run(sim, 1.5, { 0: cast({}, 'gs_flash') }).flatMap((e) => (e.type === 'hit' && e.m === m ? [e.def] : []));
+    const [m] = spawn(sim, [160, 50]);
+    const hits = run(sim, 2.0, { 0: cast({}, 'gs_flash') }).flatMap((e) => (e.type === 'hit' && e.m === m ? [e.def] : []));
     expect(hits.map((d) => d.strength)).toEqual(['heavy', ...Array(10).fill('light')]);
     expect(hits[1]!.sfx?.active).toBeUndefined();
   });
