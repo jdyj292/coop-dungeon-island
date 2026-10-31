@@ -9,6 +9,7 @@
   "maxAirHits": 12,
   "bounceVz": 90,
   "downSec": 0.8,
+  "downDamageMul": 0.5,
   "downSlide": 6,
   "getupSec": 0.5,
   "wallStunSec": 0.3,

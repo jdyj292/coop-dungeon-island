@@ -28,10 +28,17 @@ export interface Bolt {
   /** 날아간 시간, 몬스터 id → 마지막으로 맞힌 시각 (rehit) */
   age: number;
   last: Record<number, number>;
+  /** 쏜 스킬 시전 (보조 검기 순환: 시전 번호 n당 한 번, skill = 시전한 스킬 id). 평타 투사체는 없음 */
+  cast?: Cast;
 }
 
-export function spawnBolt(id: number, pid: string, def: ActionDef, x: number, y: number, dir: number, muzzle = MUZZLE): Bolt {
-  return { id, pid, def, x: x + dir * muzzle, y, dir, traveled: 0, done: false, hit: [], leg: 0, turned: false, age: 0, last: {} };
+export interface Cast {
+  n: number;
+  skill: string;
+}
+
+export function spawnBolt(id: number, pid: string, def: ActionDef, x: number, y: number, dir: number, muzzle = MUZZLE, cast?: Cast): Bolt {
+  return { id, pid, def, x: x + dir * muzzle, y, dir, traveled: 0, done: false, hit: [], leg: 0, turned: false, age: 0, last: {}, ...(cast ? { cast } : {}) };
 }
 
 /** 돌아오는 다리를 끝내고 다음 다리로 (왕복이 남았으면 다시 나감) */

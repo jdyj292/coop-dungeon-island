@@ -30,6 +30,10 @@ export interface PlayerState extends Vitals {
   reinput: { id: string; left: number; window: number } | null;
   /** 가속 (가속장 allyBuff, skills.md 3장): 남은 시간 동안 스킬 쿨이 mul배 빨리 돈다 */
   haste?: { left: number; mul: number };
+  /** 보조 노드 (SK-4 3차, RoomSim만 씀): 과열 남은 시간, 역장 보호막 남은 시간, 역장 내부 쿨 */
+  overheat?: number;
+  shield?: number;
+  aegisCd?: number;
   /** 배운 보조 노드 효과 (passives.ts perksOf). 서버 상태로 보내지 않음: RoomSim·예측이 빌드에서 채운다 */
   perks?: Perks;
 }

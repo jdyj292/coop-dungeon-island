@@ -1,23 +1,37 @@
 // RoomSim 특수 판정 연결 (room.ts에서 분리): 예약 판정(반복·후속·연발·해제·벽꿍, skillExtras.ts)과
-// SK-4 1차b 새 판정 — 투사체 왕복·끝 폭발·분열(bolts.ts), 검흔 터짐(scar.ts), 번개 연쇄(chain.ts), 가속장(아군 버프)
-import type { ActionDef } from '../actions';
+// SK-4 1차b 새 판정 — 투사체 왕복·끝 폭발·분열(bolts.ts), 검흔 터짐(scar.ts), 번개 연쇄(chain.ts), 가속장(아군 버프),
+// SK-4 3차 보조 — 여진·올려 검기·검기 순환·과열·구슬 확장 끝 폭발·역장 (효과 값은 PlayerState.perks)
+import { skillDef, type ActionDef } from '../actions';
 import { knockDown } from '../body';
 import { PLAYER } from '../data/load';
 import type { Monster } from '../monster/state';
-import { hastePlayer } from '../player';
+import { hastePlayer, type PlayerState } from '../player';
 import { actionHits } from '../shapes';
-import { blastDef, shardDef, spawnBolt, stepBolt, type Bolt } from './bolts';
+import { blastDef, shardDef, spawnBolt, stepBolt, type Bolt, type Cast } from './bolts';
 import { chainTarget } from './chain';
 import type { RoomSim } from './room';
 import { hopTarget, markScar, scarBurstDef, takeScars } from './scar';
 import { echoesOf, placeEcho, shatterDef, strikeEcho, thawed, wallDef, type Echo } from './skillExtras';
-import { hitMonster } from './strike';
+import { hitMonster, type StrikeHit } from './strike';
 import type { SimEvent, SimPlayer } from './types';
 
-/** 스킬 active 순간: 예약 판정, 연쇄 첫 판정 예약, 아군 버프 */
-export function skillActive(room: RoomSim, sp: SimPlayer, def: ActionDef): void {
+/** 스킬 active 순간: 예약 판정(연발은 같은 시전), 연쇄 첫 판정 예약, 아군 버프, 보조 올려 검기·역장 */
+export function skillActive(room: RoomSim, sp: SimPlayer, def: ActionDef, cast: Cast, events: SimEvent[]): void {
   const p = sp.state;
-  room.echoes.push(...echoesOf(sp.pid, def, p, room.time));
+  room.echoes.push(...echoesOf(sp.pid, def, p, room.time).map((e) => (e.kind === 'shot' ? { ...e, cast } : e)));
+  const lw = p.perks?.launchWave;
+  if (lw && def.id === lw.skill) {
+    const wave = skillDef('gs_wave');
+    room.shoot(sp, { ...wave, coef: lw.coef, projectile: { speed: lw.speed, range: lw.range * (p.perks?.projectileRangeMul ?? 1), radius: lw.radius, pierce: true } }, events, cast);
+  }
+  const ag = p.perks?.aegis;
+  if (ag && !((p.aegisCd ?? 0) > 0)) {
+    p.aegisCd = ag.cooldown;
+    for (const other of room.players.values()) {
+      const q = other.state.pos;
+      if (!other.away && Math.hypot(q.x - p.pos.x, q.y - p.pos.y) <= ag.radius) other.state.shield = ag.time;
+    }
+  }
   if (def.chain) room.echoes.push({ pid: sp.pid, kind: 'chain', def, x: p.pos.x, y: p.pos.y, facing: p.facing, at: room.time, chain: { left: def.chain.count, hit: [] } });
   const buff = def.allyBuff;
   if (buff) {
@@ -38,11 +52,48 @@ export function stepPlayerBolts(room: RoomSim, sp: SimPlayer, dt: number, events
     if (b.pid !== sp.pid || b.done) continue;
     const ms = stepBolt(b, dt, room.bounds, room.alive, p.pos.x);
     if (b.turned) events.push({ type: 'bolt', bolt: b });
+    if (ms.length) cycle(sp, b.cast);
     hits += room.landHits(sp, b.def, ms.map((m) => hitMonster(p, b.def, m, b.dir)), events);
     hits += burstScars(room, sp, ms, events);
     if (b.done && b.def.projectile?.blast) hits += blast(room, sp, b, events);
   }
   return hits;
+}
+
+/** 검기 순환: 스킬 투사체가 맞으면 시전 한 번에 한 번, 그 스킬을 뺀 쿨을 줄인다 */
+function cycle(sp: SimPlayer, cast: Cast | undefined): void {
+  const c = sp.state.perks?.cycle;
+  if (!c || !cast || sp.cycled === cast.n) return;
+  sp.cycled = cast.n;
+  const cds = sp.state.cooldowns;
+  for (const id of Object.keys(cds)) if (id !== cast.skill) cds[id] = Math.max(0, cds[id]! - c.sec);
+}
+
+/** 보조 노드 시간 (과열·보호막·역장 내부 쿨) */
+export function tickPerkTimers(p: PlayerState, dt: number): void {
+  if (p.overheat) p.overheat = Math.max(0, p.overheat - dt);
+  if (p.shield) p.shield = Math.max(0, p.shield - dt);
+  if (p.aegisCd) p.aegisCd = Math.max(0, p.aegisCd - dt);
+}
+
+/** 적중 뒤 보조 노드: 여진(down 판정이 맞힌 적 자리 충격파 예약), 과열(스킬 적중이면 시간 채움) */
+export function afterLand(room: RoomSim, sp: SimPlayer, def: ActionDef, hits: StrikeHit[]): void {
+  const perks = sp.state.perks;
+  if (!hits.length || !perks) return;
+  if (perks.overheat && def.mp !== undefined) sp.state.overheat = perks.overheat.time;
+  const as = perks.aftershock;
+  if (!as || !def.flags?.includes('down')) return;
+  const { hitbox, area, projectile, repeat, after, onWall, onStatusEnd, mark, chain, status, ...rest } = def;
+  const wave: ActionDef = { ...rest, coef: as.coef, area: { shape: 'circle', at: [0, 0], radius: as.radius, z: 'both' }, flags: ['downhit'] };
+  for (const h of hits) room.echoes.push({ pid: sp.pid, kind: 'after', def: wave, x: h.m.body.x, y: h.m.body.y, facing: sp.state.facing, at: room.time });
+}
+
+/** 과열: 평타 투사체 뒤 delay초에 한 발 더 */
+export function overheatShot(room: RoomSim, sp: SimPlayer, def: ActionDef): void {
+  const oh = sp.state.perks?.overheat;
+  if (!oh || !((sp.state.overheat ?? 0) > 0)) return;
+  const p = sp.state;
+  room.echoes.push({ pid: sp.pid, kind: 'shot', def, x: p.pos.x, y: p.pos.y, facing: p.facing, at: room.time + oh.delay });
 }
 
 /** 끝 판정: 그 자리 원형 판정 (repeat면 나머지를 예약), 분열 조각 발사 */
@@ -87,7 +138,7 @@ export function stepEchoes(room: RoomSim, events: SimEvent[]): void {
     const sp = room.players.get(e.pid);
     if (!sp || sp.away) continue;
     if (e.kind === 'shot') {
-      room.shoot(sp, e.def, events);
+      room.shoot(sp, e.def, events, e.cast);
       continue;
     }
     if (e.kind === 'chain') {
@@ -97,6 +148,14 @@ export function stepEchoes(room: RoomSim, events: SimEvent[]): void {
     placeEcho(e, room.alive);
     events.push({ type: 'echo', echo: { ...e, kind: e.kind } });
     room.countCombo(sp, room.landHits(sp, e.def, strikeEcho(e, sp.state, room.alive), events, true), events);
+    // 구슬 확장: 반복 묶음의 마지막 판정 뒤 그 자리에서 한 번 더 (감속 없이)
+    const end = e.def.repeatEnd;
+    if (end && e.rep && e.k === e.rep.count - 1) {
+      const { repeatEnd, status, ...rest } = e.def;
+      const burst: Echo = { ...e, kind: 'after', def: { ...rest, coef: end.coef } };
+      events.push({ type: 'echo', echo: { ...burst, kind: 'after' } });
+      room.countCombo(sp, room.landHits(sp, burst.def, strikeEcho(burst, sp.state, room.alive), events, true), events);
+    }
   }
   for (const m of thawed(room.alive)) {
     const by = m.frozenBy!, sp = room.players.get(by.pid);

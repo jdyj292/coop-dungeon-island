@@ -21,8 +21,8 @@ import { PositionHistory, type PastPos } from './history';
 import { HitLog } from './hitLog';
 import { perksOf } from '../passives';
 import { phaseIsActive, strike, type PosOf, type StrikeHit } from './strike';
-import { spawnBolt, type Bolt } from './bolts';
-import { skillActive, slam, stepEchoes, stepPlayerBolts } from './echoes';
+import { spawnBolt, type Bolt, type Cast } from './bolts';
+import { afterLand, overheatShot, skillActive, slam, stepEchoes, stepPlayerBolts, tickPerkTimers } from './echoes';
 import { markScar } from './scar';
 import type { Echo } from './skillExtras';
 
@@ -253,6 +253,7 @@ export class RoomSim {
     const input = sp.held ? { ...mergePresses(sp.held, raw)!, x: raw.x, y: raw.y, run: raw.run } : raw;
     sp.held = null;
     p.perks = perksOf(sp.weapon, sp.skills);
+    tickPerkTimers(p, dt);
     const res = stepPlayerState(p, sp.weapon, input, dt, this.bounds, zoneSpeedMul(this.zones, p.pos, PLAYER.hurtbox));
     if (res.backstepStarted) events.push({ type: 'backstep', pid });
     res.hurt.forEach((e) => events.push({ type: 'playerHurt', pid, e }));
@@ -260,10 +261,13 @@ export class RoomSim {
     const runs = new Set<ActionRun>();
     for (const e of res.events) {
       events.push({ type: 'fighter', pid, e });
-      if (e.type === 'active') runs.add(e.run);
-      // 투사체 행동은 active 순간 한 번 발사 (판정은 날아가는 마법탄이, 판정 모양이 없어 strike는 맞히지 않음)
-      if (e.type === 'active' && e.run.def.projectile) this.shoot(sp, e.run.def, events);
-      if (e.type === 'active' && e.run.kind === 'skill') skillActive(this, sp, e.run.def);
+      if (e.type !== 'active') continue;
+      runs.add(e.run);
+      const def = e.run.def, cast = e.run.kind === 'skill' ? { n: (sp.casts = (sp.casts ?? 0) + 1), skill: def.id } : undefined;
+      // 투사체 행동은 active 순간 한 번 발사 (판정은 날아가는 마법탄이, 판정 모양이 없어 strike는 맞히지 않음). 평타면 과열 추가 발
+      if (def.projectile) this.shoot(sp, def, events, cast);
+      if (def.projectile && !cast) overheatShot(this, sp, def);
+      if (cast) skillActive(this, sp, def, cast, events);
     }
     if (p.fighter.run && phaseIsActive(p.fighter.run)) runs.add(p.fighter.run);
     let hits = 0;
@@ -290,9 +294,9 @@ export class RoomSim {
   }
 
   /** 마법탄 발사 (lanes면 깊이마다 한 발씩) */
-  shoot(sp: SimPlayer, def: ActionDef, events: SimEvent[]): void {
+  shoot(sp: SimPlayer, def: ActionDef, events: SimEvent[], cast?: Cast): void {
     for (const dy of def.projectile?.lanes ?? [0]) {
-      const b = spawnBolt(this.nextId(), sp.pid, def, sp.state.pos.x, sp.state.pos.y + dy, sp.state.facing);
+      const b = spawnBolt(this.nextId(), sp.pid, def, sp.state.pos.x, sp.state.pos.y + dy, sp.state.facing, undefined, cast);
       this.bolts.push(b);
       events.push({ type: 'bolt', bolt: b });
     }
@@ -323,6 +327,7 @@ export class RoomSim {
         this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, recoil || sec));
       }
     }
+    afterLand(this, sp, def, hits);
     return hits.length;
   }
 

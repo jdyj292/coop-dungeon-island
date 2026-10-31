@@ -179,6 +179,23 @@ export const passive = z.object({
     quickRise: z.literal(true).optional(),
     /** 기상 회피로 시작한 회피의 쿨 더하기 (기상 회피 2·3포인트) */
     quickRiseCooldownAdd: perPoint(z.number()).optional(),
+    // 계열 2단계 보조 (SK-4 3차, skills.md 2·3장)
+    /** 여진: 내 down 판정이 맞힌 적 자리에 반경 radius 충격파 coef */
+    aftershock: z.object({ coef: perPoint(z.number().nonnegative()), radius: pos }).strict().optional(),
+    /** 짓밟기: 다운 대상 피해 배율 (기본 combat.json downDamageMul 대신) */
+    downDamage: perPoint(pos).optional(),
+    /** 올려 검기: skill이 active일 때 앞으로 검기 투사체 (coef, 관통) */
+    launchWave: z.object({ skill: z.string(), coef: perPoint(z.number().nonnegative()), speed: pos, range: pos, radius: pos }).strict().optional(),
+    /** 검기 순환: 스킬 투사체가 적중하면 다른 스킬 쿨 −sec초 (스킬 한 번에 한 번) */
+    cycle: z.object({ sec: perPoint(pos) }).strict().optional(),
+    /** 냉기 강화: 빙결(status freeze) 시간 더하기 */
+    freezeAdd: perPoint(sec).optional(),
+    /** 과열: 스킬 적중 뒤 time초 동안 평타 투사체가 delay초 뒤 한 발 더 */
+    overheat: z.object({ time: perPoint(pos), delay: pos }).strict().optional(),
+    /** 구슬 확장: skill의 판정 반지름 × radiusMul, 반복이 끝날 때 그 자리에서 한 번 더 coef */
+    repeatEnd: z.object({ skill: z.string(), radiusMul: perPoint(pos), coef: perPoint(z.number().nonnegative()) }).strict().optional(),
+    /** 역장: 스킬을 쓰면 나와 radius 안 동료에게 피해 1회 무효 보호막 time초 (내부 쿨 cooldown초) */
+    aegis: z.object({ radius: pos, time: pos, cooldown: perPoint(pos) }).strict().optional(),
   }).strict(),
 }).strict();
 
@@ -282,7 +299,10 @@ const stun = z.object({ time: sec, push: sec }).strict();
 export const combat = z.object({
   _note: z.string().optional(),
   baseAtk: pos, atkPerLevel: sec, gravity: pos, launchVz: pos, airHitVz: sec, airGravityMul: pos, maxAirHits: z.number().int().positive(),
-  bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec, wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
+  bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec,
+  /** 다운 상태 대상 피해 배율 (balance.md 1장 상황 보정, 보조 짓밟기가 올림) */
+  downDamageMul: pos,
+  wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
   /** 스킬 포인트 (skills.md 1장, balance.md 1장): 노드 최대 포인트(액티브·패시브), 액티브 포인트별 레벨 배율, 재입력 받는 시간 (스킬이 끝난 뒤) */
   skillTree: z.object({ maxPoints: z.number().int().positive(), levelMul: z.array(pos).min(1), reinputWindow: pos }).strict(),
   stun: z.object({ light: stun, medium: stun, heavy: stun }).strict(),

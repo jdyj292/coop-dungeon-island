@@ -24,6 +24,30 @@
     "pointDesc": ["투사체 사거리 +40%", "투사체 사거리 +60%", "투사체 사거리 +80%"],
     "effect": { "projectileRangeMul": [1.4, 1.6, 1.8] }
   },
+  "gs_aftershock": {
+    "id": "gs_aftershock", "weapon": "greatsword", "branch": "A", "unlockLevel": 7, "name": "여진",
+    "desc": "넘어뜨리는(down) 공격이 맞은 적 자리에\n작은 충격파 (반경 1.25타일)",
+    "pointDesc": ["충격파 100%", "충격파 130%", "충격파 160%"],
+    "effect": { "aftershock": { "coef": [100, 130, 160], "radius": 20 } }
+  },
+  "gs_stomp": {
+    "id": "gs_stomp", "weapon": "greatsword", "branch": "A", "unlockLevel": 9, "name": "짓밟기",
+    "desc": "다운된 적에게 주는 피해 감소가 줄어든다\n(기본 ×0.5)",
+    "pointDesc": ["다운 대상 피해 ×0.8", "다운 대상 피해 ×0.9", "다운 대상 피해 ×1.0"],
+    "effect": { "downDamage": [0.8, 0.9, 1] }
+  },
+  "gs_risingwave": {
+    "id": "gs_risingwave", "weapon": "greatsword", "branch": "B", "unlockLevel": 7, "name": "올려 검기",
+    "desc": "올려베기를 휘두르면 앞으로 꿰뚫는\n검기가 함께 날아간다 (4타일)",
+    "pointDesc": ["검기 150%", "검기 200%", "검기 250%"],
+    "effect": { "launchWave": { "skill": "gs_launch", "coef": [150, 200, 250], "speed": 200, "range": 64, "radius": 6 } }
+  },
+  "gs_cycle": {
+    "id": "gs_cycle", "weapon": "greatsword", "branch": "B", "unlockLevel": 9, "name": "검기 순환",
+    "desc": "투사체 스킬이 적에게 맞으면 다른 스킬\n쿨이 줄어든다 (스킬 한 번에 한 번)",
+    "pointDesc": ["다른 스킬 쿨 -0.5초", "다른 스킬 쿨 -0.75초", "다른 스킬 쿨 -1초"],
+    "effect": { "cycle": { "sec": [0.5, 0.75, 1] } }
+  },
   "st_affinity": {
     "id": "st_affinity", "weapon": "staff", "branch": "A", "unlockLevel": 3, "name": "원소 친화",
     "desc": "장판·지속 스킬(불꽃 기둥·부유 구슬·얼음\n장판)의 지속시간·횟수 증가",
@@ -36,6 +60,18 @@
     "pointDesc": ["받는 피해 +15%", "받는 피해 +22%", "받는 피해 +30%"],
     "effect": { "burn": { "element": "fire", "time": 3, "takenMul": [1.15, 1.22, 1.3] } }
   },
+  "st_frost": {
+    "id": "st_frost", "weapon": "staff", "branch": "A", "unlockLevel": 7, "name": "냉기 강화",
+    "desc": "얼리는 스킬(얼음 장판·얼음 창)의\n빙결 시간 증가",
+    "pointDesc": ["빙결 +0.5초", "빙결 +0.75초", "빙결 +1초"],
+    "effect": { "freezeAdd": [0.5, 0.75, 1] }
+  },
+  "st_overheat": {
+    "id": "st_overheat", "weapon": "staff", "branch": "A", "unlockLevel": 9, "name": "과열",
+    "desc": "스킬이 적에게 맞은 뒤 잠시 동안\n평타 마법탄이 한 발 더 나간다",
+    "pointDesc": ["3초 동안", "4초 동안", "5초 동안"],
+    "effect": { "overheat": { "time": [3, 4, 5], "delay": 0.1 } }
+  },
   "st_weightless": {
     "id": "st_weightless", "weapon": "staff", "branch": "B", "unlockLevel": 3, "name": "중압",
     "desc": "내가 느리게 한 적은 느려진 동안\n모두에게 받는 피해 증가",
@@ -47,6 +83,18 @@
     "desc": "회피(순간이동) 거리 증가, 쿨 감소",
     "pointDesc": ["거리 +50% · 쿨 -0.2초", "거리 +75% · 쿨 -0.3초", "거리 +100% · 쿨 -0.4초"],
     "effect": { "dodge": { "distanceMul": [1.5, 1.75, 2], "cooldownAdd": [-0.2, -0.3, -0.4] } }
+  },
+  "st_orbplus": {
+    "id": "st_orbplus", "weapon": "staff", "branch": "B", "unlockLevel": 7, "name": "구슬 확장",
+    "desc": "부유 구슬 범위 +50%, 끝날 때\n그 자리에서 터진다",
+    "pointDesc": ["끝 폭발 150%", "끝 폭발 200%", "끝 폭발 250%"],
+    "effect": { "repeatEnd": { "skill": "st_orb", "radiusMul": 1.5, "coef": [150, 200, 250] } }
+  },
+  "st_aegis": {
+    "id": "st_aegis", "weapon": "staff", "branch": "B", "unlockLevel": 9, "name": "역장",
+    "desc": "스킬을 쓰면 나와 3타일 안 동료에게\n피해 1회를 막는 보호막 6초",
+    "pointDesc": ["내부 쿨 15초", "내부 쿨 12초", "내부 쿨 10초"],
+    "effect": { "aegis": { "radius": 48, "time": 6, "cooldown": [15, 12, 10] } }
   },
   "cancel": {
     "id": "cancel", "weapon": "*", "branch": "common", "unlockLevel": 5, "name": "스킬 캔슬",

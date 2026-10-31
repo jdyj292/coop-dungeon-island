@@ -7,6 +7,7 @@ import { canBeHit } from '../body';
 import type { Monster } from '../monster/state';
 import type { PlayerState } from '../player';
 import { actionHits, areaCenter } from '../shapes';
+import type { Cast } from './bolts';
 import { hitMonster, type StrikeHit } from './strike';
 
 /** 연출 사건이 있는 예약 판정 종류: 반복 / 후속(벽꿍 포함) / 해제 */
@@ -29,6 +30,8 @@ export interface Echo {
   rep?: NonNullable<ActionDef['repeat']>;
   /** 연쇄: 남은 대상 수, 이미 맞은 몬스터 id */
   chain?: { left: number; hit: number[] };
+  /** 연발 투사체(shot)의 시전 (보조 검기 순환) */
+  cast?: Cast;
 }
 
 /** active 순간: 이 행동이 예약하는 판정들 (반복은 첫 판정을 뺀 나머지, copies는 첫 판정부터). now = 시뮬레이션 시각 */

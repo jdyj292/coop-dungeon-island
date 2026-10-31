@@ -2,7 +2,7 @@
 // 마법탄(bolts.ts)도 맞힐 때는 같은 hitMonster (피해·반응·MP·필살기·상태 이상)
 import type { ActionDef, ActionRun } from '../actions';
 import { applyHit, canBeHit } from '../body';
-import { PLAYER } from '../data/load';
+import { COMBAT, PLAYER } from '../data/load';
 import { damageOf } from '../hit';
 import { freezeMonster, slowMonster, type Monster } from '../monster/state';
 import type { PlayerState } from '../player';
@@ -27,7 +27,8 @@ const current: PosOf = (m) => ({ x: m.body.x, y: m.body.y, airborne: m.body.stat
 export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: number, from?: Origin): StrikeHit {
   // 중압 표식은 감속 동안만: 감속이 끝났으면 지운다 (다시 느리게 한 사람 기준으로 새로 건다)
   if (m.slow.left <= 0) m.pressed = 0;
-  const mul = takenMul(p, m);
+  // 다운 상태 대상은 피해 감소 (balance.md 1장, 보조 짓밟기가 올림). 맞기 전 상태로
+  const mul = takenMul(p, m) * (m.body.state === 'down' ? (p.perks?.downDamage ?? COMBAT.downDamageMul) : 1);
   applyHit(m.body, { dir, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });
   if (def.flags?.includes('pull') && from) pullToward(m, def.area ? areaCenter(from, def.area.at) : from);
   // 잠든 몬스터는 맞으면 바로 깨어남 (그 몬스터만, dungeon.md 5장)
