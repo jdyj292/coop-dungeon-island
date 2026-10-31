@@ -465,6 +465,121 @@
           ]
         }
       ]
+    },
+    "waveWind": {
+      "body": {
+        "bob": 1,
+        "legs": "walkA",
+        "lean": -2
+      },
+      "front": {
+        "hand": [
+          5,
+          6
+        ]
+      },
+      "back": {
+        "hand": [
+          6,
+          7
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            1
+          ],
+          "behind": true
+        }
+      ]
+    },
+    "waveRelease": {
+      "body": {
+        "bob": 2,
+        "legs": "walkA",
+        "lean": 2
+      },
+      "front": {
+        "hand": [
+          14,
+          12
+        ]
+      },
+      "back": {
+        "hand": [
+          -2,
+          9
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    "plunge": {
+      "body": {
+        "bob": 3,
+        "legs": "walkA",
+        "lean": 1
+      },
+      "front": {
+        "hand": [
+          12,
+          11
+        ]
+      },
+      "back": {
+        "hand": [
+          11,
+          11
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    "flashHold": {
+      "body": {
+        "bob": 3,
+        "legs": "walkA",
+        "lean": 2
+      },
+      "front": {
+        "hand": [
+          13,
+          9
+        ]
+      },
+      "back": {
+        "hand": [
+          -2,
+          11
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            -1
+          ]
+        }
+      ]
     }
   },
   "staff": {

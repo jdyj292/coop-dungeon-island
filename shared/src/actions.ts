@@ -24,7 +24,7 @@ export function skillDef(id: string): ActionDef {
   return s;
 }
 
-/** 투사체 끝 판정·분열·검흔 계수 × k (레벨 배율·충전 보너스, SK-4 1차b). out = def를 얕게 복사한 정의 */
+/** 투사체 끝 판정·분열·검흔·반환·반복(repeat.coef) 계수 × k (레벨 배율·충전 보너스, SK-4 1차b). out = def를 얕게 복사한 정의 */
 export function scaleExtraCoefs(out: ActionDef, k: number): void {
   const bl = out.projectile?.blast;
   if (bl && (bl.coef !== undefined || bl.shards)) {
@@ -35,6 +35,7 @@ export function scaleExtraCoefs(out: ActionDef, k: number): void {
   }
   if (out.mark) out.mark = { ...out.mark, coef: out.mark.coef * k };
   if (out.trail) out.trail = { ...out.trail, coef: out.trail.coef * k };
+  if (out.repeat?.coef !== undefined) out.repeat = { ...out.repeat, coef: out.repeat.coef * k };
   const meet = out.projectile?.meet;
   if (meet) out.projectile = { ...out.projectile!, meet: { ...meet, coef: meet.coef * k } };
 }
@@ -150,18 +151,27 @@ export function withCoefMul(def: ActionDef, mul: number): ActionDef {
   let byMul = coefCache.get(def);
   if (!byMul) coefCache.set(def, (byMul = new Map()));
   let out = byMul.get(mul);
-  if (!out) byMul.set(mul, (out = { ...def, coef: def.coef * mul }));
+  if (!out) {
+    out = { ...def, coef: def.coef * mul };
+    if (def.repeat?.coef !== undefined) out.repeat = { ...def.repeat, coef: def.repeat.coef * mul };
+    byMul.set(mul, out);
+  }
   return out;
 }
 
-/** 지금 구간의 포즈 이름 (행동 중이 아니면 null) */
+/** 지금 구간의 포즈 이름 (행동 중이 아니면 null). 준비·후딜레이 앞 poseSplit 비율은 lead·follow 포즈 (있으면) */
 export function fighterPose(f: Fighter): string | null {
   if (!f.run) return null;
   // 대검 충전 중(준비 끝에서 멈춤): 충전 포즈 (없으면 준비 포즈 그대로, skills.md 2장)
   const ch = f.run.charge;
-  if (ch && !ch.done && ch.t > 0 && f.run.def.poses?.charge) return f.run.def.poses.charge;
+  const poses = f.run.def.poses;
+  if (ch && !ch.done && ch.t > 0 && poses?.charge) return poses.charge;
   const phase = phaseAt(f.run.def, f.run.t);
-  return (phase && f.run.def.poses?.[phase]) ?? null;
+  if (!phase) return null;
+  const [from, to] = phaseRange(f.run.def, phase), early = f.run.t - from < (to - from) * COMBAT.poseSplit;
+  if (early && phase === 'windup' && poses?.lead) return poses.lead;
+  if (early && phase === 'recovery' && poses?.follow) return poses.follow;
+  return poses?.[phase] ?? null;
 }
 
 export const fighterPhase = (f: Fighter): Phase | null => (f.run ? phaseAt(f.run.def, f.run.t) : null);

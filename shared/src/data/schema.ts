@@ -80,7 +80,10 @@ export const actionFields = {
   hits: z.object({ count: z.number().int().positive(), interval: pos }).strict().optional(),
   move: move.optional(),
   status: z.object({ type: statusType, time: pos, amount: z.number().optional() }).strict().optional(),
-  poses: z.object({ windup: z.string(), active: z.string(), recovery: z.string(), charge: z.string() }).partial().strict().optional(),
+  // lead = 준비 앞부분 포즈, follow = 후딜레이 앞부분 포즈 (나눔 비율 combat.json poseSplit, 없으면 그 구간 포즈 하나, motion.md 2장)
+  poses: z.object({
+    windup: z.string(), active: z.string(), recovery: z.string(), charge: z.string(), lead: z.string(), follow: z.string(),
+  }).partial().strict().optional(),
   fx: z.object({ grade: z.enum(GRADES), shake: z.enum(['vertical', 'horizontal']).optional() }).strict().optional(),
   sfx: z.object({ windup: z.string(), active: z.string(), hit: z.string() }).partial().strict().optional(),
   telegraph: z.object({
@@ -102,10 +105,12 @@ export const playerAction = playerActionObj.superRefine(oneShape);
 
 /**
  * 반복 판정 (data.md 3장): 시전한 자리에 count번 (첫 판정 포함). step = 판정마다 바라보는 쪽으로 옮기는 거리(px),
- * seek = 판정마다 가장 가까운 맞을 수 있는 몬스터 쪽으로 옮기는 거리(px), copies = 같은 반복을 이 오프셋([앞, 깊이])에 하나씩 더
+ * seek = 판정마다 가장 가까운 맞을 수 있는 몬스터 쪽으로 옮기는 거리(px), copies = 같은 반복을 이 오프셋([앞, 깊이])에 하나씩 더,
+ * coef = 묶음 첫 판정 뒤 판정들의 계수 (없으면 스킬 coef. 검의 장막·일섬 = 큰 첫 판정 + 작은 다단)
  */
 export const repeat = z.object({
   count: z.number().int().positive(), interval: pos, step: z.number().optional(), seek: pos.optional(), copies: z.array(point).optional(),
+  coef: z.number().nonnegative().optional(),
 }).strict();
 /** 이 행동의 knockback으로 벽에 부딪힌 몬스터: 다운 + 추가 판정 coef (변형 벽꿍) */
 const onWall = z.object({ coef: z.number().nonnegative() }).strict();
@@ -330,6 +335,8 @@ export const combat = z.object({
   /** 다운 상태 대상 피해 배율 (balance.md 1장 상황 보정, 보조 짓밟기가 올림) */
   downDamageMul: pos,
   wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
+  /** 행동 포즈 lead·follow가 준비·후딜레이 앞에서 차지하는 비율 (motion.md 2장) */
+  poseSplit: z.number().positive().max(1),
   /** 스킬 포인트 (skills.md 1장, balance.md 1장): 노드 최대 포인트(액티브·패시브), 액티브 포인트별 레벨 배율, 재입력 받는 시간 (스킬이 끝난 뒤) */
   skillTree: z.object({ maxPoints: z.number().int().positive(), levelMul: z.array(pos).min(1), reinputWindow: pos }).strict(),
   stun: z.object({ light: stun, medium: stun, heavy: stun }).strict(),

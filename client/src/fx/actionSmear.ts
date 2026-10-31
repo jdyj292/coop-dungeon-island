@@ -1,10 +1,10 @@
 // 행동 active 진입 때의 무기 스미어 (motion.md 2장): 찌르기 행동은 직선 스미어 + 출발 먼지, 나머지는 포즈 모양의 초승달.
 // 땅을 내려치는 행동은 균열·충격 링·먼지를 더한다 (groundImpact, 부채꼴 판정이면 부채꼴 균열, 제자리 원 판정이면 사방 균열). 뒤쪽까지 베는 판정은 등 뒤 스미어.
 // 엇갈려 베는 스킬(smear.cross)은 X자 스미어를 더한다.
-// 파쇄참·대지붕괴(SK-7)는 tier3Fx, 일섬은 tier3bFx 그림. 계열 근접 스킬(fx.json branch.looks)은 자기 그림: 회전베기·어깨 들이받기는 캐릭터를 따라감, 발도는 출발 자리에서 한 줄, 회오리 검기는 판정 원 자리에서 솟는 회오리
+// 파쇄참·대지붕괴(SK-7)는 tier3Fx, 일섬은 tier3bFx 그림 (검의 장막은 spellCast → curtainFx). 계열 근접 스킬(fx.json branch.looks)은 자기 그림: 회전베기·어깨 들이받기는 캐릭터를 따라감, 발도는 출발 자리에서 한 줄, 회오리 검기는 판정 원 자리에서 솟는 회오리, 검기 날리기는 칼끝 섬광 + 포즈 스미어
 import { DEPTH_RATIO, type ActionDef, type FxGrade } from '@game/shared';
 import fx from '../../data/fx.json';
-import { cyclone, drawSlash, lookOf, shoulder, whirl } from './branchFx';
+import { cyclone, drawSlash, lookOf, shoulder, waveLaunch, whirl } from './branchFx';
 import { groundImpact, isGroundImpact, isRadialImpact, radialImpact } from './groundImpact';
 import type { FxLayer } from './layer';
 import { dust } from './particles';
@@ -13,6 +13,8 @@ import { isThrust, thrust } from './thrust';
 import { quakeRing } from './tier2Fx';
 import { collapsePulse, crushImpact } from './tier3Fx';
 import { flashLine } from './tier3bFx';
+
+const LAUNCH_DUST = fx.branch.wave.launch.dust;
 
 /** foot = 지금 발 위치(화면)와 방향 (찌르기 스미어는 돌진하는 캐릭터를 따라간다) */
 export function actionSmear(layer: FxLayer, def: ActionDef, foot: () => { sx: number; sy: number; facing: number }): void {
@@ -34,6 +36,11 @@ export function actionSmear(layer: FxLayer, def: ActionDef, foot: () => { sx: nu
     layer.add(drawSlash(sx, sy, facing, def));
     dust(sx, sy, fx.smear.thrust.dust).forEach((e) => layer.add(e));
     return;
+  }
+  // 검기 날리기: 칼끝 섬광·바람 줄 + 발밑 먼지 (그 위에 포즈 스미어)
+  if (look === 'wave') {
+    layer.add(waveLaunch(sx, sy, facing));
+    dust(sx + 6 * facing, sy, LAUNCH_DUST).forEach((e) => layer.add(e));
   }
   if (isThrust(def.id)) {
     layer.add(thrust(foot, grade));

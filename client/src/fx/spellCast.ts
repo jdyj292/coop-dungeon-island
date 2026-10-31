@@ -1,7 +1,7 @@
 // 행동 → 마법 연출 연결 (MVP 보충 ST-2a). 무엇을 그릴지는 데이터로 고른다:
 // 포즈 fx(poses.json: ready·gather·skyRaise 등 준비 = spark, bolt·thrust = bolt, area·channel = circle, plantDeep = stamp) + 행동 판정(area 원 = 화염 폭발, status freeze = 얼음 장판, slow = 동토 장판).
 // 계열 스킬(fx.json branch.looks: 불꽃 기둥·부유 구슬·끌어올림·중력 우물·중력장)은 원 판정 자리에 자기 그림 (spellBranch·spellGravity), 반복 판정마다 하나씩.
-// 원형 마법 준비 표적은 불 속성이면 금색, 아니면 하늘색. 대검 B 3단계 예약 판정(교차점·반환·잔상·이중 일섬)은 tier3bFx
+// 원형 마법 준비 표적은 불 속성이면 금색, 아니면 하늘색. 대검 B 3단계 예약 판정(교차점·반환·잔상·이중 일섬·칼바람)은 tier3bFx, 검의 장막은 curtainFx
 import { areaCenter, blastDef, type ActionDef, type EchoLook, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
@@ -17,7 +17,8 @@ import { gravField, gravityWell } from './spellGravity';
 import { iceField, slowField } from './spellIce';
 import { chainBolt, orbBurst, quakeRing, scarBurst, stickSlash } from './tier2Fx';
 import { collapseField, collapsePulse, risePillars } from './tier3Fx';
-import { flashCut, flashLine, ghosted, meetBurst } from './tier3bFx';
+import { flashCut, flashLine, flashTick, ghosted, meetBurst } from './tier3bFx';
+import { curtainActive, curtainStart, curtainTick } from './curtainFx';
 import { actionSmear } from './actionSmear';
 
 /** 시전자 (논리 좌표) */
@@ -56,6 +57,7 @@ function areaBurst(layer: Layers['layer'], def: ActionDef, c: Caster): void {
 
 /** 준비 시작: 준비 시간 동안 보석으로 빛 모으기, 지연 원형 마법이면 바닥 표적 (준비 시간 동안) */
 export function castStart(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Caster): void {
+  if (lookOf(def.id) === 'curtain') curtainStart(fxl.ground, def, c);
   const w = poseFx(weapon, def.poses?.windup, c);
   if (w?.type === 'spark') fxl.layer.add(spark(w.x, w.y, def.phases.windup));
   if (def.area?.shape === 'circle' && isSpell(weapon, def, c)) {
@@ -73,6 +75,10 @@ export function castActive(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Ca
     fxl.ground.add(magicCircle(a.x, a.y));
     fxl.ground.add(stampImpact(a.x, a.y));
     dust(a.x, a.y, fx.spell.stamp.dust).forEach((e) => fxl.layer.add(e));
+  }
+  if (lookOf(def.id) === 'curtain') {
+    curtainActive(fxl, def, c);
+    return;
   }
   // 대지붕괴: 판정 사각형에 반복 시간 동안 깨진 땅 (바닥 층)
   if (lookOf(def.id) === 'collapse' && def.area) {
@@ -103,6 +109,10 @@ export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' |
     c.layer.add(boltHit(sx, sy));
     return;
   }
+  if (lookOf(def.id) === 'curtain') {
+    curtainTick(c.layer, def, at);
+    return;
+  }
   if (lookOf(def.id) === 'collapse' && def.area) {
     const a = areaCenter(at, def.area.at), { sx, sy } = project(a.x, a.y);
     collapsePulse(sx, sy, def.area.width ?? 64, def.area.depth ?? 32, Math.round(at.x + at.y * 7 + performance.now())).forEach((e) => c.layer.add(e));
@@ -114,9 +124,13 @@ export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' |
   }
   const box = def.hitbox;
   if (!box) return;
-  // 이중 일섬 두 번째: 같은 한 줄 섬광
+  // 일섬: 칼바람 다단은 줄 위 짧은 X자 베기, 이중 일섬 마지막은 같은 한 줄 섬광
   if (lookOf(def.id) === 'flash') {
     const { sx, sy } = project(at.x, at.y);
+    if (kind === 'repeat') {
+      c.layer.add(flashTick(sx, sy, at.facing, box.width, Math.round(performance.now())));
+      return;
+    }
     c.layer.add(flashLine(sx, sy, at.facing, box.width));
     c.shake.start(fx.downShake.sec, fx.downShake.px);
     return;

@@ -7,7 +7,9 @@ const LOOK_SOUNDS: Record<string, string> = {
 };
 
 /** 변형 예약 판정 (look이 있으면 그 소리, 아니면 반복·후속 = 그 행동의 active 소리, 해제 = 적중 소리). 온라인 echo 메시지도 같은 규칙 */
-export const echoSound = (kind: string, def: { sfx?: { active?: string; hit?: string } }, look?: string): string[] => {
+export const echoSound = (kind: string, def: { sfx?: { active?: string; hit?: string }; repeat?: { coef?: number } }, look?: string): string[] => {
+  // 다단 반복(repeat.coef: 검의 장막·일섬)은 판정마다 active 소리를 다시 내지 않음 (적중 소리만)
+  if (kind === 'repeat' && def.repeat?.coef !== undefined) return [];
   const n = (look && LOOK_SOUNDS[look]) || (kind === 'shatter' ? def.sfx?.hit : def.sfx?.active);
   return n ? [n] : [];
 };

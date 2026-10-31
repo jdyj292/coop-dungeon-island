@@ -12,6 +12,7 @@ import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
 import { chargeView } from '../fx/chargeFx';
+import { setCurtainField } from '../fx/curtainFx';
 import { StatusLayer, type StatusView } from '../fx/statusFx';
 import { HazardLayer } from '../fx/hazards';
 import { ATTACKS, RemoteShots } from '../net/remoteShots';
@@ -81,6 +82,7 @@ export class OnlineStage {
   constructor(private scene: Phaser.Scene, readonly conn: Connection, bounds: Bounds) {
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), ground: new FxLayer(scene, FX_GROUND_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.local = new LocalPlayer(conn, bounds);
+    setCurtainField(bounds);
     this.hazards = new HazardLayer(scene);
     this.boltLayer = new BoltLayer(scene);
     this.status = new StatusLayer(scene);
@@ -247,10 +249,12 @@ export class OnlineStage {
     const [ax, ay] = fx.star.at as [number, number];
     const facing = attacker?.last && attacker.last.x > h.x ? -1 : 1;
     // 등급·적중 소리: 공격자가 지금 하는 행동의 데이터 (audio.md 3장)
-    const def = this.cues.lastDef(`p:${h.attacker}`);
+    // 다단 판정(repeat.coef, 서버가 light로 보냄)은 가볍게: 로컬 sim/skillExtras.ts와 같은 규칙
+    const def = this.cues.lastDef(`p:${h.attacker}`), tick = !!def && 'repeat' in def && def.repeat?.coef !== undefined && h.strength === 'light' && def.strength !== 'light';
     if (e) e.view.hurt = e.m.body.armor ? 0 : fx.reaction.hurtSec;
-    hitPackage(this.fx, def?.fx?.grade ?? 'light', e?.view ?? { flash: 0 }, { x: sx + ax * facing, y: sy + ay, numberX: sx, numberY: sy - fx.number.above }, h.damage);
-    if (def?.sfx?.hit) sfx.play(def.sfx.hit);
+    hitPackage(this.fx, tick ? 'light' : def?.fx?.grade ?? 'light', e?.view ?? { flash: 0 }, { x: sx + ax * facing, y: sy + ay, numberX: sx, numberY: sy - fx.number.above }, h.damage);
+    if (tick) sfx.play('hitLight');
+    else if (def?.sfx?.hit) sfx.play(def.sfx.hit);
     // 히트스톱 동기화: 내 공격이면 예측 중인 내 행동도 서버와 같은 시간(근접 역경직 포함) 멈춤 (몬스터·다른 사람은 서버 데이터가 이미 멈춰 있다)
     if (h.attacker === this.conn.myId) this.local.predictor?.stop(h.recoil, h.act, h.actT);
   }

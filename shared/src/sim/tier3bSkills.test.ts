@@ -1,4 +1,4 @@
-// 대검 B 계열 3단계 (SK-7, skills.md 2장): 십자 검기(2연발·사방·교차점)·일섬(이중·반환)·잔상·검의 춤(스킬 끝 1초 안 다음 스킬) (Lv1 ATK 10)
+// 대검 B 계열 3단계 (SK-7, skills.md 2장): 검의 장막(깊이 끝까지·다단 감속·두 줄·밀어내기)·일섬(다단·이중·반환)·잔상·검의 춤(스킬 끝 1초 안 다음 스킬) (Lv1 ATK 10)
 import { describe, expect, it } from 'vitest';
 import { weaponDef } from '../actions';
 import { TICK } from '../constants';
@@ -25,53 +25,79 @@ const spawn = (sim: RoomSim, ...at: [number, number][]) =>
 const hitsOn = (ev: SimEvent[], m: Monster) => ev.flatMap((e) => (e.type === 'hit' && e.m === m ? [e.damage] : []));
 const tick = (sec: number) => Math.round(sec / TICK);
 
-describe('십자 검기', () => {
-  it('같은 줄로 두 번 (각 700%)', () => {
+describe('검의 장막', () => {
+  it('앞 4타일에 방 위아래 끝까지 (600%), 2초 동안 0.25초마다 80% + 감속', () => {
     const sim = room();
-    const [m] = spawn(sim, [170, 50]);
-    expect(hitsOn(run(sim, 1.4, { 0: cast({}, 'gs_cross') }), m!)).toEqual([70, 70]);
+    const [m, top, side] = spawn(sim, [164, 50], [164, 2], [200, 50]);
+    const ev = run(sim, 3, { 0: cast({}, 'gs_cross') });
+    // 맞을 때마다 조금씩 밀려 장막 밖으로 나가면 끝 (걸어 들어오면 다시 베임)
+    const [big, ...ticks] = hitsOn(ev, m!);
+    expect(big).toBe(60);
+    expect(ticks.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(ticks)).toEqual(new Set([8]));
+    expect(hitsOn(ev, top!)[0]).toBe(60);
+    expect(hitsOn(ev, side!)).toEqual([]);
   });
 
-  it('사방: 앞·뒤·위·아래 한 번에 (각 450%)', () => {
-    const b = { gs_cross: { points: 1, variant: 'four' } };
-    const sim = room(b);
-    const ms = spawn(sim, [160, 50], [40, 50], [100 + MUZZLE, 15], [100 + MUZZLE, 85]);
-    const ev = run(sim, 1.4, { 0: cast(b, 'gs_cross') });
-    for (const m of ms) expect(hitsOn(ev, m)).toEqual([45]);
+  it('지나가다 들어온 적도 베이고 느려진다', () => {
+    const sim = room();
+    const [m] = spawn(sim, [200, 50]);
+    const first = run(sim, 0.8, { 0: cast({}, 'gs_cross') });
+    expect(hitsOn(first, m!)).toEqual([]);
+    m!.body.x = 164;
+    const later = run(sim, 0.3, {});
+    expect(hitsOn(later, m!)).toEqual([8]);
+    expect(m!.slow.left).toBeGreaterThan(0);
   });
 
-  it('교차점: 위아래 줄이 앞 4타일에서 엇갈리며 폭발 (700% × 2 + 500%)', () => {
-    const b = { gs_cross: { points: 1, variant: 'meet' } };
+  it('두 줄: 앞 2타일·5타일에 한 줄씩 (각 320%, 지날 때 40%)', () => {
+    const b = { gs_cross: { points: 1, variant: 'twin' } };
     const sim = room(b);
-    const [mid] = spawn(sim, [100 + MUZZLE + 64, 50]);
-    const ev = run(sim, 1.4, { 0: cast(b, 'gs_cross') });
-    expect(hitsOn(ev, mid!).sort()).toEqual([50, 70, 70]);
-    expect(ev.some((e) => e.type === 'echo' && e.echo.look === 'meet')).toBe(true);
+    const [near, far] = spawn(sim, [132, 50], [180, 50]);
+    const ev = run(sim, 3, { 0: cast(b, 'gs_cross') });
+    for (const m of [near!, far!]) expect(hitsOn(ev, m).slice(0, 3)).toEqual([32, 4, 4]);
+  });
+
+  it('밀어내기: 장막이 앞으로 나아가 처음 자리 밖 적도 맞힌다', () => {
+    const b = { gs_cross: { points: 1, variant: 'push' } };
+    const sim = room(b);
+    const [m] = spawn(sim, [200, 50]);
+    const ev = run(sim, 3, { 0: cast(b, 'gs_cross') });
+    expect(hitsOn(ev, m!).length).toBeGreaterThan(0);
+    expect(hitsOn(ev, m!)[0]).toBe(7);
   });
 });
 
 describe('일섬', () => {
-  it('앞 12타일 한 줄 (1300%), 그 너머는 안 맞음', () => {
+  it('앞 12타일 한 줄 300% + 칼바람 10번 (각 100%), 그 너머는 안 맞음', () => {
     const sim = room();
-    const [near, far] = spawn(sim, [280, 50], [330, 50]);
+    const [near, far] = spawn(sim, [240, 50], [330, 50]);
     const ev = run(sim, 1.5, { 0: cast({}, 'gs_flash') });
-    expect([hitsOn(ev, near!), hitsOn(ev, far!)]).toEqual([[130], []]);
+    expect([hitsOn(ev, near!), hitsOn(ev, far!)]).toEqual([[30, ...Array(10).fill(10)], []]);
   });
 
-  it('이중 일섬은 각 750% 두 번, 반환은 0.5초 뒤 맞은 적에게 400% (움직여도)', () => {
+  it('이중 일섬은 칼바람 각 60% 뒤 마지막 400%, 반환은 0.5초 뒤 맞은 적에게 400% (움직여도)', () => {
     const dbl = { gs_flash: { points: 1, variant: 'double' } };
     const sim = room(dbl);
     const [m] = spawn(sim, [200, 50]);
-    expect(hitsOn(run(sim, 1.5, { 0: cast(dbl, 'gs_flash') }), m!)).toEqual([75, 75]);
+    expect(hitsOn(run(sim, 1.5, { 0: cast(dbl, 'gs_flash') }), m!)).toEqual([30, ...Array(10).fill(6), 40]);
     const tr = { gs_flash: { points: 1, variant: 'trail' } };
     const sim2 = room(tr);
     const [a, b] = spawn(sim2, [200, 50], [200, 90]);
-    const first = run(sim2, 0.5, { 0: cast(tr, 'gs_flash') });
-    expect([hitsOn(first, a!), hitsOn(first, b!)]).toEqual([[130], []]);
+    const first = run(sim2, 0.4, { 0: cast(tr, 'gs_flash') });
+    expect([hitsOn(first, a!), hitsOn(first, b!)]).toEqual([[30], []]);
     a!.body.x = 600;
-    const later = run(sim2, 0.6, {});
+    const later = run(sim2, 0.7, {});
     expect([hitsOn(later, a!), hitsOn(later, b!)]).toEqual([[40], []]);
     expect(later.some((e) => e.type === 'echo' && e.echo.look === 'cut')).toBe(true);
+  });
+
+  it('칼바람은 가볍게 (light 경직·시전 소리 없음)', () => {
+    const sim = room();
+    const [m] = spawn(sim, [200, 50]);
+    const hits = run(sim, 1.5, { 0: cast({}, 'gs_flash') }).flatMap((e) => (e.type === 'hit' && e.m === m ? [e.def] : []));
+    expect(hits.map((d) => d.strength)).toEqual(['heavy', ...Array(10).fill('light')]);
+    expect(hits[1]!.sfx?.active).toBeUndefined();
   });
 });
 

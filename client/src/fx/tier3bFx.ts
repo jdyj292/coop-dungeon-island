@@ -1,12 +1,12 @@
-// SK-7 대검 B 계열 3단계 연출 (art.md 7장, 값 fx.json tier3b): 십자 검기 투사체는 shotDraw.crossWave,
-// 교차점 = X자로 벌어지는 빛 + 큰 별 + 고리, 일섬 = 판정 끝까지 한 줄 섬광(굵은 흰 줄 → 금 → 바둑판) + 차례로 번쩍이는 베기 자국,
-// 반환 = 맞은 적 자리 늦은 대각선 베기, 보조 잔상 = 같은 그림을 바둑판으로 반만 (ghosted)
+// SK-7 대검 B 계열 3단계 연출 (art.md 7장, 값 fx.json tier3b): 검의 장막은 curtainFx,
+// 교차점(projectile.meet, 지금 쓰는 스킬 없음) = X자로 벌어지는 빛 + 큰 별 + 고리, 일섬 = 판정 끝까지 한 줄 섬광(굵은 흰 줄 → 금 → 바둑판) + 차례로 번쩍이는 베기 자국,
+// 칼바람(일섬 다단) = 줄 위 몇 자리에 짧은 X자 베기 + 다시 번쩍이는 줄, 반환 = 맞은 적 자리 늦은 대각선 베기, 보조 잔상 = 같은 그림을 바둑판으로 반만 (ghosted)
 import type Phaser from 'phaser';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
 import type { Effect } from './layer';
 import { sparks } from './particles';
-import { clamp01, col, life, px, star4 } from './spellDraw';
+import { clamp01, col, hash, life, px, star4 } from './spellDraw';
 import { quakeRing } from './tier2Fx';
 
 const T = fx.tier3b;
@@ -82,6 +82,24 @@ export function flashLine(sx: number, sy: number, facing: number, len: number): 
         for (let j = -n; j <= n; j++) px(g, cx + Math.round(j * 0.6) * facing, y + j, Math.abs(j) < n * 0.5 && t < 0.5 ? white : gold, 1 - t);
       }
       if (thick) star4(g, sx + len * facing, y, 3, white, gold);
+    },
+  };
+}
+
+/** 칼바람 한 번: 줄(발 앞 len px) 위 cuts개 자리(seed로 정함)에 짧은 X자 베기, 그 둘레 glow px 줄이 다시 번쩍임 */
+export function flashTick(sx: number, sy: number, facing: number, len: number, seed: number): Effect {
+  const F = T.flash.tick, { white, gold } = col(), y = sy + T.flash.y;
+  const at = Array.from({ length: F.cuts }, (_, i) => Math.round(len * (0.08 + 0.88 * hash(seed + i * 17))));
+  return {
+    ...life(F.sec),
+    draw(g, k) {
+      const n = Math.max(1, Math.round(F.len * Math.min(1, (1 - k) * 4))), a = clamp01(k * 1.6);
+      for (const d of at) {
+        const cx = sx + d * facing;
+        for (let o = -F.glow; o <= F.glow; o++) px(g, cx + o, y, Math.abs(o) < F.glow / 2 ? white : gold, a * (1 - Math.abs(o) / F.glow));
+        line(g, cx - n, y - n, cx + n, y + n, k > 0.5 ? white : gold, a);
+        line(g, cx - n, y + n, cx + n, y - n, gold, a);
+      }
     },
   };
 }

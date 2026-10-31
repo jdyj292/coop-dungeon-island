@@ -13,6 +13,7 @@ import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
 import { chargeView } from '../fx/chargeFx';
+import { setCurtainField } from '../fx/curtainFx';
 import { StatusLayer } from '../fx/statusFx';
 import { HazardLayer } from '../fx/hazards';
 import { hitPackage, type FxContext } from '../fx/hitPackage';
@@ -79,6 +80,7 @@ export class CombatStage {
   constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, spawns: Spawn[], readonly opts: SimOptions = {}, readonly weapon: WeaponDef = weaponDef('greatsword')) {
     this.sim = new RoomSim(this.weapon, bounds, player, opts);
     this.sim.spawn(spawns);
+    setCurtainField(bounds);
     this.playerView = new PlayerView(scene, FX_DEPTH - 1);
     this.playerView.weaponVisual = this.weapon.visual;
     this.playerView.teleport = this.weapon.backstepStyle === 'teleport';

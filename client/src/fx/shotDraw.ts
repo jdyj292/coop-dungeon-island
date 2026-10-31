@@ -1,5 +1,5 @@
-// 계열 스킬 투사체 그리기 (SK-2 2차, art.md 7장): 검기 = 세로 초승달(흰 앞 → 금 → 어두운 금) + 뒤 잔상, 얼음 창 = 앞이 뾰족한
-// 마름모 창(흰 심줄·하늘·진한 테두리) + 서리 가루. 대검 투척 = 도는 대검, 화염구 = 불덩이 + 불꼬리 (SK-4 2차), 십자 검기 = 초승달 + 가로 칼날 (SK-7). 크기는 행동 projectile.radius (변형 대형이면 커짐). 끝 연출도 그림별로
+// 계열 스킬 투사체 그리기 (SK-2 2차, art.md 7장): 검기 = 세로 초승달(흰 앞 → 금 → 어두운 금) + 뒤 잔상 + 속도선 + 발밑 긁힌 자국, 얼음 창 = 앞이 뾰족한
+// 마름모 창(흰 심줄·하늘·진한 테두리) + 서리 가루. 대검 투척 = 도는 대검, 화염구 = 불덩이 + 불꼬리 (SK-4 2차). 크기는 행동 projectile.radius (변형 대형이면 커짐). 끝 연출도 그림별로
 import type Phaser from 'phaser';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
@@ -7,7 +7,7 @@ import type { FxLayer } from './layer';
 import { lookOf } from './branchFx';
 import { sparks, star } from './particles';
 import { boltFizzle, boltHit } from './spell';
-import { col, ellipseDots, px, star4 } from './spellDraw';
+import { col, ellipseDots, px } from './spellDraw';
 import { fireSparks } from './tier2Fx';
 
 type G = Phaser.GameObjects.Graphics;
@@ -24,30 +24,28 @@ export interface ShotView {
   ghost?: boolean;
 }
 
-/** 검기: 높이 = r × tall인 세로 초승달, 가운데가 앞으로 bulge만큼 볼록. 잔상은 같은 모양 어두운 금색 바둑판 */
-export function swordWave(g: G, sx: number, sy: number, dir: number, r: number): void {
+/** 검기: 높이 = r × tall인 세로 초승달, 가운데가 앞으로 bulge만큼 볼록 (두께 thick, 앞 2줄 흰). 잔상은 같은 모양 어두운 금색 바둑판,
+ * 뒤로 속도선(이동 거리 x로 길이가 떨림)·발밑(sy) 긁힌 자국 */
+export function swordWave(g: G, sx: number, sy: number, dir: number, r: number, x = 0): void {
   const W = B.wave, h = Math.round(r * W.tall), cy = sy - h - W.lift;
   const white = colorInt('global.allyFx.white'), gold = colorInt('global.allyFx.gold'), edge = colorInt('global.fx.smearEdge');
   const crescent = (ox: number, a: number, ghost: boolean) => {
     for (let dy = -h; dy <= h; dy++) {
-      const f = dy / h, front = Math.round((1 - f * f) * W.bulge * (r / 6)), thick = Math.max(1, Math.round((1 - Math.abs(f)) * 3));
-      for (let t = 0; t < thick; t++) px(g, sx + (front - t - ox) * dir, cy + dy, ghost ? edge : t === 0 ? white : t === 1 ? gold : edge, a);
+      const f = dy / h, front = Math.round((1 - f * f) * W.bulge * (r / 6)), thick = Math.max(1, Math.round((1 - Math.abs(f)) * W.thick));
+      for (let t = 0; t < thick; t++) {
+        const c = ghost ? edge : t === 0 || (t === 1 && Math.abs(f) < 0.4) ? white : t < thick - 1 ? gold : edge;
+        px(g, sx + (front - t - ox) * dir, cy + dy, c, a);
+      }
     }
   };
-  W.trail.forEach((d, i) => crescent(d, 0.5 - i * 0.2, true));
+  const flick = Math.floor(x / 3);
+  W.lines.forEach((k, i) => {
+    const y = cy + Math.round(k * h), len = Math.round(r * W.lineLen * (0.6 + 0.2 * ((flick + i) % 3)));
+    for (let d = 0; d < len; d++) px(g, sx - (2 + d) * dir, y, d < 2 ? gold : edge, 0.85 * (1 - d / len));
+  });
+  for (let d = 0; d < W.scratch; d += 2) px(g, sx - d * dir, sy, edge, 0.8 * (1 - d / W.scratch));
+  W.trail.forEach((d, i) => crescent(d, 0.55 - i * 0.17, true));
   crescent(0, 1, false);
-}
-
-/** 십자 검기 투사체: 세로 초승달(검기와 같음) + 가운데를 가로지르는 가로 칼날 (가운데 흰 → 금 → 끝 어두운 금) */
-export function crossWave(g: G, sx: number, sy: number, dir: number, r: number): void {
-  swordWave(g, sx, sy, dir, r);
-  const { white, gold } = col(), edge = colorInt('global.fx.smearEdge'), half = Math.round(r * fx.tier3b.cross.bar), cy = sy - Math.round(r * B.wave.tall) - B.wave.lift;
-  for (let d = -half; d <= half; d++) {
-    const f = Math.abs(d) / half, x = sx + d * dir;
-    px(g, x, cy, f < 0.5 ? white : f < 0.85 ? gold : edge);
-    if (f < 0.6) { px(g, x, cy - 1, gold); px(g, x, cy + 1, gold); }
-  }
-  star4(g, sx, cy, 2, white, gold);
 }
 
 /** 얼음 창: 길이 r × length, 앞에서 widest 비율 자리가 가장 두꺼움. 뒤로 서리 가루 */
@@ -104,8 +102,7 @@ export function fireball(g: G, sx: number, sy: number, x: number, dir: number, r
 /** 이 투사체를 계열 그림으로 그렸으면 true (아니면 BoltLayer가 마법탄으로) */
 export function drawShot(g: G, sx: number, sy: number, s: ShotView): boolean {
   const look = s.id && lookOf(s.id);
-  if (look === 'wave') swordWave(g, sx, sy + fx.spell.bolt.height, s.dir, s.r ?? 6);
-  else if (look === 'cross') crossWave(g, sx, sy + fx.spell.bolt.height, s.dir, s.r ?? 10);
+  if (look === 'wave') swordWave(g, sx, sy + fx.spell.bolt.height, s.dir, s.r ?? 6, s.x);
   else if (look === 'lance') iceLance(g, sx, sy, s.dir, s.r ?? 5);
   else if (look === 'throw') thrownBlade(g, sx, sy + fx.spell.bolt.height, s.x, s.dir, s.r ?? 8);
   else if (look === 'fireball') fireball(g, sx, sy, s.x, s.dir, s.r ?? 9);
@@ -116,7 +113,7 @@ export function drawShot(g: G, sx: number, sy: number, s: ShotView): boolean {
 /** 투사체가 끝난 자리: 검기는 금색 별·불꽃, 나머지는 마법탄 적중 섬광·흩어짐. (sx, sy) = 마법탄 높이 화면 좌표 */
 export function shotEnd(layer: FxLayer, id: string | undefined, sx: number, sy: number, hit: boolean): void {
   const look = id && lookOf(id);
-  if (look === 'wave' || look === 'throw' || look === 'cross') {
+  if (look === 'wave' || look === 'throw') {
     const y = sy + fx.spell.bolt.height - 8;
     if (hit) layer.add(star(sx, y, 'medium'));
     sparks(sx, y).slice(0, hit ? 6 : 3).forEach((e) => layer.add(e));

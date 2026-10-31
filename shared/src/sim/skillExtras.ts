@@ -52,9 +52,14 @@ export function echoesOf(pid: string, def: ActionDef, p: PlayerState, now: numbe
   const at = { pid, x: p.pos.x, y: p.pos.y, facing: p.facing };
   const out: Echo[] = [];
   if (repeat) {
+    // 묶음 첫 판정 뒤로는 repeat.coef (검의 장막·일섬 다단): 다단은 가벼운 경직·멈춤, 판정마다 시전 소리 없이 가벼운 적중 소리
+    // (온라인은 서버 hit strength light로 같은 규칙, client onlineStage·sfxEvents)
+    const tick: ActionDef = repeat.coef === undefined ? plain : {
+      ...plain, coef: repeat.coef, strength: 'light', fx: { ...plain.fx, grade: 'light' }, sfx: { hit: 'hitLight' },
+    };
     const group = (dx: number, dy: number, from: number) => {
       const spot = { x: at.x + dx * at.facing, y: at.y + dy };
-      for (let k = from; k < repeat.count; k++) out.push({ ...at, ...spot, kind: 'repeat', def: plain, at: now + k * repeat.interval, spot, k, rep: repeat });
+      for (let k = from; k < repeat.count; k++) out.push({ ...at, ...spot, kind: 'repeat', def: k ? tick : plain, at: now + k * repeat.interval, spot, k, rep: repeat });
     };
     group(0, 0, 1);
     for (const [dx, dy] of repeat.copies ?? []) group(dx, dy, 0);

@@ -47,8 +47,10 @@ export function budgetFactors(s: Skill, r: BudgetRules): (keyof BudgetRules['fac
 
 /** 한 번 쓸 때 계수 합: 다단(hits)·반복(repeat)·연발(burst)·여러 줄(lanes)·왕복(back, 갈 때·올 때)은 판정 수만큼 (연쇄는 한 대상 기준) */
 export function totalCoef(s: Skill): number {
-  const pr = s.projectile;
-  return s.coef * (s.hits?.count ?? 1) * (s.repeat?.count ?? 1) * (1 + (s.repeat?.copies?.length ?? 0)) * (pr?.burst?.count ?? 1) * (pr?.lanes?.length ?? 1) * (pr?.back ? 2 * pr.back : 1);
+  const pr = s.projectile, rep = s.repeat;
+  // 반복 묶음 = 첫 판정 coef + 나머지 repeat.coef (없으면 coef)
+  const group = rep ? s.coef + (rep.count - 1) * (rep.coef ?? s.coef) : s.coef;
+  return group * (s.hits?.count ?? 1) * (1 + (rep?.copies?.length ?? 0)) * (pr?.burst?.count ?? 1) * (pr?.lanes?.length ?? 1) * (pr?.back ? 2 * pr.back : 1);
 }
 
 export function checkSkill(s: Skill, r: BudgetRules): BudgetResult {

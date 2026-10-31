@@ -395,9 +395,11 @@
       "projectile"
     ],
     "poses": {
-      "windup": "spinBack",
-      "active": "cleave",
-      "recovery": "cleave",
+      "lead": "overhead",
+      "windup": "waveWind",
+      "active": "waveRelease",
+      "follow": "waveRelease",
+      "recovery": "slam",
       "charge": "charge"
     },
     "fx": {
@@ -904,84 +906,85 @@
     "phases": {
       "windup": 0.5,
       "active": 0.1,
-      "recovery": 0.4
+      "recovery": 0.45
     },
-    "coef": 700,
-    "projectile": {
-      "speed": 180,
-      "range": 96,
-      "radius": 10,
-      "pierce": true,
-      "burst": {
-        "count": 2,
-        "interval": 0.25
-      }
+    "coef": 600,
+    "area": {
+      "shape": "rect",
+      "at": [
+        64,
+        0
+      ],
+      "width": 12,
+      "depth": 240,
+      "z": "both"
     },
-    "strength": "medium",
-    "flags": [
-      "projectile"
-    ],
+    "repeat": {
+      "count": 9,
+      "interval": 0.25,
+      "coef": 80
+    },
+    "status": {
+      "type": "slow",
+      "time": 0.5,
+      "amount": 0.4
+    },
+    "strength": "heavy",
+    "flags": [],
     "poses": {
-      "windup": "spinBack",
-      "active": "cleave",
-      "recovery": "cleave",
-      "charge": "charge"
+      "lead": "heave",
+      "windup": "overhead",
+      "active": "plunge",
+      "follow": "plunge",
+      "recovery": "slam",
+      "charge": "overhead"
     },
     "fx": {
-      "grade": "heavy"
+      "grade": "heavy",
+      "shake": "vertical"
     },
     "sfx": {
       "active": "skill_cross",
       "hit": "hitHeavy"
     },
     "weapon": "greatsword",
-    "name": "십자 검기",
-    "desc": "십자 모양 검기를 두 번 날린다 (각 700%, 6타일 관통, 공중 적도)",
+    "name": "검의 장막",
+    "desc": "앞 4타일에 하늘에서 거대한 검기를 내리꽂아 방 위아래 끝까지 가른다 (600%, 공중 적도). 2초 동안 남은 장막을 지나는 적은 0.25초마다 베이며(80%) 느려진다 (40%)",
     "branch": "B",
     "unlockLevel": 11,
     "cooldown": 12,
     "mp": 24,
     "variants": {
-      "four": {
-        "name": "사방",
-        "desc": "앞·뒤·위·아래 네 방향으로 한 번에 날린다 (각 450%)",
-        "coef": 450,
-        "projectile": {
-          "burst": null,
-          "aims": [
-            [
-              1,
-              0
-            ],
-            [
-              -1,
-              0
-            ],
-            [
-              0,
-              -1
-            ],
-            [
-              0,
-              1
-            ]
+      "twin": {
+        "name": "두 줄",
+        "desc": "앞 2타일·5타일에 장막을 한 줄씩 내리꽂는다 (각 320%, 지날 때 각 40%)",
+        "coef": 320,
+        "area": {
+          "at": [
+            80,
+            0
           ]
+        },
+        "repeat": {
+          "copies": [
+            [
+              -48,
+              0
+            ]
+          ],
+          "coef": 40
         }
       },
-      "meet": {
-        "name": "교차점",
-        "desc": "위아래 두 줄 검기가 앞 4타일에서 엇갈리며 폭발한다 (각 700% + 폭발 500%)",
-        "projectile": {
-          "burst": null,
-          "lanes": [
-            -20,
-            20
-          ],
-          "meet": {
-            "at": 64,
-            "coef": 500,
-            "radius": 24
-          }
+      "push": {
+        "name": "밀어내기",
+        "desc": "장막이 천천히 앞으로 나아가며 적을 밀어낸다 (500%, 0.25초마다 70%)",
+        "coef": 500,
+        "flags": [
+          "knockback"
+        ],
+        "repeat": {
+          "step": 6,
+          "coef": 70
         }
       }
     }
@@ -993,21 +996,26 @@
       "active": 0.1,
       "recovery": 0.9
     },
-    "coef": 1300,
+    "coef": 300,
     "hitbox": {
       "forward": 0,
       "width": 192,
       "depth": 12,
       "z": "both"
     },
+    "repeat": {
+      "count": 11,
+      "interval": 0.08,
+      "coef": 100
+    },
     "strength": "heavy",
-    "flags": [
-      "knockback"
-    ],
+    "flags": [],
     "poses": {
+      "lead": "draw",
       "windup": "charge",
       "active": "iai",
-      "recovery": "iai",
+      "follow": "flashHold",
+      "recovery": "draw",
       "charge": "charge"
     },
     "fx": {
@@ -1020,7 +1028,7 @@
     },
     "weapon": "greatsword",
     "name": "일섬",
-    "desc": "화면 끝까지 가로로 한 줄 벤다 (12타일). 후딜레이가 길다",
+    "desc": "앞 12타일을 한 줄로 베고(300%), 그 줄에 칼바람이 0.08초마다 10번 몰아친다 (각 100%, 맞는 동안 묶임). 후딜레이가 길다",
     "branch": "B",
     "unlockLevel": 13,
     "cooldown": 14,
@@ -1028,11 +1036,13 @@
     "variants": {
       "double": {
         "name": "이중 일섬",
-        "desc": "0.3초 뒤 한 번 더 벤다 (각 750%)",
-        "coef": 750,
+        "desc": "칼바람이 끝나면 같은 줄을 한 번 더 크게 벤다 (칼바람 각 60% + 마지막 400%)",
+        "repeat": {
+          "coef": 60
+        },
         "after": {
-          "delay": 0.3,
-          "coef": 750
+          "delay": 0.85,
+          "coef": 400
         }
       },
       "trail": {

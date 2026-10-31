@@ -1,5 +1,5 @@
 // 계열 스킬 근접 연출 (SK-2 2차, art.md 7장): 회전베기 = 몸을 도는 초승달 고리, 어깨 들이받기 = 몸 뒤 속도선 + 몸 앞 충격 괄호,
-// 발도 = 출발 자리에서 벤 자리까지 한 줄 섬광. 색은 스미어와 같음 (흰 → 금 → 어두운 금). 어떤 그림인지는 fx.json branch.looks
+// 발도 = 출발 자리에서 벤 자리까지 한 줄 섬광, 검기 날리기 = 놓는 순간 칼끝 섬광·앞으로 뻗는 바람 줄. 색은 스미어와 같음 (흰 → 금 → 어두운 금). 어떤 그림인지는 fx.json branch.looks
 import type { ActionDef } from '@game/shared';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
@@ -128,6 +128,23 @@ export function drawSlash(sx: number, sy: number, facing: number, def: ActionDef
       if (e < D.thickSec * 3) {
         const ex = sx + len * facing;
         px(g, ex + facing, y, white); px(g, ex, y - 1, white); px(g, ex, y + 1, white);
+      }
+    },
+  };
+}
+
+/** 검기 날리기 놓는 순간: 칼끝 자리 세로 섬광(위아래로 뻗었다 줄어듦) + 앞으로 뻗는 바람 줄 3개 */
+export function waveLaunch(sx: number, sy: number, facing: number): Effect {
+  const L = B.wave.launch, [white, gold, edge] = tones(), [ax = 0, ay = 0] = L.at, x0 = sx + ax * facing, y0 = sy + ay;
+  return {
+    ...life(L.sec),
+    draw(g, k) {
+      const e = 1 - k, n = Math.round(L.r * Math.min(1, e * 5) * (0.4 + 0.6 * k)), a = clamp01(k * 1.8);
+      for (let j = -n; j <= n; j++) px(g, x0, y0 + j, Math.abs(j) < n * 0.5 ? white : gold, a);
+      px(g, x0 - facing, y0, white, a); px(g, x0 + facing, y0, white, a);
+      const reach = Math.round(L.wind * Math.min(1, e * 3));
+      for (const [dy, off] of [[-4, 2], [0, 0], [4, 3]] as const) {
+        for (let d = off; d < reach; d++) px(g, x0 + d * facing, y0 + dy, d > reach - 3 ? white : d > reach / 2 ? gold : edge, a * 0.9);
       }
     },
   };
