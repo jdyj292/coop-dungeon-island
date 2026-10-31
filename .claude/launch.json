@@ -3,8 +3,9 @@
   "configurations": [
     {
       "name": "dev",
-      "runtimeExecutable": "pnpm",
+      "runtimeExecutable": "corepack",
       "runtimeArgs": [
+        "pnpm",
         "dev"
       ],
       "port": 5173
