@@ -282,7 +282,7 @@ export class Dungeon extends Phaser.Scene {
     const { width, height } = this.scale.gameSize;
     if (view.player) {
       this.hud.draw({
-        player: view.player, weapon: this.weapon, skills: [0, 1, 2, 3].map((i) => sk[i] ?? null),
+        player: view.player, skills: SLOT_KEYS.map((_, i) => sk[i] ?? null),
         level: 1, coins: view.coins, materials: view.materials, colorIndex: view.look.color, hair: view.look.hair,
       }, dt, width, height - HUD_HEIGHT);
     }

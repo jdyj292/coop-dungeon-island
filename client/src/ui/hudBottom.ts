@@ -1,5 +1,5 @@
 // 아래 HUD 띠 (hud.md 1장, 위치는 승인 데모 hud_bottom_cluster.html hudBottomDraft와 같음. y는 띠 위 = 140 기준)
-// 아래 끝에 붙은 묶음 3개: 상태(얼굴·깃털·LV·HP·MP·지구력) / 스킬(Z A S D F G H·필살기 L) / 소지품(물약 1 2·이번 판 코인·재료)
+// 아래 끝에 붙은 묶음 3개: 상태(얼굴·깃털·LV·HP·MP·지구력) / 스킬(A S D F G H·필살기 L, 평타 칸 없음) / 소지품(물약 1 2·이번 판 코인·재료)
 import type Phaser from 'phaser';
 import { COMBAT, PLAYER, type ActionDef, type PlayerState } from '@game/shared';
 import icons from '../../data/sprites/hud_icons.json';
@@ -18,12 +18,10 @@ const SLOT_X = 91;
 const SLOT_STEP = 19;
 const BAR_X = 26;
 const BAR_W = 54;
-const POTION_X = 267;
+const POTION_X = 248;
 
 export interface HudInput {
   player: PlayerState;
-  /** 무기 id (Z 평타 아이콘) */
-  weapon: string;
   /** A S D F G H에 장착한 스킬 (없으면 null) */
   skills: (ActionDef | null)[];
   level: number;
@@ -104,13 +102,12 @@ export class HudBottom {
     bar(g, BAR_X, Y(152), BAR_W, 3, mpF, 'global.ui.mp', 'global.ui.mpDark', this.mp.update(mpF, dt));
     bar(g, BAR_X, Y(157), BAR_W, 2, stF, 'global.ui.stamina', 'global.ui.staminaDark', this.stamina.update(stF, dt));
 
-    // 스킬 묶음: Z A S D F G H + 필살기 L (빈 슬롯은 테두리만)
-    cluster(g, 88, Y(141), 162, bottom);
+    // 스킬 묶음: A S D F G H + 필살기 L (빈 슬롯은 테두리만, 평타는 칸 없음)
+    cluster(g, 88, Y(141), 143, bottom);
     const run = p.fighter.run;
     const slotIcons = icons.slots as Record<string, string>;
-    slot(g, SLOT_X, Y(143), { icon: slotIcons[st.weapon] ?? 'empty', key: 'Z', casting: !!run && run.kind !== 'skill' });
     ['A', 'S', 'D', 'F', 'G', 'H'].forEach((key, i) => {
-      const s = st.skills[i] ?? null, x = SLOT_X + (i + 1) * SLOT_STEP;
+      const s = st.skills[i] ?? null, x = SLOT_X + i * SLOT_STEP;
       if (!s) return emptySlot(g, x, Y(143), key);
       const cd = p.cooldowns[s.id] ?? 0, total = (s.cooldown ?? 0) * COMBAT.cooldownScale;
       const ready = cd <= 0;
@@ -124,13 +121,13 @@ export class HudBottom {
       });
     });
     const full = p.ult >= PLAYER.ultimate.max;
-    slot(g, SLOT_X + 7 * SLOT_STEP + 4, Y(143), {
+    slot(g, SLOT_X + 6 * SLOT_STEP + 4, Y(143), {
       icon: slotIcons.ultimate!, key: 'L', fill: p.ult / PLAYER.ultimate.max,
       glow: full && Math.floor(this.clock / fx.hud.ultBlinkSec) % 2 === 0,
     });
 
     // 소지품 묶음 (낮게): 물약 1·2 12×12 (남은 개수, 쿨 중엔 어둡게)
-    cluster(g, 264, Y(147), 60, bottom);
+    cluster(g, 245, Y(147), 60, bottom);
     ([['1', 'hp', 'global.ui.hp'], ['2', 'mp', 'global.ui.mp']] as const).forEach(([key, kind, col], i) => {
       const x = POTION_X + i * 13;
       dot(g, x, Y(149), C('global.ui.panelBorder'), 12, 12);
@@ -146,11 +143,11 @@ export class HudBottom {
 
     // 이번 판 코인·재료: 평소 흐리게, 얻는 순간만 밝게 튐
     const coinDy = this.coinPop.update(st.coins, dt), matDy = this.matPop.update(st.materials, dt);
-    coinIcon(g, 296, Y(150));
-    drawText(g, String(st.coins), 303, Y(150) + coinDy, { color: 'global.allyFx.gold', outline: 'none' });
-    if (!coinDy) dot(g, 295, Y(149), C('global.ui.panel'), 28, 6, fx.hud.lootDimAlpha);
-    materialIcon(g, 296, Y(156));
-    drawText(g, String(st.materials), 303, Y(156) + matDy, { color: 'global.fx.flash', outline: 'none' });
-    if (!matDy) dot(g, 295, Y(155), C('global.ui.panel'), 28, 6, fx.hud.lootDimAlpha);
+    coinIcon(g, 277, Y(150));
+    drawText(g, String(st.coins), 284, Y(150) + coinDy, { color: 'global.allyFx.gold', outline: 'none' });
+    if (!coinDy) dot(g, 276, Y(149), C('global.ui.panel'), 28, 6, fx.hud.lootDimAlpha);
+    materialIcon(g, 277, Y(156));
+    drawText(g, String(st.materials), 284, Y(156) + matDy, { color: 'global.fx.flash', outline: 'none' });
+    if (!matDy) dot(g, 276, Y(155), C('global.ui.panel'), 28, 6, fx.hud.lootDimAlpha);
   }
 }
