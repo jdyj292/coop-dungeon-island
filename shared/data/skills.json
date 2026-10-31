@@ -580,7 +580,7 @@
       "grade": "medium"
     },
     "sfx": {
-      "active": "skill_wave",
+      "active": "skill_throw",
       "hit": "hitLight"
     },
     "weapon": "greatsword",
@@ -643,7 +643,7 @@
       "grade": "medium"
     },
     "sfx": {
-      "active": "skill_draw",
+      "active": "skill_scar",
       "hit": "hitHeavy"
     },
     "weapon": "greatsword",
@@ -1149,6 +1149,9 @@
         "allyBuff": {
           "cooldownMul": 1.2,
           "time": 4
+        },
+        "sfx": {
+          "active": "skill_haste"
         }
       },
       "crush": {
@@ -1186,7 +1189,7 @@
       "grade": "medium"
     },
     "sfx": {
-      "active": "skill_icelance",
+      "active": "skill_chain",
       "hit": "bolt_hit"
     },
     "weapon": "staff",
@@ -1245,7 +1248,7 @@
       "grade": "medium"
     },
     "sfx": {
-      "windup": "skill_fireburst",
+      "windup": "skill_fireball",
       "hit": "hitHeavy"
     },
     "weapon": "staff",

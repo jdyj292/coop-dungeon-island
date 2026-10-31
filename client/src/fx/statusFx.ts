@@ -14,6 +14,7 @@ const T = fx.tier2;
 
 /** 그릴 플레이어 상태 (논리 좌표) */
 export interface StatusView {
+  id: string;
   x: number;
   y: number;
   haste: boolean;

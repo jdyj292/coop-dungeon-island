@@ -7,7 +7,7 @@ import {
 } from '@game/shared';
 import fx from '../../data/fx.json';
 import { sfx } from '../audio/player';
-import { echoSound } from '../audio/sfxEvents';
+import { echoSound, shieldsRaised } from '../audio/sfxEvents';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
@@ -66,6 +66,7 @@ export class OnlineStage {
   private boltLayer: BoltLayer;
   private status: StatusLayer;
   private statusViews: StatusView[] = [];
+  private shielded = new Set<string>();
   private hits: S2C['hit'][] = [];
   private echoes: S2C['echo'][] = [];
   private clock = 0;
@@ -192,7 +193,7 @@ export class OnlineStage {
       const moved = mine ? myMoved : r.last ? Math.hypot(p.pos.x - r.last.x, p.pos.y - r.last.y) : 0;
       r.last = { x: p.pos.x, y: p.pos.y };
       r.view.draw(p, moved, 0, this.clock);
-      this.statusViews.push({ x: p.pos.x, y: p.pos.y, haste: !!s.hasted, shield: !!s.shielded });
+      this.statusViews.push({ id, x: p.pos.x, y: p.pos.y, haste: !!s.hasted, shield: !!s.shielded });
       // 접속이 끊긴 동료는 반투명 (network.md 10장)
       r.view.actor.img.setAlpha(s.state === 'disconnected' ? DISCONNECTED_ALPHA : 1);
       r.ghosts.update(realDt, !!p.backstep && !r.view.teleport, r.view.actor.img);
@@ -258,7 +259,7 @@ export class OnlineStage {
     const def = buildSkill(weaponDef(snap?.weapon ?? 'greatsword'), buildFrom(snap?.skills ?? ''), m.act);
     if (!def) return;
     castEcho(this.fx, m.kind, def, { ...m, from: m.fx !== undefined && m.fy !== undefined ? { x: m.fx, y: m.fy } : undefined });
-    echoSound(m.kind, def).forEach((n) => sfx.play(n));
+    echoSound(m.kind, def, m.look).forEach((n) => sfx.play(n));
   }
 
   private dustAt(x: number, y: number, kind: typeof fx.dust.down): void {
@@ -285,6 +286,7 @@ export class OnlineStage {
     this.boltLayer.draw(shots.bolts);
     this.hazards.draw({ zones: this.zones, alive: alive.map((e) => e.m), projectiles: shots.projectiles });
     this.status.draw(alive.map((e) => e.m), this.statusViews);
+    if (shieldsRaised(this.shielded, new Set(this.statusViews.filter((v) => v.shield).map((v) => v.id)))) sfx.play('shield_up');
     this.statusViews = [];
     this.fx.layer.update(dt);
     this.fx.ground.update(dt);
