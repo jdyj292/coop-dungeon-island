@@ -1,3 +1,296 @@
 {
- "_note": "검토 중인 몬스터 프레임 초안 (docs/sprites.md 10장). 승인 데이터(monsters.json)에 겹쳐 sprite-preview \"초안 보기\"·게임 ?drafts=1에서만 보인다. 승인되면 monsters.json으로 옮기고 지운다"
+ "_note": "검토 중인 몬스터 프레임 초안 (docs/sprites.md 10장). 승인 데이터(monsters.json)에 겹쳐 sprite-preview \"초안 보기\"·게임 ?drafts=1에서만 보인다. 승인되면 monsters.json으로 옮기고 지운다",
+ "boar": {
+  "frames": {
+   "idle1": {
+    "rows": [
+     "................................",
+     "................................",
+     "................................",
+     "...........m.m.....b............",
+     ".........mmmmm.....bb...........",
+     "........mmmmmmm....bcb..........",
+     "........mmmmmmmmb...bbbbb.......",
+     "........bbbbbbbbbbbbbbbbbb......",
+     ".....bbbccccccccbbbbbbwEbbb.....",
+     ".bb.bbbbbbbbbbbbbbbbbbEEbbbb....",
+     ".b.bbbbbbbcccbbbbbbbbbbbbccccn..",
+     "..bbbcccccbbbcbbbbbbBBbbbccccc..",
+     "..bccbbbbbbbbbbbbbbbbbbbbccccn..",
+     "..bbbbbbbbbbbbbbbbbbbbbbbbccw...",
+     "...bbbbbbbbbbbbbbbbbbbbbbb......",
+     "....bbbbbbbbbbbbbbbbbbbbb.......",
+     ".....bbcccccccccccb.............",
+     ".....ddbbbccccccdbbb............",
+     ".....ddbbb.....ddbbb............",
+     ".....ddbbb.....ddbbb............",
+     ".....ddddd.....ddddd............"
+    ],
+    "foot": [
+     12,
+     20
+    ]
+   },
+   "idle2": {
+    "rows": [
+     "................................",
+     "................................",
+     "................................",
+     "...........m.m..................",
+     ".........mmmmm..................",
+     "........mmmmmmm....b............",
+     "........mmmmmmmmb..bb...........",
+     "........bbbbbbbbbbbbcbbbb.......",
+     ".....bbbccccccccbbbbbbbbbb......",
+     ".bb.bbbbbbbbbbbbbbbbbbbbbbb.....",
+     ".b.bbbbbbbcccbbbbbbbbbwEbbbb....",
+     "..bbbcccccbbbcbbbbbbbbEEbbbb....",
+     "..bccbbbbbbbbbbbbbbbbbbbbccccn..",
+     "..bbbbbbbbbbbbbbbbbbBBbbbccccc..",
+     "...bbbbbbbbbbbbbbbbbbbbbbccccn..",
+     "....bbbbbbbbbbbbbbbbbbbbbbccw...",
+     ".....bbcccccccccccb.bbbbb.......",
+     ".....ddbbbccccccdbbb............",
+     ".....ddbbb.....ddbbb............",
+     ".....ddbbb.....ddbbb............",
+     ".....ddddd.....ddddd............"
+    ],
+    "foot": [
+     12,
+     20
+    ]
+   },
+   "walk1": {
+    "rows": [
+     "................................",
+     "................................",
+     "................................",
+     "...........m.m.....b............",
+     ".........mmmmm.....bb...........",
+     "........mmmmmmm....bcb..........",
+     "........mmmmmmmmb...bbbbb.......",
+     "........bbbbbbbbbbbbbbbbbb......",
+     ".....bbbccccccccbbbbbbwEbbb.....",
+     ".bb.bbbbbbbbbbbbbbbbbbEEbbbb....",
+     ".b.bbbbbbbcccbbbbbbbbbbbbccccn..",
+     "..bbbcccccbbbcbbbbbbBBbbbccccc..",
+     "..bccbbbbbbbbbbbbbbbbbbbbccccn..",
+     "..bbbbbbbbbbbbbbbbbbbbbbbbccw...",
+     "...bbbbbbbbbbbbbbbbbbbbbbb......",
+     "....bbbbbbbbbbbbbbbbbbbbb.......",
+     ".....bbcccccccccccb.............",
+     "....ddd.bbbcccccbbb.............",
+     "....ddd..bbb....bbbd............",
+     "...ddd...ddd...bbbdd............",
+     "...ddd.........ddd.............."
+    ],
+    "foot": [
+     12,
+     20
+    ]
+   },
+   "walk2": {
+    "rows": [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "...........m.m..................",
+     ".........mmmmm.....b............",
+     "........mmmmmmm....bb...........",
+     "........mmmmmmmmb..bcbbbb.......",
+     "........bbbbbbbbbbbbbbbbbb......",
+     ".....bbbccccccccbbbbbbbbbbb.....",
+     ".bb.bbbbbbbbbbbbbbbbbbwEbbbb....",
+     ".b.bbbbbbbcccbbbbbbbbbEEbbbb....",
+     "..bbbcccccbbbcbbbbbbbbbbbccccn..",
+     "..bccbbbbbbbbbbbbbbbBBbbbccccc..",
+     "..bbbbbbbbbbbbbbbbbbbbbbbccccn..",
+     "...bbbbbbbbbbbbbbbbbbbbbbbccw...",
+     "....bbbbbbbbbbbbbbbbbbbbb.......",
+     ".....bbbbcccccccccbbb...........",
+     "......bbbcccccccd..bbb..........",
+     ".....bbbdd...ddd...ddd..........",
+     ".....ddd.....ddd................"
+    ],
+    "foot": [
+     12,
+     20
+    ]
+   },
+   "windup": {
+    "rows": [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "...........m.m..................",
+     ".........mmmmm..................",
+     "........mmmmmmm..b..............",
+     "........mmmmmmmmbbbbb...........",
+     "........bbbbbbbbbbb.bbbbb.......",
+     ".....bbbccccccccbbbbbEbbbb......",
+     ".bb.bbbbbbbbbbbbbbbbbbEwbbb.....",
+     ".b.bbbbbbbcccbbbbbbbbbEEbbbb....",
+     "..bbbcccccbbbcbbbbbbbbbbbccccn..",
+     "..bccbbbbbbbbbbbbbbbBBbbbccccc..",
+     "..bbbbbbbbbbbbbbbbbbbbbbbccccn..",
+     "...bbbbbbbbbbbbbbbbbbbbbbbccw...",
+     "....bbbbbbbbbbbbbbbbbbbbbb......",
+     ".....bbbbbccccccccbbbbbbb.......",
+     ".....ddbbbccccccddbbb...........",
+     ".....ddbbb.....ddd.bbb..........",
+     ".....ddddd.....ddd.ddd.........."
+    ],
+    "foot": [
+     12,
+     20
+    ],
+    "shake": true,
+    "fx": [
+     {
+      "type": "dust",
+      "at": [
+       10,
+       0
+      ]
+     }
+    ]
+   },
+   "charge": {
+    "rows": [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "...........m.m..................",
+     ".........mmmmm..................",
+     "........mmmmmmm...b.............",
+     "........mmmmmmmmb.bbbb..........",
+     "........bbbbbbbbbbb..bbbbb......",
+     ".....bbbccccccccbbb.bbEbbbb.....",
+     ".bb.bbbbbbbbbbbbbbbbbbbEwbbb....",
+     ".b.bbbbbbbcccbbbbbbbbbbEEbbbb...",
+     "..bbbcccccbbbcbbbbbbbbbbbbccccn.",
+     "..bccbbbbbbbbbbbbbbbbBBbbbccccc.",
+     "..bbbbbbbbbbbbbbbbbbbbbbbbccccn.",
+     "...bbbbbbbbbbbbbbbbbbbbbbbbccw..",
+     "....bbbbbbbbbbbbbbbbbbbbbbb.....",
+     "...ddbbbccccccccccbdbbbbbb......",
+     "...dbbb.cccccccc..ddbbb.........",
+     "..ddddd...........dddbbb........",
+     "..ddd................ddd........"
+    ],
+    "foot": [
+     12,
+     20
+    ],
+    "fx": [
+     {
+      "type": "dust",
+      "at": [
+       -12,
+       0
+      ]
+     }
+    ]
+   },
+   "dizzy": {
+    "rows": [
+     "................................",
+     "................................",
+     "................................",
+     "...........m.m..................",
+     ".........mmmmm..................",
+     "........mmmmmmm.................",
+     "........mmmmmmmmb...............",
+     "........bbbbbbbbbbbbbbbbb.......",
+     ".....bbbccccccccbbbbbbbbbb......",
+     ".bb.bbbbbbbbbbbbbbbbbEbEbbb.....",
+     ".b.bbbbbbbcccbbbbbbbbbEbbbbb....",
+     "..bbbcccccbbbcbbbbbbbEbEbbbb....",
+     "..bccbbbbbbbbbbbbbbbbbbbbccccn..",
+     "..bbbbbbbbbbbbbbbbbbBBbbbccccc..",
+     "...bbbbbbbbbbbbbbbbbbbbbbccccn..",
+     "....bbbbbbbbbbbbbbbbbbbbbbncw...",
+     ".....bbcccccccccccb.bbbbb.......",
+     "......ddbbbcccccbbb.............",
+     "......ddbbb...ddbbb.............",
+     ".......bbb...ddd.bbb............",
+     ".......ddd...ddd.ddd............"
+    ],
+    "foot": [
+     12,
+     20
+    ],
+    "fx": [
+     {
+      "type": "stars",
+      "at": [
+       10,
+       -20
+      ]
+     }
+    ]
+   },
+   "hurt": {
+    "rows": [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "...........m.m..................",
+     ".........mmmmm..................",
+     "........mmmmmmm...b.............",
+     "........mmmmmmmmb.bbbb.b........",
+     "........bbbbbbbbbbb.bbbbbbb.....",
+     ".....bbbccccccccbbbbbbbbbbbb....",
+     ".bbbbbbbbbbbbbbbbbbbbbEbbEbbb...",
+     ".bbbbbbbbbcccbbbbbbbbbbEEbbbb...",
+     ".bbbbcccccbbbcbbbbbbbbbbbbccccn.",
+     ".bbccbbbbbbbbbbbbbbbbBBbbbccccc.",
+     ".bbbbbbbbbbbbbbbbbbbbbbbbbccccn.",
+     "..bbbbbbbbbbbbbbbbbbbbbbbbbccw..",
+     "...bbbbbbbbbbbbbbbbbb..b........",
+     ".....bbbbbcccccccbbb............",
+     ".....ddbbbcccc.ddbbb............",
+     ".....ddbbb.....ddbbb............",
+     ".....ddddd.....ddddd............"
+    ],
+    "foot": [
+     12,
+     20
+    ]
+   },
+   "hurtAir": {
+    "rows": [
+     "................................",
+     "................................",
+     "...........m.m..................",
+     ".........mmmmm....b.............",
+     "........mmmmmmmb..bb.b..........",
+     "........mmmmmmmmb.bcbbbb........",
+     ".......bbbbbbbbbbbbbbbbbb.......",
+     ".....bbcccccccccbbbbbbbbbb......",
+     ".bb.bbbbbbbbbbbbbbbbEbbEbb......",
+     ".b..bbbbbbcccbbbbbbbbEEbbb......",
+     "..bbbcccccbbbcbbbbbbbbbbccccn...",
+     "...ccbbbbbbbbbbbbbbBBbbbccccc...",
+     "...bbbbbbbbbbbbbbbbbbbbbccccn...",
+     "....bbbbbbbbbbbbbbbbbbbbbccw....",
+     "....bbbbbbbbbbbbbbbbbbbb........",
+     ".....bbcccccccccccb..b..........",
+     ".......cccccccccc...............",
+     ".....ddbbbcccc.ddbbb............",
+     ".....ddbbb.....ddbbb............",
+     ".....ddbbb.....ddbbb............",
+     ".....ddddd.....ddddd............"
+    ],
+    "foot": [
+     12,
+     20
+    ]
+   }
+  }
+ }
 }
