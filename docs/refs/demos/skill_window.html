@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>스킬 창 (확정)</title>
+<!-- 대화 중 승인된 원본 데모 (2026-10-31, SK-6). 수정 금지. 스킬은 숙련도 레벨로 열림(열리면 1포인트), 레벨업마다 SP 1 → SP로 2·3포인트 강화(위력 ×1/1.15/1.3, 변형은 열리면 바로). 단계(1·2·3단계) 없음: 계열마다 액티브 4·보조 4가 열리는 레벨 순. 무기마다 계열 하나 선택, 계열마다 장착 기억. 패시브도 SP로 배움 (모든 패시브 1~3포인트), 다른 계열 보조는 꺼짐. 게임 화면 384×216을 3배로. 글자는 게임과 같은 갈무리 .bin (dev 서버 /@fs/ 경로로 열기). 색은 palette.json, 아이콘은 hud_icons.json -->
+<style>
+body{font-family:system-ui,sans-serif;max-width:1180px;margin:16px auto;padding:0 16px;background:#f6f5f1;color:#222}
+canvas{image-rendering:pixelated;display:block;width:100%;max-width:1152px;border-radius:6px;cursor:default;outline:none}
+.note{font-size:14px;color:#555;line-height:1.6}
+.note b{color:#222}
+kbd{background:#e6e3da;border-radius:3px;padding:0 4px;font-size:13px}
+.ctl{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:14px}
+</style></head><body>
+<h2 style="font-size:18px;margin:0 0 4px">스킬 창 시안 10 (계열·액티브/패시브 나눠 보기): 레벨로 열림 · SP로 강화 · 계열 하나 선택 · 패시브도 SP로 배움</h2>
+<p class="note" style="margin:0 0 8px">캔버스를 한 번 클릭하면 키보드가 먹어요. 아래 막대로 숙련도 레벨을 바꿔 열리는 순서와 SP를 볼 수 있어요 (데모용, 게임에는 없음).</p>
+<canvas id="cv" width="384" height="216" tabindex="0"></canvas>
+<div class="ctl">숙련도 레벨 (데모 조절) <input id="lv" type="range" min="1" max="20" value="9" style="width:320px"> <span id="lvt"></span></div>
+<div class="note">
+<b>스킬</b>: 레벨이 되면 열리고 1포인트로 바로 씀. 레벨업마다 SP 1 (SP = 레벨 − 1). 상세의 <kbd>-</kbd> <kbd>+</kbd> 버튼(키보드 <kbd>-</kbd> <kbd>+</kbd>)으로 2·3포인트까지 강화 (위력 ×1 / ×1.15 / ×1.3), 변형은 스킬이 열리면 바로 고르기 (포인트와 상관없음). 선택한 계열과 기본 스킬만 강화. 다른 계열에 찍어 둔 포인트는 그대로 남고 SP도 쓴 채로 (초기화로 돌려받기).<br>
+<b>패시브</b>: 레벨이 되면 열리고 SP로 배움. 모든 패시브(계열 보조·스킬 캔슬·기상 회피)가 1~3포인트, 1포인트마다 SP 1. 포인트별 효과는 상세의 "포인트별 효과" 표(지금 포인트 금색). 칸 아래 금색 점 = 포인트. 계열 보조는 선택한 계열 것만 찍을 수 있고, 다른 계열로 바꾸면 꺼짐(포인트는 남고 SP는 쓴 채로, 초기화로 돌려받기).<br>
+<b>계열</b>: 위쪽 파쇄 / 검기 버튼으로 하나를 고르면 그 계열 스킬만 아래에 보임 (키보드 <kbd>A</kbd> <kbd>B</kbd>). 고른 계열이 곧 쓰는 계열이고, 계열마다 장착을 따로 기억. <b>액티브 스킬 / 패시브 스킬</b> 탭으로 나눠 보기 (<kbd>Tab</kbd>): 액티브 = 기본 스킬 + 계열 액티브 4, 패시브 = 공용 패시브 + 계열 보조 4. 장착은 액티브 칸을 아래 U I O P 칸으로 끌어다 놓기, 또는 고른 채 <kbd>U</kbd> <kbd>I</kbd> <kbd>O</kbd> <kbd>P</kbd>.<br>
+<b>키보드</b>: <kbd>↑↓←→</kbd> 칸 옮기기 · <kbd>Tab</kbd> 액티브/패시브 · <kbd>A</kbd> <kbd>B</kbd> 계열 · <kbd>+</kbd> <kbd>-</kbd> 포인트 · <kbd>1</kbd> <kbd>2</kbd> 변형 · <kbd>Q</kbd> <kbd>E</kbd> 무기 탭 · <kbd>R</kbd> 초기화(두 번) · <kbd>[</kbd> <kbd>]</kbd> 레벨 (데모용)<br>
+<b>보는 법</b>: 아래 줄 계열 스킬은 왼쪽부터 열리는 레벨 순, 뒤로 지나가는 선은 열린 데까지 계열 색. 잠긴 칸 = 자물쇠 + 열리는 레벨. 칸 아래 금색 점 = 포인트, 왼쪽 아래 꼬리표 = 장착 키, 오른쪽 위 금색 점 = 변형 고름, 고른 칸 = 모서리 꺾쇠. 흐린 칸 = 준비 중. 패시브는 배우면 계열 색, 안 배우면 회색. 아이콘이 없는 것은 10×10 임시 그림 (승인되면 정식 16×16 아이콘을 sprite-preview로).<br>
+<b>임시로 정한 값</b>: 액티브 Lv2·4·6·8, 보조 Lv3·5·7·9, 기상 회피 Lv7, 스킬 캔슬 Lv5. 
+</div>
+<script>
+const ICONDATA={"pal":{"s":"#D9DDE3","l":"#f2f5f8","g":"#F5C542","p":"#5a3a2a","y":"#FFE08A","r":"#E9DFC6","w":"#FFF8E7","t":"#3a3550","k":"#9EE3FF","e":"#C9A24A","d":"#5BAEE6","o":"#F2A246"},"icons":{"greatsword":["................","................","................","................","...........sl...","..........sl....",".........sl.....","........sl......",".......sl.......","......sl........",".....sl.........","..g.sl..........","...g............","..p.g...........","................","................"],"gs_launch":["................","................","................","................",".......sl.......","......ysly......",".....y.sl.y.....",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......","......g..g......","................","................"],"gs_earthsplit":["................","................","......gslg......",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......","................",".....r....r.....","....r.r..r.r....","...r........r...","................","................"],"ultimate":["................","................","................",".......yy.......",".......yy.......","................","....yyywyyyy....",".....yyywyy.....","......yyyy......",".....yy..yy.....","....yy....yy....","................","................","................","................","................"],"empty":["................","................","................","................","................",".......tt.......",".......tt.......","......tttt......","......tttt......","......tttt......","......tttt......","................","................","................","................","................"],"staff":["................","................","................","...........kw...","...........kk...","..........gg....",".........p......","........p.......",".......p........","......p.........",".....p..........","....p...........","...p............","................","................","................"],"st_fireburst":["................","................",".......y........","...y...y...y....","....y..y..y.....",".....yywyy......","......www.......","..yyyywwwyyyy...","......www.......",".....yywyy......","....y..y..y.....","...y...y...y....",".......y........","..gggggggggg....","................","................"],"st_icefield":["................",".......k........",".....k.k.k......","......kwk.......","...k..kwk..k....","....kkwwwkk.....","...k..kwk..k....","......kwk.......",".....k.k.k......",".......k........","................","..kkkkkkkkkkk...","..kwkwkwkwkwk...","..kkkkkkkkkkk...","................","................"],"gs_whirl":["................","................",".....yyyyy......","...ye.....eyw...","..ye.......ww...","..y....s..wyw...",".......sl.......","......sl........",".....sl.........","..g.sl.......y..","...g.........y..","..p.g.......ey..","...wy.....ye....","....eyyyyye.....","................","................"],"gs_shoulder":["................","................","..........ww....","...........wy...",".eeyyww.....wy..","............wy..","..eyyyww.....wy.",".............wy.","...eeyyww....wy.","............wy..",".eyyww......wy..","...........wy...","..........ww....","................","................","................"],"gs_wave":["................","................","........w.......",".....e..yw......","....e...ewy.....","...e.....ywy....","..e..e...eywy...","..e..e....ywy...","..e..e....ywy...","..e..e...eywy...","...e.....ywy....","....e...ewy.....",".....e..yw......","........w.......","................","................"],"gs_draw":["................","................","................","...........e....","..........e.....","................","......e.........",".gpg.wwwwwwwwww.",".g.gyyyyyyyyye..","......e.........","................",".........e......","..........e.....","................","................","................"],"st_pillar":["................",".......y........","......yo....o...","......yyo.......",".....yywyo......",".....ywwyo..y...","....oywwwyo.....","....oywwwyo.....","....yywwwyy.....","....oywwwyo.....","....oyywyyo.....","...o.oywyo.o....","..ooooyyyoooo...","...oo.....oo....","................","................"],"st_icelance":["................","................","............ww..","...........wwk..","..........wwkd..",".........wkkd...","........wkkd....",".......kkkd.....","......kkkd......",".....dkkd.......","....d.dd........","..k.d...........",".k.d............","..k.............","................","................"],"st_orb":["................","................","......dddd......",".....dkkkkd.....","....dkwwkkkd....",".kk.dkwkkkkd.kk.",".k..dkkkkkkd..k.",".kk.dkkkkkkd.kk.","...kkdkkkkdkk...","......dddd......","................","........d.......","................","....d...d...d...","...dddddddddd...","................"],"st_lift":["................",".......w........","......wkw.......",".....wk.kw......","....wk.k.kw.....",".......k........",".......k........","..k....k....k...","...k...d...k....","................","..d.........d...","...kk.....kk....",".....kkkkk......","...d.......d....","................","................"]}};
+const W=384,H=216;
+const C={bg:'#1d1830',bd:'#4b4268',in:'#2A2540',key:'#b9b0dc',dim:'#cfc8e8',coin:'#F5C542',txt:'#f2f5f8',track:'#3a3550',danger:'#FF5A3C',off:'#5a5470',white:'#ffffff',heal:'#7CE38B'};
+// ---- 열리는 레벨 (임시): 계열마다 액티브 4·보조 4, 왼쪽부터 ----
+const ACT_LV=[2,4,6,8],PAS_LV=[3,5,7,9],LEVEL_MUL=[1,1.15,1.3];
+const COMMON_LV={cancel:5,quickrise:7};
+const spOf=lv=>lv-1;
+// ---- 데이터 (skills.json·passives.json·skills.md 표) ----
+const N={
+ gs_launch:{n:'올려베기',d:'앞의 적을 베어 올려 공중에 띄운다. 땅에 있는 적만 맞는다',v:[['연속 올려베기','한 번 더 눌러 두 번 올려벤다 (각 250%)'],['검풍','띄우는 범위가 넓어지고 뒤쪽 적까지 띄운다']]},
+ gs_earthsplit:{n:'대지가르기',d:'검을 내려쳐 앞 3타일 직선의 적을 쓰러뜨린다',v:[['균열','1초 뒤 같은 자리가 한 번 더 터진다 (300%)'],['부채꼴','직선 대신 앞쪽 넓은 부채꼴을 내려친다 (500%)']]},
+ gs_whirl:{n:'회전베기',d:'검을 휘두르며 앞으로 돌아 주변 적을 6번 벤다',v:[['흡입','돌 때마다 주변 적을 내 쪽으로 끌어당긴다'],['질주','회전 중 50% 더 멀리 나아간다']]},
+ gs_shoulder:{n:'어깨 들이받기',d:'3타일 돌진해 적을 밀어낸다. 시전 중 슈퍼아머',v:[['벽꿍','밀린 적이 벽에 부딪히면 쓰러지며 한 번 더 (200%)'],['연속 돌진','한 번 더 눌러 다시 돌진한다']]},
+ gs_wave:{n:'검기 날리기',d:'앞 5타일을 꿰뚫는 검기를 날린다',v:[['세 갈래','검기 3줄을 나란히 날린다 (각 150%)'],['대형','느리지만 크고 센 검기 (500%)']]},
+ gs_draw:{n:'발도',d:'2타일을 순식간에 나아가며 벤다',v:[['2연속','한 번 더 눌러 다시 벤다'],['후퇴 발도','앞을 베면서 뒤로 빠진다']]},
+ gs_quake:{n:'지진',d:'땅을 내리쳐 둘레 2.5타일 안 땅의 적을 살짝 띄운다',v:[['연속 지진','땅을 세 번 내리쳐 흔든다, 띄운 적도 맞는다 (각 350%)'],['집중','좁은 원(1.5타일)에 힘을 모은다 (1100%)']]},
+ gs_throw:{n:'대검 투척',soon:1,d:'검을 던져 꿰뚫으며 날아갔다 돌아온다',v:[['꽂기','꽂힌 자리 2초 다단 장판'],['부메랑','2번 왕복한다']]},
+ gs_ascend:{n:'승천검',soon:1,d:'올려베기 뒤 공중에서 2번 더 벤다',v:[['내려꽂기','마무리로 내려찍어 쓰러뜨린다 (300%)'],['체공','마무리로 1초 붙잡아 둔다']]},
+ gs_cyclone:{n:'회오리 검기',d:'2초 동안 앞으로 나아가는 회오리가 10번 베고 공중 적을 붙잡아 둔다',v:[['정지형','제자리에 큰 회오리를 세운다'],['쌍회오리','회오리 2개가 나란히 나아간다 (각 6번)']]},
+ gs_heavyhand:{n:'무거운 손',d:'스킬 충전이 30% 빠르고, 충전 중 받는 피해 -30%'},
+ gs_steadfast:{n:'굳건함',d:'모든 스킬을 쓰는 동안 슈퍼아머 (맞아도 피해만 받고 끊기지 않음)'},
+ gs_keenedge:{n:'날 선 칼날',d:'공중에 뜬 적에게 주는 피해 +15% (평타·대시 공격 포함)'},
+ gs_honing:{n:'검기 연마',d:'검기 같은 투사체 스킬의 사거리 +40%'},
+ gs_after:{n:'여진',soon:1,d:'쓰러뜨린 자리에 작은 충격파 (100%)'},
+ gs_stomp:{n:'짓밟기',soon:1,d:'쓰러진 적에게 주는 피해 보정 ×0.5 → ×0.8'},
+ gs_risewave:{n:'새 이름 미정',soon:1,d:'올려베기 끝에 올라가는 검기를 쏜다 (150%). 이름 "검풍"은 올려베기 변형과 겹쳐 새로 정함'},
+ gs_aircombo:{n:'공중 연계',soon:1,d:'공중 적에게 스킬이 맞으면 다른 스킬 쿨 -0.5초'},
+ st_fireburst:{n:'화염 폭발',d:'4타일 앞이 잠시 뒤 폭발해 적을 띄운다',v:[['연쇄','폭발이 3번 이어진다 (각 300%)'],['즉발','준비 없이 거의 바로 터진다 (550%)']]},
+ st_icefield:{n:'얼음 장판',d:'얼음 장판을 깔아 땅의 적을 1.5초 얼린다',v:[['빙결 폭발','빙결이 풀릴 때 얼음이 터진다 (400%)'],['동토','얼리는 대신 4초 동안 40% 느려지는 장판, 범위 2배']]},
+ st_pillar:{n:'불꽃 기둥',d:'앞에 2초 동안 불기둥을 세워 8번 태운다',v:[['행진','불기둥이 조금씩 앞으로 나아간다'],['쌍기둥','위아래 불기둥 2개, 각 5번']]},
+ st_icelance:{n:'얼음 창',d:'꿰뚫는 얼음 창을 쏴 0.5초 얼린다',v:[['3연발','창 3개를 이어 쏜다 (각 170%)'],['대형 창','크고 센 창이 적을 밀어낸다 (550%)']]},
+ st_chain:{n:'번개 연쇄',soon:1,d:'최대 5마리까지 튀는 번개',v:[['확산','8마리까지, 각 70%'],['집중','한 마리에 900%']]},
+ st_fireball:{n:'화염구',soon:1,d:'큰 불덩이가 날아가 부딪히면 터진다',v:[['분열','터진 뒤 작은 화염구 4개'],['관통','느리게 꿰뚫으며 여러 번']]},
+ st_orb:{n:'부유 구슬',d:'구슬 안의 공중 적을 3초 동안 띄워 둔다 (8번)',v:[['유도','구슬이 가까운 공중 적을 따라간다'],['쌍구슬','작은 구슬 2개를 나란히 띄운다']]},
+ st_lift:{n:'끌어올림',d:'앞 자리로 적을 끌어모아 살짝 띄운다',v:[['광역','끌어모으는 범위가 2배'],['이중','0.6초 뒤 한 번 더 끌어올린다 (공중 적도)']]},
+ st_well:{n:'중력 우물',d:'앞 자리로 2초 동안 적을 끌어당긴다 (6번)',v:[['붕괴','끌어당긴 뒤 그 자리가 터진다 (400%)'],['지속','3.5초 동안 끌어당긴다 (10번)']]},
+ st_gravfield:{n:'중력장',d:'범위 안 적을 4초 동안 40% 느리게 한다 (걷기·공격 사이 쉬는 시간)',v:[['가속장','범위 안 아군 쿨 회복 +20%',1],['부양장','느리게 하는 대신 범위 안 공중 적을 2초 붙잡아 둔다']]},
+ st_affinity:{n:'원소 친화',d:'장판·지속 스킬(불꽃 기둥·부유 구슬·얼음 장판)의 지속시간·횟수 +25%'},
+ st_burn:{n:'연소',d:'화염 스킬에 맞은 적은 3초 동안 모두에게 받는 피해 +15%'},
+ st_weightless:{n:'무중력',d:'내가 띄우거나 체공시킨 적은 떠 있는 동안 모두에게 받는 피해 +10%'},
+ st_lightfoot:{n:'가벼운 발',d:'회피(순간이동) 거리 +50%, 쿨 -0.2초'},
+ st_frost:{n:'냉기 강화',soon:1,d:'빙결 지속 +0.5초'},
+ st_overheat:{n:'과열',soon:1,d:'스킬 적중 뒤 3초 동안 평타 마법탄 1발 추가'},
+ st_orbplus:{n:'구슬 확장',soon:1,d:'부유 구슬 범위 +50%, 땅의 적도 살짝 띄운다'},
+ st_barrier:{n:'역장',soon:1,d:'스킬을 쓰면 둘레 동료에게 피해 1번 막는 보호막 (15초에 한 번)'},
+ cancel:{n:'스킬 캔슬',d:'스킬 후딜레이에 다른 스킬로 끊고 이어 씀. 이은 스킬 준비 ×1.5 / ×1.3 / ×1.15 (단계별)'},
+ quickrise:{n:'기상 회피',d:'다운 중 회피 키로 바로 일어나며 회피 (기상 무적 대신 회피 무적, 쿨·지구력 씀)'},
+};
+const TREE={
+ greatsword:{label:'대검',base:['gs_launch','gs_earthsplit'],br:{
+  A:{name:'파쇄',col:'#FF9A3C',t:[{act:['gs_whirl','gs_shoulder'],pas:['gs_heavyhand','gs_steadfast']},{act:['gs_quake','gs_throw'],pas:['gs_after','gs_stomp']}]},
+  B:{name:'검기',col:'#6FC3E8',t:[{act:['gs_wave','gs_draw'],pas:['gs_keenedge','gs_honing']},{act:['gs_ascend','gs_cyclone'],pas:['gs_risewave','gs_aircombo']}]}}},
+ staff:{label:'스태프',base:['st_fireburst','st_icefield'],br:{
+  A:{name:'원소',col:'#FF9A3C',t:[{act:['st_pillar','st_icelance'],pas:['st_affinity','st_burn']},{act:['st_chain','st_fireball'],pas:['st_frost','st_overheat']}]},
+  B:{name:'중력',col:'#B58AD0',t:[{act:['st_orb','st_lift'],pas:['st_weightless','st_lightfoot']},{act:['st_well','st_gravfield'],pas:['st_orbplus','st_barrier']}]}}},
+};
+const WEAPONS=['greatsword','staff'];
+// 계열 줄: 액티브 4·보조 4 (단계 없이 열리는 레벨 순)
+const ACTS=(w,br)=>TREE[w].br[br].t.flatMap(t=>t.act),PASS=(w,br)=>TREE[w].br[br].t.flatMap(t=>t.pas);
+const IDX={};
+for(const w of WEAPONS){const T=TREE[w],m={};T.base.forEach(id=>m[id]={kind:'base',lv:1});['cancel','quickrise'].forEach(id=>m[id]={kind:'common',lv:COMMON_LV[id]});
+ for(const br of ['A','B']){ACTS(w,br).forEach((id,i)=>m[id]={kind:'act',br,lv:ACT_LV[i]});PASS(w,br).forEach((id,i)=>m[id]={kind:'pas',br,lv:PAS_LV[i]});}IDX[w]=m;}
+const isActive=(w,id)=>['base','act'].includes(IDX[w][id].kind);
+// ---- 상태: 레벨, 무기마다 선택 계열·포인트·변형·계열마다 장착·패시브 ----
+let LV=9;
+const S={greatsword:{branch:'A',pts:{gs_launch:3,gs_whirl:2,gs_quake:2,gs_heavyhand:1,cancel:1},vr:{gs_launch:0},load:{A:['gs_launch','gs_earthsplit','gs_whirl','gs_quake'],B:null}},
+ staff:{branch:'A',pts:{},vr:{},load:{A:null,B:null}}};
+let W8='greatsword';
+const st=()=>S[W8];
+const open=(w,id)=>!N[id].soon&&LV>=IDX[w][id].lv;
+const inBranch=(w,id)=>!IDX[w][id].br||IDX[w][id].br===S[w].branch;
+const usable=(w,id)=>open(w,id)&&inBranch(w,id);
+// 포인트: 열린 액티브는 1부터 (SP로 2·3), 패시브는 0부터 (SP로 배움, 스킬 캔슬은 3까지), 안 열렸으면 0
+const minOf=id=>isActive(W8,id)?1:0,maxOf=()=>3;
+// 패시브 포인트별 효과 (임시)
+const PV={gs_heavyhand:["충전 +30% · 피해 -30%","충전 +45% · 피해 -40%","충전 +60% · 피해 -50%"],gs_steadfast:["스킬 중 슈퍼아머","+ 받는 피해 -10%","+ 받는 피해 -20%"],
+ gs_keenedge:["공중 적 피해 +15%","공중 적 피해 +22%","공중 적 피해 +30%"],gs_honing:["투사체 사거리 +40%","투사체 사거리 +60%","투사체 사거리 +80%"],
+ gs_after:["충격파 100%","충격파 150%","충격파 200%"],gs_stomp:["다운 보정 ×0.8","다운 보정 ×0.9","다운 보정 ×1.0"],gs_risewave:["상승 검기 150%","상승 검기 225%","상승 검기 300%"],gs_aircombo:["다른 스킬 쿨 -0.5초","다른 스킬 쿨 -0.75초","다른 스킬 쿨 -1초"],
+ st_affinity:["지속·횟수 +25%","지속·횟수 +37%","지속·횟수 +50%"],st_burn:["받는 피해 +15%","받는 피해 +22%","받는 피해 +30%"],st_weightless:["받는 피해 +10%","받는 피해 +15%","받는 피해 +20%"],st_lightfoot:["거리 +50% · 쿨 -0.2초","거리 +75% · 쿨 -0.3초","거리 +100% · 쿨 -0.4초"],
+ st_frost:["빙결 +0.5초","빙결 +0.75초","빙결 +1초"],st_overheat:["마법탄 1발 추가","마법탄 2발 추가","마법탄 3발 추가"],st_orbplus:["구슬 범위 +50%","구슬 범위 +75%","구슬 범위 +100%"],st_barrier:["보호막 15초에 한 번","보호막 12초에 한 번","보호막 9초에 한 번"],
+ cancel:["이은 스킬 준비 ×1.5","이은 스킬 준비 ×1.3","이은 스킬 준비 ×1.15"],quickrise:["다운 중 회피로 기상","+ 그 회피 쿨 -0.1초","+ 그 회피 쿨 -0.2초"]};
+const ptsOf=id=>open(W8,id)?(st().pts[id]??minOf(id)):0;
+function spent(){let n=0;for(const id in IDX[W8])n+=Math.max(0,ptsOf(id)-minOf(id));return n;}
+const varOf=id=>ptsOf(id)>=1&&st().vr[id]!=null?st().vr[id]:-1;
+function defLoad(w,br){return[...TREE[w].base,...ACTS(w,br)].filter(id=>open(w,id)).slice(0,4).concat([null,null,null,null]).slice(0,4);}
+function slots(){const s=st();if(!s.load[s.branch])s.load[s.branch]=defLoad(W8,s.branch);return s.load[s.branch];}
+const shownSlot=id=>id&&usable(W8,id)?id:null;
+const isPas=id=>['pas','common'].includes(IDX[W8][id].kind);
+// 패시브: 배웠고 선택한 계열이면 켜짐
+const eqStage=id=>usable(W8,id)?ptsOf(id):0;
+// ---- 글꼴 ----
+let G7,G9,g;
+function decodeGLF(buf){const v=new DataView(buf),asc=v.getUint8(4),n=v.getUint32(8,true),gl=new Map();let t=12,d=12+n*7;for(let i=0;i<n;i++,t+=7){const w=v.getUint8(t+3),h=v.getUint8(t+4),len=Math.ceil(w*h/8);gl.set(v.getUint16(t,true),{dw:v.getUint8(t+2),w,h,xo:v.getInt8(t+5),yo:v.getInt8(t+6),b:new Uint8Array(buf,d,len)});d+=len;}return{asc,gl};}
+const gw=(f,s)=>{let w=0;for(const ch of s)w+=(f.gl.get(ch.codePointAt(0))||f.gl.get(63)).dw;return w;};
+function gt(f,s,x,y,col){let pen=0;for(const ch of s){const q=f.gl.get(ch.codePointAt(0))||f.gl.get(63);const top=f.asc-(q.yo+q.h);g.fillStyle=col;for(let j=0;j<q.h;j++)for(let i=0;i<q.w;i++){const k=j*q.w+i;if(q.b[k>>3]&(0x80>>(k&7)))g.fillRect(x+pen+q.xo+i,y+top+j,1,1);}pen+=q.dw;}return pen;}
+function wrap(f,s,mw){const out=[];for(const para of s.split('\n')){let line='';for(const word of para.split(' ')){const t=line?line+' '+word:word;if(gw(f,t)<=mw){line=t;continue;}if(line)out.push(line);line='';let cur='';for(const ch of word){if(gw(f,cur+ch)>mw){out.push(cur);cur='';}cur+=ch;}line=cur;}if(line)out.push(line);}return out;}
+const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+const LET={U:['101','101','101','101','111'],I:['111','010','010','010','111'],O:['111','101','101','101','111'],P:['110','101','110','100','100']};
+function letter(ch,x,y,c){LET[ch].forEach((r,j)=>[...r].forEach((b,i)=>{if(b==='1')R(x+i,y+j,1,1,c);}));}
+function frame(x,y,w,h,c){R(x,y,w,1,c);R(x,y+h-1,w,1,c);R(x,y,1,h,c);R(x+w-1,y,1,h,c);}
+function box(x,y,w,h,border){R(x,y,w,h,border);R(x+1,y+1,w-2,h-2,C.in);R(x+2,y+2,w-4,h-4,C.bg);}
+function icon(id,x,y){const rows=ICONDATA.icons[id];if(!rows)return false;rows.forEach((r,j)=>[...r].forEach((ch,i)=>{if(ch!=='.')R(x+i,y+j,1,1,ICONDATA.pal[ch]);}));return true;}
+function center(f,s,x,w,y,c){gt(f,s,x+Math.floor((w-gw(f,s))/2),y,c);}
+// ---- 화면 상태 ----
+let VIEW='act',sel='gs_launch',hover=null,hoverBtn=null,hits=[],drag=null,mouse={x:0,y:0},msg=null,msgT=0,resetArm=0;
+const KEYS=['U','I','O','P'];
+// 패널 명암 (승인되면 palette.json global.ui로)
+const UI={title:'#15112a',card:'#221d38',cardBd:'#332d4d',sh:'#100c1e',hi:'#5a5470',on:'#2f2948'};
+const SUB={greatsword:{A:'충전·다운·광역',B:'원거리·공중 연계'},staff:{A:'범위 딜·지형 장악',B:'체공·모으기·팀 지원'}};
+// 아이콘 없는 스킬·패시브의 임시 그림 10×10 (# = 계열 색, + = 밝은 색). 승인되면 hud_icons.json에 정식 16×16으로
+const GL={
+ shield:['..######..','.#++#####.','.#+######.','.#+######.','.#+######.','..#######.','..######..','...####...','....##....','..........'],
+ fist:['..#.#.#...','.########.','.#+++####.','.########.','.########.','..######..','...####...','...####...','...####...','..........'],
+ blade:['........##','.......#+#','......#+#.','.....#+#..','....#+#...','...#+#....','..##+.....','.###......','#.#.......','..........'],
+ arrow:['..........','......#...','......##..','#########.','#+++++####','#########.','......##..','......#...','..........','..........'],
+ burst:['....#.....','.#..#..#..','..#.#.#...','...###....','####+####.','...###....','..#.#.#...','.#..#..#..','....#.....','..........'],
+ boot:['...###....','...#+#....','...#+#....','...#+#....','...#+####.','...######.','..#######.','..########','..........','..........'],
+ waveup:['....##....','...#++#...','..#+..+#..','.#+....+#.','.#......#.','..........','....##....','...####...','....##....','..........'],
+ wings:['..........','#.......#.','##.....##.','#+#...#+#.','#++#.#++#.','.#++#++#..','..#+++#...','...#+#....','....#.....','..........'],
+ flame:['....#.....','...##.....','...###.#..','..####.#..','..#####...','.###+###..','.##+++##..','.##+++##..','..##+##...','...###....'],
+ drop:['....#.....','....#.....','...###....','..##+##...','..#+###...','.##+####..','.#######..','.#######..','..#####...','...###....'],
+ feather:['........#.','.......##.','......#+#.','.....#+##.','....#+##..','...#+##...','..#+##....','..###.....','.#........','#.........'],
+ snow:['....#.....','.#..#..#..','..#.#.#...','...#+#....','####+####.','...#+#....','..#.#.#...','.#..#..#..','....#.....','..........'],
+ orb:['..........','...####...','..#++###..','.#+######.','.#+######.','.########.','.########.','..######..','...####...','..........'],
+ crack:['....#.....','...#......','....#.....','...#.#....','..#...#...','..........','##########','#++++++++#','##########','..........'],
+ spiral:['..#####...','.#.....#..','#..###..#.','#.#...#.#.','#.#.#.#.#.','#.#..#..#.','#..##..#..','.#....#...','..####....','..........'],
+ bolt:['.....###..','....###...','...###....','..######..','.....##...','....##....','...##.....','..##......','.#........','..........'],
+ throw:['#.......#.','.#.....#+#','..#...#+#.','......+#..','.....#+#..','....#+#...','..##+#....','..###.....','.#..#.....','..........'],
+ ascend:['....#.....','...#+#....','...#+#....','...#+#....','...#+#....','.#######..','....#.....','....#.....','...###....','..........'],
+ down:['..#....#..','..#....#..','..#....#..','#####.####','.###...##.','..#.....#.','..........','##########','#++++++++#','##########'],
+ swap:['......#...','......##..','#########.','......##..','......#...','...#......','..##......','.#########','..##......','...#......'],
+ up:['....#.....','...###....','..#####...','.###+###..','...#+#....','...#+#....','...#+#....','...###....','..........','#########.'],
+};
+const GLYPH={gs_quake:'crack',gs_throw:'throw',gs_ascend:'ascend',gs_cyclone:'spiral',st_chain:'bolt',st_fireball:'flame',st_well:'orb',st_gravfield:'down',
+ gs_heavyhand:'fist',gs_steadfast:'shield',gs_keenedge:'blade',gs_honing:'arrow',gs_after:'burst',gs_stomp:'boot',gs_risewave:'waveup',gs_aircombo:'wings',
+ st_affinity:'drop',st_burn:'flame',st_weightless:'feather',st_lightfoot:'boot',st_frost:'snow',st_overheat:'flame',st_orbplus:'orb',st_barrier:'shield',cancel:'swap',quickrise:'up'};
+// 3×5 숫자·Lv (잠금 칸)
+const D35={0:['111','101','101','101','111'],1:['010','110','010','010','111'],2:['111','001','111','100','111'],3:['111','001','111','001','111'],4:['101','101','111','001','001'],5:['111','100','111','001','111'],6:['111','100','111','101','111'],7:['111','001','010','010','010'],8:['111','101','111','101','111'],9:['111','101','111','001','111'],L:['100','100','100','100','111'],v:['000','000','101','101','010']};
+function tiny(s,x,y,c){let px=x;for(const ch of s){const p=D35[ch];if(p)p.forEach((r,j)=>[...r].forEach((b,i)=>{if(b==='1')R(px+i,y+j,1,1,c);}));px+=4;}}
+const tinyW=s=>s.length*4-1;
+function say(t,c){msg={t,c:c||C.coin};clearTimeout(msgT);msgT=setTimeout(()=>{msg=null;draw();},2000);}
+function hit(x,y,w,h,o){hits.push({x,y,w,h,...o});}
+const brCol=id=>{const inf=IDX[W8][id];return inf.br?TREE[W8].br[inf.br].col:'#D9DDE3';};
+function glyph(id,x,y,main,light){const p=GL[GLYPH[id]];if(!p)return false;
+ p.forEach((r,j)=>[...r].forEach((ch,i)=>{if(ch!=='.')R(x+i+1,y+j+1,1,1,UI.sh);}));
+ p.forEach((r,j)=>[...r].forEach((ch,i)=>{if(ch!=='.')R(x+i,y+j,1,1,ch==='+'?light:main);}));return true;}
+function drawIcon(id,x,y,size,dim){if(size>=20&&ICONDATA.icons[id]){const o=Math.floor((size-16)/2);icon(id,x+o,y+o);return;}
+ const o=Math.floor((size-10)/2);if(!glyph(id,x+o,y+o,dim?C.off:brCol(id),dim?C.key:'#FFF8E7'))center(G7,[...N[id].n][0],x,size,y+Math.floor(size/2)-6,C.dim);}
+function lockIcon(x,y,c){R(x+1,y,3,1,c);R(x,y+1,1,2,c);R(x+4,y+1,1,2,c);R(x,y+3,5,4,c);R(x+2,y+4,1,2,UI.sh);}
+function corners(x,y,w,h,c){R(x-2,y-2,3,1,c);R(x-2,y-2,1,3,c);R(x+w-1,y-2,3,1,c);R(x+w+1,y-2,1,3,c);R(x-2,y+h+1,3,1,c);R(x-2,y+h-1,1,3,c);R(x+w-1,y+h+1,3,1,c);R(x+w+1,y+h-1,1,3,c);}
+function card(x,y,w,h,bd){R(x,y,w,h,bd||UI.cardBd);R(x+1,y+1,w-2,h-2,UI.card);R(x+1,y+1,w-2,1,'rgba(255,255,255,.05)');R(x+1,y+h-1,w-2,1,UI.sh);}
+function btn(b,t,x,y,w,dis,on){const hv=hoverBtn===b&&!dis;R(x,y+1,w,12,UI.sh);R(x,y,w,12,hv?C.coin:on?C.heal:C.bd);R(x+1,y+1,w-2,10,hv?'#3a3020':on?'#24402a':UI.on);R(x+1,y+1,w-2,1,hv?'#6a5a30':UI.hi);g.globalAlpha=dis?0.35:1;center(G7,t,x,w,y+1,hv?C.coin:C.txt);g.globalAlpha=1;if(!dis)hit(x,y,w,12,{kind:'btn',b});}
+function dots(x,y,n,p,col){for(let i=0;i<n;i++){const px=x+i*4;R(px,y,3,3,UI.sh);const c=i<p?col:C.track;R(px+1,y,1,3,c);R(px,y+1,3,1,c);}}
+// ---- 칸 ----
+function cell(id,x,y,size,big){const inf=IDX[W8][id],nd=N[id],op=open(W8,id),ib=inBranch(W8,id),p=ptsOf(id),pas=isPas(id),lit=op&&ib&&(!pas||p>0);
+ const isSel=sel===id&&!big,isHov=hover===id&&!big;
+ R(x+1,y+1,size,size,UI.sh);
+ R(x,y,size,size,isSel?C.coin:isHov?C.key:lit?C.bd:UI.cardBd);
+ R(x+1,y+1,size-2,size-2,lit?UI.on:UI.title);R(x+1,y+1,size-2,1,lit?UI.hi:UI.cardBd);
+ if(nd.soon){g.globalAlpha=0.22;drawIcon(id,x,y,size,true);g.globalAlpha=1;}
+ else if(!op){g.globalAlpha=0.12;drawIcon(id,x,y,size,true);g.globalAlpha=1;const t='Lv'+inf.lv;lockIcon(x+Math.floor(size/2)-2,y+Math.floor(size/2)-(size>=20?6:5),C.key);if(size>=16)tiny(t,x+Math.floor((size-tinyW(t))/2),y+size-(size>=20?8:7),C.key);}
+ else{g.globalAlpha=ib?1:0.5;drawIcon(id,x,y,size,pas&&p===0);g.globalAlpha=1;}
+ if(isSel)corners(x,y,size,size,C.coin);
+ if(varOf(id)>=0&&ib){R(x+size-6,y+1,5,5,UI.sh);R(x+size-5,y+2,3,3,C.coin);R(x+size-4,y+3,1,1,'#FFF8E7');}
+ const k=slots().map(shownSlot).indexOf(id);if(k>=0&&!big){R(x-2,y+size-8,7,9,UI.sh);R(x-2,y+size-8,6,8,C.bd);R(x-1,y+size-7,4,6,UI.title);letter(KEYS[k],x-1,y+size-7,C.white);}
+ if(!big&&op&&!nd.soon&&maxOf(id)>1){const mx=maxOf(id);dots(x+Math.floor((size-(mx*4-1))/2),y+size-2,mx,p,ib?C.coin:C.off);}
+ if(!big)hit(x,y,size,size,{kind:'cell',id});}
+function nameUnder(id,cx,w,y){const op=open(W8,id),ib=inBranch(W8,id),nd=N[id];let t=nd.n;while(gw(G7,t)>w&&t.length>1)t=t.slice(0,-1);center(G7,t,cx,w,y,nd.soon||!op?C.off:ib?(sel===id?C.coin:C.dim):C.off);}
+// ---- 그리기 ----
+function draw(){const s=st(),T=TREE[W8];hits=[];document.getElementById('lvt').textContent='Lv '+LV;
+ for(let y=0;y<H;y+=8)for(let x=0;x<W;x+=16)R(x,y,16,8,((x>>4)+(y>>3))%2?'#8DAA68':'#97B472');R(0,0,W,H,'rgba(10,8,20,.55)');
+ // 패널 + 제목 띠
+ R(9,8,368,204,'rgba(0,0,0,.35)');R(7,5,370,205,UI.sh);R(8,6,368,203,C.bd);R(9,7,366,201,C.bg);R(9,7,366,1,UI.hi);
+ R(9,8,366,15,UI.title);R(9,23,366,1,C.bd);
+ // 별 + 제목
+ const sx=14,sy=10;[[3,0],[3,1],[2,2],[3,2],[4,2],[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[1,4],[2,4],[3,4],[4,4],[5,4],[2,5],[3,5],[4,5],[1,6],[2,6],[4,6],[5,6]].forEach(([a,b])=>R(sx+a,sy+b,1,1,b<3?'#FFE08A':C.coin));
+ gt(G9,'스킬',23,9,C.txt);
+ let tx=52;WEAPONS.forEach(w=>{const lab=TREE[w].label,tw=gw(G7,lab)+14,on=w===W8;
+  if(on){R(tx,9,tw,15,C.bd);R(tx+1,10,tw-2,14,C.bg);R(tx+1,10,tw-2,1,UI.hi);}else{R(tx,11,tw,12,UI.cardBd);R(tx+1,12,tw-2,10,UI.title);}
+  gt(G7,lab,tx+7,on?12:12,on?C.txt:C.key);hit(tx,9,tw,14,{kind:'tab',w});tx+=tw+2;});
+ // 오른쪽: Lv 알약 + SP 보석
+ const left=spOf(LV)-spent(),spN=''+left,spT='/'+spOf(LV);let rx=370-gw(G7,spT);gt(G7,spT,rx,12,C.key);rx-=gw(G9,spN)+1;gt(G9,spN,rx,10,left<0?C.danger:left>0?C.coin:C.dim);
+ rx-=gw(G7,'SP')+3;gt(G7,'SP',rx,12,C.key);rx-=8;[[2,0,1],[1,1,3],[0,2,5],[1,3,3],[2,4,1]].forEach(([a,b,w])=>R(rx+a,11+b+1,w,1,b<2?'#FFE08A':C.coin));
+ const lvT='Lv '+LV,lw=gw(G7,lvT)+10;rx-=lw+6;R(rx,11,lw,11,C.bd);R(rx+1,12,lw-2,9,UI.on);gt(G7,lvT,rx+5,12,C.txt);
+ // 계열 고르기 (하나만): 고른 계열 스킬만 아래에 보임
+ ['A','B'].forEach((br,i)=>{const B=T.br[br],on=s.branch===br,x=12+i*113,w=111,y=27,hv=hoverBtn==='br'+br;
+  R(x+1,y+1,w,22,UI.sh);R(x,y,w,22,on?B.col:hv?C.key:UI.cardBd);R(x+1,y+1,w-2,20,UI.title);
+  if(on){g.globalAlpha=0.25;R(x+1,y+1,w-2,20,B.col);g.globalAlpha=1;R(x+1,y+1,w-2,1,'rgba(255,255,255,.15)');}
+  g.globalAlpha=on?1:0.65;gt(G9,br,x+6,y+5,B.col);gt(G7,B.name,x+18,y+1,on?C.txt:C.dim);gt(G7,SUB[W8][br],x+18,y+11,on?C.dim:C.key);g.globalAlpha=1;
+  if(on)[[0,3],[1,4],[2,5],[3,4],[4,3],[5,2],[6,1]].forEach(([a,b])=>R(x+w-12+a,y+7+b,1,2,C.coin));
+  else{hit(x,y,w,22,{kind:'btn',b:'br'+br});}});
+ // 액티브 / 패시브 보기 탭
+ let vx=12;[['act','액티브 스킬'],['pas','패시브 스킬']].forEach(([v,lab])=>{const tw=gw(G7,lab)+16,on=VIEW===v,hv=hoverBtn==='v'+v;
+  if(on){R(vx,51,tw,13,C.bd);R(vx+1,52,tw-2,12,UI.card);R(vx+1,52,tw-2,1,UI.hi);}else{R(vx,53,tw,10,hv?C.key:UI.cardBd);R(vx+1,54,tw-2,8,UI.title);}
+  gt(G7,lab,vx+8,on?52:53,on?C.txt:hv?C.txt:C.key);hit(vx,51,tw,13,{kind:'btn',b:'v'+v});vx+=tw+2;});
+ gt(G7,VIEW==='act'?'U I O P에 장착':'SP로 배우면 켜짐',236-gw(G7,VIEW==='act'?'U I O P에 장착':'SP로 배우면 켜짐'),53,C.off);
+ // 내용 카드: 위 = 기본·공용, 아래 = 고른 계열 (열리는 레벨 순 + 진행 선)
+ const B=T.br[s.branch];
+ R(13,64,224,104,UI.sh);R(12,63,224,104,C.bd);R(13,64,222,102,UI.card);
+ const sec=[[VIEW==='act'?'기본 스킬':'공용 패시브',VIEW==='act'?T.base:['cancel','quickrise'],C.key],[`${B.name} ${VIEW==='act'?'액티브':'보조'}`,VIEW==='act'?ACTS(W8,s.branch):PASS(W8,s.branch),B.col]];
+ sec.forEach(([lab,ids,lc],si)=>{const y0=64+si*50;
+  if(si)for(let i=0;i<218;i+=2)R(15+i,y0-2,1,1,UI.cardBd);
+  gt(G7,lab,18,y0,lc);
+  const xs=ids.map((_,i)=>16+i*54),cy=y0+12;
+  if(si){const last=Math.max(-1,...ids.map((id,i)=>open(W8,id)?i:-1));R(xs[0]+27,cy+11,xs[ids.length-1]-xs[0],1,UI.cardBd);if(last>0){g.globalAlpha=0.8;R(xs[0]+27,cy+11,xs[last]-xs[0],1,B.col);g.globalAlpha=1;}}
+  ids.forEach((id,i)=>{cell(id,xs[i]+16,cy,22);nameUnder(id,xs[i],54,cy+23);});
+ });
+ // 장착 트레이
+ card(12,170,224,38);gt(G7,'장착',17,170,C.key);
+ slots().forEach((raw,k)=>{const id=shownSlot(raw),x=20+k*28,y=182,tgt=drag&&drag.moved&&inRect(mouse,x,y,22,22);
+  R(x+1,y+1,22,22,UI.sh);R(x,y,22,22,tgt?C.coin:C.key);R(x+1,y+1,20,20,UI.title);R(x+1,y+1,20,1,UI.cardBd);
+  if(id&&!(drag&&drag.moved&&drag.from===k))drawIcon(id,x,y,22,false);
+  R(x-2,y+14,7,9,UI.sh);R(x-2,y+14,6,8,C.bd);R(x-1,y+15,4,6,UI.title);letter(KEYS[k],x-1,y+15,C.white);hit(x,y,22,22,{kind:'slot',k});});
+ gt(G7,'끌어다 놓거나',134,180,C.off);gt(G7,'고른 채 U I O P',134,190,C.off);
+ const rl=resetArm?'확인?':'초기화';btn('reset',rl,231-(gw(G7,rl)+12),191,gw(G7,rl)+12,false,false);if(resetArm){R(231-(gw(G7,rl)+12),191,1,12,C.danger);}
+ detail();
+ if(drag&&drag.moved){g.globalAlpha=0.9;drawIcon(drag.id,mouse.x-11,mouse.y-11,22,false);g.globalAlpha=1;}
+}
+function inRect(p,x,y,w,h){return p.x>=x&&p.x<x+w&&p.y>=y&&p.y<y+h;}
+function detail(){const s=st(),id=hover||sel,inf=IDX[W8][id],nd=N[id],T=TREE[W8],X=246,MW=122,op=open(W8,id),ib=inBranch(W8,id),col=inf.br?T.br[inf.br].col:C.key;
+ R(242,28,132,180,UI.sh);R(240,27,132,180,C.bd);R(241,28,130,178,UI.card);
+ g.globalAlpha=0.2;R(241,28,130,32,col);g.globalAlpha=1;R(241,60,130,1,C.bd);
+ cell(id,X,32,24,true);
+ let nm=nd.n;while(gw(G9,nm)>94&&nm.length>1)nm=nm.slice(0,-1);gt(G9,nm,X+29,31,nd.soon?C.dim:C.txt);
+ const kind=inf.kind==='base'?'기본 스킬':inf.kind==='common'?'공용 패시브':`${inf.br} ${T.br[inf.br].name} · ${inf.kind==='act'?'액티브':'보조'}`;
+ gt(G7,kind,X+29,44,inf.br?col:C.key);
+ // 상태 줄
+ const RY=65;
+ if(nd.soon)gt(G7,'준비 중 (아직 구현 안 됨)',X,RY,C.off);
+ else if(!op){lockIcon(X,RY+2,C.danger);gt(G7,`Lv ${inf.lv}에 열림 · 지금 Lv ${LV}`,X+8,RY,C.danger);}
+ else if(!ib){const t=`${T.br[inf.br].name}(으)로 바꾸기`;if(id===sel)btn('br'+inf.br,t,X,RY-1,gw(G7,t)+12,false,false);else gt(G7,`${T.br[inf.br].name} 계열에서 사용`,X,RY,C.key);}
+ else{const p=ptsOf(id),mx=maxOf(id);for(let i=0;i<mx;i++){const px=X+i*7;R(px,RY+2,6,6,UI.sh);const c=i<p?C.coin:C.track;R(px+2,RY+2,2,6,c);R(px,RY+4,6,2,c);R(px+1,RY+3,4,4,c);}
+  const t=isActive(W8,id)?`위력 ×${LEVEL_MUL[p-1]}`:p?'배움':'안 배움';
+  gt(G7,`${p}/${mx}`,X+mx*7+3,RY,C.txt);gt(G7,t,X+mx*7+3+gw(G7,`${p}/${mx}`)+5,RY,p?C.heal:C.key);
+  if(id===sel){btn('minus','-',336,RY-1,15,p<=minOf(id),false);btn('plus','+',353,RY-1,15,p>=mx,false);}}
+ // 설명
+ let y=79;wrap(G7,nd.d,MW).slice(0,3).forEach(l=>{gt(G7,l,X,y,C.dim);y+=10;});
+ for(let i=0;i<126;i+=2)R(243+i,111,1,1,UI.cardBd);
+ if(nd.v){const ok=ptsOf(id)>=1;gt(G7,'변형',X,113,C.key);gt(G7,ok?'하나 고르기':'스킬이 열리면 고르기',X+gw(G7,'변형')+5,113,ok?C.dim:C.off);
+  nd.v.forEach(([vn,vd,soon],i)=>{const cy=124+i*30,on=varOf(id)===i,can=ok&&ib&&!soon&&id===sel,hv=can&&mouse&&inRect(mouse,X-2,cy,MW+4,28);
+   R(X-2,cy,MW+4,28,on?C.coin:hv?C.key:UI.cardBd);R(X-1,cy+1,MW+2,26,on?'#3a3020':UI.title);
+   g.globalAlpha=ok&&!soon?1:0.4;
+   // 고르기 동그라미
+   R(X+2,cy+4,5,5,on?C.coin:C.key);R(X+3,cy+5,3,3,on?'#FFF8E7':UI.title);if(!on)R(X+3,cy+5,3,3,UI.title);
+   gt(G7,vn+(soon?' (준비 중)':''),X+10,cy+1,on?C.coin:C.txt);
+   wrap(G7,vd,MW-8).slice(0,2).forEach((l,j)=>gt(G7,l,X+3,cy+10+j*8,C.dim));g.globalAlpha=1;
+   if(can)hit(X-2,cy,MW+4,28,{kind:'var',i});});}
+ else if(isPas(id)){const p=ptsOf(id);gt(G7,'포인트별 효과',X,113,C.key);gt(G7,'SP 1씩',X+gw(G7,'포인트별 효과')+5,113,C.off);
+  (PV[id]||[]).forEach((t,i)=>{const on=p===i+1,cy=124+i*11;if(on){R(X-2,cy,MW+4,11,'#3a3020');R(X-2,cy,1,11,C.coin);}tiny(''+(i+1),X+1,cy+3,on?C.coin:i<p?C.dim:C.off);gt(G7,t,X+8,cy+1,on?C.coin:i<p?C.dim:C.off);});
+  wrap(G7,inf.kind==='common'?'공용: 어느 계열에서나 켜짐':'계열 보조: 선택한 계열일 때만 켜짐. 다른 계열로 바꾸면 꺼지고 SP는 쓴 채로',MW).forEach((l,j)=>gt(G7,l,X,160+j*10,C.off));}
+ const warn=[];if(msg)warn.push([msg.t,msg.c]);
+ if(!ib&&op&&!nd.soon)warn.push([`지금은 ${T.br[s.branch].name}. 바꾸면 ${T.br[inf.br].name} 장착이 돌아옴`,C.coin]);
+ if(warn.length){R(241,185,130,21,UI.title);let wy=185;for(const [t,c] of warn)for(const l of wrap(G7,t,MW)){if(wy>195)break;gt(G7,l,X,wy,c);wy+=10;}}
+}
+// ---- 입력 ----
+const cv=document.getElementById('cv');g=cv.getContext('2d');
+function setBranch(br){const s=st();if(s.branch===br)return;const L=VIEW==='act'?ACTS:PASS,i=L(W8,s.branch).indexOf(sel);slots();s.branch=br;slots();if(i>=0)sel=L(W8,br)[i];say(`${TREE[W8].br[br].name} 계열로 바꿨습니다`);}
+function plus(id){const s=st(),inf=IDX[W8][id];if(N[id].soon)return say('준비 중인 스킬입니다',C.danger);if(!open(W8,id))return say(`Lv ${inf.lv}에 열립니다`,C.danger);if(!inBranch(W8,id))return say('선택한 계열 스킬만 찍습니다',C.danger);
+ const p=ptsOf(id);if(p>=maxOf(id))return say('최대 포인트입니다',C.danger);if(spent()>=spOf(LV))return say('SP가 모자랍니다',C.danger);s.pts[id]=p+1;}
+function minus(id){const s=st();if(!inBranch(W8,id))return say('선택한 계열 스킬만 바꿉니다',C.danger);const p=ptsOf(id);if(p<=minOf(id))return say(isActive(W8,id)?'1포인트 아래로는 못 내립니다':'배우지 않은 패시브입니다',C.danger);s.pts[id]=p-1;}
+function setView(v){if(VIEW===v)return;VIEW=v;sel=grid()[0][0];}
+function act(b){if(b.startsWith('br'))setBranch(b.slice(2));else if(b==='vact'||b==='vpas')setView(b.slice(1));else if(b==='plus')plus(sel);else if(b==='minus')minus(sel);
+ else if(b==='reset'){if(resetArm){st().pts={};st().vr={};resetArm=0;say('포인트·변형을 초기화했습니다');}else{resetArm=1;setTimeout(()=>{resetArm=0;draw();},2000);}}}
+function chooseVar(i){const s=st(),nd=N[sel];if(!nd.v)return;if(!inBranch(W8,sel))return say('선택한 계열 스킬만 바꿉니다',C.danger);if(ptsOf(sel)<1)return say('스킬이 열려야 변형을 고릅니다',C.danger);if(nd.v[i][2])return say('준비 중인 변형입니다',C.danger);s.vr[sel]=varOf(sel)===i?null:i;}
+function equip(id,k){const T=TREE[W8];if(!isActive(W8,id))return say('액티브 스킬만 장착합니다',C.danger);if(N[id].soon)return say('준비 중인 스킬입니다',C.danger);if(!open(W8,id))return say(`Lv ${IDX[W8][id].lv}에 열립니다`,C.danger);if(!inBranch(W8,id))return say(`${T.br[IDX[W8][id].br].name} 계열로 바꿔야 장착합니다`,C.danger);
+ const L=slots(),j=L.map(shownSlot).indexOf(id),prev=L[k];L[k]=id;if(j>=0&&j!==k)L[j]=prev;}
+const pos=e=>{const r=cv.getBoundingClientRect();return{x:Math.floor((e.clientX-r.left)*W/r.width),y:Math.floor((e.clientY-r.top)*H/r.height)};};
+const at=p=>{for(let i=hits.length-1;i>=0;i--){const h=hits[i];if(inRect(p,h.x,h.y,h.w,h.h))return h;}return null;};
+cv.addEventListener('mousemove',e=>{mouse=pos(e);const h=at(mouse);hover=h&&h.kind==='cell'?h.id:null;hoverBtn=h&&h.kind==='btn'?h.b:null;if(drag&&!drag.moved&&Math.abs(mouse.x-drag.x)+Math.abs(mouse.y-drag.y)>3)drag.moved=true;draw();});
+cv.addEventListener('mouseleave',()=>{hover=null;hoverBtn=null;mouse={x:-99,y:-99};draw();});
+cv.addEventListener('mousedown',e=>{const p=pos(e),h=at(p);if(!h)return;
+ if(h.kind==='cell'){sel=h.id;if(isActive(W8,h.id))drag={id:h.id,from:-1,x:p.x,y:p.y,moved:false};}
+ else if(h.kind==='slot'){const id=shownSlot(slots()[h.k]);if(id){VIEW='act';sel=id;drag={id,from:h.k,x:p.x,y:p.y,moved:false};}}
+ else if(h.kind==='tab'){W8=h.w;sel=grid()[0][0];}
+ else if(h.kind==='btn')act(h.b);
+ else if(h.kind==='var')chooseVar(h.i);
+ draw();});
+window.addEventListener('mouseup',e=>{if(drag&&drag.moved){const h=at(pos(e));if(h&&h.kind==='slot')equip(drag.id,h.k);}drag=null;draw();});
+// 키보드 격자: 기본·공용 / 계열마다 (액티브, 보조) 짝을 왼쪽부터
+function grid(){const T=TREE[W8],br=st().branch;return VIEW==='act'?[T.base,ACTS(W8,br)]:[['cancel','quickrise'],PASS(W8,br)];}
+function setLv(v){LV=Math.max(1,Math.min(20,v));document.getElementById('lv').value=LV;}
+document.getElementById('lv').addEventListener('input',e=>{setLv(+e.target.value);draw();});
+cv.addEventListener('keydown',e=>{const k=e.key,G=grid();let ry=G.findIndex(r=>r.includes(sel));if(ry<0){sel=G[0][0];ry=0;}let rx=G[ry].indexOf(sel);
+ const mv={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[k];
+ if(mv){e.preventDefault();const ny=Math.max(0,Math.min(G.length-1,ry+mv[1]));rx=mv[1]?Math.round(rx*(G[ny].length-1)/Math.max(1,G[ry].length-1)):rx+mv[0];ry=ny;rx=Math.max(0,Math.min(G[ry].length-1,rx));sel=G[ry][rx];hover=null;}
+ else if(k==='Tab'){e.preventDefault();setView(VIEW==='act'?'pas':'act');}
+ else if(k==='a'||k==='A'||k==='b'||k==='B')setBranch(k.toUpperCase());
+ else if(k==='+'||k==='=')plus(sel);else if(k==='-')minus(sel);
+ else if(k==='1'||k==='2')chooseVar(+k-1);
+ else if(KEYS.includes(k.toUpperCase()))equip(sel,KEYS.indexOf(k.toUpperCase()));
+ else if(k==='q'||k==='e'||k==='Q'||k==='E'){W8=WEAPONS[(WEAPONS.indexOf(W8)+1)%2];sel=grid()[0][0];}
+ else if(k==='r'||k==='R')act('reset');
+ else if(k==='['||k===']')setLv(LV+(k===']'?1:-1));
+ else return;
+ draw();});
+Promise.all(['Galmuri7','Galmuri9'].map(f=>fetch('../../../client/public/fonts/'+f+'.bin').then(r=>r.arrayBuffer()))).then(([a,b])=>{G7=decodeGLF(a);G9=decodeGLF(b);draw();cv.focus();});
+</script>
+</body></html>

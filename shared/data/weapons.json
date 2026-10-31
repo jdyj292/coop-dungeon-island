@@ -131,7 +131,8 @@
     "baseSkills": [
       "gs_launch",
       "gs_earthsplit"
-    ]
+    ],
+    "branches": { "A": { "name": "파쇄", "desc": "충전·다운·광역" }, "B": { "name": "검기", "desc": "원거리·공중 연계" } }
   },
   "staff": {
     "name": "스태프",
@@ -265,7 +266,8 @@
     "baseSkills": [
       "st_fireburst",
       "st_icefield"
-    ]
+    ],
+    "branches": { "A": { "name": "원소", "desc": "범위 딜·지형 장악" }, "B": { "name": "중력", "desc": "체공·모으기·팀 지원" } }
   },
   "fist": {
     "name": "주먹",

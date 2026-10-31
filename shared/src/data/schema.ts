@@ -113,7 +113,8 @@ export const skill = playerActionObj.extend({
   /** 스킬 창(K) 설명 (hud.md 8장) */
   desc: z.string().min(1),
   branch: z.enum(['base', 'A', 'B']),
-  tier: z.number().int().min(1).max(4).optional(),
+  /** 열리는 숙련도 레벨 (계열 스킬, skills.md 1장). 없으면 1 (기본 스킬) */
+  unlockLevel: z.number().int().min(1).max(99).optional(),
   cooldown: pos,
   mp: z.number().int().nonnegative(),
   variants: z.record(z.object({ name: z.string(), desc: z.string() }).passthrough()).optional(),
@@ -127,28 +128,36 @@ export const skill = playerActionObj.extend({
   lasting: z.boolean().optional(),
 }).strict().superRefine(oneShape);
 
-/** 계열 보조 노드 (data.md 3장 passives.json): 1포인트, 같은 무기·계열·단계 보조는 하나만.
- * 공용 패시브 = weapon '*'·branch common: 무기마다 펼쳐지고 택1 없음, maxPoints까지 (포인트별 값은 배열) */
+/** 숫자 하나 또는 포인트별 값 배열 (길이 = combat.json skillTree.maxPoints, crossCheck) */
+const perPoint = <T extends z.ZodTypeAny>(t: T) => z.union([t, z.array(t).min(1)]);
+
+/** 패시브 (data.md 3장 passives.json): 계열 보조 + 공용 패시브(weapon '*'·branch common, 무기마다 펼쳐짐).
+ * unlockLevel에 열리고 SP로 0~maxPoints 포인트 (skills.md 1장). 값이 배열이면 포인트별 */
 export const passive = z.object({
   id: z.string(),
   weapon: z.string(),
   branch: z.enum(['A', 'B', 'common']),
-  tier: z.number().int().min(1).max(3),
-  maxPoints: z.number().int().min(1).max(3).optional(),
+  unlockLevel: z.number().int().min(1).max(99),
   name: z.string(),
   desc: z.string().min(1),
+  /** 스킬 창 포인트별 효과 줄 (길이 = maxPoints) */
+  pointDesc: z.array(z.string().min(1)).min(1),
   effect: z.object({
-    chargeSpeedMul: pos.optional(),
-    chargeTakenMul: pos.optional(),
+    chargeSpeedMul: perPoint(pos).optional(),
+    chargeTakenMul: perPoint(pos).optional(),
     skillArmor: z.literal(true).optional(),
-    airDamageMul: pos.optional(),
-    projectileRangeMul: pos.optional(),
-    lastingMul: pos.optional(),
-    burn: z.object({ element: z.enum(['fire', 'ice']), time: sec, takenMul: pos }).strict().optional(),
-    lift: z.object({ takenMul: pos }).strict().optional(),
-    dodge: z.object({ distanceMul: pos, cooldownAdd: z.number() }).strict().optional(),
+    /** 스킬 시전 중 받는 피해 배율 (굳건함 2·3포인트) */
+    skillTakenMul: perPoint(pos).optional(),
+    airDamageMul: perPoint(pos).optional(),
+    projectileRangeMul: perPoint(pos).optional(),
+    lastingMul: perPoint(pos).optional(),
+    burn: z.object({ element: z.enum(['fire', 'ice']), time: perPoint(sec), takenMul: perPoint(pos) }).strict().optional(),
+    lift: z.object({ takenMul: perPoint(pos) }).strict().optional(),
+    dodge: z.object({ distanceMul: perPoint(pos), cooldownAdd: perPoint(z.number()) }).strict().optional(),
     cancel: z.object({ windupMul: z.array(pos).min(1) }).strict().optional(),
     quickRise: z.literal(true).optional(),
+    /** 기상 회피로 시작한 회피의 쿨 더하기 (기상 회피 2·3포인트) */
+    quickRiseCooldownAdd: perPoint(z.number()).optional(),
   }).strict(),
 }).strict();
 
@@ -181,6 +190,9 @@ export const weapon = z.object({
   basic: z.array(playerAction).min(1),
   dash: playerAction,
   baseSkills: z.array(z.string()),
+  /** 계열 이름·특징 (스킬 창 계열 버튼, skills.md 1장). 계열 스킬이 있는 무기만 */
+  branches: z.object(Object.fromEntries(['A', 'B'].map((k) => [k, z.object({ name: z.string(), desc: z.string() }).strict()])) as
+    Record<'A' | 'B', z.ZodObject<{ name: z.ZodString; desc: z.ZodString }>>).strict().optional(),
 }).strict();
 
 const pattern = z.discriminatedUnion('type', [
@@ -250,8 +262,8 @@ export const combat = z.object({
   _note: z.string().optional(),
   baseAtk: pos, atkPerLevel: sec, gravity: pos, launchVz: pos, airHitVz: sec, airGravityMul: pos, maxAirHits: z.number().int().positive(),
   bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec, wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
-  /** 스킬 포인트 (skills.md 1장, balance.md 1장): 노드 최대 포인트, 변형을 고르는 포인트, 단계별 열림 포인트(같은 계열 아래 단계 합), 포인트별 레벨 배율, 재입력 받는 시간 (스킬이 끝난 뒤) */
-  skillTree: z.object({ maxPoints: z.number().int().positive(), variantAt: z.number().int().positive(), tierPoints: z.array(z.number().int().nonnegative()).min(1), levelMul: z.array(pos).min(1), reinputWindow: pos }).strict(),
+  /** 스킬 포인트 (skills.md 1장, balance.md 1장): 노드 최대 포인트(액티브·패시브), 액티브 포인트별 레벨 배율, 재입력 받는 시간 (스킬이 끝난 뒤) */
+  skillTree: z.object({ maxPoints: z.number().int().positive(), levelMul: z.array(pos).min(1), reinputWindow: pos }).strict(),
   stun: z.object({ light: stun, medium: stun, heavy: stun }).strict(),
   weightMul: z.object({ light: sec, medium: sec, heavy: sec, fixed: sec, boss: sec }).strict(),
   grades: z.object(Object.fromEntries(GRADES.map((g) => [g, z.object({ hitstop: sec, shake: sec }).strict()])) as

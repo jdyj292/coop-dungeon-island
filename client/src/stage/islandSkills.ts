@@ -1,11 +1,10 @@
-// 스킬 창 (K, hud.md 8장, skills.md 1장): 무기 탭마다 맨 위 공용 패시브(스킬 캔슬 N/3·기상 회피 N/1), 기본 스킬 2개, 계열(A·B)마다 1단계 액티브(택1)·보조(택1), 2단계 액티브(택1).
-// 2단계는 같은 계열 1단계에 3포인트를 쓰면 열림 (안 열렸으면 "잠김"). 줄 = 스킬(장착한 슬롯 키·포인트 N/3) 다음에 그 변형 2개.
-// 스킬 줄 ←→ = 포인트 내리기·올리기 (계열 스킬은 0 = 안 배움, 배우면 같은 단계 다른 스킬은 지워짐), Enter·장착 버튼 = 다음 슬롯(U→I→O→P)에 장착,
-// 변형 줄 Enter = 고르기(3포인트일 때), 초기화 버튼. 1단계를 내려 2단계가 지워지면 설명 상자에 먼저 경고.
-// 검사·저장은 서버 (islandShop skill), 값은 islandNet.skills
+// 스킬 창 (K, hud.md 8장, skills.md 1장): 무기 탭마다 맨 위 계열 줄 2개(A·B, Enter = 고르기), 공용 패시브, 기본 스킬, 고른 계열의 액티브·보조.
+// 스킬·패시브는 숙련도 레벨에 열림 (안 열렸으면 이름 뒤 "(Lv N)"). 줄 = 스킬(장착한 슬롯 키·포인트 N/3) 다음에 그 변형 2개.
+// 스킬 줄 ←→ = 포인트 (액티브는 열리면 1부터, 패시브는 0부터), Enter·장착 버튼 = 다음 슬롯(U→I→O→P)에 장착, 변형 줄 Enter = 고르기, 초기화 버튼.
+// 임시 목록 창 (SK-6 2차에서 트리형 창으로 바뀜, 승인 데모 skill_window.html). 검사·저장은 서버 (islandShop skill), 값은 islandNet.skills
 import {
-  branchPoints, buildFrom, COMBAT, isUnlocked, maxPointsOf, minPoints, MVP_WEAPONS, nodeOf, PASSIVES, prunedBy, rivalsOf, SKILLS, SLOT_COUNT, slotSkills, tierOf,
-  treeNodes, weaponDef, type S2C, type SkillBuild, type SkillNode,
+  branchOf, buildFrom, COMBAT, isOpen, maxPointsOf, MVP_WEAPONS, nodeOf, PASSIVES, pointsAt, SKILLS, SLOT_COUNT, treeNodes, unlockLevelOf,
+  weaponDef, BRANCHES, type Branch, type S2C, type SkillBuild,
 } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { wrapKo } from '../ui/koText';
@@ -15,16 +14,13 @@ const TREE = COMBAT.skillTree;
 /** 아래 줄 알림 시간 */
 const NOTE_MS = 2000;
 const SLOT_KEYS = ['U', 'I', 'O', 'P'] as const;
-const BRANCH_ORDER = ['common', 'base', 'A', 'B'];
+const ORDER = ['common', 'base', 'A', 'B'];
 const FAIL_TEXT: Record<NonNullable<S2C['skills']['fail']>, string> = {
-  skill: '이 무기 스킬이 아닙니다', points: `포인트는 최대 ${TREE.maxPoints}`, variant: `변형은 ${TREE.variantAt}포인트부터`,
-  sp: 'SP가 모자랍니다', locked: '아직 잠긴 단계입니다', slot: '없는 슬롯입니다', busy: '출발 카운트다운 중에는 못 바꿉니다',
+  skill: '이 무기 스킬이 아닙니다', points: `포인트는 최대 ${TREE.maxPoints}`, variant: '없는 변형입니다',
+  sp: 'SP가 모자랍니다', locked: '아직 레벨이 모자랍니다', branch: '선택한 계열 스킬만 됩니다', slot: '없는 슬롯입니다', busy: '출발 카운트다운 중에는 못 바꿉니다',
 };
 
-interface Line {
-  skill: string;
-  variant?: string;
-}
+type Line = { branch: Branch } | { skill: string; variant?: string };
 
 export class SkillsTab {
   private note = '';
@@ -41,68 +37,64 @@ export class SkillsTab {
     return buildFrom(this.mine(weapon)?.build ?? '');
   }
 
-  private node(weapon: string, skill: string): SkillNode {
-    return nodeOf(this.build(weapon), skill);
+  private level(weapon: string): number {
+    return this.mine(weapon)?.level ?? 1;
   }
 
-  /** 공용 패시브, 기본 스킬, A 계열(1단계 액티브·변형, 보조, 2단계 액티브·변형), B 계열 순 */
+  private branch(weapon: string): Branch {
+    return this.mine(weapon)?.branch ?? 'A';
+  }
+
+  private points(weapon: string, skill: string): number {
+    return pointsAt(this.build(weapon), skill, this.level(weapon));
+  }
+
+  /** 계열 줄 A·B, 공용 패시브, 기본 스킬(변형), 고른 계열의 액티브(변형)·보조 */
   private lines(weapon: string): Line[] {
-    const order = (id: string) => BRANCH_ORDER.indexOf(SKILLS[id]?.branch ?? PASSIVES[id]?.branch ?? 'B');
-    return treeNodes(weaponDef(weapon))
+    const br = this.branch(weapon), order = (id: string) => ORDER.indexOf(branchOf(id));
+    const nodes = treeNodes(weaponDef(weapon)).filter((id) => [br, 'base', 'common'].includes(branchOf(id)))
       .map((skill, i) => ({ skill, i }))
-      .sort((a, b) => order(a.skill) - order(b.skill) || tierOf(a.skill) - tierOf(b.skill) || a.i - b.i)
-      .flatMap(({ skill }) => [{ skill }, ...Object.keys(SKILLS[skill]?.variants ?? {}).map((variant) => ({ skill, variant }))]);
+      .sort((a, b) => order(a.skill) - order(b.skill) || Number(!!PASSIVES[a.skill]) - Number(!!PASSIVES[b.skill]) || a.i - b.i);
+    return [
+      ...(weaponDef(weapon).branches ? BRANCHES.map((branch) => ({ branch })) : []),
+      ...nodes.flatMap(({ skill }) => [{ skill }, ...Object.keys(SKILLS[skill]?.variants ?? {}).map((variant) => ({ skill, variant }))]),
+    ];
   }
 
-  /** 장착한 슬롯 (없으면 -1) */
   private slotOf(weapon: string, skill: string): number {
-    return slotSkills(weaponDef(weapon), this.build(weapon)).indexOf(skill);
-  }
-
-  private locked(weapon: string, skill: string): boolean {
-    return !isUnlocked(weaponDef(weapon), this.build(weapon), skill);
+    return this.mine(weapon)?.slots.indexOf(skill) ?? -1;
   }
 
   rows(weapon: string): PanelRow[] {
-    return this.lines(weapon).map(({ skill, variant }) => {
-      const n = this.node(weapon, skill), pv = PASSIVES[skill];
-      if (pv) return { label: `${pv.branch === 'common' ? '공용' : '보조'} ${pv.name}`, right: `${n.points}/${maxPointsOf(skill)}`, dim: n.points === 0 };
+    const lv = this.level(weapon), names = weaponDef(weapon).branches;
+    return this.lines(weapon).map((l) => {
+      if ('branch' in l) {
+        const on = this.branch(weapon) === l.branch;
+        return { label: `계열 ${l.branch} ${names?.[l.branch].name ?? ''}${on ? ' (선택)' : ''}`, dim: !on };
+      }
+      const { skill, variant } = l, p = this.points(weapon, skill), shut = isOpen(skill, lv) ? '' : ` (Lv ${unlockLevelOf(skill)})`;
+      const pv = PASSIVES[skill];
+      if (pv) return { label: `${pv.branch === 'common' ? '공용' : '보조'} ${pv.name}${shut}`, right: `${p}/${maxPointsOf(skill)}`, dim: p === 0 };
       const s = SKILLS[skill]!;
       if (!variant) {
-        // 앞 글자 = 장착한 슬롯 키 (장착 안 했으면 -), 안 배운 계열 스킬은 흐리게, 안 열린 단계는 이름 뒤 "(잠김)" (오른쪽 칸은 도트 숫자 글꼴이라 한글 없음)
+        // 앞 글자 = 장착한 슬롯 키 (장착 안 했으면 -) (오른쪽 칸은 도트 숫자 글꼴이라 한글 없음)
         const slot = this.slotOf(weapon, skill), key = slot >= 0 ? SLOT_KEYS[slot] : '-';
-        const shut = n.points === 0 && this.locked(weapon, skill) ? ' (잠김)' : '';
-        return { label: `${key} ${s.name}${shut}`, right: `${n.points}/${TREE.maxPoints}`, dim: n.points === 0 };
+        return { label: `${key} ${s.name}${shut}`, right: `${p}/${TREE.maxPoints}`, dim: p === 0 };
       }
       const name = s.variants?.[variant]?.name ?? variant;
-      return { label: `· ${name}${n.variant === variant ? ' (선택)' : ''}`, dim: n.points < TREE.variantAt };
+      return { label: `· ${name}${nodeOf(this.build(weapon), skill).variant === variant ? ' (선택)' : ''}`, dim: p === 0 };
     });
   }
 
-  /** 고른 줄 설명 (패널 아래 상자): 스킬 = 기본 효과, 변형 = 무엇이 바뀌는지. 잠김·지워질 위 단계는 첫 줄에 */
+  /** 고른 줄 설명 (패널 아래 상자): 계열 = 특징, 스킬 = 기본 효과, 패시브 = 지금 포인트 효과, 변형 = 무엇이 바뀌는지. 잠김은 첫 줄에 */
   detail(weapon: string, sel: number): string | DetailLine[] {
-    const l = this.lines(weapon)[sel], s = l && SKILLS[l.skill];
+    const l = this.lines(weapon)[sel];
     if (!l) return '';
-    const desc = PASSIVES[l.skill]?.desc ?? (l.variant ? (s?.variants?.[l.variant]?.desc ?? '') : (s?.desc ?? ''));
-    const head = l.variant ? null : this.warning(weapon, l.skill);
-    if (!head) return desc;
-    return [{ text: head }, ...wrapKo(desc, PANEL.w - 2 * PANEL.pad, 1).map((text) => ({ text, dim: true }))];
-  }
-
-  /** 잠김 사유, 또는 -(배운 스킬)·+(택1 옮겨 배우기)로 함께 지워질 위 단계 */
-  private warning(weapon: string, skill: string): string | null {
-    const w = weaponDef(weapon), b = this.build(weapon), n = nodeOf(b, skill), meta = SKILLS[skill] ?? PASSIVES[skill];
-    if (!meta) return null;
-    if (n.points === 0 && meta.branch !== 'base' && this.locked(weapon, skill)) {
-      const t = tierOf(skill), need = TREE.tierPoints[t - 1] ?? 0;
-      return `잠김: ${meta.branch} 계열 ${t - 1}단계에 ${need}포인트 (지금 ${branchPoints(w, b, meta.branch, t)})`;
-    }
-    const swap = n.points === 0 && rivalsOf(w, skill).some((r) => nodeOf(b, r).points > 0);
-    const lose = n.points > minPoints(skill) ? prunedBy(w, b, skill, { points: n.points - 1, ...(n.points - 1 >= TREE.variantAt && n.variant ? { variant: n.variant } : {}) })
-      : swap ? prunedBy(w, b, skill, { points: 1 }) : [];
-    if (!lose.length) return null;
-    const names = lose.map((id) => SKILLS[id]?.name ?? PASSIVES[id]?.name ?? id).join(', ');
-    return `${swap ? '+' : '-'} 하면 ${names} 지워짐 (SP 돌려받음)`;
+    if ('branch' in l) return weaponDef(weapon).branches?.[l.branch].desc ?? '';
+    const s = SKILLS[l.skill], pv = PASSIVES[l.skill], p = this.points(weapon, l.skill);
+    const desc = pv ? `${pv.desc.replace('\n', ' ')}${p ? ` (${pv.pointDesc[p - 1]})` : ''}` : l.variant ? (s?.variants?.[l.variant]?.desc ?? '') : (s?.desc ?? '');
+    if (isOpen(l.skill, this.level(weapon))) return desc;
+    return [{ text: `Lv ${unlockLevelOf(l.skill)}에 열림 (지금 Lv ${this.level(weapon)})` }, ...wrapKo(desc, PANEL.w - 2 * PANEL.pad, 1).map((text) => ({ text, dim: true }))];
   }
 
   footer(weapon: string, locked: boolean): string {
@@ -120,50 +112,50 @@ export class SkillsTab {
   }
 
   buttons(weapon: string, sel: number, locked: boolean): PanelButton[] {
-    const l = this.lines(weapon)[sel], m = this.mine(weapon);
-    if (!l?.variant) {
-      const n = l ? this.node(weapon, l.skill).points : 0;
-      // 같은 단계 다른 스킬에서 옮겨 배우기는 SP가 모자라도 된다 (포인트가 옮겨감)
-      const swap = !!l && n === 0 && rivalsOf(weaponDef(weapon), l.skill).some((r) => this.node(weapon, r).points > 0);
-      const shut = !!l && n === 0 && this.locked(weapon, l.skill);
-      return [
-        { id: 'minus', label: '-', disabled: locked || !l || n <= minPoints(l.skill) },
-        { id: 'plus', label: '+', disabled: locked || !l || shut || n >= maxPointsOf(l.skill) || !m || (m.spent >= m.sp && !swap) },
-        // 보조 노드는 슬롯에 들어가지 않는다
-        ...(l && SKILLS[l.skill] ? [{ id: 'equip', label: '장착', disabled: locked || n === 0 }] : []),
-        { id: 'skillReset', label: '초기화', disabled: locked || !m?.spent },
-      ];
+    const l = this.lines(weapon)[sel], m = this.mine(weapon), reset = { id: 'skillReset', label: '초기화', disabled: locked || !m?.spent };
+    if (!l) return [reset];
+    if ('branch' in l) return [{ id: 'variant', label: '고르기', disabled: locked || this.branch(weapon) === l.branch }, reset];
+    const p = this.points(weapon, l.skill), open = isOpen(l.skill, this.level(weapon));
+    if (l.variant) {
+      const chosen = nodeOf(this.build(weapon), l.skill).variant === l.variant;
+      return [{ id: 'variant', label: chosen ? '선택 해제' : '고르기', disabled: locked || !open }, reset];
     }
-    const n = this.node(weapon, l.skill);
     return [
-      { id: 'variant', label: n.variant === l.variant ? '선택 해제' : '고르기', disabled: locked || n.points < TREE.variantAt },
-      { id: 'skillReset', label: '초기화', disabled: locked || !m?.spent },
+      { id: 'minus', label: '-', disabled: locked || p <= (SKILLS[l.skill] ? 1 : 0) },
+      { id: 'plus', label: '+', disabled: locked || !open || p >= maxPointsOf(l.skill) || !m || m.spent >= m.sp },
+      // 패시브는 슬롯에 들어가지 않는다
+      ...(SKILLS[l.skill] ? [{ id: 'equip', label: '장착', disabled: locked || !open }] : []),
+      reset,
     ];
   }
 
-  /** minus·plus·equip·variant·skillReset (변형 줄에서 ←→는 무시, 스킬 줄에서 Enter(variant) = 장착) */
+  /** minus·plus·equip·variant·skillReset (계열 줄 Enter(variant) = 계열 고르기, 스킬 줄 Enter(variant) = 장착, 변형 줄 ←→는 무시) */
   act(id: string, weapon: string, sel: number, locked: boolean): void {
     const l = this.lines(weapon)[sel];
     if (locked || !l || !(MVP_WEAPONS as readonly string[]).includes(weapon)) return;
-    const w = weapon as (typeof MVP_WEAPONS)[number], n = this.node(weapon, l.skill);
+    const w = weapon as (typeof MVP_WEAPONS)[number];
     if (id === 'skillReset') return this.conn.send('skill', { weapon: w, op: 'reset' });
+    if ('branch' in l) {
+      if (id === 'variant' && this.branch(weapon) !== l.branch) this.conn.send('skill', { weapon: w, op: 'branch', branch: l.branch });
+      return;
+    }
+    const p = this.points(weapon, l.skill), n = nodeOf(this.build(weapon), l.skill);
+    if (!isOpen(l.skill, this.level(weapon))) return;
     if (l.variant) {
-      if (id !== 'variant' || n.points < TREE.variantAt) return;
+      if (id !== 'variant') return;
       const variant = n.variant === l.variant ? undefined : l.variant;
-      return this.conn.send('skill', { weapon: w, op: 'set', skillId: l.skill, points: n.points, ...(variant ? { variant } : {}) });
+      return this.conn.send('skill', { weapon: w, op: 'set', skillId: l.skill, points: p, ...(variant ? { variant } : {}) });
     }
     if (id === 'equip' || id === 'variant') {
-      if (!SKILLS[l.skill] || n.points === 0) return;
+      if (!SKILLS[l.skill]) return;
       // 장착돼 있으면 다음 칸, 아니면 첫 빈칸(없으면 U)
-      const slots = slotSkills(weaponDef(weapon), this.build(weapon)), cur = slots.indexOf(l.skill);
-      const slot = cur >= 0 ? (cur + 1) % SLOT_COUNT : Math.max(0, slots.indexOf(null));
+      const slots = this.mine(weapon)?.slots ?? [], cur = slots.indexOf(l.skill);
+      const slot = cur >= 0 ? (cur + 1) % SLOT_COUNT : Math.max(0, slots.indexOf(''));
       return this.conn.send('skill', { weapon: w, op: 'equip', skillId: l.skill, slot });
     }
-    const points = id === 'plus' ? n.points + 1 : id === 'minus' ? n.points - 1 : n.points;
-    if (points === n.points || points < minPoints(l.skill) || points > maxPointsOf(l.skill)) return;
-    // 변형 조건 아래로 내리면 고른 변형도 지운다
-    const variant = points >= TREE.variantAt ? n.variant : undefined;
-    this.conn.send('skill', { weapon: w, op: 'set', skillId: l.skill, points, ...(variant ? { variant } : {}) });
+    const points = id === 'plus' ? p + 1 : id === 'minus' ? p - 1 : p;
+    if (points === p || points < (SKILLS[l.skill] ? 1 : 0) || points > maxPointsOf(l.skill)) return;
+    this.conn.send('skill', { weapon: w, op: 'set', skillId: l.skill, points, ...(n.variant ? { variant: n.variant } : {}) });
   }
 
   private say(text: string): void {

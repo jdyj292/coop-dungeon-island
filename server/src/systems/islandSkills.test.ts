@@ -1,11 +1,11 @@
-// 스킬 창(K) (skills.md 1장): 섬에서 포인트·변형 저장(서버 검사)·초기화, 던전 파티 정보·입력 검사에 반영
-import { decodeBuild, resolveSkill, slotSkills, weaponDef, type S2C } from '@game/shared';
+// 스킬 창(K) (skills.md 1장): 섬에서 포인트·변형·계열·장착 저장(서버 검사)·초기화, 던전 파티 정보·입력 검사에 반영
+import { decodeBuild, perksOf, resolveSkill, slotSkills, weaponDef, type S2C } from '@game/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
 import { IslandStore } from '../db/islandStore';
 import { islands, users, weaponMastery } from '../db/schema';
 import { ShopStore } from '../db/shopStore';
-import { skillBuild } from '../db/skillStore';
+import { dungeonBuild, skillBuild } from '../db/skillStore';
 import { InputQueue } from './inputs';
 import { IslandGame } from './islandGame';
 
@@ -21,6 +21,8 @@ const game = () => new IslandGame('섬', 0, [], { send: (id, type, msg) => sent.
 const lastSkills = (id: string) => sent.filter(([to, t]) => to === id && t === 'skills').at(-1)?.[2] as S2C['skills'];
 const gs = (s: S2C['skills']) => s.weapons.find((w) => w.weapon === 'greatsword')!;
 const enter = (g: IslandGame, id: string) => { g.addResident({ id, name: id, color: 0 }); g.join(id); };
+const set = (g: IslandGame, a: string, skillId: string, points: number, variant?: string) =>
+  g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId, points, ...(variant ? { variant } : {}) });
 
 beforeEach(() => {
   db = openDb(':memory:').db;
@@ -29,86 +31,79 @@ beforeEach(() => {
 });
 
 describe('스킬 탭', () => {
-  it('입장 때 무기마다 SP(레벨 − 1)·쓴 SP·노드', () => {
+  it('입장 때 무기마다 레벨·SP(레벨 − 1)·쓴 SP·노드·계열·장착', () => {
     const a = user(4), g = game();
     enter(g, a);
-    expect(gs(lastSkills(a))).toEqual({ weapon: 'greatsword', sp: 3, spent: 0, build: '' });
-    expect(lastSkills(a).weapons.find((w) => w.weapon === 'staff')?.sp).toBe(0);
+    expect(gs(lastSkills(a))).toEqual({ weapon: 'greatsword', level: 4, sp: 3, spent: 0, build: '', branch: 'A', slots: ['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder'] });
+    expect(lastSkills(a).weapons.find((w) => w.weapon === 'staff')).toMatchObject({ level: 1, sp: 0, slots: ['st_fireburst', 'st_icefield', '', ''] });
   });
 
-  it('포인트·변형 저장, SP를 넘으면 거절', () => {
+  it('포인트·변형 저장 (변형은 1포인트부터), SP를 넘으면 거절', () => {
     const a = user(4), g = game();
     enter(g, a);
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_launch', points: 3, variant: 'double' });
-    expect(gs(lastSkills(a))).toMatchObject({ spent: 2, build: 'gs_launch:3:double' });
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_earthsplit', points: 3 });
+    set(g, a, 'gs_earthsplit', 1, 'fan');
+    expect(lastSkills(a).fail).toBeUndefined();
+    set(g, a, 'gs_launch', 3, 'double');
+    expect(gs(lastSkills(a))).toMatchObject({ spent: 2, build: 'gs_launch:3:double,gs_earthsplit:1:fan' });
+    set(g, a, 'gs_whirl', 3);
     expect(lastSkills(a).fail).toBe('sp');
-    expect(skillBuild(db, Number(a))).toEqual({ gs_launch: { points: 3, variant: 'double' } });
+    expect(skillBuild(db, Number(a))).toEqual({ gs_earthsplit: { points: 1, variant: 'fan' }, gs_launch: { points: 3, variant: 'double' } });
   });
 
-  it('변형은 3포인트부터, 다른 무기 스킬은 거절', () => {
-    const a = user(4), g = game();
+  it('잠긴 노드·다른 계열·다른 무기는 거절, 패시브는 0~3', () => {
+    const a = user(5), g = game();
     enter(g, a);
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_launch', points: 2, variant: 'double' });
-    expect(lastSkills(a).fail).toBe('variant');
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'st_icefield', points: 2 });
+    set(g, a, 'gs_quake', 2);
+    expect(lastSkills(a).fail).toBe('locked');
+    set(g, a, 'gs_keenedge', 1);
+    expect(lastSkills(a).fail).toBe('branch');
+    set(g, a, 'st_icefield', 2);
     expect(lastSkills(a).fail).toBe('skill');
+    set(g, a, 'gs_steadfast', 3);
+    expect(gs(lastSkills(a))).toMatchObject({ spent: 3, build: 'gs_steadfast:3' });
   });
 
-  it('1포인트로 내리면 행이 지워지고, 초기화는 그 무기만', () => {
+  it('기본값으로 내리면 행이 지워지고, 초기화는 그 무기 포인트·변형만', () => {
     const a = user(4), g = game();
     enter(g, a);
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_launch', points: 2 });
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_launch', points: 1 });
+    set(g, a, 'gs_whirl', 2);
+    set(g, a, 'gs_whirl', 1);
     expect(skillBuild(db, Number(a))).toEqual({});
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_earthsplit', points: 3, variant: 'fan' });
+    set(g, a, 'gs_earthsplit', 3, 'fan');
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'reset' });
     expect(gs(lastSkills(a))).toMatchObject({ spent: 0, build: '' });
   });
 
-  it('계열 스킬: 배우면 같은 키의 다른 스킬은 지워지고 포인트가 옮겨감, 0으로 내리면 안 배움', () => {
-    const a = user(3), g = game();
+  it('계열 바꾸기: 장착은 계열마다 따로 기억, 다른 계열에 찍은 포인트는 남음', () => {
+    const a = user(9), g = game();
     enter(g, a);
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_whirl', points: 2 });
-    expect(gs(lastSkills(a))).toMatchObject({ spent: 2, build: 'gs_whirl:2' });
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_shoulder', points: 2 });
-    expect(skillBuild(db, Number(a))).toEqual({ gs_shoulder: { points: 2 } });
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_shoulder', points: 0 });
-    expect(gs(lastSkills(a))).toMatchObject({ spent: 0, build: '' });
-  });
-
-  it('계열 2단계: 1단계 3포인트 전에는 잠김, 1단계를 내리면 2단계가 지워지고 SP가 돌아옴', () => {
-    const a = user(6), g = game();
-    enter(g, a);
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_quake', points: 1 });
-    expect(lastSkills(a).fail).toBe('locked');
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_whirl', points: 3 });
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_quake', points: 2 });
-    expect(gs(lastSkills(a))).toMatchObject({ spent: 5, build: 'gs_whirl:3,gs_quake:2' });
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_whirl', points: 2 });
-    expect(gs(lastSkills(a))).toMatchObject({ spent: 2, build: 'gs_whirl:2' });
-  });
-
-  it('슬롯 장착: 저장되고 던전 파티 정보에 실림, 장착 안 한 스킬은 던전에서 거절', () => {
-    const a = user(6), g = game(), w = weaponDef('greatsword');
-    enter(g, a);
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_whirl', points: 3 });
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_wave', points: 1 });
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_quake', points: 1 });
-    // 빈칸이 없어 지진은 장착 안 됨 → U에 장착하면 올려베기가 빠짐
-    expect(slotSkills(w, skillBuild(db, Number(a)))).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_wave']);
+    set(g, a, 'gs_whirl', 3);
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_quake', slot: 0 });
-    expect(lastSkills(a).fail).toBeUndefined();
-    const b = skillBuild(db, Number(a));
-    expect(slotSkills(w, b)).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_wave']);
-    expect(slotSkills(w, decodeBuild(gs(lastSkills(a)).build))).toEqual(slotSkills(w, b));
+    expect(gs(lastSkills(a)).slots).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder']);
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'branch', branch: 'B' });
+    expect(gs(lastSkills(a))).toMatchObject({ branch: 'B', spent: 2, slots: ['gs_launch', 'gs_earthsplit', 'gs_wave', 'gs_draw'] });
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_whirl', slot: 2 });
+    expect(lastSkills(a).fail).toBe('branch');
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'branch', branch: 'A' });
+    expect(gs(lastSkills(a))).toMatchObject({ branch: 'A', slots: ['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder'] });
+  });
+
+  it('던전 파티 정보: 고른 계열·장착만 실리고, 장착 안 한 스킬은 던전에서 거절', () => {
+    const a = user(9), g = game(), w = weaponDef('greatsword');
+    enter(g, a);
+    set(g, a, 'gs_whirl', 3, 'rush');
+    set(g, a, 'gs_keenedge', 1);
+    expect(lastSkills(a).fail).toBe('branch');
+    set(g, a, 'gs_heavyhand', 2);
+    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_quake', slot: 0 });
+    const b = decodeBuild(dungeonBuild(db, Number(a), 'greatsword'));
+    expect(slotSkills(w, b)).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder']);
+    expect(b.gs_whirl).toEqual({ points: 3, variant: 'rush', slot: 2 });
+    expect(perksOf(w, b).chargeSpeedMul).toBe(1.45);
     const q = new InputQueue(), act = (skillId: string) => ({ seq: 1, t: 0, kind: 'skill' as const, skillId, x: 0, y: 0, facing: 1 as const });
     const p = { downed: false, hurt: null, cooldowns: {}, mp: 100, reinput: null };
     expect(q.onAction(act('gs_launch'), p as never, w, b)).not.toBeNull();
     expect(q.onAction(act('gs_quake'), p as never, w, b)).toBeNull();
-    // 안 배운 스킬은 거절 (없는 슬롯은 skillLoadout.test, 섬 메시지는 초당 5개라 여기서는 5번까지)
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_draw', slot: 1 });
-    expect(lastSkills(a).fail).toBe('skill');
   });
 
   it('출발 카운트다운 중인 대기자는 못 바꿈', () => {
@@ -116,7 +111,7 @@ describe('스킬 탭', () => {
     enter(g, a);
     Object.assign(g.state.well, { departAt: 1 });
     g.state.well.members.push(a);
-    g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'set', skillId: 'gs_launch', points: 2 });
+    set(g, a, 'gs_launch', 2);
     expect(lastSkills(a).fail).toBe('busy');
     expect(skillBuild(db, Number(a))).toEqual({});
   });
@@ -133,7 +128,7 @@ describe('던전 입력 검사', () => {
     expect(q.take().input.skill).toBe(resolveSkill('gs_launch', { points: 3, variant: 'double' }));
   });
 
-  it('안 배운 계열 스킬은 거절', () => {
+  it('빌드에 없는 계열 스킬은 거절', () => {
     const q = new InputQueue(), w = weaponDef('greatsword');
     expect(q.onAction(action('gs_whirl'), player() as never, w, {})).not.toBeNull();
     expect(q.onAction(action('gs_whirl'), player() as never, w, decodeBuild('gs_whirl:1'))).toBeNull();

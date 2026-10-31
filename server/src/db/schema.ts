@@ -116,14 +116,23 @@ export const weaponMastery = sqliteTable('weapon_mastery', {
   level: integer('level').notNull().default(1),
   exp: integer('exp').notNull().default(0),
   sp: integer('sp').notNull().default(0),
+  /** 고른 계열 A·B (skills.md 1장): 그 계열 스킬·보조만 쓴다 */
+  branch: text('branch').notNull().default('A'),
 }, (t) => [primaryKey({ columns: [t.userId, t.weapon] })]);
 
-/** 스킬 노드 (skills.md 1장): 찍은 포인트·고른 변형. 행이 없으면 기본 1포인트. 무기는 노드 id(스킬 id)로 정해진다 */
+/** 스킬 노드 (skills.md 1장): 찍은 포인트·고른 변형. 행이 없으면 기본값(액티브 1포인트·패시브 0). 무기는 노드 id(스킬 id)로 정해진다 */
 export const skillNodes = sqliteTable('skill_nodes', {
   userId: integer('user_id').notNull().references(() => users.id),
   nodeId: text('node_id').notNull(),
   points: integer('points').notNull(),
   variant: text('variant'),
-  /** 장착한 슬롯 0~3 (U I O P). null = 장착 안 함 (그 무기에 slot이 하나도 없으면 기본 배치, skillLoadout.ts) */
-  slot: integer('slot'),
 }, (t) => [primaryKey({ columns: [t.userId, t.nodeId] })]);
+
+/** 장착 (skills.md 1장): 무기·계열마다 U I O P(0~3) 칸의 스킬. 그 무기·계열에 행이 없으면 기본 배치 (skillLoadout.loadoutSlots), 빈칸은 행 없음 */
+export const skillSlots = sqliteTable('skill_slots', {
+  userId: integer('user_id').notNull().references(() => users.id),
+  weapon: text('weapon').notNull(),
+  branch: text('branch').notNull(),
+  slot: integer('slot').notNull(),
+  nodeId: text('node_id').notNull(),
+}, (t) => [primaryKey({ columns: [t.userId, t.weapon, t.branch, t.slot] })]);

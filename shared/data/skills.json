@@ -292,7 +292,7 @@
     "name": "회전베기",
     "desc": "검을 휘두르며 앞으로 돌아 주변 적을 6번 벤다",
     "branch": "A",
-    "tier": 1,
+    "unlockLevel": 2,
     "cooldown": 9,
     "mp": 18,
     "variants": {
@@ -352,7 +352,7 @@
     "name": "어깨 들이받기",
     "desc": "3타일 돌진해 적을 밀어낸다. 시전 중 슈퍼아머",
     "branch": "A",
-    "tier": 1,
+    "unlockLevel": 4,
     "cooldown": 6,
     "mp": 12,
     "variants": {
@@ -404,7 +404,7 @@
     "name": "검기 날리기",
     "desc": "앞 5타일을 꿰뚫는 검기를 날린다",
     "branch": "B",
-    "tier": 1,
+    "unlockLevel": 2,
     "cooldown": 4,
     "mp": 8,
     "variants": {
@@ -466,7 +466,7 @@
     "name": "발도",
     "desc": "2타일을 순식간에 나아가며 벤다",
     "branch": "B",
-    "tier": 1,
+    "unlockLevel": 4,
     "cooldown": 5,
     "mp": 10,
     "variants": {
@@ -523,7 +523,7 @@
     "name": "지진",
     "desc": "땅을 내리쳐 둘레 2.5타일 안 땅의 적을 살짝 띄운다",
     "branch": "A",
-    "tier": 2,
+    "unlockLevel": 6,
     "cooldown": 10,
     "mp": 20,
     "variants": {
@@ -595,7 +595,7 @@
     "name": "회오리 검기",
     "desc": "2초 동안 앞으로 나아가는 회오리가 10번 베고 공중 적을 붙잡아 둔다",
     "branch": "B",
-    "tier": 2,
+    "unlockLevel": 8,
     "cooldown": 10,
     "mp": 20,
     "note": "예산 대비 +25%: 회오리가 앞으로 나아가 10번을 다 맞히기 어렵고 hold는 공중 적에게만",
@@ -670,7 +670,7 @@
     "name": "불꽃 기둥",
     "desc": "앞에 2초 동안 불기둥을 세워 8번 태운다",
     "element": "fire", "lasting": true, "branch": "A",
-    "tier": 1,
+    "unlockLevel": 2,
     "cooldown": 8,
     "mp": 16,
     "variants": {
@@ -741,7 +741,7 @@
     "name": "얼음 창",
     "desc": "꿰뚫는 얼음 창을 쏴 0.5초 얼린다",
     "element": "ice", "branch": "A",
-    "tier": 1,
+    "unlockLevel": 4,
     "cooldown": 4,
     "mp": 8,
     "variants": {
@@ -816,7 +816,7 @@
     "name": "부유 구슬",
     "desc": "구슬 안의 공중 적을 3초 동안 띄워 둔다 (8번)",
     "lasting": true, "branch": "B",
-    "tier": 1,
+    "unlockLevel": 2,
     "cooldown": 8,
     "mp": 16,
     "variants": {
@@ -883,7 +883,7 @@
     "name": "끌어올림",
     "desc": "앞 자리로 적을 끌어모아 살짝 띄운다",
     "branch": "B",
-    "tier": 1,
+    "unlockLevel": 4,
     "cooldown": 6,
     "mp": 12,
     "variants": {
@@ -949,7 +949,7 @@
     "desc": "앞 자리로 2초 동안 적을 끌어당긴다 (6번)",
     "lasting": true,
     "branch": "B",
-    "tier": 2,
+    "unlockLevel": 6,
     "cooldown": 12,
     "mp": 24,
     "note": "예산 대비 크게 낮음: 끌어모으기(2초 pull)가 주 가치, 딜은 의도적으로 낮게",
@@ -1012,7 +1012,7 @@
     "desc": "범위 안 적을 4초 동안 40% 느리게 한다 (걷기·공격 사이 쉬는 시간)",
     "lasting": true,
     "branch": "B",
-    "tier": 2,
+    "unlockLevel": 8,
     "cooldown": 10,
     "mp": 20,
     "note": "예산 대비 크게 낮음: 4초 감속(걷기·공격 사이 쉬는 시간)이 주 가치, 딜은 의도적으로 낮게",

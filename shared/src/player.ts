@@ -108,8 +108,9 @@ export function stepPlayerState(
   // 우물에서 떨어지는 중: 아무 입력도 받지 않음 (dungeon.md 2장)
   if (p.arrive > 0) return out;
   if (input.potion && usePotion(p, input.potion)) out.potion = input.potion;
-  // 기상 회피: 기상 무적 없이 다운을 끝내고 아래 회피로 (회피 무적이 대신)
-  if (input.backstep && canQuickRise(p)) p.hurt = null;
+  // 기상 회피: 기상 무적 없이 다운을 끝내고 아래 회피로 (회피 무적이 대신). 2·3포인트면 그 회피 쿨이 짧다
+  const rose = input.backstep && canQuickRise(p);
+  if (rose) p.hurt = null;
   if (p.hurt) {
     // 맞아서 밀려남 (벽·장애물에 막힘)
     const push = p.hurt.push;
@@ -128,7 +129,7 @@ export function stepPlayerState(
     p.fighter = newFighter();
     const dir = Math.sign(input.x), dy = Math.sign(input.y);
     p.backstep = { t: 0, dir: dir || dy ? dir : -p.facing, dy };
-    p.backstepCd = bs.cooldown + (dg?.cooldownAdd ?? 0);
+    p.backstepCd = bs.cooldown + (dg?.cooldownAdd ?? 0) + (rose ? (p.perks?.quickRiseCooldownAdd ?? 0) : 0);
     spendStamina(p, st.dodge);
     out.backstepStarted = true;
   }

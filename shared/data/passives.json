@@ -1,53 +1,63 @@
 {
-  "_note": "계열 보조 노드 (skills.md 1~3장, data.md 3장). 1포인트, 같은 무기·계열·단계 보조는 하나만. effect 키 의미는 data.md. 가벼운 발 쿨은 회피 쿨 0.6초에 맞춰 −0.2초. weapon \"*\" = 공용 패시브: 무기마다 노드 '<무기>.<id>'로 펼쳐짐(무기별 SP), 택1 없음, maxPoints 포인트별 값은 배열",
+  "_note": "패시브 (skills.md 1~3장, data.md 3장). unlockLevel(숙련도)에 열리고 SP로 0~3포인트(combat.json skillTree.maxPoints). 값이 배열이면 포인트별(1·2·3포인트), 숫자 하나면 포인트와 상관없음. 계열 보조는 선택한 계열일 때만 켜짐. pointDesc = 스킬 창 포인트별 효과 줄. effect 키 의미는 data.md. weapon \"*\" = 공용 패시브: 무기마다 노드 '<무기>.<id>'로 펼쳐짐(무기별 SP)",
   "gs_heavyhand": {
-    "id": "gs_heavyhand", "weapon": "greatsword", "branch": "A", "tier": 1, "name": "무거운 손",
-    "desc": "스킬 충전이 30% 빠르고, 충전 중\n받는 피해 -30%",
-    "effect": { "chargeSpeedMul": 1.3, "chargeTakenMul": 0.7 }
+    "id": "gs_heavyhand", "weapon": "greatsword", "branch": "A", "unlockLevel": 3, "name": "무거운 손",
+    "desc": "스킬 충전이 빨라지고, 충전 중\n받는 피해가 줄어든다",
+    "pointDesc": ["충전 +30% · 피해 -30%", "충전 +45% · 피해 -40%", "충전 +60% · 피해 -50%"],
+    "effect": { "chargeSpeedMul": [1.3, 1.45, 1.6], "chargeTakenMul": [0.7, 0.6, 0.5] }
   },
   "gs_steadfast": {
-    "id": "gs_steadfast", "weapon": "greatsword", "branch": "A", "tier": 1, "name": "굳건함",
+    "id": "gs_steadfast", "weapon": "greatsword", "branch": "A", "unlockLevel": 5, "name": "굳건함",
     "desc": "모든 스킬을 쓰는 동안 슈퍼아머\n(맞아도 피해만 받고 끊기지 않음)",
-    "effect": { "skillArmor": true }
+    "pointDesc": ["스킬 중 슈퍼아머", "+ 받는 피해 -10%", "+ 받는 피해 -20%"],
+    "effect": { "skillArmor": true, "skillTakenMul": [1, 0.9, 0.8] }
   },
   "gs_keenedge": {
-    "id": "gs_keenedge", "weapon": "greatsword", "branch": "B", "tier": 1, "name": "날 선 칼날",
-    "desc": "공중에 뜬 적에게 주는 피해 +15%\n(평타·대시 공격 포함)",
-    "effect": { "airDamageMul": 1.15 }
+    "id": "gs_keenedge", "weapon": "greatsword", "branch": "B", "unlockLevel": 3, "name": "날 선 칼날",
+    "desc": "공중에 뜬 적에게 주는 피해 증가\n(평타·대시 공격 포함)",
+    "pointDesc": ["공중 적 피해 +15%", "공중 적 피해 +22%", "공중 적 피해 +30%"],
+    "effect": { "airDamageMul": [1.15, 1.22, 1.3] }
   },
   "gs_honing": {
-    "id": "gs_honing", "weapon": "greatsword", "branch": "B", "tier": 1, "name": "검기 연마",
-    "desc": "검기 같은 투사체 스킬의 사거리 +40%",
-    "effect": { "projectileRangeMul": 1.4 }
+    "id": "gs_honing", "weapon": "greatsword", "branch": "B", "unlockLevel": 5, "name": "검기 연마",
+    "desc": "검기 같은 투사체 스킬의 사거리 증가",
+    "pointDesc": ["투사체 사거리 +40%", "투사체 사거리 +60%", "투사체 사거리 +80%"],
+    "effect": { "projectileRangeMul": [1.4, 1.6, 1.8] }
   },
   "st_affinity": {
-    "id": "st_affinity", "weapon": "staff", "branch": "A", "tier": 1, "name": "원소 친화",
-    "desc": "장판·지속 스킬(불꽃 기둥·부유 구슬·얼음\n장판)의 지속시간·횟수 +25%",
-    "effect": { "lastingMul": 1.25 }
+    "id": "st_affinity", "weapon": "staff", "branch": "A", "unlockLevel": 3, "name": "원소 친화",
+    "desc": "장판·지속 스킬(불꽃 기둥·부유 구슬·얼음\n장판)의 지속시간·횟수 증가",
+    "pointDesc": ["지속·횟수 +25%", "지속·횟수 +37%", "지속·횟수 +50%"],
+    "effect": { "lastingMul": [1.25, 1.37, 1.5] }
   },
   "st_burn": {
-    "id": "st_burn", "weapon": "staff", "branch": "A", "tier": 1, "name": "연소",
-    "desc": "화염 스킬에 맞은 적은 3초 동안\n모두에게 받는 피해 +15%",
-    "effect": { "burn": { "element": "fire", "time": 3, "takenMul": 1.15 } }
+    "id": "st_burn", "weapon": "staff", "branch": "A", "unlockLevel": 5, "name": "연소",
+    "desc": "화염 스킬에 맞은 적은 3초 동안\n모두에게 받는 피해 증가",
+    "pointDesc": ["받는 피해 +15%", "받는 피해 +22%", "받는 피해 +30%"],
+    "effect": { "burn": { "element": "fire", "time": 3, "takenMul": [1.15, 1.22, 1.3] } }
   },
   "st_weightless": {
-    "id": "st_weightless", "weapon": "staff", "branch": "B", "tier": 1, "name": "무중력",
-    "desc": "내가 띄우거나 체공시킨 적은 떠 있는 동안\n모두에게 받는 피해 +10%",
-    "effect": { "lift": { "takenMul": 1.1 } }
+    "id": "st_weightless", "weapon": "staff", "branch": "B", "unlockLevel": 3, "name": "무중력",
+    "desc": "내가 띄우거나 체공시킨 적은 떠 있는 동안\n모두에게 받는 피해 증가",
+    "pointDesc": ["받는 피해 +10%", "받는 피해 +15%", "받는 피해 +20%"],
+    "effect": { "lift": { "takenMul": [1.1, 1.15, 1.2] } }
   },
   "st_lightfoot": {
-    "id": "st_lightfoot", "weapon": "staff", "branch": "B", "tier": 1, "name": "가벼운 발",
-    "desc": "회피(순간이동) 거리 +50%, 쿨 -0.2초",
-    "effect": { "dodge": { "distanceMul": 1.5, "cooldownAdd": -0.2 } }
+    "id": "st_lightfoot", "weapon": "staff", "branch": "B", "unlockLevel": 5, "name": "가벼운 발",
+    "desc": "회피(순간이동) 거리 증가, 쿨 감소",
+    "pointDesc": ["거리 +50% · 쿨 -0.2초", "거리 +75% · 쿨 -0.3초", "거리 +100% · 쿨 -0.4초"],
+    "effect": { "dodge": { "distanceMul": [1.5, 1.75, 2], "cooldownAdd": [-0.2, -0.3, -0.4] } }
   },
   "cancel": {
-    "id": "cancel", "weapon": "*", "branch": "common", "tier": 1, "maxPoints": 3, "name": "스킬 캔슬",
-    "desc": "스킬 후딜레이에 다른 스킬로 끊고 이어 씀.\n이은 스킬 준비 ×1.5 / ×1.3 / ×1.15 (포인트별)",
+    "id": "cancel", "weapon": "*", "branch": "common", "unlockLevel": 5, "name": "스킬 캔슬",
+    "desc": "스킬 후딜레이에 다른 스킬로 끊고 이어 씀.\n이은 스킬은 준비가 조금 길어짐",
+    "pointDesc": ["이은 스킬 준비 ×1.5", "이은 스킬 준비 ×1.3", "이은 스킬 준비 ×1.15"],
     "effect": { "cancel": { "windupMul": [1.5, 1.3, 1.15] } }
   },
   "quickrise": {
-    "id": "quickrise", "weapon": "*", "branch": "common", "tier": 1, "name": "기상 회피",
+    "id": "quickrise", "weapon": "*", "branch": "common", "unlockLevel": 7, "name": "기상 회피",
     "desc": "다운 중 회피 키로 바로 일어나며 회피\n(기상 무적 대신 회피 무적, 쿨·지구력 씀)",
-    "effect": { "quickRise": true }
+    "pointDesc": ["다운 중 회피로 기상", "+ 그 회피 쿨 -0.1초", "+ 그 회피 쿨 -0.2초"],
+    "effect": { "quickRise": true, "quickRiseCooldownAdd": [0, -0.1, -0.2] }
   }
 }

@@ -1,9 +1,9 @@
 // 잡화점 구매·게시판 DB 처리 (docs/island.md 5·8장, network.md 11장 "구매는 즉시 트랜잭션")
 // 장식·물약 = 개인 지갑 → 가방, 공용 장식(source treasury) = 공동 금고 → 공용 창고
-import { ITEMS, type NodeFail, type SkillNode } from '@game/shared';
+import { ITEMS, type Branch, type NodeFail, type SkillNode } from '@game/shared';
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
 import type { Db } from './client';
-import { equipSkillSlot, resetSkills, setSkillNode, skillsView } from './skillStore';
+import { equipSkillSlot, resetSkills, setBranch, setSkillNode, skillsView } from './skillStore';
 import { mastery } from './runStore';
 import { activityLog, inventory, islandStorage, islands, memos, users } from './schema';
 
@@ -44,6 +44,10 @@ export class ShopStore {
 
   resetSkills(userId: number, weapon: string): void {
     resetSkills(this.db, userId, weapon);
+  }
+
+  setBranch(userId: number, weapon: string, branch: Branch): void {
+    setBranch(this.db, userId, weapon, branch);
   }
 
   /** 숙련도 레벨 (섬 HUD LV, 고른 무기) */

@@ -1,91 +1,80 @@
-// 계열 2단계 열림·자동 지움, 슬롯 장착 (skills.md 1장)
+// 계열 선택·계열별 장착·던전용 빌드 (skills.md 1장)
 import { describe, expect, it } from 'vitest';
 import { weaponDef } from './actions';
-import { applyNode, branchPoints, buildSkill, checkEquip, checkNode, equipSkill, isUnlocked, prunedBy, slotSkills, weaponSkills } from './skillLoadout';
-import { decodeBuild, encodeBuild, spSpent } from './skillTree';
+import { perksOf } from './passives';
+import { buildSkill, checkEquip, effectiveBuild, equipSlots, loadoutSlots, slotSkills, usable, weaponSkills } from './skillLoadout';
+import { decodeBuild, encodeBuild } from './skillTree';
 
 const gs = weaponDef('greatsword'), st = weaponDef('staff');
 
-describe('계열 2단계 열림', () => {
-  it('같은 계열 1단계 액티브 + 보조 포인트가 3 이상이면 열림', () => {
-    expect(isUnlocked(gs, {}, 'gs_quake')).toBe(false);
-    expect(isUnlocked(gs, { gs_whirl: { points: 2 } }, 'gs_quake')).toBe(false);
-    expect(isUnlocked(gs, { gs_whirl: { points: 2 }, gs_heavyhand: { points: 1 } }, 'gs_quake')).toBe(true);
-    expect(isUnlocked(gs, { gs_shoulder: { points: 3 } }, 'gs_quake')).toBe(true);
-    // 다른 계열 포인트는 세지 않는다
-    expect(isUnlocked(gs, { gs_wave: { points: 3 } }, 'gs_quake')).toBe(false);
-    expect(branchPoints(gs, { gs_whirl: { points: 3 }, gs_quake: { points: 2 } }, 'A', 2)).toBe(3);
-  });
-
-  it('잠긴 단계는 거절, 열리면 SP로 배움', () => {
-    expect(checkNode(gs, {}, 'gs_quake', { points: 1 }, 9)).toBe('locked');
-    expect(checkNode(gs, { gs_whirl: { points: 3 } }, 'gs_quake', { points: 1 }, 3)).toBe('sp');
-    expect(checkNode(gs, { gs_whirl: { points: 3 } }, 'gs_quake', { points: 1 }, 4)).toBeNull();
-    expect(checkNode(st, { st_orb: { points: 3 } }, 'st_well', { points: 3, variant: 'collapse' }, 6)).toBeNull();
-  });
-
-  it('2단계도 같은 단계 택1 (옮겨 배우기)', () => {
-    const b = { st_lift: { points: 3 }, st_well: { points: 2 } };
-    expect(checkNode(st, b, 'st_gravfield', { points: 2 }, 5)).toBeNull();
-    expect(applyNode(st, b, 'st_gravfield', { points: 2 })).toEqual({ st_lift: { points: 3 }, st_gravfield: { points: 2 } });
-  });
-
-  it('1단계를 내리거나 옮기면 2단계는 지워지고 SP가 돌아옴', () => {
-    const b = { gs_whirl: { points: 3 }, gs_quake: { points: 3, variant: 'focus' } };
-    expect(spSpent(gs, b)).toBe(6);
-    const down = applyNode(gs, b, 'gs_whirl', { points: 2 });
-    expect(down).toEqual({ gs_whirl: { points: 2 } });
-    expect(spSpent(gs, down)).toBe(2);
-    expect(prunedBy(gs, b, 'gs_whirl', { points: 2 })).toEqual(['gs_quake']);
-    // 옮겨 배우기는 1포인트로 시작하니 2단계가 지워짐
-    expect(applyNode(gs, b, 'gs_shoulder', { points: 1 })).toEqual({ gs_shoulder: { points: 1 } });
-    // 보조 노드 1포인트가 받쳐 주면 그대로
-    const withPassive = { ...b, gs_steadfast: { points: 1 } };
-    expect(prunedBy(gs, withPassive, 'gs_whirl', { points: 2 })).toEqual([]);
+describe('계열', () => {
+  it('고른 계열 노드와 기본·공용만 씀, 안 열린 노드는 못 씀', () => {
+    const a = { level: 9, branch: 'A' as const };
+    expect(['gs_launch', 'gs_whirl', 'gs_wave', 'gs_heavyhand', 'gs_keenedge', 'greatsword.cancel'].map((id) => usable(id, a))).toEqual([true, true, false, true, false, true]);
+    expect(usable('gs_quake', { level: 5, branch: 'A' })).toBe(false);
+    expect(usable('greatsword.quickrise', { level: 6, branch: 'B' })).toBe(false);
   });
 });
 
-describe('슬롯 장착', () => {
-  it('slot이 없으면 기본 배치: 기본 U I, 계열 1단계 O P, 남은 칸에 다른 액티브', () => {
-    expect(slotSkills(gs, decodeBuild('gs_whirl:3,gs_quake:1'))).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_quake']);
-    expect(slotSkills(gs, decodeBuild('gs_whirl:3,gs_quake:1,gs_draw:1'))).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_draw']);
+describe('장착 (계열마다 따로)', () => {
+  it('저장이 없으면 기본 배치: 기본 U I, 그 계열에서 열린 액티브를 열리는 순서로', () => {
+    expect(loadoutSlots(gs, { level: 1, branch: 'A' })).toEqual(['gs_launch', 'gs_earthsplit', null, null]);
+    expect(loadoutSlots(gs, { level: 3, branch: 'A' })).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', null]);
+    expect(loadoutSlots(gs, { level: 9, branch: 'A' })).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder']);
+    expect(loadoutSlots(gs, { level: 9, branch: 'B' })).toEqual(['gs_launch', 'gs_earthsplit', 'gs_wave', 'gs_draw']);
   });
 
-  it('새로 배운 액티브는 기본 자리(B 계열 = P) 또는 첫 빈칸, 빈칸이 없으면 장착 안 함', () => {
-    let b = applyNode(gs, {}, 'gs_wave', { points: 1 });
-    expect(slotSkills(gs, b)).toEqual(['gs_launch', 'gs_earthsplit', null, 'gs_wave']);
-    b = applyNode(gs, b, 'gs_whirl', { points: 3 });
-    b = applyNode(gs, b, 'gs_quake', { points: 1 });
-    expect(slotSkills(gs, b)).toEqual(['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_wave']);
-    expect(buildSkill(gs, b, 'gs_quake')).toBeUndefined();
+  it('저장한 장착은 그대로, 지금 못 쓰는 스킬은 빈칸', () => {
+    const saved = ['gs_quake', 'gs_earthsplit', 'gs_wave', null];
+    expect(loadoutSlots(gs, { level: 9, branch: 'A', slots: saved })).toEqual(['gs_quake', 'gs_earthsplit', null, null]);
+    expect(loadoutSlots(gs, { level: 5, branch: 'A', slots: saved })).toEqual([null, 'gs_earthsplit', null, null]);
   });
 
-  it('장착하면 그 칸 스킬과 자리를 바꾸거나 빠짐, 저장 문자열에 실림', () => {
-    const b0 = decodeBuild('gs_whirl:3,gs_quake:1,gs_wave:1');
-    expect(checkEquip(gs, b0, 'gs_quake', 0)).toBeNull();
-    const b1 = equipSkill(gs, b0, 'gs_quake', 0);
-    expect(slotSkills(gs, b1)).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_wave']);
-    expect(buildSkill(gs, b1, 'gs_launch')).toBeUndefined();
-    expect(weaponSkills(gs, b1)[0]?.id).toBe('gs_quake');
-    expect(slotSkills(gs, decodeBuild(encodeBuild(b1)))).toEqual(slotSkills(gs, b1));
-    // 이미 장착한 스킬끼리는 자리 바꿈
-    expect(slotSkills(gs, equipSkill(gs, b1, 'gs_wave', 0))).toEqual(['gs_wave', 'gs_earthsplit', 'gs_whirl', 'gs_quake']);
-    // 기본 배치로 돌아가면 slot을 적지 않는다
-    expect(encodeBuild(equipSkill(gs, equipSkill(gs, b1, 'gs_launch', 0), 'gs_launch', 0))).toBe('gs_whirl:3,gs_quake:1,gs_wave:1');
+  it('장착하면 그 칸 스킬과 자리를 바꾸거나 빠짐', () => {
+    const s = ['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder'];
+    expect(equipSlots(s, 'gs_quake', 0)).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder']);
+    expect(equipSlots(s, 'gs_shoulder', 0)).toEqual(['gs_shoulder', 'gs_earthsplit', 'gs_whirl', 'gs_launch']);
   });
 
-  it('장착한 스킬이 지워지면 빈칸, 택1로 옮기면 그 칸을 이어받음', () => {
-    const b = equipSkill(gs, decodeBuild('gs_whirl:3,gs_quake:1,gs_wave:1'), 'gs_quake', 0);
-    expect(slotSkills(gs, applyNode(gs, b, 'gs_quake', { points: 0 }))).toEqual([null, 'gs_earthsplit', 'gs_whirl', 'gs_wave']);
-    expect(slotSkills(gs, applyNode(gs, b, 'gs_wave', { points: 0 }))).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', null]);
-    expect(slotSkills(gs, applyNode(gs, b, 'gs_draw', { points: 1 }))).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_draw']);
+  it('잠긴 스킬·다른 계열·패시브·없는 슬롯은 거절', () => {
+    const a = { level: 5, branch: 'A' as const };
+    expect(checkEquip(gs, a, 'gs_shoulder', 2)).toBeNull();
+    expect(checkEquip(gs, a, 'gs_quake', 2)).toBe('locked');
+    expect(checkEquip(gs, a, 'gs_wave', 2)).toBe('branch');
+    expect(checkEquip(gs, a, 'gs_steadfast', 2)).toBe('skill');
+    expect(checkEquip(gs, a, 'st_orb', 2)).toBe('skill');
+    expect(checkEquip(gs, a, 'gs_launch', 4)).toBe('slot');
+  });
+});
+
+describe('던전용 빌드', () => {
+  const b = decodeBuild('gs_launch:3:double,gs_whirl:2:rush,gs_wave:3,gs_heavyhand:2,gs_keenedge:3,greatsword.cancel:1');
+
+  it('고른 계열·열린 노드만, 액티브는 1포인트부터, 장착한 칸이 slot', () => {
+    const lo = { level: 9, branch: 'A' as const, slots: ['gs_whirl', 'gs_launch', null, 'gs_quake'] };
+    const e = effectiveBuild(gs, b, lo);
+    expect(e).toEqual({
+      gs_launch: { points: 3, variant: 'double', slot: 1 }, gs_earthsplit: { points: 1 }, gs_whirl: { points: 2, variant: 'rush', slot: 0 },
+      gs_shoulder: { points: 1 }, gs_quake: { points: 1, slot: 3 }, gs_heavyhand: { points: 2 }, 'greatsword.cancel': { points: 1 },
+    });
+    expect(slotSkills(gs, e)).toEqual(['gs_whirl', 'gs_launch', null, 'gs_quake']);
+    expect(slotSkills(gs, decodeBuild(encodeBuild(e)))).toEqual(slotSkills(gs, e));
+    expect(buildSkill(gs, e, 'gs_shoulder')).toBeUndefined();
+    expect(weaponSkills(gs, e)[0]?.id).toBe('gs_whirl');
+    // 다른 계열 보조는 효과 없음
+    expect(perksOf(gs, e).airDamageMul).toBeUndefined();
+    expect(perksOf(gs, e).chargeSpeedMul).toBe(1.45);
   });
 
-  it('안 배운 스킬·보조 노드·없는 슬롯은 거절, 다른 무기 빌드는 그대로', () => {
-    expect(checkEquip(gs, {}, 'gs_quake', 0)).toBe('skill');
-    expect(checkEquip(gs, { gs_steadfast: { points: 1 } }, 'gs_steadfast', 0)).toBe('skill');
-    expect(checkEquip(gs, {}, 'gs_launch', 4)).toBe('slot');
-    const both = { st_icefield: { points: 2 }, gs_wave: { points: 1 } };
-    expect(equipSkill(gs, both, 'gs_wave', 0).st_icefield).toEqual({ points: 2 });
+  it('계열을 바꾸면 그 계열 스킬·보조로, 레벨이 낮으면 안 열린 노드는 빠짐', () => {
+    const e = effectiveBuild(gs, b, { level: 3, branch: 'B' });
+    expect(Object.keys(e)).toEqual(['gs_launch', 'gs_earthsplit', 'gs_wave', 'gs_keenedge']);
+    expect(slotSkills(gs, e)).toEqual(['gs_launch', 'gs_earthsplit', 'gs_wave', null]);
+    expect(perksOf(gs, e).airDamageMul).toBe(1.3);
+  });
+
+  it('다른 무기 노드는 들어가지 않음', () => {
+    expect(effectiveBuild(gs, { st_icefield: { points: 2 } }, { level: 9, branch: 'A' }).st_icefield).toBeUndefined();
+    expect(Object.keys(effectiveBuild(st, {}, { level: 1, branch: 'B' }))).toEqual(['st_fireburst', 'st_icefield']);
   });
 });

@@ -1,10 +1,10 @@
-// 계열 보조 노드 (skills.md 1~3장): 택1·포인트 규칙, 스킬 정의 변경(withPerks), 판정 효과(공중 피해·연소·무중력·회피). 무거운 손은 charge.test.ts (Lv1 ATK 10)
+// 계열 보조 노드 (skills.md 1~3장): 열림·포인트 규칙, 스킬 정의 변경(withPerks), 판정 효과(공중 피해·연소·무중력·회피·스킬 중 받는 피해). 무거운 손은 charge.test.ts (Lv1 ATK 10)
 import { describe, expect, it } from 'vitest';
 import { skillDef, weaponDef, type ActionDef } from '../actions';
 import { TICK } from '../constants';
 import { newMonster } from '../monster/state';
 import { perksOf } from '../passives';
-import { newPlayerState, type PlayerInput } from '../player';
+import { newPlayerState, stepPlayerState, type PlayerInput } from '../player';
 import { hurtPlayer } from '../playerHurt';
 import { applyNode, buildSkill, checkNode, slotSkills } from '../skillLoadout';
 import { decodeBuild, encodeBuild, spSpent } from '../skillTree';
@@ -21,28 +21,40 @@ const mon = (air = false) => {
 const plain = (coef: number): ActionDef => ({ ...skillDef('gs_launch'), coef, flags: [] });
 
 describe('보조 노드 규칙', () => {
-  it('1포인트까지, SP 1, 변형 없음', () => {
-    expect(checkNode(gs, {}, 'gs_steadfast', { points: 1 }, 1)).toBeNull();
-    expect(checkNode(gs, {}, 'gs_steadfast', { points: 2 }, 5)).toBe('points');
-    expect(checkNode(gs, {}, 'gs_steadfast', { points: 1 }, 0)).toBe('sp');
-    expect(checkNode(gs, {}, 'st_burn', { points: 1 }, 1)).toBe('skill');
-    expect(spSpent(gs, { gs_steadfast: { points: 1 }, gs_whirl: { points: 2 } })).toBe(3);
+  const lv9A = { level: 9, branch: 'A' as const };
+  it('열리는 레벨부터 0~3포인트, 포인트마다 SP 1, 변형 없음', () => {
+    expect(checkNode(gs, {}, 'gs_steadfast', { points: 1 }, 1, lv9A)).toBeNull();
+    expect(checkNode(gs, {}, 'gs_steadfast', { points: 3 }, 3, lv9A)).toBeNull();
+    expect(checkNode(gs, {}, 'gs_steadfast', { points: 4 }, 9, lv9A)).toBe('points');
+    expect(checkNode(gs, {}, 'gs_steadfast', { points: 1 }, 0, lv9A)).toBe('sp');
+    expect(checkNode(gs, {}, 'gs_steadfast', { points: 1, variant: 'x' }, 9, lv9A)).toBe('variant');
+    expect(checkNode(gs, {}, 'gs_steadfast', { points: 1 }, 9, { level: 4, branch: 'A' })).toBe('locked');
+    expect(checkNode(gs, {}, 'st_burn', { points: 1 }, 1, lv9A)).toBe('skill');
+    expect(spSpent(gs, { gs_steadfast: { points: 2 }, gs_whirl: { points: 2 } })).toBe(3);
   });
 
-  it('같은 계열·단계 보조는 택1: 바꾸면 먼저 배운 쪽이 지워지고 SP는 그대로', () => {
-    const b = applyNode(gs, { gs_heavyhand: { points: 1 } }, 'gs_steadfast', { points: 1 });
-    expect(b).toEqual({ gs_steadfast: { points: 1 } });
-    expect(checkNode(gs, { gs_heavyhand: { points: 1 } }, 'gs_steadfast', { points: 1 }, 1)).toBeNull();
-    // 다른 계열 보조·같은 계열 액티브와는 따로
-    expect(applyNode(gs, b, 'gs_honing', { points: 1 })).toEqual({ gs_steadfast: { points: 1 }, gs_honing: { points: 1 } });
-    expect(applyNode(gs, b, 'gs_whirl', { points: 1 })).toEqual({ gs_steadfast: { points: 1 }, gs_whirl: { points: 1 } });
+  it('택1 없음: 같은 계열 보조를 함께 배움, 다른 계열 보조는 고른 계열일 때만', () => {
+    const b = applyNode({ gs_heavyhand: { points: 1 } }, 'gs_steadfast', { points: 2 });
+    expect(b).toEqual({ gs_heavyhand: { points: 1 }, gs_steadfast: { points: 2 } });
+    expect(checkNode(gs, b, 'gs_honing', { points: 1 }, 9, lv9A)).toBe('branch');
+    expect(checkNode(gs, b, 'gs_honing', { points: 1 }, 9, { level: 9, branch: 'B' })).toBeNull();
+    expect(applyNode(b, 'gs_steadfast', { points: 0 })).toEqual({ gs_heavyhand: { points: 1 } });
   });
 
   it('저장 문자열에 실리고 슬롯에는 안 들어감', () => {
-    const b = { gs_keenedge: { points: 1 } };
+    const b = { gs_keenedge: { points: 3 } };
     expect(decodeBuild(encodeBuild(b))).toEqual(b);
-    expect(decodeBuild('gs_keenedge:2')).toEqual({});
+    expect(decodeBuild('gs_keenedge:4')).toEqual({});
     expect(slotSkills(gs, b)).toEqual(['gs_launch', 'gs_earthsplit', null, null]);
+  });
+
+  it('효과는 포인트별 값 (배열이 아니면 그대로)', () => {
+    const at = (id: string, points: number) => perksOf(gs, { [id]: { points } });
+    expect([1, 2, 3].map((n) => at('gs_keenedge', n).airDamageMul)).toEqual([1.15, 1.22, 1.3]);
+    expect(at('gs_heavyhand', 3)).toEqual({ chargeSpeedMul: 1.6, chargeTakenMul: 0.5 });
+    expect(at('gs_steadfast', 2)).toEqual({ skillArmor: true, skillTakenMul: 0.9 });
+    expect(perksOf(st, { st_burn: { points: 2 } }).burn).toEqual({ element: 'fire', time: 3, takenMul: 1.22 });
+    expect(perksOf(st, { st_lightfoot: { points: 3 } }).dodge).toEqual({ distanceMul: 2, cooldownAdd: -0.4 });
   });
 });
 
@@ -109,5 +121,22 @@ describe('판정 효과', () => {
     expect(light.moved).toBeCloseTo(base.moved * 1.5, 0);
     expect(base.cd).toBeCloseTo(0.6);
     expect(light.cd).toBeCloseTo(0.4);
+  });
+});
+
+describe('굳건함 2·3포인트', () => {
+  const none: PlayerInput = { x: 0, y: 0, attack: false, skill: null, backstep: false };
+  const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
+  const build = { gs_steadfast: { points: 3 } };
+  const fresh = () => ({ ...newPlayerState({ x: 100, y: 50 }), perks: perksOf(gs, build) });
+
+  it('스킬 시전 중 받는 피해 -20%, 평소에는 그대로', () => {
+    const idle = fresh(), hp = idle.hp;
+    hurtPlayer(idle, 100);
+    expect(hp - idle.hp).toBe(100);
+    const casting = fresh();
+    stepPlayerState(casting, gs, { ...none, skill: buildSkill(gs, build, 'gs_launch')! }, TICK, bounds);
+    expect(hurtPlayer(casting, 100)).toEqual(['armor']);
+    expect(hp - casting.hp).toBe(80);
   });
 });

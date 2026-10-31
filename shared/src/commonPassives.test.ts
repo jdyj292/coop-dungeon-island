@@ -7,7 +7,7 @@ import { perksOf } from './passives';
 import { canQuickRise, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from './player';
 import { hurtPlayer, isInvulnerable } from './playerHurt';
 import { applyNode, checkNode } from './skillLoadout';
-import { decodeBuild, encodeBuild, maxPointsOf, rivalsOf, spSpent, treeNodes, type SkillBuild } from './skillTree';
+import { decodeBuild, encodeBuild, maxPointsOf, spSpent, treeNodes, type SkillBuild } from './skillTree';
 
 const gs = weaponDef('greatsword');
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
@@ -33,26 +33,27 @@ function toRecovery(p: PlayerState) {
 }
 
 describe('공용 노드', () => {
-  it('무기마다 따로, 스킬 캔슬 최대 3·기상 회피 1, 택1 상대 없음, SP 계산·저장 문자열', () => {
+  it('무기마다 따로, 둘 다 최대 3, SP 계산·저장 문자열', () => {
     expect(treeNodes(gs)).toEqual(expect.arrayContaining(['greatsword.cancel', 'greatsword.quickrise']));
     expect(treeNodes(weaponDef('staff'))).toContain('staff.cancel');
     expect(treeNodes(gs)).not.toContain('staff.cancel');
-    expect([maxPointsOf('greatsword.cancel'), maxPointsOf('greatsword.quickrise')]).toEqual([3, 1]);
-    expect(rivalsOf(gs, 'greatsword.cancel')).toEqual([]);
-    const b = decodeBuild('greatsword.cancel:3,greatsword.quickrise:1');
-    expect(spSpent(gs, b)).toBe(4);
-    expect(encodeBuild(b)).toBe('greatsword.cancel:3,greatsword.quickrise:1');
+    expect([maxPointsOf('greatsword.cancel'), maxPointsOf('greatsword.quickrise')]).toEqual([3, 3]);
+    const b = decodeBuild('greatsword.cancel:3,greatsword.quickrise:2');
+    expect(spSpent(gs, b)).toBe(5);
+    expect(encodeBuild(b)).toBe('greatsword.cancel:3,greatsword.quickrise:2');
     expect(decodeBuild('greatsword.cancel:4')).toEqual({});
   });
-  it('둘 다 배울 수 있고 처음부터 열림, SP가 모자라면 안 됨', () => {
+  it('열리는 레벨(스킬 캔슬 5·기상 회피 7)부터 어느 계열에서나, SP가 모자라면 안 됨', () => {
     let b: SkillBuild = {};
-    expect(checkNode(gs, b, 'greatsword.cancel', { points: 1 }, 1)).toBeNull();
-    b = applyNode(gs, b, 'greatsword.cancel', { points: 1 });
-    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 2)).toBeNull();
-    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 1)).toBe('sp');
+    expect(checkNode(gs, b, 'greatsword.cancel', { points: 1 }, 9, { level: 4, branch: 'A' })).toBe('locked');
+    expect(checkNode(gs, b, 'greatsword.cancel', { points: 1 }, 1, { level: 5, branch: 'B' })).toBeNull();
+    b = applyNode(b, 'greatsword.cancel', { points: 1 });
+    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 2, { level: 7, branch: 'A' })).toBeNull();
+    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 1, { level: 7, branch: 'A' })).toBe('sp');
   });
-  it('스킬 캔슬 준비 배율은 포인트별', () => {
+  it('스킬 캔슬 준비 배율·기상 회피 쿨은 포인트별', () => {
     expect([1, 2, 3].map((n) => perksOf(gs, { 'greatsword.cancel': { points: n } }).cancelWindupMul)).toEqual([1.5, 1.3, 1.15]);
+    expect([1, 2, 3].map((n) => perksOf(gs, { 'greatsword.quickrise': { points: n } }).quickRiseCooldownAdd)).toEqual([0, -0.1, -0.2]);
   });
 });
 
@@ -97,6 +98,19 @@ describe('기상 회피', () => {
     expect(p.stamina).toBeCloseTo(st - PLAYER.stamina.dodge);
     ticks(p, Math.ceil(PLAYER.backstep.sec / TICK) + 1);
     expect(isInvulnerable(p)).toBe(false);
+  });
+  it('2·3포인트면 기상 회피로 시작한 회피의 쿨이 0.1 / 0.2초 짧음 (보통 회피는 그대로)', () => {
+    const cd = (points: number) => {
+      const p = downed({ 'greatsword.quickrise': { points } });
+      ticks(p, Math.ceil(PLAYER.hurt.pushSec / TICK) + 1);
+      ticks(p, 1, { backstep: true });
+      return p.backstepCd;
+    };
+    expect(cd(1)).toBeCloseTo(PLAYER.backstep.cooldown);
+    expect(cd(3)).toBeCloseTo(PLAYER.backstep.cooldown - 0.2);
+    const q = withBuild({ 'greatsword.quickrise': { points: 3 } });
+    ticks(q, 1, { backstep: true });
+    expect(q.backstepCd).toBeCloseTo(PLAYER.backstep.cooldown);
   });
   it('지구력이 모자라면 못 함', () => {
     const p = downed({ 'greatsword.quickrise': { points: 1 } });

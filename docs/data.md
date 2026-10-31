@@ -83,6 +83,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | basic | 평타 단계별 행동 |
 | dash | 달리기 중 평타 |
 | baseSkills | 공용 기본 스킬 id (skills.json) |
+| branches | 계열 이름·특징 `{ A: { name, desc }, B: {…} }` (스킬 창 계열 버튼). 계열 스킬이 있는 무기는 필수 |
 
 ### 평타 입력 규칙
 - active~recovery 중 J 입력은 다음 단계로 예약 (선입력). recovery가 끝나면 바로 다음 단계
@@ -100,7 +101,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | name | 표시 이름 |
 | desc | 스킬 창(K) 설명 (필수, 2줄 안: 패널 폭 196px). 변형에도 desc 필수 = 기본 스킬과 무엇이 다른지. 변형 desc는 판정에 덮어쓰지 않음 |
 | branch | base / A / B |
-| tier | 계열 스킬의 단계 (1~3, 각성 4). 같은 무기·계열·단계 액티브는 하나만 배움 |
+| unlockLevel | 계열 스킬이 열리는 숙련도 레벨 (skills.md 1장, 계열마다 2·4·6·8). 기본 스킬은 없음(처음부터) — data-validate가 검사 |
 | superArmor | 시전 중 슈퍼아머 (combat.md 3장) |
 | repeat | 기본 스킬에도 둘 수 있는 반복 판정 (아래 특수 필드) |
 | onWall | 벽꿍 `{coef}` (아래 특수 필드) |
@@ -114,7 +115,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 - 특수 필드: reinput(재입력 횟수), repeat(`{count, interval, step?, seek?, copies?}` 반복: step = 판정마다 앞으로 px, seek = 판정마다 가까운 맞을 몬스터 쪽으로 px, copies = `[[앞, 깊이], ...]` 자리에 같은 반복을 첫 판정부터 더), after(`{delay, coef}` 후속 판정), onStatusEnd(상태이상 해제 시 판정), onWall(`{coef}` 벽꿍). 기본 스킬에 repeat가 있으면 변형은 일부 키만 덮어써도 됨
 - 적용은 shared/src/skillTree.ts resolveSkill (덮어쓰기 + 특수 필드 + 계수에 레벨 배율), 특수 판정은 shared/src/sim/skillExtras.ts: 반복·후속 = 시전한 자리·방향에 같은 판정을 예약(반복은 count번 중 첫 판정 뒤 나머지), 해제 = 그 행동이 건 빙결이 풀릴 때 그 몬스터에 한 번(빙결·띄우기 없이), 재입력 = 같은 스킬을 쿨타임·MP 없이 (스킬 recovery 또는 끝난 뒤 combat.json skillTree.reinputWindow 안). status slow = 몬스터 걷는 속도·공격 쿨타임·공격 사이 쉬는 시간이 × (1 − amount)로 흐름
 - 현재 파일: 대검·스태프 공용 기본 스킬 + A·B 계열 1단계 액티브(SK-2). 나머지는 skills.md 표를 이 형식으로 옮겨 추가
-- **passives.json (계열 보조 노드)**: `{ id, weapon, branch: A|B, tier, name, desc, effect }`. effect 키: chargeSpeedMul(대검 충전 속도 배율, 최대까지 maxTime / 값), chargeTakenMul(충전 중 받는 피해 배율), skillArmor(모든 스킬 슈퍼아머), airDamageMul(공중 대상 피해 배율), projectileRangeMul(투사체 스킬 사거리 배율), lastingMul(lasting 스킬 상태 이상 시간·repeat count 배율, 횟수는 반올림), burn `{element, time, takenMul}`(그 원소 스킬 적중 대상이 time초 동안 받는 피해 배율), lift `{takenMul}`(내 launch·hold로 떠 있는 동안 받는 피해 배율), dodge `{distanceMul, cooldownAdd}`(회피 거리 배율·쿨 더하기), cancel `{windupMul: [포인트별]}`(스킬 캔슬: 스킬 recovery → 다른 스킬, 이은 스킬 windup 배율), quickRise(다운 중 회피로 기상). 공용 패시브 = weapon "*"·branch common, maxPoints(1~3, 없으면 1, 계열 보조는 1만), 무기마다 `<무기>.<id>` 노드로 펼침 (load.ts). 노드 id는 행동 id와 겹치면 안 됨 (data-validate). 예산 검사 대상 아님
+- **passives.json (패시브: 계열 보조·공용)**: `{ id, weapon, branch: A|B|common, unlockLevel, name, desc, pointDesc: [1·2·3포인트 줄], effect }`. 0~maxPoints(combat.json skillTree) 포인트, effect 값이 배열이면 포인트별(길이 = maxPoints, data-validate), 숫자 하나면 포인트와 상관없음 (passives.ts perksOf). effect 키: chargeSpeedMul(대검 충전 속도 배율, 최대까지 maxTime / 값), chargeTakenMul(충전 중 받는 피해 배율), skillArmor(모든 스킬 슈퍼아머), skillTakenMul(스킬 시전 중 받는 피해 배율), airDamageMul(공중 대상 피해 배율), projectileRangeMul(투사체 스킬 사거리 배율), lastingMul(lasting 스킬 상태 이상 시간·repeat count 배율, 횟수는 반올림), burn `{element, time, takenMul}`(그 원소 스킬 적중 대상이 time초 동안 받는 피해 배율), lift `{takenMul}`(내 launch·hold로 떠 있는 동안 받는 피해 배율), dodge `{distanceMul, cooldownAdd}`(회피 거리 배율·쿨 더하기), cancel `{windupMul: [포인트별]}`(스킬 캔슬: 스킬 recovery → 다른 스킬, 이은 스킬 windup 배율), quickRise(다운 중 회피로 기상), quickRiseCooldownAdd(기상 회피로 시작한 회피의 쿨 더하기). 공용 패시브 = weapon "*"·branch common, 무기마다 `<무기>.<id>` 노드로 펼침 (load.ts). 노드 id는 행동 id와 겹치면 안 됨 (data-validate). 예산 검사 대상 아님
 - 예산 검사(balance-check)는 한 번 쓸 때 계수 합 = coef × hits·repeat(copies 포함)·burst·lanes 수
 
 ---
@@ -217,7 +218,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | pushRate | 밀림이 남은 거리를 줄이는 속도 (초당 비율, 클수록 짧고 세게 밀림) |
 | turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 (무기 basicTurn false면 없음) |
 | cooldownScale | 전역 쿨타임 배율 (balance.md 2장). 실제 쿨 = 기준 쿨 × 이 값 |
-| skillTree | 스킬 포인트 (skills.md 1장): maxPoints(노드 최대), variantAt(변형을 고르는 포인트), tierPoints(단계마다 열리는 데 필요한 같은 계열 아래 단계 포인트 합, [1단계, 2단계, 3단계]), levelMul(포인트별 레벨 배율, balance.md 1장), reinputWindow(변형 재입력을 받는 시간, 스킬이 끝난 뒤 초) |
+| skillTree | 스킬 포인트 (skills.md 1장): maxPoints(노드 최대, 액티브·패시브), levelMul(액티브 포인트별 레벨 배율, balance.md 1장), reinputWindow(변형 재입력을 받는 시간, 스킬이 끝난 뒤 초) |
 | stunExitSec | 기절(체력 0) 뒤 퇴장까지 시간 |
 | stun.{light,medium,heavy} | `{ time, push }` 경직 시간·밀림 거리 |
 | weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |
