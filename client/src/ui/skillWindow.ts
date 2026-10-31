@@ -1,6 +1,6 @@
 // 스킬 창 (K) 그리기 (hud.md 8장, 승인 데모 docs/refs/demos/skill_window.html, 게임 화면 384×216 기준 좌표):
 // 제목 띠(별·무기 탭·Lv·SP) / 계열 버튼 A·B / 액티브·패시브 보기 탭 / 내용 카드(위 = 기본 스킬·공용 패시브, 아래 = 고른 계열, 열리는 레벨 순 + 진행 선) /
-// 장착 칸 U I O P·초기화 / 오른쪽 상세 (skillDetail.ts). 상태·입력은 stage/islandSkills.ts (SkillSource)
+// 장착 칸 A S D F G H·초기화 / 오른쪽 상세 (skillDetail.ts). 상태·입력은 stage/islandSkills.ts (SkillSource)
 import type Phaser from 'phaser';
 import type { Branch } from '@game/shared';
 import type { FontKey } from './fonts';
@@ -60,7 +60,7 @@ export interface SkillSource {
   busy: boolean;
 }
 
-const W = 384, H = 216, KEYS = ['U', 'I', 'O', 'P'];
+const W = 384, H = 216, KEYS = ['A', 'S', 'D', 'F', 'G', 'H'];
 const labW = (t: string, font: FontKey = 'koSmall') => koWidth(t, font);
 const BRANCHES: Branch[] = ['A', 'B'];
 
@@ -195,7 +195,7 @@ export class SkillWindow {
       p.hit(vx, 51, tw, 13, { kind: 'view', v });
       vx += tw + 2;
     }
-    const hint = s.view === 'act' ? 'U I O P에 장착' : 'SP로 배우면 켜짐';
+    const hint = s.view === 'act' ? 'A~H에 장착' : 'SP로 배우면 켜짐';
     p.text(236 - labW(hint), 53, hint, SK.off);
   }
 
@@ -223,13 +223,14 @@ export class SkillWindow {
     });
   }
 
-  /** 장착 칸 U I O P + 안내 + 초기화 */
+  /** 장착 칸 A S D F G H + 안내 + 초기화 */
   private tray(s: SkillSource): void {
     const p = this.p, g = p.g;
     card(g, 12, 170, 224, 38);
     p.text(17, 170, '장착', SK.key);
+    p.text(40, 170, '끌어다 놓거나 고른 채 A~H', SK.off);
     s.slots.forEach((id, k) => {
-      const x = 20 + k * 28, y = 182, tgt = s.drag?.target === k;
+      const x = 18 + k * 25, y = 182, tgt = s.drag?.target === k;
       R(g, x + 1, y + 1, 22, 22, SK.shade);
       R(g, x, y, 22, 22, tgt ? SK.coin : SK.key);
       R(g, x + 1, y + 1, 20, 20, SK.title);
@@ -238,8 +239,6 @@ export class SkillWindow {
       keyTag(g, x - 2, y + 14, KEYS[k]!);
       p.hit(x, y, 22, 22, { kind: 'slot', k });
     });
-    p.text(134, 180, '끌어다 놓거나', SK.off);
-    p.text(134, 190, '고른 채 U I O P', SK.off);
     const lab = s.resetArm ? '확인?' : '초기화', w = labW(lab) + 12, bx = 231 - w;
     buttonBox(g, bx, 191, w, { hover: s.hoverBtn === 'reset' });
     if (s.resetArm) R(g, bx, 191, 1, 12, SK.danger);

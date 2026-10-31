@@ -128,7 +128,7 @@ export const skillNodes = sqliteTable('skill_nodes', {
   variant: text('variant'),
 }, (t) => [primaryKey({ columns: [t.userId, t.nodeId] })]);
 
-/** 장착 (skills.md 1장): 무기·계열마다 U I O P(0~3) 칸의 스킬. 그 무기·계열에 행이 없으면 기본 배치 (skillLoadout.loadoutSlots), 빈칸은 행 없음 */
+/** 장착 (skills.md 1장): 무기·계열마다 A S D F G H(0~5) 칸의 스킬. 그 무기·계열에 행이 없으면 기본 배치 (skillLoadout.loadoutSlots), 빈칸은 행 없음 */
 export const skillSlots = sqliteTable('skill_slots', {
   userId: integer('user_id').notNull().references(() => users.id),
   weapon: text('weapon').notNull(),

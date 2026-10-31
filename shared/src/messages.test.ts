@@ -10,7 +10,6 @@ describe('클라이언트 → 서버 메시지 검사 (network.md 4장)', () => 
     expect(parseC2S('input', { seq: 3, t: 0, mx: 2, my: 0, run: false })).toBeNull();
     expect(parseC2S('input', { seq: 3, t: 0, mx: 0, my: 0, run: false, hp: 9999 })).toBeNull();
     expect(parseC2S('action', { seq: 1, t: 0, kind: 'nuke', x: 0, y: 0, facing: 1 })).toBeNull();
-    expect(parseC2S('emote', { id: 5 })).toBeNull();
   });
   it('채팅은 앞뒤 공백을 빼고 1~60자', () => {
     expect(parseC2S('chat', { text: '  안녕  ' })?.text).toBe('안녕');

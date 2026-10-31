@@ -39,11 +39,13 @@ const WIPE_RESTART_MS = 2000;
 const HUD_DEPTH = 10000;
 /** 부활: E를 누르고 있는 동안 서버에 알리는 간격 (서버는 300ms 안에 다시 오면 계속 누른 것으로) */
 const REVIVE_SEND_MS = 150;
-/** 스킬 슬롯 U·I = 무기 기본 스킬 2개 (임시 고정 장착, 슬롯 UI는 MVP 이후) */
 /** 스킬 키 순서대로 (code = 스킬 노드: 온라인은 서버 값, 로컬은 개발 옵션 ?skills=) */
 const skillsOf = (weapon: string, code: string) => weaponSkills(weaponDef(weapon), buildFrom(code));
 
-type KeyName = 'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd' | 'attack' | 'backstep' | 'skill1' | 'skill2' | 'skill3' | 'skill4' | 'potionHp' | 'potionMp' | 'interact';
+/** 스킬 슬롯 키 A S D F G H (combat.md 1장) */
+const SLOT_KEYS = ['skill1', 'skill2', 'skill3', 'skill4', 'skill5', 'skill6'] as const;
+type SlotKey = (typeof SLOT_KEYS)[number];
+type KeyName = 'up' | 'down' | 'left' | 'right' | 'attack' | 'backstep' | SlotKey | 'potionHp' | 'potionMp' | 'interact';
 
 export class Dungeon extends Phaser.Scene {
   private params = new URLSearchParams(location.search);
@@ -51,7 +53,7 @@ export class Dungeon extends Phaser.Scene {
   private onlineMode = this.params.get('online') === '1';
   private weapon = 'greatsword';
   /** 마지막에 누른 스킬 키 (누르고 있으면 대검 충전) */
-  private skillKey: 'skill1' | 'skill2' | 'skill3' | 'skill4' | null = null;
+  private skillKey: SlotKey | null = null;
   /** 섬 우물에서 출발한 던전 방 번호 (registry dungeonRoom, 정산 뒤 섬으로) */
   private islandRoom: string | null = null;
   /** 다시 시작해도 이어 쓰는 접속 (방 진행) */
@@ -115,8 +117,8 @@ export class Dungeon extends Phaser.Scene {
 
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({
-      up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D,
-      attack: K.J, backstep: K.K, skill1: K.U, skill2: K.I, skill3: K.O, skill4: K.P, potionHp: K.Z, potionMp: K.X, interact: K.E,
+      up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, attack: K.Z, backstep: K.SPACE,
+      skill1: K.A, skill2: K.S, skill3: K.D, skill4: K.F, skill5: K.G, skill6: K.H, potionHp: K.ONE, potionMp: K.TWO, interact: K.E,
     }) as typeof this.keys;
   }
 
@@ -233,13 +235,12 @@ export class Dungeon extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     const k = this.keys, dt = delta / 1000, sk = skillsOf(this.weapon, this.online ? this.online.conn.mySkills : this.params.get('skills') ?? '');
-    // U I O P = 장착한 슬롯 순서 (skillLoadout.slotSkills). 마지막에 누른 스킬 키를 누르고 있으면 대검 충전
-    const slots = ['skill1', 'skill2', 'skill3', 'skill4'] as const;
-    const pressed = slots.findIndex((n, i) => Phaser.Input.Keyboard.JustDown(k[n]) && sk[i]);
-    if (pressed >= 0) this.skillKey = slots[pressed]!;
+    // A S D F G H = 장착한 슬롯 순서 (skillLoadout.slotSkills). 마지막에 누른 스킬 키를 누르고 있으면 대검 충전
+    const pressed = SLOT_KEYS.findIndex((n, i) => Phaser.Input.Keyboard.JustDown(k[n]) && sk[i]);
+    if (pressed >= 0) this.skillKey = SLOT_KEYS[pressed]!;
     const input: KeyInput = {
-      x: (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0),
-      y: (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0),
+      x: (k.right.isDown ? 1 : 0) - (k.left.isDown ? 1 : 0),
+      y: (k.down.isDown ? 1 : 0) - (k.up.isDown ? 1 : 0),
       attack: Phaser.Input.Keyboard.JustDown(k.attack),
       skill: pressed >= 0 ? sk[pressed]! : null,
       hold: !!this.skillKey && k[this.skillKey].isDown,

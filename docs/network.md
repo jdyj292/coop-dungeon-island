@@ -49,13 +49,12 @@
 |---|---|---|
 | input | `{ seq, t, mx, my, run }` | mx·my ∈ {−1,0,1}. seq는 1씩 증가. run = 클라이언트가 두 번 누르기로 판정한 달리기 (서버는 간격을 다시 재지 않음) |
 | action | `{ seq, t, kind, skillId?, x, y, facing }` | kind: basic / dash / skill / ultimate / backstep / chargeStart / chargeRelease. x·y는 클라이언트가 본 내 위치. chargeRelease = 보낸 스킬 키를 뗌 (대검 충전: 서버는 skill을 받은 뒤 이 메시지까지 누르고 있다고 보고, 어떤 상태에서도 받음). chargeStart는 쓰지 않음 |
-| item | `{ seq, t, slot }` | 물약 Z / X |
+| item | `{ seq, t, slot }` | 물약 1 / 2 |
 | interact | `{ targetId }` | 부활, 줍기, 레버. "chest" (클리어 뒤, interactRange 안, 방마다 한 번), "revive:<pid>" (E를 누르는 동안 150ms마다, 300ms 안에 안 오면 손 뗀 것) |
 
 ### 공통 (섬·던전)
 | 메시지 | 내용 | 비고 |
 |---|---|---|
-| emote | `{ id }` | 1~4 |
 | chat | `{ text }` | 1~60자 (hud.md 4장) |
 | ping | `{ t }` | 시계 맞추기 |
 
@@ -73,7 +72,7 @@
 | look | `{ hair: 0~2, hairColor: 0~3 }` (shared LOOK) 외형 바꾸기 → users.hair_style·hair_color 저장, 주민 상태 hair·hairColor |
 | weapon | `{ id }` (shared MVP_WEAPONS) 무기 고르기 → users.weapon 저장, 주민 상태 weapon, `me` 다시 보냄(그 무기 숙련도). 출발 카운트다운 중인 대기자는 무시 |
 | skill | `{ weapon, op: set·equip·branch·reset, skillId?, points?, variant?, slot?, branch? }` 스킬 창(K) (skills.md 1장). 서버가 shared skillLoadout.checkNode·checkEquip으로 검사 → skill_nodes(포인트·변형)·skill_slots(고른 계열 장착)·weapon_mastery.branch 저장, 결과는 `skills` (안 되면 fail: skill·points·variant·sp·locked·branch·slot). 출발 카운트다운 중인 대기자는 fail busy |
-- chat·emote는 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }`·`emote { player, id }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
+- chat은 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }` (저장 안 함). 이모트(emote)는 2026-11 없앰. 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
 | loadout | 무기 교체·스킬 장착·의상 장착 (MVP 이후 의상) |
 
 ### 검증과 제한
@@ -183,7 +182,6 @@ IslandState
 | roomEnter | `{ roomIndex }` 다음 방 | 클라이언트는 상태 roomIndex가 바뀌면 같은 접속으로 Dungeon 씬을 다시 시작 (배경·소품·예측 범위 교체, 보간 버퍼 비움, 0.3초 페이드인) |
 | result | `{ kind: clear·return·wipe, lines[pid·코인·보너스·잃은 코인·지갑·금고·재료·경험치·레벨 전후], treasury }` | 정산 화면. 서버는 phase "result"로 세계를 멈춤 |
 | rejected | `{ seq, reason }` | 예측했던 행동 취소 |
-| emote | `{ player, id }` | 머리 위 표시 |
 | chat | `{ player, text, t }` | 말풍선 + 대화 기록 (같은 방에만 전달, 저장 안 함) |
 
 ---

@@ -25,7 +25,7 @@ MVP 열: O = MVP에 포함, — = MVP 이후.
 | weapon_loadout | user_id, weapon, skin_id (무기 종류별 장착 외형) | — | island |
 | boss_drop_pity | user_id, boss_id, kills_since_drop (천장 카운트) | — | island |
 | skill_nodes | user_id, node_id(스킬 id), points, variant. 행이 없으면 기본값(액티브 1포인트·패시브 0) (마이그레이션 0009, 0011에서 slot 열 뺌) | O (SK-1·SK-6) | skills |
-| skill_slots | user_id, weapon, branch(A·B), slot(0~3 = U I O P), node_id. PK(user_id, weapon, branch, slot). 계열마다 장착, 그 무기·계열에 행이 없으면 기본 배치, 빈칸은 행 없음 (0011) | O (SK-6) | skills |
+| skill_slots | user_id, weapon, branch(A·B), slot(0~5 = A S D F G H), node_id. PK(user_id, weapon, branch, slot). 계열마다 장착, 그 무기·계열에 행이 없으면 기본 배치, 빈칸은 행 없음 (0011) | O (SK-6) | skills |
 
 - 돈·재고 변경은 항상 트랜잭션
 - 던전 진행 상태는 DB에 저장하지 않는다 (메모리)

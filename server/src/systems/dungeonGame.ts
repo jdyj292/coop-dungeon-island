@@ -177,12 +177,6 @@ export class DungeonGame {
         this.out.send(pid, 'pong', { t: msg.t, server: this.now });
         return 'ok';
       }
-      case 'emote': {
-        const msg = parseC2S('emote', raw);
-        if (!msg) return 'ignored';
-        this.out.broadcast('emote', { player: pid, id: msg.id });
-        return 'ok';
-      }
       case 'chat': {
         const msg = parseC2S('chat', raw);
         if (!msg) return 'ignored';

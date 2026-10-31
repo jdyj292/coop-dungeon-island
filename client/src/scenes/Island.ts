@@ -50,7 +50,7 @@ export class Island extends Phaser.Scene {
   private hover: HudButton | null = null;
   /** 설정 (Esc, 볼륨) */
   private settings!: SettingsPanel;
-  private keys!: Record<'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd', Phaser.Input.Keyboard.Key>;
+  private keys!: Record<'up' | 'down' | 'left' | 'right', Phaser.Input.Keyboard.Key>;
   private me!: MeRes & { island: NonNullable<MeRes['island']> };
   private notice: Phaser.GameObjects.GameObject | null = null;
   private noticeTimer: Phaser.Time.TimerEvent | null = null;
@@ -83,7 +83,7 @@ export class Island extends Phaser.Scene {
       set: (h) => this.stage?.conn.send('look', { hair: h.style, hairColor: h.color }),
     }, 'island');
     const K = Phaser.Input.Keyboard.KeyCodes;
-    this.keys = this.input.keyboard!.addKeys({ up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, w: K.W, a: K.A, s: K.S, d: K.D }) as Island['keys'];
+    this.keys = this.input.keyboard!.addKeys({ up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT }) as Island['keys'];
     this.input.keyboard!.on('keydown', (e: KeyboardEvent) => this.onKey(e));
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       this.hover = IslandHud.hitButton(p.x, p.y, this.bandTop(), this.scale.gameSize.width);
@@ -174,7 +174,6 @@ export class Island extends Phaser.Scene {
     else if (e.code === 'KeyK') s.panels.show('skill');
     else if (e.code === 'KeyM') s.panels.show('board');
     else if (e.code === 'Enter') s.chat.chat((text) => s.conn.send('chat', { text }));
-    else if (/^Digit[1-4]$/.test(e.code)) s.conn.send('emote', { id: Number(e.code.slice(5)) });
     else if (e.code === 'KeyL') this.logout();
     else if (e.code === 'KeyE') {
       const near = nearFacility(s.myPos, s.conn.facilities);
@@ -227,8 +226,8 @@ export class Island extends Phaser.Scene {
     const k = this.keys, s = this.stage;
     // 배치 모드·패널·설정·입력창 동안 캐릭터는 서 있음 (방향키는 커서·목록)
     const walk = !s?.place.active && !s?.panels.open && !s?.chat.open && !this.settings.open && !s?.busy;
-    const x = walk ? (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0) : 0;
-    const y = walk ? (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0) : 0;
+    const x = walk ? (k.right.isDown ? 1 : 0) - (k.left.isDown ? 1 : 0) : 0;
+    const y = walk ? (k.down.isDown ? 1 : 0) - (k.up.isDown ? 1 : 0) : 0;
     const { width, height } = this.scale.gameSize;
     if (s) {
       s.update(dt, { x, y });

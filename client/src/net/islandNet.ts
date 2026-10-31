@@ -62,11 +62,10 @@ export class IslandConnection {
   skillsSeq = 0;
   /** 배치 실패 (화면 알림) */
   onPlaceFail: (m: S2C['placeFail']) => void = () => {};
-  /** 구매 결과·게시판 내용·채팅·이모트 */
+  /** 구매 결과·게시판 내용·채팅 */
   onBuy: (m: S2C['buyResult']) => void = () => {};
   board: S2C['board'] | null = null;
   onChat: (m: S2C['chat']) => void = () => {};
-  onEmote: (m: S2C['emote']) => void = () => {};
   /** 우물 출발 → 던전 방 / 우물 요청 실패 */
   onDepart: (m: S2C['depart']) => void = () => {};
   onWellFail: (m: S2C['wellFail']) => void = () => {};
@@ -105,7 +104,6 @@ export class IslandConnection {
     room.onMessage('buyResult', (m: S2C['buyResult']) => this.onBuy(m));
     room.onMessage('board', (m: S2C['board']) => { this.board = m; });
     room.onMessage('chat', (m: S2C['chat']) => this.onChat(m));
-    room.onMessage('emote', (m: S2C['emote']) => this.onEmote(m));
     room.onMessage('depart', (m: S2C['depart']) => this.onDepart(m));
     room.onMessage('wellFail', (m: S2C['wellFail']) => this.onWellFail(m));
     room.onMessage('joinRequest', (m: S2C['joinRequest']) => this.onJoinRequest(m));

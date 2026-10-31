@@ -43,7 +43,7 @@ describe('변형·레벨 배율 적용', () => {
   });
 
   it('무기 스킬은 키 순서대로, 안 배운 계열 슬롯은 빈칸', () => {
-    expect(weaponSkills(gs, { gs_earthsplit: { points: 2 } }).map((d) => d && [d.id, Math.round(d.coef)])).toEqual([['gs_launch', 400], ['gs_earthsplit', 690], null, null]);
+    expect(weaponSkills(gs, { gs_earthsplit: { points: 2 } }).map((d) => d && [d.id, Math.round(d.coef)])).toEqual([['gs_launch', 400], ['gs_earthsplit', 690], null, null, null, null]);
   });
 
   it('기본 스킬에 있는 반복은 변형이 일부만 덮어쓴다', () => {
@@ -121,10 +121,10 @@ describe('노드 규칙', () => {
     expect(applyNode({ gs_launch: { points: 2 } }, 'gs_launch', { points: 1 })).toEqual({});
   });
 
-  it('던전 슬롯: slot이 없으면 기본 U I + 배운 계열 스킬, 안 배운 계열 스킬은 못 씀', () => {
-    expect(slotSkills(gs, {})).toEqual(['gs_launch', 'gs_earthsplit', null, null]);
+  it('던전 슬롯: slot이 없으면 기본 A S + 배운 계열 스킬, 안 배운 계열 스킬은 못 씀', () => {
+    expect(slotSkills(gs, {})).toEqual(['gs_launch', 'gs_earthsplit', null, null, null, null]);
     expect(buildSkill(gs, {}, 'gs_whirl')).toBeUndefined();
-    expect(slotSkills(gs, { gs_shoulder: { points: 1 }, gs_draw: { points: 3, variant: 'back' } })).toEqual(['gs_launch', 'gs_earthsplit', 'gs_shoulder', 'gs_draw']);
+    expect(slotSkills(gs, { gs_shoulder: { points: 1 }, gs_draw: { points: 3, variant: 'back' } })).toEqual(['gs_launch', 'gs_earthsplit', 'gs_shoulder', 'gs_draw', null, null]);
     expect(weaponSkills(gs, { gs_draw: { points: 3, variant: 'back' } })[2]?.move).toEqual({ distance: -32, during: 'active' });
   });
 });

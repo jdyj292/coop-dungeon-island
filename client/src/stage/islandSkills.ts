@@ -1,9 +1,9 @@
 // 스킬 창 (K, hud.md 8장, skills.md 1장, 승인 데모 docs/refs/demos/skill_window.html): 상태·입력. 그리기는 ui/skillWindow.ts
-// 무기 탭, 계열 A·B 고르기(고른 계열만 보임), 액티브/패시브 보기, 칸 고르기·마우스 올림 미리 보기, - + 포인트, 변형 카드, 장착(끌어다 놓기 또는 U I O P), 초기화(두 번).
-// 키: ↑↓←→ 칸 · Tab 액티브/패시브 · A B 계열 · + - 포인트 · 1 2 변형 · U I O P 장착 · Q E 무기 · R 초기화. 검사는 서버(islandShop skill), 미리 같은 규칙으로 막고 사유를 보여 줌
+// 무기 탭, 계열 A·B 고르기(고른 계열만 보임), 액티브/패시브 보기, 칸 고르기·마우스 올림 미리 보기, - + 포인트, 변형 카드, 장착(끌어다 놓기 또는 A S D F G H), 초기화(두 번).
+// 키: ↑↓←→ 칸 · Tab 액티브/패시브 · B 계열 바꾸기 · + - 포인트 · 1 2 변형 · A S D F G H 장착 · Q E 무기 · R 초기화. 검사는 서버(islandShop skill), 미리 같은 규칙으로 막고 사유를 보여 줌
 import type Phaser from 'phaser';
 import {
-  branchOf, buildFrom, checkEquip, checkNode, isOpen, maxPointsOf, MVP_WEAPONS, nodeOf, PASSIVES, pointsAt, SKILLS, treeSkills, unlockLevelOf,
+  branchOf, buildFrom, checkEquip, checkNode, isOpen, maxPointsOf, MVP_WEAPONS, nodeOf, PASSIVES, pointsAt, SKILLS, SLOT_COUNT, treeSkills, unlockLevelOf,
   weaponDef, weaponPassives, WEAPONS, type Branch, type Loadout, type NodeFail, type S2C,
 } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
@@ -12,7 +12,7 @@ import { SkillWindow, type NodeInfo, type SkillHit, type SkillSource, type Skill
 
 /** 알림 시간 */
 const NOTE_MS = 2000;
-const SLOT_KEYS = ['KeyU', 'KeyI', 'KeyO', 'KeyP'];
+const SLOT_KEYS = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH'];
 const FAIL_TEXT: Record<NonNullable<S2C['skills']['fail']> | NodeFail, string> = {
   skill: '이 무기 스킬이 아닙니다', points: '더 올리거나 내릴 수 없습니다', variant: '없는 변형입니다', sp: 'SP가 모자랍니다',
   locked: '아직 레벨이 모자랍니다', branch: '선택한 계열 스킬만 됩니다', slot: '없는 슬롯입니다', busy: '출발 카운트다운 중에는 못 바꿉니다',
@@ -51,7 +51,7 @@ export class SkillPanel implements SkillSource {
   get spent(): number { return this.mine?.spent ?? 0; }
   get branch(): Branch { return this.mine?.branch ?? 'A'; }
   get branches() { return weaponDef(this.weapon).branches; }
-  get slots(): (string | null)[] { return (this.mine?.slots ?? ['', '', '', '']).map((id) => id || null); }
+  get slots(): (string | null)[] { return (this.mine?.slots ?? Array<string>(SLOT_COUNT).fill('')).map((id) => id || null); }
   get busy(): boolean { return this.locked(); }
   get drag(): SkillSource['drag'] {
     const d = this.dragging;
@@ -136,7 +136,7 @@ export class SkillPanel implements SkillSource {
     const mv = ({ ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] } as Record<string, [number, number]>)[code];
     if (mv) return this.move(mv[0], mv[1]);
     if (code === 'Tab') return this.setView(this.view === 'act' ? 'pas' : 'act');
-    if (code === 'KeyA' || code === 'KeyB') return this.setBranch(code === 'KeyA' ? 'A' : 'B');
+    if (code === 'KeyB') return this.setBranch(this.branch === 'A' ? 'B' : 'A');
     if (code === 'Equal' || code === 'NumpadAdd') return this.points(this.sel, 1);
     if (code === 'Minus' || code === 'NumpadSubtract') return this.points(this.sel, -1);
     if (code === 'Digit1' || code === 'Digit2') return this.variant(Number(code.slice(-1)) - 1);

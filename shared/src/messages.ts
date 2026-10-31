@@ -25,7 +25,6 @@ export const C2S = {
   }).strict(),
   item: z.object({ seq, t, slot: z.enum(['hp', 'mp']) }).strict(),
   interact: z.object({ targetId: z.string().max(40) }).strict(),
-  emote: z.object({ id: z.number().int().min(1).max(4) }).strict(),
   // 앞뒤 공백을 뺀 1~60자, 제어 문자·줄바꿈 제거 (표시는 텍스트로만, security.md 4장)
   chat: z.object({ text: lineText(NET.chatMaxLen) }).strict(),
   ping: z.object({ t: z.number().nonnegative() }).strict(),
@@ -48,7 +47,7 @@ export const C2S = {
   memo: z.object({ text: lineText(NET.memoMaxLen) }).strict(),
   /** 무기 고르기 (섬 가방 장비 탭, MVP 보충 ST-4) */
   weapon: z.object({ id: z.enum(MVP_WEAPONS) }).strict(),
-  /** 섬: 스킬 포인트·변형 바꾸기, 고른 계열에 슬롯 장착(slot 0~3 = U I O P), 계열 고르기(branch A·B), 포인트·변형 초기화 (skills.md 1장, 스킬 창(K)). 검사는 서버 */
+  /** 섬: 스킬 포인트·변형 바꾸기, 고른 계열에 슬롯 장착(slot 0~5 = A S D F G H), 계열 고르기(branch A·B), 포인트·변형 초기화 (skills.md 1장, 스킬 창(K)). 검사는 서버 */
   skill: z.object({
     weapon: z.enum(MVP_WEAPONS), op: z.enum(['set', 'equip', 'branch', 'reset']), skillId: z.string().max(40).optional(),
     points: z.number().int().min(0).max(9).optional(), variant: z.string().max(24).optional(), slot: z.number().int().min(0).max(9).optional(),
@@ -73,7 +72,6 @@ export interface S2C {
   playerHit: { pid: string; damage: number; strength: string; from: number | null };
   rejected: { seq: number; reason: 'cooldown' | 'mp' | 'stamina' | 'state' | 'rate' };
   combo: { pid: string; count: number; milestone?: number };
-  emote: { player: string; id: number };
   chat: { player: string; text: string; t: number };
   pong: { t: number; server: number };
   /** 투사체는 상태에 넣지 않고 이벤트로 (network.md 5장). kind = 공격 id */
@@ -107,7 +105,7 @@ export interface S2C {
   teamMilestone: { count: number };
   /** 섬: 입장 때 본인에게 (지갑은 상태에 넣지 않음, network.md 5장) */
   me: { wallet: number; level: number };
-  /** 섬: 내 스킬 (입장 때·바꿀 때 본인에게). 무기마다 숙련도 레벨·받은 SP·쓴 SP·노드 문자열(skillTree.encodeBuild)·고른 계열·그 계열 장착(U I O P, 빈칸 ''). fail = 방금 요청이 안 된 사유 */
+  /** 섬: 내 스킬 (입장 때·바꿀 때 본인에게). 무기마다 숙련도 레벨·받은 SP·쓴 SP·노드 문자열(skillTree.encodeBuild)·고른 계열·그 계열 장착(A S D F G H, 빈칸 ''). fail = 방금 요청이 안 된 사유 */
   skills: {
     weapons: { weapon: string; level: number; sp: number; spent: number; build: string; branch: Branch; slots: string[] }[];
     fail?: 'skill' | 'points' | 'variant' | 'sp' | 'locked' | 'branch' | 'slot' | 'busy';

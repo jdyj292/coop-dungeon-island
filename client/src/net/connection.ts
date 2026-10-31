@@ -113,7 +113,7 @@ const RECONNECT_EVERY_MS = 2000;
 const RECONNECT_MAX_MS = 60_000;
 
 const EVENTS: (keyof S2C)[] = [
-  'hit', 'playerHit', 'rejected', 'combo', 'emote', 'chat', 'projSpawn', 'projEnd', 'bolt', 'boltEnd', 'echo', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter', 'result',
+  'hit', 'playerHit', 'rejected', 'combo', 'chat', 'projSpawn', 'projEnd', 'bolt', 'boltEnd', 'echo', 'roomClear', 'teamMilestone', 'reward', 'comboBonus', 'roomEnter', 'result',
 ];
 
 /**

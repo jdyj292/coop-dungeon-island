@@ -1,7 +1,7 @@
 // 계열 선택·노드 바꾸기·계열별 장착·던전용 빌드 (docs/skills.md 1장): 클라이언트·서버 공용
 // 무기마다 계열(A·B) 하나를 고른다. 고른 계열의 계열 스킬·보조와 기본 스킬·공용 패시브만 쓴다 (다른 계열에 찍은 포인트는 남지만 효과 없음).
 // SP는 계열마다 따로 받는다: 계열 노드는 자기 계열 SP에서만, 기본·공용 노드는 두 계열 SP 모두에서 빠진다.
-// 장착(U I O P)은 계열마다 따로 기억한다. 저장한 장착이 없으면 기본 배치 = 기본 스킬 U I, 그 계열에서 열린 액티브를 열리는 순서로 O P.
+// 장착(A S D F G H)은 계열마다 따로 기억한다. 저장한 장착이 없으면 기본 배치 = 기본 스킬 U I, 그 계열에서 열린 액티브를 열리는 순서로 O P.
 // 던전에는 effectiveBuild(고른 계열·열린 것만, 장착한 칸이 slot)를 보내고, 던전 판정은 그 빌드의 slot만 본다 (slotSkills)
 import type { ActionDef, WeaponDef } from './actions';
 import { SKILLS } from './data/load';
@@ -24,7 +24,7 @@ export const usable = (id: string, lo: Loadout): boolean => isOpen(id, lo.level)
 const learned = (b: SkillBuild, id: string): boolean => nodeOf(b, id).points > 0;
 const pad = (ids: (string | null)[]): (string | null)[] => [...ids, ...Array<null>(Math.max(0, SLOT_COUNT - ids.length)).fill(null)].slice(0, SLOT_COUNT);
 
-/** 섬 장착 (U I O P 순서, 빈칸 null): 저장한 장착에서 지금 못 쓰는 스킬은 빈칸, 저장이 없으면 기본 배치 */
+/** 섬 장착 (A S D F G H 순서, 빈칸 null): 저장한 장착에서 지금 못 쓰는 스킬은 빈칸, 저장이 없으면 기본 배치 */
 export function loadoutSlots(weapon: WeaponDef, lo: Loadout): (string | null)[] {
   const tree = treeSkills(weapon);
   if (lo.slots) return pad(lo.slots.map((id) => (id && tree.includes(id) && usable(id, lo) ? id : null)));
@@ -82,7 +82,7 @@ export function effectiveBuild(weapon: WeaponDef, b: SkillBuild, lo: Loadout): S
   return out;
 }
 
-/** 던전 슬롯 (U I O P 순서, 빈칸 null): 빌드의 slot. slot이 하나도 없으면(개발 ?skills=) 기본 스킬 U I, 배운 계열 스킬을 트리 순서로 남은 칸에 */
+/** 던전 슬롯 (A S D F G H 순서, 빈칸 null): 빌드의 slot. slot이 하나도 없으면(개발 ?skills=) 기본 스킬 U I, 배운 계열 스킬을 트리 순서로 남은 칸에 */
 export function slotSkills(weapon: WeaponDef, b: SkillBuild): (string | null)[] {
   const tree = treeSkills(weapon), placed = tree.filter((id) => b[id]?.slot !== undefined && learned(b, id));
   if (!placed.length) return pad(tree.filter((id) => learned(b, id)));

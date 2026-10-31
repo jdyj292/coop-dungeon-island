@@ -10,7 +10,7 @@ import { isPassive, weaponPassives } from './passives';
 export interface SkillNode {
   points: number;
   variant?: string;
-  /** 장착한 슬롯 (0~3 = U I O P). 던전용 빌드(skillLoadout.effectiveBuild)·개발 ?skills=에만 (섬 장착은 계열마다 따로 저장) */
+  /** 장착한 슬롯 (0~5 = A S D F G H). 던전용 빌드(skillLoadout.effectiveBuild)·개발 ?skills=에만 (섬 장착은 계열마다 따로 저장) */
   slot?: number;
 }
 
@@ -21,8 +21,8 @@ const TREE = COMBAT.skillTree;
 /** 계열 */
 export const BRANCHES = ['A', 'B'] as const;
 export type Branch = (typeof BRANCHES)[number];
-/** 스킬 슬롯 수 (U I O P) */
-export const SLOT_COUNT = 4;
+/** 스킬 슬롯 수 (A S D F G H) */
+export const SLOT_COUNT = 6;
 
 export const isBaseSkill = (id: string): boolean => SKILLS[id]?.branch === 'base';
 /** 저장 문자열의 기본값: 기본 스킬 1, 계열 스킬·패시브 0 (적지 않음) */

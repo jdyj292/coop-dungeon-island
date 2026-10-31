@@ -35,7 +35,7 @@ const islandRules = (): Record<string, readonly [number, number]> => {
   const l = NET.limits;
   const island = [1000, l.island] as const;
   return {
-    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], emote: island, look: island, weapon: island, skill: island,
+    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], look: island, weapon: island, skill: island,
     place: island, move: island, moveFacility: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island, well: island,
   };
 };

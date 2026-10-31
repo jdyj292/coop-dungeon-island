@@ -41,7 +41,7 @@ describe('보조 노드 규칙', () => {
     const b = { gs_keenedge: { points: 3 } };
     expect(decodeBuild(encodeBuild(b))).toEqual(b);
     expect(decodeBuild('gs_keenedge:4')).toEqual({});
-    expect(slotSkills(gs, b)).toEqual(['gs_launch', 'gs_earthsplit', null, null]);
+    expect(slotSkills(gs, b)).toEqual(['gs_launch', 'gs_earthsplit', null, null, null, null]);
   });
 
   it('효과는 포인트별 값 (배열이 아니면 그대로)', () => {

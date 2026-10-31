@@ -2,7 +2,7 @@
 // 무기마다 고른 계열(weapon_mastery.branch)과 계열마다 장착(skill_slots, 없으면 기본 배치)
 // 검사는 shared/skillLoadout.checkNode·checkEquip (클라이언트 신고값은 믿지 않는다), 던전 출발 때 effectiveBuild로 판정 빌드를 만든다
 import {
-  applyNode, BRANCHES, checkEquip, checkNode, decodeBuild, effectiveBuild, encodeBuild, equipSlots, loadoutSlots, MVP_WEAPONS, spSpent, spTotal,
+  applyNode, BRANCHES, SLOT_COUNT, checkEquip, checkNode, decodeBuild, effectiveBuild, encodeBuild, equipSlots, loadoutSlots, MVP_WEAPONS, spSpent, spTotal,
   treeNodes, weaponDef, type Branch, type Loadout, type NodeFail, type SkillBuild, type SkillNode,
 } from '@game/shared';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -37,7 +37,7 @@ export function loadoutOf(db: Db, userId: number, weapon: string): Loadout {
   const rows = db.select().from(skillSlots)
     .where(and(eq(skillSlots.userId, userId), eq(skillSlots.weapon, weapon), eq(skillSlots.branch, branch))).all();
   if (!rows.length) return { level: r?.level ?? 1, branch };
-  const slots: (string | null)[] = [null, null, null, null];
+  const slots: (string | null)[] = Array<string | null>(SLOT_COUNT).fill(null);
   for (const s of rows) if (s.slot >= 0 && s.slot < slots.length) slots[s.slot] = s.nodeId;
   return { level: r?.level ?? 1, branch, slots };
 }
@@ -74,7 +74,7 @@ export function setSkillNode(db: Db, userId: number, weapon: string, id: string,
   return null;
 }
 
-/** 고른 계열의 슬롯(0~3 = U I O P)에 장착 (그 칸 스킬과 자리 바꿈, 그 계열 장착 4칸을 다시 적음). 안 되면 사유 */
+/** 고른 계열의 슬롯(0~5 = A S D F G H)에 장착 (그 칸 스킬과 자리 바꿈, 그 계열 장착 6칸을 다시 적음). 안 되면 사유 */
 export function equipSkillSlot(db: Db, userId: number, weapon: string, id: string, slot: number): NodeFail | null {
   const w = weaponDef(weapon), lo = loadoutOf(db, userId, weapon);
   const fail = checkEquip(w, lo, id, slot);

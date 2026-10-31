@@ -22,8 +22,8 @@ const LOOK_TAB = 1, HELP_TAB = 2, TAB_COUNT = 3;
 /** 도움말 탭: 곳마다 조작 키 (섬 = Island.onKey, 던전 = combat.md 1장 조작 표) */
 export type HelpPlace = 'island' | 'dungeon';
 const HELP: Record<HelpPlace, [key: string, text: string][]> = {
-  island: [['방향키', '이동'], ['E', '시설 이용 (가까이에서)'], ['I', '가방'], ['K', '스킬'], ['M', '게시판'], ['B', '섬 꾸미기'], ['Enter', '채팅'], ['1~4', '이모트'], ['Esc', '설정 닫기']],
-  dungeon: [['방향키', '이동 (좌우 두 번 = 달리기)'], ['J', '평타 (달리며 = 대시 공격)'], ['U I O P', '스킬'], ['K', '회피'], ['L', '필살기'], ['Z X', 'HP · MP 물약'], ['E', '부활 · 줍기'], ['Enter', '채팅'], ['1~4', '이모트']],
+  island: [['방향키', '이동'], ['E', '시설 이용 (가까이에서)'], ['I', '가방'], ['K', '스킬'], ['M', '게시판'], ['B', '섬 꾸미기'], ['Enter', '채팅'], ['Esc', '설정 닫기']],
+  dungeon: [['방향키', '이동 (좌우 두 번 = 달리기)'], ['Z', '평타 (달리며 = 대시 공격)'], ['A S D F G H', '스킬'], ['Space', '회피'], ['L', '필살기'], ['1 2', 'HP · MP 물약'], ['E', '부활 · 줍기'], ['Enter', '채팅']],
 };
 const PLACE_NAME: Record<HelpPlace, string> = { island: '섬 조작', dungeon: '던전 조작' };
 /** 외형 미리보기 배율 (정수) */

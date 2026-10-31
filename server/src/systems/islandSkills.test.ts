@@ -34,8 +34,8 @@ describe('스킬 탭', () => {
   it('입장 때 무기마다 레벨·SP(레벨 − 1)·쓴 SP·노드·계열·장착', () => {
     const a = user(4), g = game();
     enter(g, a);
-    expect(gs(lastSkills(a))).toEqual({ weapon: 'greatsword', level: 4, sp: 3, spent: 0, build: '', branch: 'A', slots: ['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder'] });
-    expect(lastSkills(a).weapons.find((w) => w.weapon === 'staff')).toMatchObject({ level: 1, sp: 0, slots: ['st_fireburst', 'st_icefield', '', ''] });
+    expect(gs(lastSkills(a))).toEqual({ weapon: 'greatsword', level: 4, sp: 3, spent: 0, build: '', branch: 'A', slots: ['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder', '', ''] });
+    expect(lastSkills(a).weapons.find((w) => w.weapon === 'staff')).toMatchObject({ level: 1, sp: 0, slots: ['st_fireburst', 'st_icefield', '', '', '', ''] });
   });
 
   it('포인트·변형 저장 (변형은 1포인트부터), SP를 넘으면 거절', () => {
@@ -79,16 +79,16 @@ describe('스킬 탭', () => {
     enter(g, a);
     set(g, a, 'gs_whirl', 3);
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_quake', slot: 0 });
-    expect(gs(lastSkills(a)).slots).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder']);
+    expect(gs(lastSkills(a)).slots).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder', 'gs_launch', 'gs_throw']);
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'branch', branch: 'B' });
-    expect(gs(lastSkills(a))).toMatchObject({ branch: 'B', spent: 0, slots: ['gs_launch', 'gs_earthsplit', 'gs_wave', 'gs_draw'] });
+    expect(gs(lastSkills(a))).toMatchObject({ branch: 'B', spent: 0, slots: ['gs_launch', 'gs_earthsplit', 'gs_wave', 'gs_draw', 'gs_scar', 'gs_cyclone'] });
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_whirl', slot: 2 });
     expect(lastSkills(a).fail).toBe('branch');
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'branch', branch: 'A' });
-    expect(gs(lastSkills(a))).toMatchObject({ branch: 'A', spent: 2, slots: ['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder'] });
+    expect(gs(lastSkills(a))).toMatchObject({ branch: 'A', spent: 2, slots: ['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder', 'gs_launch', 'gs_throw'] });
   });
 
-  it('던전 파티 정보: 고른 계열·장착만 실리고, 장착 안 한 스킬은 던전에서 거절', () => {
+  it('던전 파티 정보: 고른 계열·장착만 실리고, 다른 계열 스킬은 던전에서 거절', () => {
     const a = user(9), g = game(), w = weaponDef('greatsword');
     enter(g, a);
     set(g, a, 'gs_whirl', 3, 'rush');
@@ -97,12 +97,12 @@ describe('스킬 탭', () => {
     set(g, a, 'gs_heavyhand', 2);
     g.onMessage(a, 'skill', { weapon: 'greatsword', op: 'equip', skillId: 'gs_quake', slot: 0 });
     const b = decodeBuild(dungeonBuild(db, Number(a), 'greatsword'));
-    expect(slotSkills(w, b)).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder']);
+    expect(slotSkills(w, b)).toEqual(['gs_quake', 'gs_earthsplit', 'gs_whirl', 'gs_shoulder', 'gs_launch', 'gs_throw']);
     expect(b.gs_whirl).toEqual({ points: 3, variant: 'rush', slot: 2 });
     expect(perksOf(w, b).chargeSpeedMul).toBe(1.45);
     const q = new InputQueue(), act = (skillId: string) => ({ seq: 1, t: 0, kind: 'skill' as const, skillId, x: 0, y: 0, facing: 1 as const });
     const p = { downed: false, hurt: null, cooldowns: {}, mp: 100, reinput: null };
-    expect(q.onAction(act('gs_launch'), p as never, w, b)).not.toBeNull();
+    expect(q.onAction(act('gs_wave'), p as never, w, b)).not.toBeNull();
     expect(q.onAction(act('gs_quake'), p as never, w, b)).toBeNull();
   });
 
