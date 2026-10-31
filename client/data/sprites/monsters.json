@@ -197,137 +197,192 @@
   "frames": {
    "idle1": {
     "rows": [
-     ".....mmmm........",
-     "....mmmmmm.bb....",
-     "...mmmmmmmmbc....",
-     "....bbbbbbbbbbb..",
-     "b.bbbbbbbbbbbEbb.",
-     "bbbbbbbbbbbbbccc.",
-     ".bbbbbbbbbbbBcccn",
-     ".bbbbbbbbbbbbcccn",
-     ".bbbccccccccccbw.",
-     "..bccccccccccc...",
-     "...ddcccccdd.....",
-     "...dd.....dd....."
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..............d.d.d...b...........",
+     "......m.m...d.ddddd.dbb...........",
+     ".....mmmm...ddbbbbbddbc...........",
+     "...mmmmmmmddbbbbbbbbbdb...........",
+     ".....mmmmbbbbbbbbbbbbbbb..........",
+     "...bbbbbbbbbbbbbbbbbbbbbbb........",
+     "...bbbbbbbbbbbbbbbbbbbbbbbbbb.....",
+     "..bbbbbbbbbbbbbbbbbbbbbEbbbcccn...",
+     ".bbbbbbbbbbbbbbbbbbbbbbEbbbcccc...",
+     "ddbbbbbbbbbbbbbbbbbbbBBbbbbwccn...",
+     "..bbbbbbbbbbbbbbbbbbbbbbbbwb......",
+     "...bbbbbbbbbbbbbbbbbbbbb..........",
+     "....bbbbcccccccccccbb.............",
+     ".....bcccbbbccccccccbbb...........",
+     "......dddbbbcccccdddbbb...........",
+     "......dddbbb.....dddbbb...........",
+     "......dddddd.....dddddd..........."
     ],
     "foot": [
-     8,
-     11
+     13,
+     20
     ]
    },
    "idle2": {
     "rows": [
-     ".....mmmm........",
-     "....mmmmmm.bb....",
-     "...mmmmmmmmbc....",
-     "....bbbbbbbb.....",
-     "b.bbbbbbbbbbbbb..",
-     "bbbbbbbbbbbbbEbb.",
-     ".bbbbbbbbbbbbccc.",
-     ".bbbbbbbbbbbBcccn",
-     ".bbbccccccccccccn",
-     "..bccccccccccccw.",
-     "...ddcccccdd.....",
-     "...dd.....dd....."
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..............d.d.d...............",
+     "......m.m...d.ddddd.d.b...........",
+     ".....mmmm...ddbbbbbddbb...........",
+     "...mmmmmmmddbbbbbbbbbbc...........",
+     ".....mmmmbbbbbbbbbbbbbb...........",
+     "...bbbbbbbbbbbbbbbbbbbbb..........",
+     "...bbbbbbbbbbbbbbbbbbbbbb.........",
+     "..bbbbbbbbbbbbbbbbbbbbbbbb........",
+     ".bbbbbbbbbbbbbbbbbbbbbbEbbbbb.....",
+     "ddbbbbbbbbbbbbbbbbbbbbbEbbbbb.....",
+     "..bbbbbbbbbbbbbbbbbbbBBbbbbcccn...",
+     "...bbbbbbbbbbbbbbbbbbbbbbbbcccc...",
+     "....bbbbccccccccccbbbbbbbbbwccn...",
+     ".....bcccbbbccccccccbbb...w.......",
+     "......dddbbbcccccdddbbb...........",
+     "......dddbbb.....dddbbb...........",
+     "......dddddd.....dddddd..........."
     ],
     "foot": [
-     8,
-     11
+     13,
+     20
     ]
    },
    "walk1": {
     "rows": [
-     ".....mmmm........",
-     "....mmmmmm.bb....",
-     "...mmmmmmmmbc....",
-     "....bbbbbbbbbbb..",
-     "b.bbbbbbbbbbbEbb.",
-     "bbbbbbbbbbbbbccc.",
-     ".bbbbbbbbbbbBcccn",
-     ".bbbbbbbbbbbbcccn",
-     ".bbbccccccccccbw.",
-     "..bccccccccccc...",
-     "..ddcccccccdd....",
-     "..dd.......dd...."
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..............d.d.d...b...........",
+     "......m.m...d.ddddd.dbb...........",
+     ".....mmmm...ddbbbbbddbc...........",
+     "...mmmmmmmddbbbbbbbbbdb...........",
+     ".....mmmmbbbbbbbbbbbbbbb..........",
+     "...bbbbbbbbbbbbbbbbbbbbbbb........",
+     "...bbbbbbbbbbbbbbbbbbbbbbbbbb.....",
+     "..bbbbbbbbbbbbbbbbbbbbbEbbbcccn...",
+     ".bbbbbbbbbbbbbbbbbbbbbbEbbbcccc...",
+     "ddbbbbbbbbbbbbbbbbbbbBBbbbbwccn...",
+     "..bbbbbbbbbbbbbbbbbbbbbbbbwb......",
+     "...bbbbbbbbbbbbbbbbbbbbb..........",
+     "....bbbbcccccccccccbb.............",
+     ".....bccccbbbccccccbbb............",
+     ".....ddd.ccbbbccc..bbb............",
+     "....ddd....ddd....bbbd............",
+     "....ddd...........ddd............."
     ],
     "foot": [
-     8,
-     11
+     13,
+     20
     ]
    },
    "walk2": {
     "rows": [
-     ".....mmmm........",
-     "....mmmmmm.bb....",
-     "...mmmmmmmmbc....",
-     "....bbbbbbbbbbb..",
-     "b.bbbbbbbbbbbEbb.",
-     "bbbbbbbbbbbbbccc.",
-     ".bbbbbbbbbbbBcccn",
-     ".bbbbbbbbbbbbcccn",
-     ".bbbccccccccccbw.",
-     "..bccccccccccc...",
-     "....ddcccddc.....",
-     "....dd...dd......"
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..............d.d.d...b...........",
+     "......m.m...d.ddddd.dbb...........",
+     ".....mmmm...ddbbbbbddbc...........",
+     "...mmmmmmmddbbbbbbbbbdb...........",
+     ".....mmmmbbbbbbbbbbbbbbb..........",
+     "...bbbbbbbbbbbbbbbbbbbbbbb........",
+     "...bbbbbbbbbbbbbbbbbbbbbbbbbb.....",
+     "..bbbbbbbbbbbbbbbbbbbbbEbbbcccn...",
+     ".bbbbbbbbbbbbbbbbbbbbbbEbbbcccc...",
+     "ddbbbbbbbbbbbbbbbbbbbBBbbbbwccn...",
+     "..bbbbbbbbbbbbbbbbbbbbbbbbwb......",
+     "...bbbbbbbbbbbbbbbbbbbbb..........",
+     "....bbbbbbbccccccccbbbbb..........",
+     ".....bccbbbccccccccc..bbb.........",
+     ".......bbbcccccccd....ddd.........",
+     ".......ddd.....ddd................"
     ],
     "foot": [
-     8,
-     11
+     13,
+     20
     ]
    },
    "windup": {
     "rows": [
-     ".....mmmm........",
-     "....mmmmmm.......",
-     "...mmmmmmmmb.....",
-     "....bbbbbbbbbbb..",
-     "b.bbbbbbbbbbbEbb.",
-     "bbbbbbbbbbbbbccc.",
-     ".bbbbbbbbbbbBcccn",
-     ".bbbbbbbbbbbbcccn",
-     ".bbbccccccccccbw.",
-     "..bccccccccccc...",
-     "...ddcccccdd....."
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..............d.d.d...............",
+     "......m.m...d.ddddd.d.............",
+     ".....mmmm...ddbbbbbbb.............",
+     "...mmmmmmmddbbbbbbbbbb............",
+     ".....mmmmbbbbbbbbbbbbbb...........",
+     "...bbbbbbbbbbbbbbbbbbbbb..........",
+     "...bbbbbbbbbbbbbbbbbbbbbb.........",
+     "..bbbbbbbbbbbbbbbbbbbbEbbb........",
+     ".bbbbbbbbbbbbbbbbbbbbbbEbbbbb.....",
+     "ddbbbbbbbbbbbbbbbbbbbbbEEbbbb.....",
+     "..bbbbbbbbbbbbbbbbbbbBBbbbbcccn...",
+     "...bbbbbbbbbbbbbbbbbbbbbbbbcccc...",
+     "....bbbbcbbbccccccbbbbbbbbbwccn...",
+     ".....bcccbbbcccccccc.bbb..w.......",
+     ".....dddbbbccccccddd..bbb.........",
+     ".....dddddd......ddd..ddd........."
     ],
     "foot": [
-     8,
-     10
+     13,
+     20
     ],
+    "shake": true,
     "fx": [
      {
       "type": "dust",
       "at": [
-       8,
+       10,
        0
       ]
      }
-    ],
-    "shake": true
+    ]
    },
    "charge": {
     "rows": [
-     ".....mmmm........",
-     "....mmmmmm.......",
-     "...mmmmmmmmb.....",
-     "....bbbbbbbbbbb..",
-     "b.bbbbbbbbbbbEbb.",
-     "bbbbbbbbbbbbbccc.",
-     ".bbbbbbbbbbbBcccn",
-     ".bbbbbbbbbbbbcccn",
-     ".bbbccccccccccbw.",
-     "..bccccccccccc...",
-     ".dd.ccccccccdd...",
-     "dd...........dd.."
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..............d.d.d...............",
+     "......m.m...d.ddddd.d.............",
+     ".....mmmm...ddbbbbbdbb............",
+     "...mmmmmmmddbbbbbbbbbbb...........",
+     ".....mmmmbbbbbbbbbbbbbdb..........",
+     "...bbbbbbbbbbbbbbbbbbbbbb.........",
+     "...bbbbbbbbbbbbbbbbbbbbbbbb.......",
+     "..bbbbbbbbbbbbbbbbbbbbbEbbbb......",
+     ".bbbbbbbbbbbbbbbbbbbbbbbEbbbbbb...",
+     "ddbbbbbbbbbbbbbbbbbbbbbbEEbbbbb...",
+     "..bbbbbbbbbbbbbbbbbbbbBBbbbbbcccn.",
+     "...bbbbbbbbbbbbbbbbbbbbbbbbbbcccc.",
+     "....bbbbbbcccccccccbbbbbbbbbbwccn.",
+     "....dbbbbcccccccccccdddbbb..w.....",
+     "...ddddddcccccccc...ddd.bbb.......",
+     "...ddd..................ddd......."
     ],
     "foot": [
-     8,
-     11
+     13,
+     20
     ],
     "fx": [
      {
       "type": "dust",
       "at": [
-       -10,
+       -12,
        0
       ]
      }
@@ -335,72 +390,98 @@
    },
    "dizzy": {
     "rows": [
-     ".....mmmm........",
-     "....mmmmmm.bb....",
-     "...mmmmmmmmbc....",
-     "....bbbbbbbbEbb..",
-     "b.bbbbbbbbbbbEbb.",
-     "bbbbbbbbbbbbbcEc.",
-     ".bbbbbbbbbbbBcccn",
-     ".bbbbbbbbbbbbcccn",
-     ".bbbccccccccccbw.",
-     "..bccccccccccc...",
-     "...ddcccccdd.....",
-     "...dd.....dd....."
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..............d.d.d...............",
+     "......m.m...d.ddddd.d.............",
+     ".....mmmm...ddbbbbbdd.............",
+     "...mmmmmmmddbbbbbbbbbd............",
+     ".....mmmmbbbbbbbbbbbbbbb..........",
+     "...bbbbbbbbbbbbbbbbbbbbbb.........",
+     "...bbbbbbbbbbbbbbbbbbbbbb.........",
+     "..bbbbbbbbbbbbbbbbbbbbEbEb........",
+     ".bbbbbbbbbbbbbbbbbbbbbbEbbbbb.....",
+     "ddbbbbbbbbbbbbbbbbbbbbEbEbbbb.....",
+     "..bbbbbbbbbbbbbbbbbbbBBbbbbcccn...",
+     "...bbbbbbbbbbbbbbbbbbbbbbbbcccc...",
+     "....bbbbccccccccccbbbbbbbbbwccn...",
+     ".....bccccbbbccccccbbb..nnw.......",
+     ".......ddcbbbccccddbbb............",
+     "........dbbb...ddd..bbb...........",
+     "........dddd...ddd..ddd..........."
     ],
     "foot": [
-     8,
-     11
+     13,
+     20
     ],
     "fx": [
      {
       "type": "stars",
       "at": [
-       5,
-       -14
+       10,
+       -20
       ]
      }
     ]
    },
    "hurt": {
-    "foot": [
-     9,
-     10
-    ],
     "rows": [
-     "......mmmm.........",
-     ".....mmmmmm.bb.....",
-     "....mmmmmmmmbc.....",
-     "....bbbbbbbbbbbbb..",
-     "bb.bbbbbbbbbbbEEbb.",
-     "bbbbbbbbbbbbbbcccc.",
-     ".bbbbbbbbbbbbBcccnn",
-     ".bbbbccccccccccbww.",
-     "..bbcccccccccccc...",
-     "...ddcccccccdd.....",
-     "...dd.......dd....."
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "..................................",
+     "................d.................",
+     "......m.m...d.ddddd.bb............",
+     ".....mmmm...dddbbbdddbb...........",
+     "...mmmmmmm.dbbbbbbbbbddb..........",
+     ".....mmmmddbbbbbbbbbbbbbb.........",
+     "...bbbbbbbbbbbbbbbbbbbbbbbb.......",
+     "..bbbbbbbbbbbbbbbbbbbbbbbbbbbb....",
+     "..bbbbbbbbbbbbbbbbbbbbbbbEbbcccn..",
+     ".bbbbbbbbbbbbbbbbbbbbbbEEbbbcccc..",
+     "ddbbbbbbbbbbbbbbbbbbbbBBbbbbwccn..",
+     "..bbbbbbbbbbbbbbbbbbbbbbbbbwb.....",
+     "..bbbbbbbbbbbbbbbbbbbbbbb.........",
+     "....bbbbcbbbcccccccbbbb...........",
+     "......cccbbbccccccccbbb...........",
+     "......dddbbb.c...dddbbb...........",
+     "......dddddd.....dddddd..........."
+    ],
+    "foot": [
+     13,
+     20
     ]
    },
    "hurtAir": {
-    "foot": [
-     8,
-     13
-    ],
     "rows": [
-     ".....mmmm........",
-     "....mmmmmm.bb....",
-     "...mmmmmmmmbc....",
-     "....bbbbbbbbbbb..",
-     "b.bbbbbbbbbbbEEb.",
-     "bbbbbbbbbbbbbccc.",
-     ".bbbbbbbbbbbBcccn",
-     ".bbbbbbbbbbbbcccn",
-     ".bbbbbbbbbbbbccc.",
-     ".bbbccccccccccbw.",
-     "..bccccccccccc...",
-     "...ddcccccdd.....",
-     "...dd.....dd.....",
-     "...dd.....dd....."
+     "..................................",
+     "..................................",
+     "................d.................",
+     "..............ddddd..b............",
+     "......m.m...dddbbbddbb............",
+     ".....mmmm...dbbbbbbbbc............",
+     "...mmmmmmmddbbbbbbbbbb............",
+     ".....mmmmbbbbbbbbbbbbbb...........",
+     "....bbbbbbbbbbbbbbbbbbbbb.........",
+     "...bbbbbbbbbbbbbbbbbbbbbbbbb......",
+     "..bbbbbbbbbbbbbbbbbbbbbEbbcccn....",
+     ".bbbbbbbbbbbbbbbbbbbbEEbbbcccc....",
+     "ddbbbbbbbbbbbbbbbbbbBBbbbbwccn....",
+     "...bbbbbbbbbbbbbbbbbbbbbbwb.......",
+     "...bbbbbbbbbbbbbbbbbbbb...........",
+     "....bbbbcccccccccccbb.............",
+     ".....bccccccccccccc...............",
+     "......dccbbbccccccddbbb...........",
+     "......dddbbb.....dddbbb...........",
+     "......dddbbb.....dddbbb...........",
+     "......dddddd.....dddddd..........."
+    ],
+    "foot": [
+     13,
+     20
     ]
    }
   },

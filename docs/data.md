@@ -129,7 +129,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 "boar": {
   "name": "아기 멧돼지", "floor": 1, "rank": "normal", "sprite": "boar",
   "hp": 80, "weight": "medium",
-  "hurtbox": { "width": 16, "height": 12, "depth": 10 },
+  "hurtbox": { "width": 26, "height": 16, "depth": 12 },
   "move": { "x": 40, "y": 25, "style": "walk" },
   "detectRange": 96, "usesToken": true, "superArmor": "none",
   "ai": { "type": "charger", "preferRange": [32, 96] },
