@@ -109,5 +109,12 @@
     "clouds": { "count": 3, "w": [280, 400], "h": [100, 150], "lobes": [9, 13], "lobeR": [0.08, 0.17], "noise": 0.35, "cut": 0.12, "edge": 0.06, "speed": 3, "alpha": 0.24 }
   },
   "_islandShadow": "섬 사물 땅 그림자 (art.md 6장 섬, client/src/sprites/castShadow.ts). 빛이 왼쪽 위라 사물 실루엣을 높이 h만큼 오른쪽 h × shear·뒤(화면 위) h × lift로 옮겨 바닥에 눕히고 맨 아래 줄 밑에 접지 줄 1px. 안쪽 채움·경계 바둑판, 색 global.outline, 진하기 alpha. 바닥·구름 그림자 위, 사물·캐릭터 아래",
-  "islandShadow": { "shear": 0.5, "lift": 0.2, "alpha": 0.28 }
+  "islandShadow": { "shear": 0.5, "lift": 0.2, "alpha": 0.28 },
+  "_chargeGlow": "대검 충전 모이는 빛 (SK-3 2차, art.md 7장, client/src/fx/chargeFx.ts). 손(포즈 front.hand) 둘레 from px에서 빛 점 motes개가 gatherSec마다 소용돌이(swirl 바퀴)치며 빨려듦, 충전 비율이 오를수록 보이는 점 수 minShare → 1. 손 빛 반지름 core[0] → core[1], pulseSec마다 1px 밝게. 떼는 순간 별 release(비율 fullAt 이상이면 full: 별 + 빛살 rays개가 rayLen px까지 퍼짐), 시간 초",
+  "chargeGlow": {
+    "motes": 8, "from": 13, "swirl": 0.35, "gatherSec": 0.4, "minShare": 0.4,
+    "core": [1, 2], "pulseSec": 0.12, "fullAt": 0.9,
+    "release": { "sec": 0.1, "radius": 3 },
+    "full": { "sec": 0.2, "radius": 5, "rays": 8, "rayLen": 14 }
+  }
 }

@@ -74,7 +74,7 @@ export const actionFields = {
   hits: z.object({ count: z.number().int().positive(), interval: pos }).strict().optional(),
   move: move.optional(),
   status: z.object({ type: statusType, time: pos, amount: z.number().optional() }).strict().optional(),
-  poses: z.object({ windup: z.string(), active: z.string(), recovery: z.string() }).partial().strict().optional(),
+  poses: z.object({ windup: z.string(), active: z.string(), recovery: z.string(), charge: z.string() }).partial().strict().optional(),
   fx: z.object({ grade: z.enum(GRADES), shake: z.enum(['vertical', 'horizontal']).optional() }).strict().optional(),
   sfx: z.object({ windup: z.string(), active: z.string(), hit: z.string() }).partial().strict().optional(),
   telegraph: z.object({

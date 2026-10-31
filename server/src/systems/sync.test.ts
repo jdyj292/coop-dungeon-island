@@ -17,6 +17,27 @@ describe('syncPlayer', () => {
     expect(s.actionStart).toBeCloseTo(855);
   });
 
+  it('대검 충전: 충전 중에도 행동 시작 시각은 그대로, 충전한 ms·비율을 보낸다 (SK-3 2차)', () => {
+    const gs = weaponDef('greatsword');
+    const p = newPlayerState({ x: 100, y: 50 });
+    const def = gs.basic[0]!;
+    const charge = { t: 0.25, done: false, armor: true };
+    p.fighter.run = { def, kind: 'skill', step: 0, t: 0.3, charge } as never;
+    const sp = { state: p, away: false, weapon: gs } as unknown as SimPlayer;
+    const s = new PlayerState();
+    syncPlayer(s, sp, 0, 1000);
+    expect([s.actionStart, s.chargeMs]).toEqual([expect.closeTo(450), 250]);
+    expect(s.chargeLv).toBe(Math.round(0.25 * 255));
+    // 충전이 늘어도 시작 시각은 그대로
+    charge.t = 0.3;
+    syncPlayer(s, sp, 0, 1050);
+    expect([s.actionStart, s.chargeMs]).toEqual([expect.closeTo(450), 300]);
+    // 떼면 비율 0, 충전한 ms는 남음
+    charge.done = true;
+    syncPlayer(s, sp, 0, 1050);
+    expect([s.chargeLv, s.chargeMs]).toEqual([0, 300]);
+  });
+
   it('가속(가속장)은 끝나는 시각·배율을 본인에게 보낸다', () => {
     const p = newPlayerState({ x: 100, y: 50 });
     p.haste = { left: 2, mul: 1.2 };

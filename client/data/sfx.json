@@ -1632,6 +1632,16 @@
     "wet": 0.4
    }
   ],
+  "charge_start": [
+   { "k": "tone", "wave": "triangle", "f": [180, 360], "dur": 0.35, "v": 0.14, "at": 0, "atk": 0.08, "wet": 0.3 },
+   { "k": "noise", "f": [300, 1200], "dur": 0.3, "v": 0.12, "filter": "lowpass", "q": 1, "at": 0, "swell": true, "wet": 0.2 },
+   { "k": "metal", "f": 1400, "dur": 0.25, "v": 0.04, "at": 0.05, "wet": 0.4 }
+  ],
+  "charge_full": [
+   { "k": "click", "v": 0.25, "at": 0 },
+   { "k": "metal", "f": 1660, "dur": 0.45, "v": 0.14, "at": 0, "wet": 0.5 },
+   { "k": "tone", "wave": "sine", "f": [880, 1320], "dur": 0.2, "v": 0.1, "at": 0, "atk": 0.005, "wet": 0.5 }
+  ],
   "shield_up": [
    {
     "k": "tone",

@@ -53,6 +53,9 @@ export class PlayerState extends Schema {
   /** 진행 중 행동 id와 시작 서버 시각 (구간은 클라이언트가 데이터로 계산) */
   @type('string') actionId = '';
   @type('float64') actionStart = 0;
+  /** 대검 충전: 이 행동에서 충전한 ms (충전 중이면 지금까지, 끝났으면 최종, 없으면 0)·충전 중 비율 1~255 (아니면 0). 충전 포즈·모이는 빛 (skills.md 2장) */
+  @type('uint16') chargeMs = 0;
+  @type('uint8') chargeLv = 0;
   @type('uint16') hp = 0;
   @type('uint16') maxHp = 0;
   @type('uint8') ultGauge = 0;

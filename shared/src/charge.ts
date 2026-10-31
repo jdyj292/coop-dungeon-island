@@ -18,7 +18,7 @@ export interface ChargeInput {
 }
 
 /** 충전 중 멈춰 있는 시각: windup 끝 바로 앞 (phaseAt이 계속 windup을 돌려주게) */
-const EPS = 1e-6;
+export const CHARGE_HOLD_EPS = 1e-6;
 
 /** 충전 없이 지나가게 표시 (재입력 변형의 다음 입력) */
 export const noCharge = (): ChargeState => ({ t: 0, done: true, armor: false });
@@ -34,7 +34,7 @@ export function stepCharge(run: ActionRun, c: ChargeInput, dt: number): number {
   if (run.kind !== 'skill') return dt;
   const ch = (run.charge ??= { t: 0, done: false, armor: c.armor });
   if (ch.done) return dt;
-  const end = run.def.phases.windup - EPS;
+  const end = run.def.phases.windup - CHARGE_HOLD_EPS;
   if (run.t + dt < end) return dt;
   if (!c.hold) {
     ch.done = true;

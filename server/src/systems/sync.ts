@@ -1,5 +1,5 @@
 // 시뮬레이션 → 상태 스키마 (docs/network.md 5장). 매 틱 반영하고 전송은 20Hz 패치가 변경분만 보낸다
-import { hasArmor, playerStateName, type Monster, type RoomSim, type SimPlayer, type ZoneArea } from '@game/shared';
+import { chargeLevel, hasArmor, playerStateName, type Monster, type RoomSim, type SimPlayer, type ZoneArea } from '@game/shared';
 import { MonsterState, ZoneState, type DungeonState, type PlayerState } from '../schema/DungeonState';
 
 const int = (n: number) => Math.round(n);
@@ -23,11 +23,17 @@ export function syncPlayer(s: PlayerState, sp: SimPlayer, moved: number, now: nu
   if (!dodgeStart || !s.dodgeStart || Math.abs(dodgeStart - s.dodgeStart) > PLAYER_TIME_EPS_MS) s.dodgeStart = dodgeStart;
   s.state = sp.away ? 'disconnected' : playerStateName(p, moved);
   const actionId = run ? run.def.id : '';
-  // 같은 행동이 이어지면 시작 시각을 다시 쓰지 않는다 (평타 연속은 id가 바뀜)
-  if (actionId !== s.actionId || (run && Math.abs(now - run.t * 1000 - s.actionStart) > PLAYER_TIME_EPS_MS)) {
+  // 같은 행동이 이어지면 시작 시각을 다시 쓰지 않는다 (평타 연속은 id가 바뀜).
+  // 대검 충전 중에는 run.t가 멈추고 충전 시간이 늘어나므로 둘을 더한 흐른 시간으로 (충전 중에도 시작 시각이 그대로, mirror.ts가 chargeMs로 되돌림)
+  const chargeSec = run?.charge?.t ?? 0;
+  const start = run ? now - (run.t + chargeSec) * 1000 : 0;
+  if (actionId !== s.actionId || (run && Math.abs(start - s.actionStart) > PLAYER_TIME_EPS_MS)) {
     s.actionId = actionId;
-    s.actionStart = run ? now - run.t * 1000 : 0;
+    s.actionStart = start;
   }
+  s.chargeMs = int(chargeSec * 1000);
+  const lv = run?.charge ? chargeLevel(p, sp.weapon) : 0;
+  s.chargeLv = lv > 0 ? Math.max(1, int(lv * 255)) : 0;
   s.hp = int(p.hp);
   s.maxHp = p.maxHp;
   s.ultGauge = int(p.ult);

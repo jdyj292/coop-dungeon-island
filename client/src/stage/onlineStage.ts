@@ -2,7 +2,7 @@
 // 내 캐릭터는 예측 상태로 바로 그리고 서버 패치마다 보정 (network.md 7장, net/localPlayer.ts)
 import type Phaser from 'phaser';
 import {
-  buildFrom, buildSkill, COMBAT, MONSTERS, NET, playerStateName, weaponDef,
+  buildFrom, buildSkill, chargeLevel, COMBAT, MONSTERS, NET, playerStateName, weaponDef,
   type Bounds, type Monster, type PlayerState, type S2C, type ZoneArea,
 } from '@game/shared';
 import fx from '../../data/fx.json';
@@ -11,6 +11,7 @@ import { echoSound, shieldsRaised } from '../audio/sfxEvents';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
+import { chargeView } from '../fx/chargeFx';
 import { StatusLayer, type StatusView } from '../fx/statusFx';
 import { HazardLayer } from '../fx/hazards';
 import { ATTACKS, RemoteShots } from '../net/remoteShots';
@@ -193,7 +194,8 @@ export class OnlineStage {
       const moved = mine ? myMoved : r.last ? Math.hypot(p.pos.x - r.last.x, p.pos.y - r.last.y) : 0;
       r.last = { x: p.pos.x, y: p.pos.y };
       r.view.draw(p, moved, 0, this.clock);
-      this.statusViews.push({ id, x: p.pos.x, y: p.pos.y, haste: !!s.hasted, shield: !!s.shielded });
+      const lv = mine ? chargeLevel(p, w) : (s.chargeLv ?? 0) / 255;
+      this.statusViews.push({ id, x: p.pos.x, y: p.pos.y, haste: !!s.hasted, shield: !!s.shielded, charge: chargeView(id, p, w, lv) });
       // 접속이 끊긴 동료는 반투명 (network.md 10장)
       r.view.actor.img.setAlpha(s.state === 'disconnected' ? DISCONNECTED_ALPHA : 1);
       r.ghosts.update(realDt, !!p.backstep && !r.view.teleport, r.view.actor.img);
@@ -285,7 +287,7 @@ export class OnlineStage {
     const shots = this.shots.at(t, this.fx.layer);
     this.boltLayer.draw(shots.bolts);
     this.hazards.draw({ zones: this.zones, alive: alive.map((e) => e.m), projectiles: shots.projectiles });
-    this.status.draw(alive.map((e) => e.m), this.statusViews);
+    this.status.draw(alive.map((e) => e.m), this.statusViews, dt).forEach((n) => sfx.play(n));
     if (shieldsRaised(this.shielded, new Set(this.statusViews.filter((v) => v.shield).map((v) => v.id)))) sfx.play('shield_up');
     this.statusViews = [];
     this.fx.layer.update(dt);

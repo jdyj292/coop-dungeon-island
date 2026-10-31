@@ -151,6 +151,9 @@ export function withWindupMul(def: ActionDef, mul: number): ActionDef {
 /** 지금 구간의 포즈 이름 (행동 중이 아니면 null) */
 export function fighterPose(f: Fighter): string | null {
   if (!f.run) return null;
+  // 대검 충전 중(준비 끝에서 멈춤): 충전 포즈 (없으면 준비 포즈 그대로, skills.md 2장)
+  const ch = f.run.charge;
+  if (ch && !ch.done && ch.t > 0 && f.run.def.poses?.charge) return f.run.def.poses.charge;
   const phase = phaseAt(f.run.def, f.run.t);
   return (phase && f.run.def.poses?.[phase]) ?? null;
 }

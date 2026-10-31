@@ -197,6 +197,13 @@ function chargeInput(p: PlayerState, weapon: WeaponDef, input: PlayerInput): Cha
   return { hold: !!input.hold, maxTime: tr.maxTime / (p.perks?.chargeSpeedMul ?? 1), bonusMax: tr.bonusMax, armor: tr.superArmorWhileCharging };
 }
 
+/** 충전 비율 0~1 (충전 중이 아니면 0, 연출·동기화용) */
+export function chargeLevel(p: PlayerState, weapon: WeaponDef): number {
+  const tr = weapon.trait, ch = p.fighter.run?.charge;
+  if (tr?.type !== 'charge' || !ch || ch.done || ch.t <= 0) return 0;
+  return Math.min(1, (ch.t * (p.perks?.chargeSpeedMul ?? 1)) / tr.maxTime);
+}
+
 /** 가속 걸기 (가속장): 더해지지 않고 더 센 배율·더 긴 시간으로 */
 export function hastePlayer(p: PlayerState, sec: number, mul: number): void {
   p.haste = { left: Math.max(p.haste?.left ?? 0, sec), mul: Math.max(p.haste?.mul ?? 1, mul) };

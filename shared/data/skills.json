@@ -22,7 +22,8 @@
     "poses": {
       "windup": "slash",
       "active": "upslash",
-      "recovery": "upslash"
+      "recovery": "upslash",
+      "charge": "charge"
     },
     "fx": {
       "grade": "medium"
@@ -282,7 +283,8 @@
     "poses": {
       "windup": "ready",
       "active": "sweep",
-      "recovery": "sweep"
+      "recovery": "sweep",
+      "charge": "charge"
     },
     "fx": {
       "grade": "light"
@@ -342,7 +344,8 @@
     "poses": {
       "windup": "ready",
       "active": "draw",
-      "recovery": "ready"
+      "recovery": "ready",
+      "charge": "charge"
     },
     "fx": {
       "grade": "heavy"
@@ -394,7 +397,8 @@
     "poses": {
       "windup": "ready",
       "active": "sweep",
-      "recovery": "sweep"
+      "recovery": "sweep",
+      "charge": "charge"
     },
     "fx": {
       "grade": "medium"
@@ -456,7 +460,8 @@
     "poses": {
       "windup": "ready",
       "active": "draw",
-      "recovery": "draw"
+      "recovery": "draw",
+      "charge": "charge"
     },
     "fx": {
       "grade": "medium"
@@ -574,7 +579,8 @@
     "poses": {
       "windup": "ready",
       "active": "sweep",
-      "recovery": "sweep"
+      "recovery": "sweep",
+      "charge": "charge"
     },
     "fx": {
       "grade": "medium"
@@ -637,7 +643,8 @@
     "poses": {
       "windup": "slash",
       "active": "sweep",
-      "recovery": "sweep"
+      "recovery": "sweep",
+      "charge": "charge"
     },
     "fx": {
       "grade": "medium"
@@ -705,7 +712,8 @@
     "poses": {
       "windup": "ready",
       "active": "sweep",
-      "recovery": "sweep"
+      "recovery": "sweep",
+      "charge": "charge"
     },
     "fx": {
       "grade": "light"

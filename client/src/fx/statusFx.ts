@@ -1,10 +1,11 @@
 // SK-4 2차 상태 표시 (art.md 7장): 검흔 표식(몬스터 머리 위 칼자국 두 줄), 가속(발 양옆 위로 흐르는 속도선),
-// 역장 보호막(몸을 감싼 점선 타원 + 도는 반짝임). 매 프레임 다시 그린다. 온라인은 서버 상태의 표시용 값(scarred·hasted·shielded)
+// 역장 보호막(몸을 감싼 점선 타원 + 도는 반짝임), 대검 충전 모이는 빛(chargeFx.ts). 매 프레임 다시 그린다. 온라인은 서버 상태의 표시용 값(scarred·hasted·shielded·chargeLv)
 import type Phaser from 'phaser';
 import type { Monster } from '@game/shared';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
 import { project } from '../view/layout';
+import { ChargeLayer, type ChargeView } from './chargeFx';
 import { dot } from './layer';
 import { col, px } from './spellDraw';
 
@@ -19,16 +20,21 @@ export interface StatusView {
   y: number;
   haste: boolean;
   shield: boolean;
+  /** 대검 충전 (chargeFx.chargeView) */
+  charge?: ChargeView;
 }
 
 export class StatusLayer {
   private g: Phaser.GameObjects.Graphics;
+  private charge: ChargeLayer;
 
   constructor(scene: Phaser.Scene) {
     this.g = scene.add.graphics().setDepth(DEPTH);
+    this.charge = new ChargeLayer(scene);
   }
 
-  draw(monsters: Monster[], players: StatusView[]): void {
+  /** dt = 지난 그리기 뒤 흐른 초. 반환 = 낼 소리 (충전 빛) */
+  draw(monsters: Monster[], players: StatusView[], dt: number): string[] {
     const g = this.g, now = performance.now() / 1000, { sky, white, gold, deep } = col(), edge = colorInt('global.fx.smearEdge');
     g.clear();
     // 검흔: 비스듬한 칼자국 두 줄 (pulseSec마다 밝은 줄이 바뀜)
@@ -62,9 +68,11 @@ export class StatusLayer {
         dot(g, gx - 1, gy, sky); dot(g, gx + 1, gy, sky);
       }
     }
+    return this.charge.draw(players.flatMap((p) => (p.charge ? [p.charge] : [])), dt);
   }
 
   destroy(): void {
     this.g.destroy();
+    this.charge.destroy();
   }
 }

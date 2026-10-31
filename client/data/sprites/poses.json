@@ -236,6 +236,35 @@
         }
       ]
     },
+    "charge": {
+      "body": {
+        "bob": 1,
+        "legs": "walkA"
+      },
+      "front": {
+        "hand": [
+          8,
+          13
+        ]
+      },
+      "back": {
+        "hand": [
+          9,
+          13
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            0
+          ],
+          "behind": true
+        }
+      ]
+    },
     "rise": {
       "body": {
         "legs": "walkA"

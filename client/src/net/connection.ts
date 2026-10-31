@@ -38,6 +38,9 @@ export interface PlayerSnap extends Pos {
   /** 가속장 가속 중·역장 보호막 (표시용) */
   hasted?: boolean;
   shielded?: boolean;
+  /** 대검 충전: 이 행동에서 충전한 ms, 충전 중 비율 1~255 (아니면 0) */
+  chargeMs?: number;
+  chargeLv?: number;
 }
 
 export interface MonsterSnap extends Pos {
@@ -287,7 +290,7 @@ export class Connection {
     s.players.forEach((p, id) => players.set(id, {
       id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, dodgeDir: p.dodgeDir ?? 0, dodgeDy: p.dodgeDy ?? 0, dodgeStart: p.dodgeStart ?? 0, state: p.state, since: since(prevP?.get(id), p.state),
       actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0, look: p.look ?? '', weapon: p.weapon || 'greatsword', skills: p.skills ?? '',
-      hasted: !!p.hasted, shielded: !!p.shielded,
+      hasted: !!p.hasted, shielded: !!p.shielded, chargeMs: p.chargeMs ?? 0, chargeLv: p.chargeLv ?? 0,
     }));
     const monsters = new Map<string, MonsterSnap>();
     s.monsters.forEach((m, id) => monsters.set(id, {
