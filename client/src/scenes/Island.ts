@@ -88,8 +88,10 @@ export class Island extends Phaser.Scene {
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       this.hover = IslandHud.hitButton(p.x, p.y, this.bandTop(), this.scale.gameSize.width);
       this.stage?.place.onPointerMove({ x: p.worldX, y: p.worldY });
+      this.stage?.panels.onPointerMove(p.x, p.y);
     });
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onPointerDown(p));
+    this.input.on('pointerup', (p: Phaser.Input.Pointer) => this.stage?.panels.onPointerUp(p.x, p.y));
     this.events.once('shutdown', () => {
       this.settings.destroy();
       this.hud.destroy();
@@ -99,6 +101,7 @@ export class Island extends Phaser.Scene {
       this.input.keyboard!.off('keydown');
       this.input.off('pointermove');
       this.input.off('pointerdown');
+      this.input.off('pointerup');
     });
     music.play('island');
     void this.connect();
@@ -243,7 +246,7 @@ export class Island extends Phaser.Scene {
     this.drawTip(width, height - HUD_HEIGHT);
     this.settings.update(width, height - HUD_HEIGHT);
     if (s) {
-      s.panels.update(width, height - HUD_HEIGHT);
+      s.panels.update(width, height - HUD_HEIGHT, height);
       s.chat.draw(s.time);
     }
     if (s && placing) {

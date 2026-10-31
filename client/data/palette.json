@@ -96,7 +96,10 @@
       "islandFaceBg": "#cfe3b8",
       "coinShade": "#C9A24A",
       "bagLight": "#c79a6a",
-      "offline": "#5a5470"
+      "offline": "#5a5470",
+      "skillTitle": "#15112a", "skillCard": "#221d38", "skillCardBorder": "#332d4d", "skillShade": "#100c1e", "skillLit": "#2f2948",
+      "skillPick": "#3a3020", "skillOn": "#24402a",
+      "skillBranch": { "greatsword": { "A": "#FF9A3C", "B": "#6FC3E8" }, "staff": { "A": "#FF9A3C", "B": "#B58AD0" } }
     }
   },
   "island": {

@@ -1,165 +1,280 @@
-// 스킬 창 (K, hud.md 8장, skills.md 1장): 무기 탭마다 맨 위 계열 줄 2개(A·B, Enter = 고르기), 공용 패시브, 기본 스킬, 고른 계열의 액티브·보조.
-// 스킬·패시브는 숙련도 레벨에 열림 (안 열렸으면 이름 뒤 "(Lv N)"). 줄 = 스킬(장착한 슬롯 키·포인트 N/3) 다음에 그 변형 2개.
-// 스킬 줄 ←→ = 포인트 (액티브는 열리면 1부터, 패시브는 0부터), Enter·장착 버튼 = 다음 슬롯(U→I→O→P)에 장착, 변형 줄 Enter = 고르기, 초기화 버튼.
-// 임시 목록 창 (SK-6 2차에서 트리형 창으로 바뀜, 승인 데모 skill_window.html). 검사·저장은 서버 (islandShop skill), 값은 islandNet.skills
+// 스킬 창 (K, hud.md 8장, skills.md 1장, 승인 데모 docs/refs/demos/skill_window.html): 상태·입력. 그리기는 ui/skillWindow.ts
+// 무기 탭, 계열 A·B 고르기(고른 계열만 보임), 액티브/패시브 보기, 칸 고르기·마우스 올림 미리 보기, - + 포인트, 변형 카드, 장착(끌어다 놓기 또는 U I O P), 초기화(두 번).
+// 키: ↑↓←→ 칸 · Tab 액티브/패시브 · A B 계열 · + - 포인트 · 1 2 변형 · U I O P 장착 · Q E 무기 · R 초기화. 검사는 서버(islandShop skill), 미리 같은 규칙으로 막고 사유를 보여 줌
+import type Phaser from 'phaser';
 import {
-  branchOf, buildFrom, COMBAT, isOpen, maxPointsOf, MVP_WEAPONS, nodeOf, PASSIVES, pointsAt, SKILLS, SLOT_COUNT, treeNodes, unlockLevelOf,
-  weaponDef, BRANCHES, type Branch, type S2C, type SkillBuild,
+  branchOf, buildFrom, checkEquip, checkNode, isOpen, maxPointsOf, MVP_WEAPONS, nodeOf, PASSIVES, pointsAt, SKILLS, treeSkills, unlockLevelOf,
+  weaponDef, weaponPassives, WEAPONS, type Branch, type Loadout, type NodeFail, type S2C,
 } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
-import { wrapKo } from '../ui/koText';
-import { PANEL, type DetailLine, type PanelButton, type PanelRow } from '../ui/listPanel';
+import { SK } from '../ui/skillParts';
+import { SkillWindow, type NodeInfo, type SkillHit, type SkillSource, type SkillView } from '../ui/skillWindow';
 
-const TREE = COMBAT.skillTree;
-/** 아래 줄 알림 시간 */
+/** 알림 시간 */
 const NOTE_MS = 2000;
-const SLOT_KEYS = ['U', 'I', 'O', 'P'] as const;
-const ORDER = ['common', 'base', 'A', 'B'];
-const FAIL_TEXT: Record<NonNullable<S2C['skills']['fail']>, string> = {
-  skill: '이 무기 스킬이 아닙니다', points: `포인트는 최대 ${TREE.maxPoints}`, variant: '없는 변형입니다',
-  sp: 'SP가 모자랍니다', locked: '아직 레벨이 모자랍니다', branch: '선택한 계열 스킬만 됩니다', slot: '없는 슬롯입니다', busy: '출발 카운트다운 중에는 못 바꿉니다',
+const SLOT_KEYS = ['KeyU', 'KeyI', 'KeyO', 'KeyP'];
+const FAIL_TEXT: Record<NonNullable<S2C['skills']['fail']> | NodeFail, string> = {
+  skill: '이 무기 스킬이 아닙니다', points: '더 올리거나 내릴 수 없습니다', variant: '없는 변형입니다', sp: 'SP가 모자랍니다',
+  locked: '아직 레벨이 모자랍니다', branch: '선택한 계열 스킬만 됩니다', slot: '없는 슬롯입니다', busy: '출발 카운트다운 중에는 못 바꿉니다',
 };
+type Weapon = (typeof MVP_WEAPONS)[number];
 
-type Line = { branch: Branch } | { skill: string; variant?: string };
-
-export class SkillsTab {
-  private note = '';
+export class SkillPanel implements SkillSource {
+  view: SkillView = 'act';
+  sel = '';
+  hover: string | null = null;
+  hoverBtn: string | null = null;
+  resetArm = false;
+  note: { text: string; color: string } | null = null;
+  private tabIndex = 0;
   private noteUntil = 0;
+  private armUntil = 0;
   private seenSeq = 0;
+  private pointer = { x: 0, y: 0 };
+  private dragging: { id: string; from: number; sx: number; sy: number; moved: boolean } | null = null;
+  /** 계열을 바꿔 서버 값을 기다리는 중: 오면 같은 자리 칸을 고름 */
+  private afterBranch: { b: Branch; at: number } | null = null;
+  private win: SkillWindow;
 
-  constructor(private conn: IslandConnection) {}
-
-  private mine(weapon: string) {
-    return this.conn.skills.weapons.find((w) => w.weapon === weapon);
+  constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private locked: () => boolean, private myWeapon: () => string) {
+    this.win = new SkillWindow(scene, depth);
   }
 
-  private build(weapon: string): SkillBuild {
-    return buildFrom(this.mine(weapon)?.build ?? '');
+  // ---- SkillSource ----
+  get tabs(): string[] { return MVP_WEAPONS.map((id) => WEAPONS[id]?.name ?? id); }
+  get tab(): number { return this.tabIndex; }
+  private get weapon(): Weapon { return MVP_WEAPONS[this.tabIndex] ?? 'greatsword'; }
+  private get mine() { return this.conn.skills.weapons.find((w) => w.weapon === this.weapon); }
+  private get build() { return buildFrom(this.mine?.build ?? ''); }
+  get level(): number { return this.mine?.level ?? 1; }
+  get sp(): number { return this.mine?.sp ?? 0; }
+  get spent(): number { return this.mine?.spent ?? 0; }
+  get branch(): Branch { return this.mine?.branch ?? 'A'; }
+  get branches() { return weaponDef(this.weapon).branches; }
+  get slots(): (string | null)[] { return (this.mine?.slots ?? ['', '', '', '']).map((id) => id || null); }
+  get busy(): boolean { return this.locked(); }
+  get drag(): SkillSource['drag'] {
+    const d = this.dragging;
+    if (!d?.moved) return null;
+    const h = this.win.hit(this.pointer.x, this.pointer.y);
+    return { id: d.id, from: d.from, target: h?.kind === 'slot' ? h.k : -1 };
   }
+  branchColor(b: Branch): string { return `global.ui.skillBranch.${this.weapon}.${b}`; }
 
-  private level(weapon: string): number {
-    return this.mine(weapon)?.level ?? 1;
-  }
-
-  private branch(weapon: string): Branch {
-    return this.mine(weapon)?.branch ?? 'A';
-  }
-
-  private points(weapon: string, skill: string): number {
-    return pointsAt(this.build(weapon), skill, this.level(weapon));
-  }
-
-  /** 계열 줄 A·B, 공용 패시브, 기본 스킬(변형), 고른 계열의 액티브(변형)·보조 */
-  private lines(weapon: string): Line[] {
-    const br = this.branch(weapon), order = (id: string) => ORDER.indexOf(branchOf(id));
-    const nodes = treeNodes(weaponDef(weapon)).filter((id) => [br, 'base', 'common'].includes(branchOf(id)))
-      .map((skill, i) => ({ skill, i }))
-      .sort((a, b) => order(a.skill) - order(b.skill) || Number(!!PASSIVES[a.skill]) - Number(!!PASSIVES[b.skill]) || a.i - b.i);
+  get sections(): SkillSource['sections'] {
+    const w = weaponDef(this.weapon), br = this.branch, name = this.branches?.[br].name ?? br, byLv = (a: string, b: string) => unlockLevelOf(a) - unlockLevelOf(b);
+    if (this.view === 'act') {
+      return [
+        { label: '기본 스킬', color: SK.key, ids: [...w.baseSkills] },
+        { label: `${name} 액티브`, color: this.branchColor(br), ids: treeSkills(w).filter((id) => branchOf(id) === br) },
+      ];
+    }
+    const pv = weaponPassives(w);
     return [
-      ...(weaponDef(weapon).branches ? BRANCHES.map((branch) => ({ branch })) : []),
-      ...nodes.flatMap(({ skill }) => [{ skill }, ...Object.keys(SKILLS[skill]?.variants ?? {}).map((variant) => ({ skill, variant }))]),
+      { label: '공용 패시브', color: SK.key, ids: pv.filter((id) => branchOf(id) === 'common').sort(byLv) },
+      { label: `${name} 보조`, color: this.branchColor(br), ids: pv.filter((id) => branchOf(id) === br).sort(byLv) },
     ];
   }
 
-  private slotOf(weapon: string, skill: string): number {
-    return this.mine(weapon)?.slots.indexOf(skill) ?? -1;
+  node(id: string): NodeInfo {
+    const s = SKILLS[id], pv = PASSIVES[id], br = branchOf(id), plain = br === 'base' || br === 'common';
+    const vars = s?.variants ?? {}, chosen = nodeOf(this.build, id).variant;
+    return {
+      id, name: s?.name ?? pv?.name ?? id, open: isOpen(id, this.level), lv: unlockLevelOf(id), points: pointsAt(this.build, id, this.level), max: maxPointsOf(id),
+      passive: !!pv, plain, color: plain ? SK.steel : this.branchColor(br as Branch), variant: chosen ? Object.keys(vars).indexOf(chosen) : -1,
+      variants: Object.values(vars).map((v) => ({ name: v.name, desc: v.desc })), desc: s?.desc ?? pv?.desc ?? '', ...(pv ? { pointDesc: pv.pointDesc } : {}),
+      slot: this.slots.indexOf(id),
+      kind: br === 'base' ? '기본 스킬' : br === 'common' ? '공용 패시브' : `${br} ${this.branches?.[br as Branch].name ?? ''} · ${pv ? '보조' : '액티브'}`,
+    };
   }
 
-  rows(weapon: string): PanelRow[] {
-    const lv = this.level(weapon), names = weaponDef(weapon).branches;
-    return this.lines(weapon).map((l) => {
-      if ('branch' in l) {
-        const on = this.branch(weapon) === l.branch;
-        return { label: `계열 ${l.branch} ${names?.[l.branch].name ?? ''}${on ? ' (선택)' : ''}`, dim: !on };
-      }
-      const { skill, variant } = l, p = this.points(weapon, skill), shut = isOpen(skill, lv) ? '' : ` (Lv ${unlockLevelOf(skill)})`;
-      const pv = PASSIVES[skill];
-      if (pv) return { label: `${pv.branch === 'common' ? '공용' : '보조'} ${pv.name}${shut}`, right: `${p}/${maxPointsOf(skill)}`, dim: p === 0 };
-      const s = SKILLS[skill]!;
-      if (!variant) {
-        // 앞 글자 = 장착한 슬롯 키 (장착 안 했으면 -) (오른쪽 칸은 도트 숫자 글꼴이라 한글 없음)
-        const slot = this.slotOf(weapon, skill), key = slot >= 0 ? SLOT_KEYS[slot] : '-';
-        return { label: `${key} ${s.name}${shut}`, right: `${p}/${TREE.maxPoints}`, dim: p === 0 };
-      }
-      const name = s.variants?.[variant]?.name ?? variant;
-      return { label: `· ${name}${nodeOf(this.build(weapon), skill).variant === variant ? ' (선택)' : ''}`, dim: p === 0 };
-    });
+  // ---- 열기·그리기 ----
+  show(): void {
+    this.tabIndex = Math.max(0, (MVP_WEAPONS as readonly string[]).indexOf(this.myWeapon()));
+    this.view = 'act';
+    this.sel = this.grid()[0]![0]!;
+    this.hover = this.hoverBtn = null;
+    this.resetArm = false;
+    this.dragging = null;
+    this.afterBranch = null;
   }
 
-  /** 고른 줄 설명 (패널 아래 상자): 계열 = 특징, 스킬 = 기본 효과, 패시브 = 지금 포인트 효과, 변형 = 무엇이 바뀌는지. 잠김은 첫 줄에 */
-  detail(weapon: string, sel: number): string | DetailLine[] {
-    const l = this.lines(weapon)[sel];
-    if (!l) return '';
-    if ('branch' in l) return weaponDef(weapon).branches?.[l.branch].desc ?? '';
-    const s = SKILLS[l.skill], pv = PASSIVES[l.skill], p = this.points(weapon, l.skill);
-    const desc = pv ? `${pv.desc.replace('\n', ' ')}${p ? ` (${pv.pointDesc[p - 1]})` : ''}` : l.variant ? (s?.variants?.[l.variant]?.desc ?? '') : (s?.desc ?? '');
-    if (isOpen(l.skill, this.level(weapon))) return desc;
-    return [{ text: `Lv ${unlockLevelOf(l.skill)}에 열림 (지금 Lv ${this.level(weapon)})` }, ...wrapKo(desc, PANEL.w - 2 * PANEL.pad, 1).map((text) => ({ text, dim: true }))];
-  }
-
-  footer(weapon: string, locked: boolean): string {
+  update(width: number, height: number): void {
     // 서버가 거절했으면 잠깐 사유
     if (this.conn.skillsSeq !== this.seenSeq) {
       this.seenSeq = this.conn.skillsSeq;
       const fail = this.conn.skills.fail;
-      if (fail) this.say(FAIL_TEXT[fail]);
+      if (fail) this.say(FAIL_TEXT[fail], SK.danger);
     }
-    if (Date.now() < this.noteUntil) return this.note;
-    if (locked) return FAIL_TEXT.busy;
-    const m = this.mine(weapon);
-    // 스킬 줄은 버튼이 4개(- + 장착 초기화)라 SP만
-    return `SP ${m ? m.sp - m.spent : 0}/${m?.sp ?? 0}`;
+    const now = Date.now();
+    if (this.note && now > this.noteUntil) this.note = null;
+    if (this.resetArm && now > this.armUntil) this.resetArm = false;
+    const ab = this.afterBranch;
+    if (ab && this.branch === ab.b) {
+      const row = this.sections[1]?.ids ?? [];
+      if (ab.at >= 0 && row.length) this.sel = row[Math.min(ab.at, row.length - 1)]!;
+      this.afterBranch = null;
+    }
+    if (!this.afterBranch && !this.grid().some((r) => r.includes(this.sel))) this.sel = this.grid()[0]![0]!;
+    const d = this.drag;
+    this.win.render(this, JSON.stringify([this.mine, this.tabIndex, this.view, this.sel, this.hover, this.hoverBtn, this.resetArm, d, this.note, this.busy]), width, height);
+    this.win.drawGhost(d ? this : null, this.pointer.x, this.pointer.y);
   }
 
-  buttons(weapon: string, sel: number, locked: boolean): PanelButton[] {
-    const l = this.lines(weapon)[sel], m = this.mine(weapon), reset = { id: 'skillReset', label: '초기화', disabled: locked || !m?.spent };
-    if (!l) return [reset];
-    if ('branch' in l) return [{ id: 'variant', label: '고르기', disabled: locked || this.branch(weapon) === l.branch }, reset];
-    const p = this.points(weapon, l.skill), open = isOpen(l.skill, this.level(weapon));
-    if (l.variant) {
-      const chosen = nodeOf(this.build(weapon), l.skill).variant === l.variant;
-      return [{ id: 'variant', label: chosen ? '선택 해제' : '고르기', disabled: locked || !open }, reset];
-    }
-    return [
-      { id: 'minus', label: '-', disabled: locked || p <= (SKILLS[l.skill] ? 1 : 0) },
-      { id: 'plus', label: '+', disabled: locked || !open || p >= maxPointsOf(l.skill) || !m || m.spent >= m.sp },
-      // 패시브는 슬롯에 들어가지 않는다
-      ...(SKILLS[l.skill] ? [{ id: 'equip', label: '장착', disabled: locked || !open }] : []),
-      reset,
-    ];
+  hide(): void {
+    this.dragging = null;
+    this.win.hide();
   }
 
-  /** minus·plus·equip·variant·skillReset (계열 줄 Enter(variant) = 계열 고르기, 스킬 줄 Enter(variant) = 장착, 변형 줄 ←→는 무시) */
-  act(id: string, weapon: string, sel: number, locked: boolean): void {
-    const l = this.lines(weapon)[sel];
-    if (locked || !l || !(MVP_WEAPONS as readonly string[]).includes(weapon)) return;
-    const w = weapon as (typeof MVP_WEAPONS)[number];
-    if (id === 'skillReset') return this.conn.send('skill', { weapon: w, op: 'reset' });
-    if ('branch' in l) {
-      if (id === 'variant' && this.branch(weapon) !== l.branch) this.conn.send('skill', { weapon: w, op: 'branch', branch: l.branch });
+  destroy(): void {
+    this.win.destroy();
+  }
+
+  // ---- 입력 ----
+  /** 키 (Esc는 IslandPanels가 닫음) */
+  onKey(code: string): void {
+    const mv = ({ ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] } as Record<string, [number, number]>)[code];
+    if (mv) return this.move(mv[0], mv[1]);
+    if (code === 'Tab') return this.setView(this.view === 'act' ? 'pas' : 'act');
+    if (code === 'KeyA' || code === 'KeyB') return this.setBranch(code === 'KeyA' ? 'A' : 'B');
+    if (code === 'Equal' || code === 'NumpadAdd') return this.points(this.sel, 1);
+    if (code === 'Minus' || code === 'NumpadSubtract') return this.points(this.sel, -1);
+    if (code === 'Digit1' || code === 'Digit2') return this.variant(Number(code.slice(-1)) - 1);
+    if (SLOT_KEYS.includes(code)) return this.equip(this.sel, SLOT_KEYS.indexOf(code));
+    if (code === 'KeyQ' || code === 'KeyE') return this.setTab((this.tabIndex + (code === 'KeyQ' ? -1 : 1) + MVP_WEAPONS.length) % MVP_WEAPONS.length);
+    if (code === 'KeyR') this.reset();
+  }
+
+  /** 누름. 패널 밖이면 false (닫기) */
+  onPointerDown(x: number, y: number): boolean {
+    this.pointer = { x, y };
+    const h = this.win.hit(x, y);
+    if (!h) return false;
+    this.click(h, x, y);
+    return true;
+  }
+
+  onPointerMove(x: number, y: number): void {
+    this.pointer = { x, y };
+    const h = this.win.hit(x, y), d = this.dragging;
+    this.hover = h?.kind === 'cell' ? h.id : null;
+    this.hoverBtn = !h ? null : h.kind === 'btn' ? h.b : h.kind === 'branch' ? `br${h.b}` : h.kind === 'view' ? `v${h.v}` : h.kind === 'var' ? `var${h.i}` : null;
+    if (d && !d.moved && Math.abs(x - d.sx) + Math.abs(y - d.sy) > 3) d.moved = true;
+  }
+
+  onPointerUp(x: number, y: number): void {
+    const d = this.dragging;
+    this.dragging = null;
+    if (!d?.moved) return;
+    const h = this.win.hit(x, y);
+    if (h?.kind === 'slot') this.equip(d.id, h.k);
+  }
+
+  private click(h: SkillHit, x: number, y: number): void {
+    if (h.kind === 'tab') this.setTab(h.i);
+    else if (h.kind === 'branch') this.setBranch(h.b);
+    else if (h.kind === 'view') this.setView(h.v);
+    else if (h.kind === 'cell') {
+      this.sel = h.id;
+      if (SKILLS[h.id] && isOpen(h.id, this.level)) this.dragging = { id: h.id, from: -1, sx: x, sy: y, moved: false };
+    } else if (h.kind === 'slot') {
+      const id = this.slots[h.k];
+      if (!id) return;
+      this.view = 'act';
+      this.sel = id;
+      this.dragging = { id, from: h.k, sx: x, sy: y, moved: false };
+    } else if (h.kind === 'btn') {
+      if (h.b === 'reset') this.reset();
+      else this.points(this.sel, h.b === 'plus' ? 1 : -1);
+    } else if (h.kind === 'var') this.variant(h.i);
+  }
+
+  /** 키보드 격자: 위 줄 = 기본·공용, 아래 줄 = 고른 계열 */
+  private grid(): string[][] {
+    return this.sections.map((s) => s.ids).filter((r) => r.length);
+  }
+
+  private move(dx: number, dy: number): void {
+    const G = this.grid();
+    let ry = Math.max(0, G.findIndex((r) => r.includes(this.sel)));
+    let rx = Math.max(0, G[ry]!.indexOf(this.sel));
+    if (dy) {
+      const ny = Math.max(0, Math.min(G.length - 1, ry + dy));
+      rx = Math.round(rx * (G[ny]!.length - 1) / Math.max(1, G[ry]!.length - 1));
+      ry = ny;
+    } else rx += dx;
+    this.sel = G[ry]![Math.max(0, Math.min(G[ry]!.length - 1, rx))]!;
+    this.hover = null;
+  }
+
+  private setTab(i: number): void {
+    this.tabIndex = i;
+    this.afterBranch = null;
+    this.view = 'act';
+    this.sel = this.grid()[0]![0]!;
+  }
+
+  private setView(v: SkillView): void {
+    if (this.view === v) return;
+    this.view = v;
+    this.sel = this.grid()[0]![0]!;
+  }
+
+  private loadout(): Loadout {
+    return { level: this.level, branch: this.branch, slots: this.slots };
+  }
+
+  /** 막혔으면 사유를 보여 주고 true */
+  private blocked(fail: NodeFail | 'busy' | null): boolean {
+    if (!fail) return false;
+    this.say(FAIL_TEXT[fail], SK.danger);
+    return true;
+  }
+
+  private setBranch(b: Branch): void {
+    if (!this.branches || b === this.branch || this.blocked(this.busy ? 'busy' : null)) return;
+    // 같은 자리 칸을 계속 고름
+    const at = this.sections[1]?.ids.indexOf(this.sel) ?? -1;
+    this.conn.send('skill', { weapon: this.weapon, op: 'branch', branch: b });
+    this.say(`${this.branches[b].name} 계열로 바꿨습니다`, SK.coin);
+    this.afterBranch = { b, at };
+  }
+
+  private points(id: string, d: number): void {
+    const n = this.node(id), points = n.points + d, variant = nodeOf(this.build, id).variant;
+    if (this.blocked(this.busy ? 'busy' : null)) return;
+    const node = { points, ...(variant ? { variant } : {}) };
+    if (this.blocked(checkNode(weaponDef(this.weapon), this.build, id, node, this.sp, this.loadout()))) return;
+    this.conn.send('skill', { weapon: this.weapon, op: 'set', skillId: id, ...node });
+  }
+
+  private variant(i: number): void {
+    const id = this.sel, n = this.node(id), key = Object.keys(SKILLS[id]?.variants ?? {})[i];
+    if (!key || this.blocked(this.busy ? 'busy' : !n.open ? 'locked' : null)) return;
+    const variant = n.variant === i ? undefined : key, node = { points: n.points, ...(variant ? { variant } : {}) };
+    if (this.blocked(checkNode(weaponDef(this.weapon), this.build, id, node, this.sp, this.loadout()))) return;
+    this.conn.send('skill', { weapon: this.weapon, op: 'set', skillId: id, ...node });
+  }
+
+  private equip(id: string, slot: number): void {
+    if (this.blocked(this.busy ? 'busy' : checkEquip(weaponDef(this.weapon), this.loadout(), id, slot))) return;
+    if (this.slots[slot] !== id) this.conn.send('skill', { weapon: this.weapon, op: 'equip', skillId: id, slot });
+  }
+
+  private reset(): void {
+    if (this.blocked(this.busy ? 'busy' : null)) return;
+    if (!this.resetArm) {
+      this.resetArm = true;
+      this.armUntil = Date.now() + NOTE_MS;
       return;
     }
-    const p = this.points(weapon, l.skill), n = nodeOf(this.build(weapon), l.skill);
-    if (!isOpen(l.skill, this.level(weapon))) return;
-    if (l.variant) {
-      if (id !== 'variant') return;
-      const variant = n.variant === l.variant ? undefined : l.variant;
-      return this.conn.send('skill', { weapon: w, op: 'set', skillId: l.skill, points: p, ...(variant ? { variant } : {}) });
-    }
-    if (id === 'equip' || id === 'variant') {
-      if (!SKILLS[l.skill]) return;
-      // 장착돼 있으면 다음 칸, 아니면 첫 빈칸(없으면 U)
-      const slots = this.mine(weapon)?.slots ?? [], cur = slots.indexOf(l.skill);
-      const slot = cur >= 0 ? (cur + 1) % SLOT_COUNT : Math.max(0, slots.indexOf(''));
-      return this.conn.send('skill', { weapon: w, op: 'equip', skillId: l.skill, slot });
-    }
-    const points = id === 'plus' ? p + 1 : id === 'minus' ? p - 1 : p;
-    if (points === p || points < (SKILLS[l.skill] ? 1 : 0) || points > maxPointsOf(l.skill)) return;
-    this.conn.send('skill', { weapon: w, op: 'set', skillId: l.skill, points, ...(n.variant ? { variant: n.variant } : {}) });
+    this.resetArm = false;
+    this.conn.send('skill', { weapon: this.weapon, op: 'reset' });
+    this.say('포인트·변형을 초기화했습니다', SK.coin);
   }
 
-  private say(text: string): void {
-    this.note = text;
+  private say(text: string, color: string): void {
+    this.note = { text, color };
     this.noteUntil = Date.now() + NOTE_MS;
   }
 }

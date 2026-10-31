@@ -1,20 +1,20 @@
-// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·장식·물약·재료) / 스킬(무기별 탭) / 게시판(기록·메모·주민)
-// 키: ↑↓ 고르기, ←→ 수량(스킬 창은 포인트), Q·E·Tab 탭, Enter 사기·장착·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
+// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·장식·물약·재료) / 게시판(기록·메모·주민) / 우물. 스킬 창(K)은 전용 창 (islandSkills.ts)
+// 키: ↑↓ 고르기, ←→ 수량, Q·E·Tab 탭, Enter 사기·장착·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
 import type Phaser from 'phaser';
 import { facilityName, ISLAND, ITEMS, MVP_WEAPONS, NET, WEAPONS } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
 import { moneyLines } from './islandBadges';
 import { ResidentsTab } from './islandResidents';
-import { SkillsTab } from './islandSkills';
+import { SkillPanel } from './islandSkills';
 
 export type PanelKind = 'shop' | 'bag' | 'skill' | 'board' | 'well';
 
 const TABS: Record<PanelKind, { label: string; disabled?: boolean }[]> = {
   shop: [{ label: '물약' }, { label: '장식' }, { label: '의상', disabled: true }],
   bag: [{ label: '장비' }, { label: '장식' }, { label: '물약' }, { label: '재료' }],
-  // 무기별 스킬 (처음 열면 장착한 무기 탭)
-  skill: MVP_WEAPONS.map((id) => ({ label: WEAPONS[id]?.name ?? id })),
+  // 스킬 창은 전용 창 (무기 탭도 그 안에)
+  skill: [],
   board: [{ label: '기록' }, { label: '메모' }, { label: '주민' }],
   // 층 선택 (해금된 층만, island.json well.floors)
   well: ISLAND.well.floors.map((f) => ({ label: `${f.replace(/\D/g, '')}층` })),
@@ -53,13 +53,13 @@ export class IslandPanels {
   private confirm = false;
   private panel: ListPanel;
   private residents: ResidentsTab;
-  private skills: SkillsTab;
+  private skills: SkillPanel;
 
   /** writeMemo = 메모 입력창 열기 (DOM, Scene이 띄움) */
   constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private writeMemo: () => void) {
     this.panel = new ListPanel(scene, depth);
     this.residents = new ResidentsTab(conn);
-    this.skills = new SkillsTab(conn);
+    this.skills = new SkillPanel(scene, conn, depth, () => this.weaponLocked(), () => this.myWeapon());
     // 섬 주인이면 기다리는 신청 수 (M 버튼 이름표)
     this.residents.refresh();
   }
@@ -81,7 +81,7 @@ export class IslandPanels {
     this.qty = 1;
     this.confirm = false;
     if (kind === 'board') this.conn.send('board', {});
-    if (kind === 'skill') this.tab = Math.max(0, (MVP_WEAPONS as readonly string[]).indexOf(this.myWeapon()));
+    if (kind === 'skill') this.skills.show();
   }
 
   private setTab(t: number): void {
@@ -102,11 +102,6 @@ export class IslandPanels {
     return this.open === 'skill';
   }
 
-  /** 스킬 창에서 보고 있는 무기 탭 */
-  private skillWeapon(): string {
-    return MVP_WEAPONS[this.tab] ?? this.myWeapon();
-  }
-
   private myWeapon(): string {
     return this.conn.residents.latest?.items.get(this.conn.userId)?.weapon || 'greatsword';
   }
@@ -124,10 +119,12 @@ export class IslandPanels {
   close(): void {
     this.open = null;
     this.panel.hide();
+    this.skills.hide();
   }
 
   destroy(): void {
     this.panel.destroy();
+    this.skills.destroy();
   }
 
   /** 지금 탭의 줄과 줄마다의 품목 id */
@@ -149,10 +146,6 @@ export class IslandPanels {
       // 장비: MVP 무기는 모두 가지고 있음. 고른 무기 = 주민 상태 weapon (users.weapon)
       const cur = this.myWeapon();
       return { ids: [...MVP_WEAPONS], rows: MVP_WEAPONS.map((id) => ({ icon: { kind: 'weapon' as const, weapon: id }, label: id === cur ? `${weaponName(id)} (장착 중)` : weaponName(id) })) };
-    }
-    if (this.onSkills()) {
-      const rows = this.skills.rows(this.skillWeapon());
-      return { ids: rows.map(() => ''), rows };
     }
     if (this.open === 'bag') {
       const inv = c.inventory, src = [ITEMS.decorations, ITEMS.consumables, ITEMS.materials][this.tab - DECO_TAB]!;
@@ -204,9 +197,6 @@ export class IslandPanels {
       const id = ids[this.sel], locked = this.weaponLocked();
       footer = locked ? '출발 카운트다운 중에는 못 바꿉니다' : `${weaponName(this.myWeapon())} · LV ${c.me.level}`;
       buttons = [{ id: 'equip', label: '장착', disabled: !id || id === this.myWeapon() || locked }];
-    } else if (this.onSkills()) {
-      footer = this.skills.footer(this.skillWeapon(), this.weaponLocked());
-      buttons = this.skills.buttons(this.skillWeapon(), this.sel, this.weaponLocked());
     } else if (this.onResidents()) {
       footer = this.residents.footer();
       buttons = this.residents.buttons(this.sel);
@@ -215,14 +205,13 @@ export class IslandPanels {
     return {
       title: TITLE[kind], tabs: TABS[kind], tab: this.tab, rows, sel: (kind === 'board' && !this.onResidents()) || kind === 'well' ? -1 : Math.min(this.sel, rows.length - 1), footer, buttons,
       ...(kind === 'board' && !this.onResidents() ? { scrollTop: this.sel } : {}),
-      ...(this.onSkills() ? { detail: this.skills.detail(this.skillWeapon(), this.sel) } : kind === 'bag' ? { detail: moneyLines(this.conn) } : {}),
+      ...(kind === 'bag' ? { detail: moneyLines(this.conn) } : {}),
       empty: this.onResidents() ? '불러오는 중…' : kind === 'board' ? (c.board ? '아직 없습니다' : '불러오는 중…') : kind === 'well' ? '대기 중인 주민이 없습니다' : '비어 있습니다',
     };
   }
 
   private act(id: string): void {
     if (this.onResidents()) return this.residents.act(id, this.sel);
-    if (this.onSkills()) return this.skills.act(id, this.skillWeapon(), this.sel, this.weaponLocked());
     const ids = this.rows().ids, item = ids[this.sel];
     if (id === 'minus') this.qty = Math.max(1, this.qty - 1);
     else if (id === 'plus') this.qty = Math.min(MAX_QTY, this.qty + 1);
@@ -242,6 +231,7 @@ export class IslandPanels {
   /** 키 (패널이 열려 있으면 모두 여기서) */
   onKey(code: string): void {
     if (!this.open) return;
+    if (this.onSkills()) return code === 'Escape' ? this.close() : this.skills.onKey(code);
     const tabs = TABS[this.open], n = this.rows().rows.length;
     const nextTab = (d: number) => {
       let t = this.tab;
@@ -258,12 +248,16 @@ export class IslandPanels {
     else if (code === 'ArrowRight' || code === 'KeyD') this.act('plus');
     else if (code === 'KeyQ') nextTab(-1);
     else if (code === 'KeyE' || code === 'Tab') nextTab(1);
-    else if (code === 'Enter' || code === 'Space') this.act(this.open === 'board' ? (this.tab === 1 ? 'memo' : this.tab === RESIDENTS_TAB ? 'accept' : '') : this.open === 'shop' ? 'buy' : this.onEquip() ? 'equip' : this.onSkills() ? 'variant' : this.open === 'well' ? this.wellKey() : '');
+    else if (code === 'Enter' || code === 'Space') this.act(this.open === 'board' ? (this.tab === 1 ? 'memo' : this.tab === RESIDENTS_TAB ? 'accept' : '') : this.open === 'shop' ? 'buy' : this.onEquip() ? 'equip' : this.open === 'well' ? this.wellKey() : '');
   }
 
   /** 마우스 (화면 좌표). 패널이 열려 있으면 true */
   onPointer(x: number, y: number): boolean {
     if (!this.open) return false;
+    if (this.onSkills()) {
+      if (!this.skills.onPointerDown(x, y)) this.close();
+      return true;
+    }
     const h = this.panel.hit(x, y);
     if (h.kind === 'outside') this.close();
     else if (h.kind === 'tab') this.setTab(h.i);
@@ -279,8 +273,19 @@ export class IslandPanels {
     return w.members[0] === me && !w.departAt ? 'depart' : '';
   }
 
-  update(width: number, fieldH: number): void {
-    if (this.open) this.panel.render(this.view(), width, fieldH);
+  /** 마우스 이동·떼기 (스킬 창 마우스 올림·끌어다 장착) */
+  onPointerMove(x: number, y: number): void {
+    if (this.onSkills()) this.skills.onPointerMove(x, y);
+  }
+
+  onPointerUp(x: number, y: number): void {
+    if (this.onSkills()) this.skills.onPointerUp(x, y);
+  }
+
+  /** fieldH = 아래 띠 위까지 (목록 패널), height = 화면 전체 (스킬 창은 아래 띠를 덮음) */
+  update(width: number, fieldH: number, height: number): void {
+    if (this.onSkills()) this.skills.update(width, height);
+    else if (this.open) this.panel.render(this.view(), width, fieldH);
   }
 
   /** 메모 글자 수 (입력창 maxLength) */
