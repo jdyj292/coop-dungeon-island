@@ -23,6 +23,9 @@ export class PlayerPrivate extends Schema {
   @type('string') reinputId = '';
   @type('uint8') reinputLeft = 0;
   @type('float64') reinputEnd = 0;
+  /** 가속 (가속장): 끝나는 서버 시각(ms, 없으면 0)과 쿨이 도는 배율 */
+  @type('float64') hasteEnd = 0;
+  @type('float32') hasteMul = 1;
 }
 
 export class PlayerState extends Schema {
@@ -50,11 +53,19 @@ export class PlayerState extends Schema {
   /** 진행 중 행동 id와 시작 서버 시각 (구간은 클라이언트가 데이터로 계산) */
   @type('string') actionId = '';
   @type('float64') actionStart = 0;
+  /** 대검 충전: 이 행동에서 충전한 ms (충전 중이면 지금까지, 끝났으면 최종, 없으면 0)·충전 중 비율 1~255 (아니면 0). 충전 포즈·모이는 빛 (skills.md 2장) */
+  @type('uint16') chargeMs = 0;
+  @type('uint8') chargeLv = 0;
   @type('uint16') hp = 0;
   @type('uint16') maxHp = 0;
   @type('uint8') ultGauge = 0;
   /** 쓰러진 동안 동료 부활 진행도 0~255 (M3) */
   @type('uint8') reviveProgress = 0;
+  /** 가속장 가속 중·역장 보호막이 있음 (모두에게 보이는 표시용) */
+  @type('boolean') hasted = false;
+  @type('boolean') shielded = false;
+  /** 전장 장악 둘레 반지름 px (0 = 없음, 발밑 고리 표시용) */
+  @type('uint8') aura = 0;
   /** 서버가 처리한 마지막 입력 번호 (예측 보정용, network.md 7장) */
   @type('uint32') lastInputSeq = 0;
   @filter(function (this: PlayerState, client: Client) {
@@ -84,6 +95,8 @@ export class MonsterState extends Schema {
   /** 보조 노드 표식 (연소·중압, 표시용. 배율은 서버만 안다) */
   @type('boolean') burning = false;
   @type('boolean') pressed = false;
+  /** 검흔 표식 (표시용) */
+  @type('boolean') scarred = false;
 }
 
 export class ZoneState extends Schema {

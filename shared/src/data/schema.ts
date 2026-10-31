@@ -33,6 +33,22 @@ const projectile = z.object({
   // 플레이어: 한 번에 여러 줄 (깊이 오프셋 목록), 연발 (첫 발 뒤 count−1발을 interval마다)
   lanes: z.array(z.number()).min(1).optional(),
   burst: z.object({ count: z.number().int().min(2), interval: pos }).strict().optional(),
+  // 몬스터 (이끼곰 가시, dungeon.md 5장): 조준 방향을 가운데로 angle도 부채꼴 안에 count발을 한 번에
+  fan: z.object({ count: z.number().int().min(2), angle: pos }).strict().optional(),
+  // 플레이어 (SK-4 1차b, data.md 3장): back = 사거리 끝에서 던진 사람에게 돌아오는 왕복 횟수, rehit = 관통하며 같은 적을 이 초마다 다시,
+  // blast = 끝나는 자리(처음 닿은 적·사거리 끝·벽) 원형 판정 (관통이 아니면 닿은 적에게 직접 피해 없이 폭발만)
+  back: z.number().int().positive().optional(),
+  rehit: pos.optional(),
+  blast: z.object({
+    radius: pos, coef: z.number().nonnegative().optional(),
+    // 같은 자리에 여러 번 (꽂기 장판), 폭발 뒤 작은 투사체 (분열: 각 깊이 줄에서 앞뒤로 한 발씩)
+    repeat: z.object({ count: z.number().int().positive(), interval: pos }).strict().optional(),
+    shards: z.object({ coef: z.number().nonnegative(), speed: pos, range: pos, radius: pos, lanes: z.array(z.number()).min(1) }).strict().optional(),
+  }).strict().optional(),
+  // 플레이어 (SK-7 십자 검기, data.md 3장): aims = 나가는 방향 목록 [앞, 깊이] (바라보는 쪽 기준, [1,0] 앞·[-1,0] 뒤·[0,-1] 위·[0,1] 아래),
+  // meet = 여러 줄(lanes)이 앞 at px 가운데 줄 한 점으로 비스듬히 모여 엇갈리고, 엇갈리는 순간 그 자리 원형 폭발 (반지름 radius, coef)
+  aims: z.array(point).min(1).optional(),
+  meet: z.object({ at: pos, coef: z.number().nonnegative(), radius: pos }).strict().optional(),
 }).strict();
 
 // hold = 공중 대상 체공 유지 (time 동안 중력 없음, combat.md 3장)
@@ -64,7 +80,7 @@ export const actionFields = {
   hits: z.object({ count: z.number().int().positive(), interval: pos }).strict().optional(),
   move: move.optional(),
   status: z.object({ type: statusType, time: pos, amount: z.number().optional() }).strict().optional(),
-  poses: z.object({ windup: z.string(), active: z.string(), recovery: z.string() }).partial().strict().optional(),
+  poses: z.object({ windup: z.string(), active: z.string(), recovery: z.string(), charge: z.string() }).partial().strict().optional(),
   fx: z.object({ grade: z.enum(GRADES), shake: z.enum(['vertical', 'horizontal']).optional() }).strict().optional(),
   sfx: z.object({ windup: z.string(), active: z.string(), hit: z.string() }).partial().strict().optional(),
   telegraph: z.object({
@@ -73,8 +89,8 @@ export const actionFields = {
   cooldown: sec.optional(),
 };
 
-type Shape = { hitbox?: unknown; area?: unknown; projectile?: unknown; zone?: unknown; damage?: number };
-const SHAPES = ['hitbox', 'area', 'projectile', 'zone'] as const;
+type Shape = { hitbox?: unknown; area?: unknown; projectile?: unknown; zone?: unknown; chain?: unknown; damage?: number };
+const SHAPES = ['hitbox', 'area', 'projectile', 'zone', 'chain'] as const;
 function oneShape(a: Shape, ctx: z.RefinementCtx): void {
   const n = SHAPES.filter((k) => a[k] !== undefined).length;
   if (n > 1) ctx.addIssue({ code: 'custom', message: `판정은 ${SHAPES.join(' / ')} 중 하나만` });
@@ -126,6 +142,26 @@ export const skill = playerActionObj.extend({
   // 원소 (보조 노드 연소 등이 본다). lasting = 장판·지속 스킬 (원소 친화가 지속시간·반복 횟수를 늘림)
   element: z.enum(['fire', 'ice']).optional(),
   lasting: z.boolean().optional(),
+  // 연쇄 (번개 연쇄): 앞쪽 range 안 가장 가까운 적부터, jump 안의 아직 안 맞은 가장 가까운 적으로 interval마다 최대 count마리
+  chain: z.object({ range: pos, jump: pos, count: z.number().int().positive(), interval: sec }).strict().optional(),
+  // 검흔 (검흔 베기): 맞은 적에 time초 표식, 그 적을 내 투사체가 맞히면 터지며 coef. hop = 터지면 range 안 가장 가까운 적에게 옮겨감 (최대 count번)
+  mark: z.object({
+    time: pos, coef: z.number().nonnegative(),
+    hop: z.object({ range: pos, count: z.number().int().positive() }).strict().optional(),
+  }).strict().optional(),
+  // 아군 버프 (가속장): 시전할 때 나와 판정 범위 안 동료의 스킬 쿨이 time초 동안 cooldownMul배 빨리 돈다
+  allyBuff: z.object({ cooldownMul: pos, time: pos }).strict().optional(),
+  // 계열 3단계 (SK-7, skills.md 2장)
+  // 충전 규칙 (대검 충전, charge.ts): 최대 충전 시간 × timeMul, 최대 보너스 × bonusMul, off = 충전 없음 (파쇄참 3단 충전·즉발)
+  chargeRule: z.object({ timeMul: pos.optional(), bonusMul: pos.optional(), off: z.literal(true).optional() }).strict().optional(),
+  // 슈퍼아머 대상도 이 초만큼 경직 (파쇄참)
+  armorBreak: sec.optional(),
+  // 땅에 있는 적을 맞히면 바로 다운 (다시 맞으면 다운 시간 처음부터, 대지붕괴)
+  keepDown: z.literal(true).optional(),
+  // 반복이 끝날 때 마지막 판정 자리에서 한 번 더 coef. launch = 그 판정이 띄움 (대지붕괴 솟구침, 보조 구슬 확장도 같은 필드)
+  repeatEnd: z.object({ coef: z.number().nonnegative(), launch: z.literal(true).optional() }).strict().optional(),
+  // 맞힌 적마다 delay초 뒤 그 적에게 한 번 더 coef (어디로 움직였든, 일섬 반환)
+  trail: z.object({ delay: pos, coef: z.number().nonnegative() }).strict().optional(),
 }).strict().superRefine(oneShape);
 
 /** 숫자 하나 또는 포인트별 값 배열 (길이 = combat.json skillTree.maxPoints, crossCheck) */
@@ -145,6 +181,10 @@ export const passive = z.object({
   effect: z.object({
     chargeSpeedMul: perPoint(pos).optional(),
     chargeTakenMul: perPoint(pos).optional(),
+    /** 거인의 힘: 대검 충전 최대 보너스 더하기 (weapons.json trait bonusMax 0.5 + 이 값) */
+    chargeBonusAdd: perPoint(pos).optional(),
+    /** 전장 장악: 내 둘레 radius(px) 안 적 감속 amount (매 틱 짧게 다시 걺, 감속 규칙은 status slow와 같음) */
+    aura: z.object({ radius: pos, amount: perPoint(pos) }).strict().optional(),
     skillArmor: z.literal(true).optional(),
     /** 스킬 시전 중 받는 피해 배율 (굳건함 2·3포인트) */
     skillTakenMul: perPoint(pos).optional(),
@@ -160,6 +200,28 @@ export const passive = z.object({
     quickRise: z.literal(true).optional(),
     /** 기상 회피로 시작한 회피의 쿨 더하기 (기상 회피 2·3포인트) */
     quickRiseCooldownAdd: perPoint(z.number()).optional(),
+    // 계열 2단계 보조 (SK-4 3차, skills.md 2·3장)
+    /** 여진: 내 down 판정이 맞힌 적 자리에 반경 radius 충격파 coef */
+    aftershock: z.object({ coef: perPoint(z.number().nonnegative()), radius: pos }).strict().optional(),
+    /** 짓밟기: 다운 대상 피해 배율 (기본 combat.json downDamageMul 대신) */
+    downDamage: perPoint(pos).optional(),
+    /** 올려 검기: skill이 active일 때 앞으로 검기 투사체 (coef, 관통) */
+    launchWave: z.object({ skill: z.string(), coef: perPoint(z.number().nonnegative()), speed: pos, range: pos, radius: pos }).strict().optional(),
+    /** 검기 순환: 스킬 투사체가 적중하면 다른 스킬 쿨 −sec초 (스킬 한 번에 한 번) */
+    cycle: z.object({ sec: perPoint(pos) }).strict().optional(),
+    /** 냉기 강화: 빙결(status freeze) 시간 더하기 */
+    freezeAdd: perPoint(sec).optional(),
+    /** 과열: 스킬 적중 뒤 time초 동안 평타 투사체가 delay초 뒤 한 발 더 */
+    overheat: z.object({ time: perPoint(pos), delay: pos }).strict().optional(),
+    /** 구슬 확장: skill의 판정 반지름 × radiusMul, 반복이 끝날 때 그 자리에서 한 번 더 coef */
+    repeatEnd: z.object({ skill: z.string(), radiusMul: perPoint(pos), coef: perPoint(z.number().nonnegative()) }).strict().optional(),
+    /** 역장: 스킬을 쓰면 나와 radius 안 동료에게 피해 1회 무효 보호막 time초 (내부 쿨 cooldown초) */
+    aegis: z.object({ radius: pos, time: pos, cooldown: perPoint(pos) }).strict().optional(),
+    // 계열 3단계 보조 (SK-7, skills.md 2장)
+    /** 잔상: 근접(hitbox)·투사체 스킬이 delay초 뒤 같은 자리·방향에서 한 번 더 (계수 × mul, 후속·반복·표식 없이) */
+    phantom: z.object({ delay: pos, mul: perPoint(pos) }).strict().optional(),
+    /** 검의 춤: 스킬 캔슬로 이은 스킬 계수 × mul (스킬 캔슬을 배워야 이을 수 있음) */
+    dance: z.object({ mul: perPoint(pos) }).strict().optional(),
   }).strict(),
 }).strict();
 
@@ -167,7 +229,8 @@ export const monsterAttack = z.object({
   ...actionFields,
   damage: z.number().nonnegative(),
   onWallHit: z.union([
-    z.object({ selfStun: pos }).strict(), z.object({ groggy: z.literal(true) }).strict(),
+    // bounce = 벽에 이 횟수만큼은 튕겨 되돌아 구르고, 그다음 벽에서 그로기 (이끼곰 3단계 구르기)
+    z.object({ selfStun: pos }).strict(), z.object({ groggy: z.literal(true), bounce: z.number().int().positive().optional() }).strict(),
   ]).optional(),
 }).strict().superRefine(oneShape);
 
@@ -206,7 +269,8 @@ const pattern = z.discriminatedUnion('type', [
   }).strict(),
   z.object({
     type: z.literal('loop'),
-    phases: z.array(z.object({ until: z.string().optional(), sequence: z.array(z.string()).min(1) }).strict()).min(1),
+    // idleBetween: 이 단계의 공격 사이 쉬는 시간 (없으면 ai.idleBetween, 분노 단계)
+    phases: z.array(z.object({ until: z.string().optional(), sequence: z.array(z.string()).min(1), idleBetween: range.optional() }).strict()).min(1),
   }).strict(),
 ]);
 
@@ -263,7 +327,10 @@ const stun = z.object({ time: sec, push: sec }).strict();
 export const combat = z.object({
   _note: z.string().optional(),
   baseAtk: pos, atkPerLevel: sec, gravity: pos, launchVz: pos, airHitVz: sec, airGravityMul: pos, maxAirHits: z.number().int().positive(),
-  bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec, wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
+  bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec,
+  /** 다운 상태 대상 피해 배율 (balance.md 1장 상황 보정, 보조 짓밟기가 올림) */
+  downDamageMul: pos,
+  wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
   /** 스킬 포인트 (skills.md 1장, balance.md 1장): 노드 최대 포인트(액티브·패시브), 액티브 포인트별 레벨 배율, 재입력 받는 시간 (스킬이 끝난 뒤) */
   skillTree: z.object({ maxPoints: z.number().int().positive(), levelMul: z.array(pos).min(1), reinputWindow: pos }).strict(),
   stun: z.object({ light: stun, medium: stun, heavy: stun }).strict(),

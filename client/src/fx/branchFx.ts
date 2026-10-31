@@ -4,7 +4,7 @@ import type { ActionDef } from '@game/shared';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
 import { type Effect } from './layer';
-import { clamp01, hash, life, px } from './spellDraw';
+import { clamp01, ellipseDots, hash, life, px } from './spellDraw';
 
 const B = fx.branch;
 
@@ -25,6 +25,8 @@ export function whirl(foot: Foot, def: ActionDef): Effect {
       const { sx, sy, facing } = foot(), e = (1 - k) * sec, cy = sy + W.y;
       const a = e > def.phases.active ? k * sec / W.tail : 1;
       const rot = e * W.spin * facing;
+      // 바닥: 판정 반지름을 도는 점선 고리 (칼끝이 땅을 쓸고 지나간 자리)
+      ellipseDots(g, sx, sy, r * 1.1, e * W.groundSpin * facing, edge, a * 0.8, W.groundEvery);
       for (let n = 0; n < W.arcs; n++) {
         const head = rot + (n / W.arcs) * Math.PI * 2;
         const steps = Math.round(r * W.span);
@@ -63,7 +65,22 @@ export function shoulder(foot: Foot, def: ActionDef): Effect {
         const l = Math.round(len! * (0.7 + 0.3 * hash(i + frame)) * (done ? a : 1));
         for (let d = 0; d < l; d++) px(g, sx + (S.back - d) * facing, sy + y!, d < 2 ? white : d < l * 0.6 ? gold : edge, a);
       });
-      if (done) return;
+      // 발밑 흙먼지 자국: 몸 뒤 바닥에 puffEvery px마다 (멀수록 어둡고 성김)
+      const dustL = colorInt('global.fx.dustLight'), dustD = colorInt('global.fx.dustDark');
+      for (let d = 4; d < 24; d += S.puffEvery) {
+        const f = d / 24, j = Math.round(hash(d + frame) * 2) - 1;
+        px(g, sx - d * facing, sy + j - 1, f < 0.5 ? dustL : dustD, a * (1 - f));
+      }
+      if (done) {
+        // 멈춘 순간 몸 앞 충격파: 세로로 긴 타원이 퍼지며 바둑판으로 사라짐
+        const t = clamp01((e - def.phases.active) / S.burstSec);
+        if (t >= 1) return;
+        const rr = 3 + S.burstR * t, cx = sx + S.front * facing, cy = sy + (S.top + S.bottom) / 2;
+        for (let q = -Math.PI / 2; q <= Math.PI / 2; q += 0.18) {
+          px(g, cx + Math.cos(q) * rr * 0.5 * facing, cy + Math.sin(q) * rr, t < 0.4 ? white : gold, 1 - t);
+        }
+        return;
+      }
       // 괄호: 위아래 끝이 뒤로 휘는 2px 호 (안쪽 흰, 바깥 금)
       const h = S.bottom - S.top, mid = (S.top + S.bottom) / 2;
       for (let y = S.top; y <= S.bottom; y++) {
@@ -101,9 +118,44 @@ export function drawSlash(sx: number, sy: number, facing: number, def: ActionDef
         px(g, x + facing, y + up * 2, edge, a);
         px(g, x + 2 * facing, y + up * 3, edge, a * 0.7);
       }
+      // 늦게 터지는 베기 자국: 줄을 따라 cuts개의 짧은 대각선이 차례로 번쩍임 (흰 → 금 → 바둑판)
+      for (let i = 0; i < D.cuts; i++) {
+        const t = (e - D.cutDelay - i * 0.03) / D.cutSec;
+        if (t < 0 || t >= 1) continue;
+        const cx = sx + Math.round((len * (i + 1)) / (D.cuts + 1)) * facing, grow = Math.min(1, t * 4), n = Math.round(D.cutLen * grow);
+        for (let j = -n; j <= n; j++) px(g, cx + Math.round(j * 0.6) * facing, y + j, Math.abs(j) < n * 0.5 && t < 0.5 ? white : gold, 1 - t);
+      }
       if (e < D.thickSec * 3) {
         const ex = sx + len * facing;
         px(g, ex + facing, y, white); px(g, ex, y - 1, white); px(g, ex, y + 1, white);
+      }
+    },
+  };
+}
+
+/**
+ * 회오리 검기: 판정 원 자리(x, y = 바닥)에서 솟는 회오리. 아래가 좁고 위가 넓은 층 rings개 위를 초승달이 돌고,
+ * 둘레 빛 점이 나선을 그리며 빨려 오른다. 마지막 fadeLast 비율은 바둑판으로 사라짐
+ */
+export function cyclone(x: number, y: number, radius: number, facing: number): Effect {
+  const C = B.cyclone, [white, gold, edge] = tones();
+  return {
+    ...life(C.sec),
+    draw(g, k) {
+      const e = (1 - k) * C.sec, a = clamp01(k / C.fadeLast), rise = clamp01(e / 0.08);
+      for (let i = 0; i < C.rings; i++) {
+        const f = i / (C.rings - 1), r = radius * (C.bottom + (1 - C.bottom) * f), cy = y - C.height * f * rise;
+        const head = e * C.spin * facing + i * 1.3, steps = Math.round(r * 2.2);
+        for (let j = 0; j <= steps; j++) {
+          const u = j / steps, q = head - u * 2.2 * facing;
+          const c = u < 0.2 ? white : u < 0.6 ? gold : edge;
+          px(g, x + Math.cos(q) * r, cy + Math.sin(q) * r * C.flat, c, a * (1.1 - u * 0.7));
+        }
+      }
+      for (let i = 0; i < C.motes; i++) {
+        const t = (e * 2.5 + hash(i)) % 1, q = e * C.spin * 0.7 * facing + (i / C.motes) * Math.PI * 2;
+        const r = radius * (1.2 - t * 0.6);
+        px(g, x + Math.cos(q) * r, y - C.height * t + Math.sin(q) * r * C.flat, t < 0.5 ? gold : white, a * (1 - t * 0.5));
       }
     },
   };

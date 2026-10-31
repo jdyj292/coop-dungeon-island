@@ -36,6 +36,9 @@ export interface SimPlayer {
   away: boolean;
   /** 스킬 노드 (skillTree.ts). 서버는 DB 값, 로컬은 개발 옵션 */
   skills: SkillBuild;
+  /** 스킬 시전 번호 (active마다 +1), 검기 순환으로 쿨을 줄인 마지막 시전 번호 (보조 노드, sim/echoes.ts) */
+  casts?: number;
+  cycled?: number;
 }
 
 /** pid = 그 사건의 플레이어 (hit은 공격자, playerHit·playerHurt는 맞은 사람) */

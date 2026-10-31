@@ -112,15 +112,15 @@ export function setUseDrafts(on: boolean): void {
 
 export const draftsOn = () => useDrafts;
 
-type MonsterDraft = { frames?: Record<string, unknown>; states?: Record<string, unknown> };
+type MonsterDraft = { materials?: Record<string, string>; frames?: Record<string, unknown>; states?: Record<string, unknown> };
 
-/** 초안 몬스터 프레임·상태를 승인 데이터 위에 겹친다 (승인 파일은 그대로) */
+/** 초안 몬스터 재질·프레임·상태를 승인 데이터 위에 겹친다 (승인 파일은 그대로). 재질은 새 글자 추가용 */
 export function withMonsterDrafts(base: Record<string, unknown>, drafts: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = { ...base };
   for (const [id, d] of Object.entries(withoutNotes(drafts)) as [string, MonsterDraft][]) {
-    const m = base[id] as { frames: Record<string, unknown>; states: Record<string, unknown> } | undefined;
+    const m = base[id] as { materials?: Record<string, string>; frames: Record<string, unknown>; states: Record<string, unknown> } | undefined;
     if (!m) continue;
-    out[id] = { ...m, frames: { ...m.frames, ...d.frames }, states: { ...m.states, ...d.states } };
+    out[id] = { ...m, ...(d.materials && { materials: { ...m.materials, ...d.materials } }), frames: { ...m.frames, ...d.frames }, states: { ...m.states, ...d.states } };
   }
   return out;
 }

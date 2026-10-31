@@ -59,11 +59,12 @@ export function perksOf(weapon: WeaponDef, build: Record<string, { points: numbe
 
 const defCache = new WeakMap<ActionDef, Map<string, ActionDef>>();
 
-/** 스킬 정의에 보조 노드 효과: 모든 스킬 슈퍼아머, 투사체 사거리, 장판·지속 스킬(lasting)의 상태 이상 시간·반복 횟수 */
+/** 스킬 정의에 보조 노드 효과: 모든 스킬 슈퍼아머, 투사체 사거리, 장판·지속 스킬(lasting)의 상태 이상 시간·반복 횟수, 빙결 시간(냉기 강화), 구슬 확장 */
 export function withPerks(def: ActionDef, perks: Perks): ActionDef {
-  const { skillArmor, projectileRangeMul: rm, lastingMul: lm } = perks;
-  const key = `${skillArmor ? 1 : ''}:${def.projectile ? (rm ?? '') : ''}:${def.lasting ? (lm ?? '') : ''}`;
-  if (key === '::') return def;
+  const { skillArmor, projectileRangeMul: rm, lastingMul: lm, freezeAdd: fa, repeatEnd: re } = perks;
+  const freeze = def.status?.type === 'freeze' ? (fa ?? '') : '', end = re?.skill === def.id ? `${re.radiusMul}/${re.coef}` : '';
+  const key = `${skillArmor ? 1 : ''}:${def.projectile ? (rm ?? '') : ''}:${def.lasting ? (lm ?? '') : ''}:${freeze}:${end}`;
+  if (key === '::::') return def;
   let byKey = defCache.get(def);
   if (!byKey) defCache.set(def, (byKey = new Map()));
   const hit = byKey.get(key);
@@ -74,6 +75,14 @@ export function withPerks(def: ActionDef, perks: Perks): ActionDef {
   if (lm && def.lasting) {
     if (def.repeat) out.repeat = { ...def.repeat, count: Math.round(def.repeat.count * lm) };
     if (def.status?.time) out.status = { ...def.status, time: def.status.time * lm };
+    if (def.allyBuff) out.allyBuff = { ...def.allyBuff, time: def.allyBuff.time * lm };
+  }
+  // 냉기 강화: 빙결 시간 더하기 (지속 배율 뒤)
+  if (freeze !== '' && out.status) out.status = { ...out.status, time: out.status.time + (fa as number) };
+  // 구슬 확장: 그 스킬의 판정 반지름 키우기, 반복이 끝날 때 한 번 더 (sim/echoes.ts)
+  if (end && re) {
+    if (out.area?.radius) out.area = { ...out.area, radius: out.area.radius * re.radiusMul };
+    out.repeatEnd = { coef: re.coef };
   }
   byKey.set(key, out);
   return out;

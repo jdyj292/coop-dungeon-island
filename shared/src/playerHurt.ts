@@ -51,6 +51,11 @@ export function isInvulnerable(p: PlayerState): boolean {
 /** 몬스터 공격 적중. 약·중 → 경직, 강 → 다운. 하던 행동은 끊긴다. pushDir = 밀려날 방향 (1 오른쪽, -1 왼쪽, 0 = 밀리지 않음) */
 export function hurtPlayer(p: PlayerState, damage: number, strength: Strength = 'light', pushDir = 0): HurtEvent[] {
   if (isInvulnerable(p)) return [];
+  // 역장 보호막: 피해 1회를 통째로 막고 사라짐 (반응도 없음)
+  if (p.shield && p.shield > 0) {
+    p.shield = 0;
+    return [];
+  }
   // 대검 충전 중: 슈퍼아머, 보조 노드 무거운 손이면 받는 피해 감소 (charge.ts). 스킬 시전 중: 굳건함 2·3포인트면 감소
   const run = p.fighter.run, charging = isCharging(run);
   const taken = (charging ? (p.perks?.chargeTakenMul ?? 1) : 1) * (run?.kind === 'skill' ? (p.perks?.skillTakenMul ?? 1) : 1);

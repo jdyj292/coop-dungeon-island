@@ -47,7 +47,10 @@ export function applyVariant(base: Record<string, unknown>, variant: Record<stri
     if (VARIANT_ONLY.includes(k)) continue;
     const b = out[k];
     if (v === null) delete out[k];
-    else if (typeof v === 'object' && !Array.isArray(v) && typeof b === 'object' && b && !Array.isArray(b)) out[k] = { ...b, ...v };
+    // 안쪽 null도 그 키를 지운다 (예: projectile.back: null)
+    else if (typeof v === 'object' && !Array.isArray(v) && typeof b === 'object' && b && !Array.isArray(b)) {
+      out[k] = Object.fromEntries(Object.entries({ ...b, ...v }).filter(([, x]) => x !== null));
+    }
     else out[k] = v;
   }
   return out;
@@ -138,6 +141,11 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
       else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) arrays(x, `${path}.${k}`);
     };
     arrays(p.effect, `${at}.effect`);
+    // 특정 스킬을 바꾸는 보조 (올려 검기·구슬 확장): 그 무기 스킬이어야 함
+    for (const [k, ref] of [['launchWave', p.effect.launchWave?.skill], ['repeatEnd', p.effect.repeatEnd?.skill]] as const) {
+      if (ref && d.skills[ref]?.weapon !== p.weapon) err(`${at}.effect.${k}.skill`, `'${ref}'는 이 무기 스킬이 아님`);
+    }
+    if (p.effect.repeatEnd && !d.skills[p.effect.repeatEnd.skill]?.repeat) err(`${at}.effect.repeatEnd.skill`, '반복(repeat) 스킬이 아님');
     const burn = p.effect.burn?.element;
     if (burn && !Object.values(d.skills).some((s) => s.weapon === p.weapon && s.element === burn)) warn(`${at}.effect.burn`, `'${burn}' 원소 스킬이 이 무기에 없음`);
   }

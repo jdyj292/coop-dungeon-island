@@ -80,7 +80,8 @@ export function monsterPose(data: SpriteData, m: Monster, v: MonsterView, clock:
   if (m.mode === 'groggy') return { frame: stateFrame(data, m, 'groggy') ?? idle, angle: 0 };
   if (v.hurt > 0) return { frame: hurtFrame(data, m, 'hurt'), angle: 0 };
   const ph = attackPhase(m);
-  if (ph && m.attack) return { frame: stateFrame(data, m, `${ph}:${m.attack.def.id}`) ?? idle, angle: 0 };
+  // poses: 그림을 다른 공격과 같이 쓰는 공격 (이끼곰 땅울림 = 앞발 프레임, data.md 1장)
+  if (ph && m.attack) return { frame: stateFrame(data, m, m.attack.def.poses?.[ph] ?? `${ph}:${m.attack.def.id}`) ?? idle, angle: 0 };
   if (m.moving) {
     // 튀기(hop): 이동 박자 = 첫 프레임, 쉬는 박자 = 둘째 / 걷기: 일정 간격 순환 (motion.md 8장)
     const ai = COMBAT.ai;

@@ -8,9 +8,10 @@ import { clamp01, col, easeOut, ellipseDots, hash, life, px } from './spellDraw'
 
 const S = fx.spell;
 
-/** 화염 폭발 표적: 금색 점선 원이 천천히 돌고 안쪽이 차오름, 터지기 직전 테두리가 이어짐 (적 예고와 같은 모양, 색만 아군) */
-export function fireTarget(x: number, y: number, r: number, sec: number): Effect {
-  const { gold, amber } = col(), T = S.target;
+/** 원형 마법 표적: 점선 원이 천천히 돌고 안쪽이 차오름, 터지기 직전 테두리가 이어짐 (적 예고와 같은 모양, 색만 아군).
+ *  tone fire = 금 → 주황빛 금(화염), magic = 하늘 → 진한 하늘(불 아닌 원형 마법: 부유 구슬·끌어올림·중력 우물·중력장) */
+export function fireTarget(x: number, y: number, r: number, sec: number, tone: 'fire' | 'magic' = 'fire'): Effect {
+  const c = col(), T = S.target, [gold, amber] = tone === 'fire' ? [c.gold, c.amber] : [c.sky, c.deep];
   return {
     ...life(sec),
     draw(g, k) {

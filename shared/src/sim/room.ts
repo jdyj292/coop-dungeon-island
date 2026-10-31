@@ -1,12 +1,12 @@
 // 방 시뮬레이션 한 틱 (클라이언트 로컬·서버 공용): 몬스터 AI → 투사체·장판 → 플레이어 행동·판정(마법탄 포함) → 몬스터끼리 겹침 풀기
+// 예약 판정·투사체 끝 판정·검흔·연쇄·아군 버프는 echoes.ts
 // 플레이어는 여러 명 (pid로 구분). 솔로는 첫 플레이어만 쓰는 tick(dt, input)
 import type { ActionDef, ActionRun, WeaponDef } from '../actions';
 import { COMBAT, PLAYER } from '../data/load';
 import type { MonsterAttack } from '../data/schema';
 import { stepMonsterAi, type AiContext, type MonsterEvent } from '../monster/ai';
-import { spawnProjectile, zoneSpeedMul, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
+import { spawnProjectiles, zoneSpeedMul, spawnZone, stepProjectile, stepZone, type Projectile, type ZoneArea } from '../monster/hazards';
 import { newMonster, stepBodyIn, type Monster } from '../monster/state';
-import { knockDown } from '../body';
 import { recordGroggyHit } from '../monster/groggy';
 import { AttackTokens } from '../monster/tokens';
 import type { Bounds, Vec2 } from '../movement';
@@ -20,9 +20,11 @@ import { separateMonsters } from './separate';
 import { PositionHistory, type PastPos } from './history';
 import { HitLog } from './hitLog';
 import { perksOf } from '../passives';
-import { hitMonster, phaseIsActive, strike, type PosOf, type StrikeHit } from './strike';
-import { spawnBolt, stepBolt, type Bolt } from './bolts';
-import { echoesOf, placeEcho, shatterDef, strikeEcho, thawed, wallDef, type Echo } from './skillExtras';
+import { phaseIsActive, strike, type PosOf, type StrikeHit } from './strike';
+import { spawnBolt, volley, type Bolt, type Cast } from './bolts';
+import { afterLand, auraSlow, overheatShot, skillActive, slam, stepEchoes, stepPlayerBolts, tickPerkTimers } from './echoes';
+import { markScar } from './scar';
+import type { Echo } from './skillExtras';
 
 export type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
 import type { SimEvent, SimOptions, SimPlayer, Spawn } from './types';
@@ -185,9 +187,9 @@ export class RoomSim {
       for (const e of evs) {
         events.push({ type: 'monster', m, e });
         if (e.type === 'playerHit') this.hitPlayer(events, e.pid, m, e.def, e.damage, this.awayFrom(m, e.pid));
-        if (e.type === 'shoot') this.projectiles.push(spawnProjectile(this.ids++, m.id, e.def, m.body.x, m.body.y, m.attack?.dir ?? m.facing, ctx.player));
+        if (e.type === 'shoot') this.projectiles.push(...spawnProjectiles(() => this.ids++, m.id, e.def, m.body.x, m.body.y, m.attack?.dir ?? m.facing, ctx.player));
         if (e.type === 'zone') this.zones.push(spawnZone(this.ids++, e.def, { x: m.body.x, y: m.body.y, facing: m.facing }));
-        if (e.type === 'body' && e.e === 'wall' && m.wallBy) this.slam(m, events);
+        if (e.type === 'body' && e.e === 'wall' && m.wallBy) slam(this, m, events);
       }
     }
     // 2. 투사체·장판
@@ -202,7 +204,7 @@ export class RoomSim {
     // 3. 플레이어 행동과 판정 (active 동안 매 틱)
     const moved = new Map<string, number>();
     for (const sp of this.players.values()) moved.set(sp.pid, this.stepPlayer(sp, inputs.get(sp.pid) ?? IDLE, dt, events));
-    this.stepEchoes(events);
+    stepEchoes(this, events);
     this.stepTeamCombo(events);
     // 4. 몬스터끼리 겹침 풀기 (지상·공격 중 아닐 때)
     separateMonsters(this.alive, this.bounds);
@@ -251,6 +253,8 @@ export class RoomSim {
     const input = sp.held ? { ...mergePresses(sp.held, raw)!, x: raw.x, y: raw.y, run: raw.run } : raw;
     sp.held = null;
     p.perks = perksOf(sp.weapon, sp.skills);
+    tickPerkTimers(p, dt);
+    auraSlow(this, sp);
     const res = stepPlayerState(p, sp.weapon, input, dt, this.bounds, zoneSpeedMul(this.zones, p.pos, PLAYER.hurtbox));
     if (res.backstepStarted) events.push({ type: 'backstep', pid });
     res.hurt.forEach((e) => events.push({ type: 'playerHurt', pid, e }));
@@ -258,10 +262,13 @@ export class RoomSim {
     const runs = new Set<ActionRun>();
     for (const e of res.events) {
       events.push({ type: 'fighter', pid, e });
-      if (e.type === 'active') runs.add(e.run);
-      // 투사체 행동은 active 순간 한 번 발사 (판정은 날아가는 마법탄이, 판정 모양이 없어 strike는 맞히지 않음)
-      if (e.type === 'active' && e.run.def.projectile) this.shoot(sp, e.run.def, events);
-      if (e.type === 'active' && e.run.kind === 'skill') this.echoes.push(...echoesOf(pid, e.run.def, p, this.time));
+      if (e.type !== 'active') continue;
+      runs.add(e.run);
+      const def = e.run.def, cast = e.run.kind === 'skill' ? { n: (sp.casts = (sp.casts ?? 0) + 1), skill: def.id } : undefined;
+      // 투사체 행동은 active 순간 한 번 발사 (판정은 날아가는 마법탄이, 판정 모양이 없어 strike는 맞히지 않음). 평타면 과열 추가 발
+      if (def.projectile) this.shoot(sp, def, events, cast);
+      if (def.projectile && !cast) overheatShot(this, sp, def);
+      if (cast) skillActive(this, sp, def, cast, events);
     }
     if (p.fighter.run && phaseIsActive(p.fighter.run)) runs.add(p.fighter.run);
     let hits = 0;
@@ -273,68 +280,38 @@ export class RoomSim {
       if (!done) this.struck.set(run, (done = new Set()));
       hits += this.landHits(sp, run.def, strike(p, run, this.alive, done, posOf), events);
     }
-    for (const b of this.bolts) if (b.pid === pid) hits += this.landHits(sp, b.def, stepBolt(b, dt, this.bounds, this.alive).map((m) => hitMonster(p, b.def, m, b.dir)), events);
+    hits += stepPlayerBolts(this, sp, dt, events);
     this.bolts = this.bolts.filter((b) => (b.done ? (events.push({ type: 'boltEnd', bolt: b }), false) : true));
     this.countCombo(sp, hits, events);
     return res.moved;
   }
 
-  /** 솔로는 개인 콤보 단계가 코인 보너스 (파티는 팀 콤보, stepTeamCombo) */
-  private countCombo(sp: SimPlayer, hits: number, events: SimEvent[]): void {
+  /** 솔로는 개인 콤보 단계가 코인 보너스 (파티는 팀 콤보, stepTeamCombo). countCombo·shoot·landHits·nextId는 echoes.ts도 쓴다 */
+  countCombo(sp: SimPlayer, hits: number, events: SimEvent[]): void {
     if ((this.opts.partySize ?? 1) < 2) {
       const ms = milestoneHit(sp.combo, hits, COMBAT.combo.soloMilestones);
       if (ms !== null) events.push({ type: 'comboMilestone', pid: sp.pid, count: ms });
     } else comboHit(sp.combo, hits);
   }
 
-  /** 변형 특수 판정: 때가 된 예약 판정(반복·후속), 빙결이 풀린 몬스터의 해제 판정. 연출은 echo 사건 */
-  private stepEchoes(events: SimEvent[]): void {
-    const due = this.echoes.filter((e) => e.at <= this.time);
-    this.echoes = this.echoes.filter((e) => e.at > this.time);
-    for (const e of due) {
-      const sp = this.players.get(e.pid);
-      if (!sp || sp.away) continue;
-      if (e.kind === 'shot') {
-        this.shoot(sp, e.def, events);
-        continue;
-      }
-      placeEcho(e, this.alive);
-      events.push({ type: 'echo', echo: { ...e, kind: e.kind } });
-      this.countCombo(sp, this.landHits(sp, e.def, strikeEcho(e, sp.state, this.alive), events, true), events);
-    }
-    for (const m of thawed(this.alive)) {
-      const by = m.frozenBy!, sp = this.players.get(by.pid);
-      delete m.frozenBy;
-      if (!sp || sp.away) continue;
-      const def = shatterDef(by.def);
-      events.push({ type: 'echo', echo: { pid: by.pid, kind: 'shatter', def, x: m.body.x, y: m.body.y, facing: sp.state.facing, at: this.time } });
-      this.countCombo(sp, this.landHits(sp, def, [hitMonster(sp.state, def, m, sp.state.facing)], events, true), events);
-    }
-  }
-
-  /** 벽꿍 (변형 onWall): 밀려 벽에 닿은 몬스터를 다운시키고 추가 판정 (연출은 후속 판정과 같은 echo) */
-  private slam(m: Monster, events: SimEvent[]): void {
-    const by = m.wallBy!, sp = this.players.get(by.pid);
-    delete m.wallBy;
-    if (!sp || sp.away || m.body.ko) return;
-    const def = wallDef(by.def);
-    events.push({ type: 'echo', echo: { pid: by.pid, kind: 'after', def, x: m.body.x, y: m.body.y, facing: sp.state.facing, at: this.time } });
-    const hit = hitMonster(sp.state, def, m, sp.state.facing);
-    knockDown(m.body);
-    this.countCombo(sp, this.landHits(sp, def, [hit], events, true), events);
-  }
-
-  /** 마법탄 발사 (lanes면 깊이마다 한 발씩) */
-  private shoot(sp: SimPlayer, def: ActionDef, events: SimEvent[]): void {
-    for (const dy of def.projectile?.lanes ?? [0]) {
-      const b = spawnBolt(this.ids++, sp.pid, def, sp.state.pos.x, sp.state.pos.y + dy, sp.state.facing);
+  /** 마법탄 발사 (lanes면 깊이마다, aims면 방향마다 한 발씩, bolts.volley). from = 쏘는 자리 (보조 잔상: 처음 쏜 자리, 반투명) */
+  shoot(sp: SimPlayer, def: ActionDef, events: SimEvent[], cast?: Cast, from?: { x: number; y: number; facing: number }): void {
+    const o = from ?? { ...sp.state.pos, facing: sp.state.facing };
+    for (const l of volley(def, o.x, o.y, o.facing)) {
+      const b = spawnBolt(this.nextId(), sp.pid, def, l.x, l.y, l.dir, undefined, cast);
+      if (l.dy) b.dy = l.dy;
+      if (from) b.ghost = true;
       this.bolts.push(b);
       events.push({ type: 'bolt', bolt: b });
     }
   }
 
+  nextId(): number {
+    return this.ids++;
+  }
+
   /** 적중 사건·기절·보스 졸음 연장(파티: 서로 다른 2명, 솔로: 15히트)·히트스톱. 적중 수. echo = 예약 판정 (공격자는 멈추지 않음) */
-  private landHits(sp: SimPlayer, def: ActionDef, hits: StrikeHit[], events: SimEvent[], echo = false): number {
+  landHits(sp: SimPlayer, def: ActionDef, hits: StrikeHit[], events: SimEvent[], echo = false): number {
     for (const h of hits) {
       const sec = gradeTiming(def.fx?.grade ?? 'light').hitstop;
       // 근접 역경직: 근접 무기는 더 오래 멈추고, 맞은 몬스터도 같은 시간 멈춘다 (weapons.json recoilMul, combat.md 5장)
@@ -346,6 +323,7 @@ export class RoomSim {
       recordGroggyHit(h.m, sp.pid, (this.opts.partySize ?? 1) >= 2);
       // 해제 판정을 걸어둠 (그 행동이 건 빙결이 풀릴 때), 벽꿍은 다음 적중이 덮어쓴다
       if (def.onStatusEnd && h.m.frozen > 0) h.m.frozenBy = { pid: sp.pid, def };
+      markScar(sp.pid, def, h.m);
       if (def.onWall) h.m.wallBy = { pid: sp.pid, def };
       else delete h.m.wallBy;
       if (this.opts.hitstop === 'entity') {
@@ -353,6 +331,7 @@ export class RoomSim {
         this.monsterStop.set(h.m.id, Math.max(this.monsterStop.get(h.m.id) ?? 0, recoil || sec));
       }
     }
+    afterLand(this, sp, def, hits);
     return hits.length;
   }
 

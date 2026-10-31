@@ -118,15 +118,16 @@ describe('갓버섯 기사 (정예, 공격 중 슈퍼아머)', () => {
 });
 
 describe('졸린 이끼곰 (boss loop)', () => {
-  it('순서대로 앞발 → 앞발 → 구르기, 벽에 부딪히면 그로기(슈퍼아머 해제)', () => {
+  it('순서대로 앞발 → 땅울림 → 앞발 → 가시 → 구르기, 벽에 부딪히면 그로기(슈퍼아머 해제)', () => {
     const sim = room(448, 144);
     const [m] = sim.spawn([{ kind: 'mossbear', x: 140, y: 56 }]);
     const starts: string[] = [];
     let groggy = false;
-    run(sim, 14, () => {
+    run(sim, 20, () => {
+      sim.player.hp = sim.player.maxHp;
       if (m!.mode === 'groggy') groggy = true;
     }).forEach((e) => { if (e.type === 'monster' && e.e.type === 'attackStart') starts.push(e.e.def.id); });
-    expect(starts.slice(0, 3)).toEqual(['bear_paw', 'bear_paw', 'bear_roll']);
+    expect(starts.slice(0, 5)).toEqual(['bear_paw', 'bear_quake', 'bear_paw', 'bear_thorns', 'bear_roll']);
     expect(groggy).toBe(true);
   });
   it('체력 50% 미만이면 다음 단계 (하품 → 졸음 구름 장판)', () => {
@@ -136,5 +137,30 @@ describe('졸린 이끼곰 (boss loop)', () => {
     const ev = run(sim, 12);
     expect(m!.loop.phase).toBe(1);
     expect(types(ev)).toContain('m:zone');
+  });
+  it('가시: 부채꼴로 5발을 한 번에 (깊이 방향이 서로 다름)', () => {
+    const sim = room(448, 144);
+    const [m] = sim.spawn([{ kind: 'mossbear', x: 140, y: 56 }]);
+    m!.loop.index = 3;
+    let thorns: typeof sim.projectiles = [];
+    run(sim, 3, () => {
+      if (!thorns.length) thorns = sim.projectiles.filter((p) => p.def.id === 'bear_thorns');
+    });
+    expect(thorns).toHaveLength(5);
+    expect(new Set(thorns.map((p) => p.dy.toFixed(3))).size).toBe(5);
+  });
+  it('체력 25% 미만: 3단계, 구르기는 벽에 한 번 튕긴 뒤 그로기', () => {
+    const sim = room(448, 144);
+    const [m] = sim.spawn([{ kind: 'mossbear', x: 140, y: 56 }]);
+    m!.hp = m!.def.hp * 0.2;
+    m!.loop = { phase: 2, index: 4 };
+    const walls: boolean[] = [];
+    let groggy = false;
+    run(sim, 12, () => {
+      sim.player.hp = sim.player.maxHp;
+      if (m!.mode === 'groggy') groggy = true;
+    }).forEach((e) => { if (e.type === 'monster' && e.e.type === 'wallHit') walls.push(e.e.groggy); });
+    expect(walls.slice(0, 2)).toEqual([false, true]);
+    expect(groggy).toBe(true);
   });
 });

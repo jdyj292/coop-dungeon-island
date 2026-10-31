@@ -1,5 +1,5 @@
 {
-  "_note": "스킬 정의 (대검·스태프: 공용 기본 + A·B 계열 1단계 액티브). cooldown은 기준 쿨 (실제 = ×COOLDOWN_SCALE), mp = 기준 쿨 × 2. 형식은 docs/data.md",
+  "_note": "스킬 정의 (대검·스태프: 공용 기본 + A·B 계열 액티브). cooldown은 기준 쿨 (실제 = ×COOLDOWN_SCALE), mp = 기준 쿨 × 2. 형식은 docs/data.md",
   "gs_launch": {
     "id": "gs_launch",
     "phases": {
@@ -22,7 +22,8 @@
     "poses": {
       "windup": "slash",
       "active": "upslash",
-      "recovery": "upslash"
+      "recovery": "upslash",
+      "charge": "charge"
     },
     "fx": {
       "grade": "medium"
@@ -145,9 +146,9 @@
     ],
     "launchVz": 120,
     "poses": {
-      "windup": "ready",
-      "active": "bolt",
-      "recovery": "bolt"
+      "windup": "gather",
+      "active": "thrust",
+      "recovery": "thrust"
     },
     "fx": {
       "grade": "medium"
@@ -158,7 +159,8 @@
     "weapon": "staff",
     "name": "화염 폭발",
     "desc": "4타일 앞이 잠시 뒤 폭발해 적을 띄운다",
-    "element": "fire", "branch": "base",
+    "element": "fire",
+    "branch": "base",
     "cooldown": 6,
     "mp": 12,
     "variants": {
@@ -206,9 +208,9 @@
       "time": 1.5
     },
     "poses": {
-      "windup": "ready",
-      "active": "plant",
-      "recovery": "plant"
+      "windup": "plantRaise",
+      "active": "plantDeep",
+      "recovery": "plantDeep"
     },
     "fx": {
       "grade": "medium"
@@ -220,7 +222,9 @@
     "weapon": "staff",
     "name": "얼음 장판",
     "desc": "얼음 장판을 깔아 땅의 적을 1.5초 얼린다",
-    "element": "ice", "lasting": true, "branch": "base",
+    "element": "ice",
+    "lasting": true,
+    "branch": "base",
     "cooldown": 10,
     "mp": 20,
     "variants": {
@@ -277,9 +281,10 @@
       "during": "active"
     },
     "poses": {
-      "windup": "ready",
+      "windup": "spinBack",
       "active": "sweep",
-      "recovery": "sweep"
+      "recovery": "sweep",
+      "charge": "charge"
     },
     "fx": {
       "grade": "light"
@@ -337,9 +342,10 @@
     },
     "superArmor": true,
     "poses": {
-      "windup": "ready",
-      "active": "draw",
-      "recovery": "ready"
+      "windup": "charge",
+      "active": "tackle",
+      "recovery": "tackle",
+      "charge": "charge"
     },
     "fx": {
       "grade": "heavy"
@@ -389,9 +395,10 @@
       "projectile"
     ],
     "poses": {
-      "windup": "ready",
-      "active": "sweep",
-      "recovery": "sweep"
+      "windup": "spinBack",
+      "active": "cleave",
+      "recovery": "cleave",
+      "charge": "charge"
     },
     "fx": {
       "grade": "medium"
@@ -451,9 +458,10 @@
       "during": "active"
     },
     "poses": {
-      "windup": "ready",
-      "active": "draw",
-      "recovery": "draw"
+      "windup": "charge",
+      "active": "iai",
+      "recovery": "iai",
+      "charge": "charge"
     },
     "fx": {
       "grade": "medium"
@@ -549,6 +557,266 @@
       }
     }
   },
+  "gs_throw": {
+    "id": "gs_throw",
+    "phases": {
+      "windup": 0.3,
+      "active": 0.05,
+      "recovery": 0.35
+    },
+    "coef": 300,
+    "projectile": {
+      "speed": 180,
+      "range": 96,
+      "radius": 8,
+      "pierce": true,
+      "back": 1
+    },
+    "strength": "medium",
+    "flags": [
+      "projectile"
+    ],
+    "poses": {
+      "windup": "throwWind",
+      "active": "throwRelease",
+      "recovery": "throwRelease",
+      "charge": "charge"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "skill_throw",
+      "hit": "hitLight"
+    },
+    "weapon": "greatsword",
+    "name": "대검 투척",
+    "desc": "대검을 던져 꿰뚫으며 6타일 날아갔다가 나에게 돌아온다 (갈 때·올 때 각 300%)",
+    "branch": "A",
+    "unlockLevel": 8,
+    "cooldown": 8,
+    "mp": 16,
+    "variants": {
+      "stick": {
+        "name": "꽂기",
+        "desc": "돌아오지 않고 끝에 꽂혀 2초 동안 둘레를 8번 벤다 (각 60%)",
+        "projectile": {
+          "back": null,
+          "blast": {
+            "radius": 20,
+            "coef": 60,
+            "repeat": {
+              "count": 8,
+              "interval": 0.25
+            }
+          }
+        }
+      },
+      "boomerang": {
+        "name": "부메랑",
+        "desc": "두 번 왕복한다",
+        "projectile": {
+          "back": 2
+        }
+      }
+    }
+  },
+  "gs_crush": {
+    "id": "gs_crush",
+    "phases": {
+      "windup": 0.5,
+      "active": 0.1,
+      "recovery": 0.6
+    },
+    "coef": 1500,
+    "hitbox": {
+      "forward": 0,
+      "width": 56,
+      "depth": 20,
+      "z": "both"
+    },
+    "strength": "heavy",
+    "flags": [
+      "knockback"
+    ],
+    "armorBreak": 0.3,
+    "poses": {
+      "windup": "overhead",
+      "active": "slam",
+      "recovery": "slam",
+      "charge": "overhead"
+    },
+    "fx": {
+      "grade": "heavy",
+      "shake": "vertical"
+    },
+    "sfx": {
+      "active": "skill_crush",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "파쇄참",
+    "desc": "대검을 크게 내리찍는 전방 일격. 슈퍼아머 적도 0.3초 경직",
+    "branch": "A",
+    "unlockLevel": 11,
+    "cooldown": 15,
+    "mp": 30,
+    "variants": {
+      "tri": {
+        "name": "3단 충전",
+        "desc": "충전을 2초까지 3단계로 모은다 (기본 1000%, 끝까지 모으면 2000%)",
+        "coef": 1000,
+        "chargeRule": {
+          "timeMul": 2,
+          "bonusMul": 2
+        }
+      },
+      "instant": {
+        "name": "즉발",
+        "desc": "충전 없이 빨리 내리찍는다 (1100%)",
+        "coef": 1100,
+        "chargeRule": {
+          "off": true
+        },
+        "phases": {
+          "windup": 0.3
+        }
+      }
+    }
+  },
+  "gs_collapse": {
+    "id": "gs_collapse",
+    "phases": {
+      "windup": 0.45,
+      "active": 0.1,
+      "recovery": 0.5
+    },
+    "coef": 120,
+    "area": {
+      "shape": "rect",
+      "at": [
+        40,
+        0
+      ],
+      "width": 64,
+      "depth": 32,
+      "z": "ground"
+    },
+    "repeat": {
+      "count": 12,
+      "interval": 0.25
+    },
+    "strength": "light",
+    "flags": [
+      "downhit"
+    ],
+    "keepDown": true,
+    "lasting": true,
+    "poses": {
+      "windup": "overhead",
+      "active": "slam",
+      "recovery": "slam",
+      "charge": "overhead"
+    },
+    "fx": {
+      "grade": "medium",
+      "shake": "vertical"
+    },
+    "sfx": {
+      "active": "skill_collapse",
+      "hit": "hitLight"
+    },
+    "weapon": "greatsword",
+    "name": "대지붕괴",
+    "desc": "앞 땅을 무너뜨려 3초 동안 12번 (각 120%). 땅의 적은 계속 다운",
+    "branch": "A",
+    "unlockLevel": 13,
+    "cooldown": 18,
+    "mp": 36,
+    "variants": {
+      "spread": {
+        "name": "확산",
+        "desc": "무너지는 땅이 두 배로 넓다 (각 90%)",
+        "coef": 90,
+        "area": {
+          "at": [
+            56,
+            0
+          ],
+          "width": 96,
+          "depth": 44
+        }
+      },
+      "rise": {
+        "name": "솟구침",
+        "desc": "끝날 때 땅이 솟구쳐 다운된 적까지 모두 띄운다 (300%)",
+        "repeatEnd": {
+          "coef": 300,
+          "launch": true
+        }
+      }
+    }
+  },
+  "gs_scar": {
+    "id": "gs_scar",
+    "phases": {
+      "windup": 0.15,
+      "active": 0.1,
+      "recovery": 0.35
+    },
+    "coef": 300,
+    "hitbox": {
+      "forward": 0,
+      "width": 36,
+      "depth": 16,
+      "z": "both"
+    },
+    "strength": "medium",
+    "mark": {
+      "time": 3,
+      "coef": 200
+    },
+    "poses": {
+      "windup": "draw",
+      "active": "cleave",
+      "recovery": "cleave",
+      "charge": "charge"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "skill_scar",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "검흔 베기",
+    "desc": "앞을 베어 맞은 적에 3초 검흔을 남긴다. 검흔 있는 적을 내 검기(투사체)가 맞히면 터진다 (200%)",
+    "branch": "B",
+    "unlockLevel": 6,
+    "cooldown": 8,
+    "mp": 16,
+    "note": "예산 대비 −62%: 검흔 터짐(200%)은 내 투사체를 맞혀야 하는 조건부라 자동 계산에서 빠짐, 터짐까지 더해도 표식 준비 스킬",
+    "variants": {
+      "chain": {
+        "name": "연쇄 검흔",
+        "desc": "터지면 가까운 적(4타일 안) 1마리에 검흔이 옮겨간다 (최대 3번)",
+        "mark": {
+          "hop": {
+            "range": 64,
+            "count": 3
+          }
+        }
+      },
+      "deep": {
+        "name": "깊은 검흔",
+        "desc": "터질 때 400%, 옮겨가지 않는다",
+        "mark": {
+          "coef": 400
+        }
+      }
+    }
+  },
   "gs_cyclone": {
     "id": "gs_cyclone",
     "phases": {
@@ -578,9 +846,10 @@
       "amount": 0.3
     },
     "poses": {
-      "windup": "ready",
+      "windup": "spinBack",
       "active": "sweep",
-      "recovery": "sweep"
+      "recovery": "cleave",
+      "charge": "charge"
     },
     "fx": {
       "grade": "light"
@@ -630,6 +899,152 @@
       }
     }
   },
+  "gs_cross": {
+    "id": "gs_cross",
+    "phases": {
+      "windup": 0.5,
+      "active": 0.1,
+      "recovery": 0.4
+    },
+    "coef": 700,
+    "projectile": {
+      "speed": 180,
+      "range": 96,
+      "radius": 10,
+      "pierce": true,
+      "burst": {
+        "count": 2,
+        "interval": 0.25
+      }
+    },
+    "strength": "medium",
+    "flags": [
+      "projectile"
+    ],
+    "poses": {
+      "windup": "spinBack",
+      "active": "cleave",
+      "recovery": "cleave",
+      "charge": "charge"
+    },
+    "fx": {
+      "grade": "heavy"
+    },
+    "sfx": {
+      "active": "skill_cross",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "십자 검기",
+    "desc": "십자 모양 검기를 두 번 날린다 (각 700%, 6타일 관통, 공중 적도)",
+    "branch": "B",
+    "unlockLevel": 11,
+    "cooldown": 12,
+    "mp": 24,
+    "variants": {
+      "four": {
+        "name": "사방",
+        "desc": "앞·뒤·위·아래 네 방향으로 한 번에 날린다 (각 450%)",
+        "coef": 450,
+        "projectile": {
+          "burst": null,
+          "aims": [
+            [
+              1,
+              0
+            ],
+            [
+              -1,
+              0
+            ],
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        }
+      },
+      "meet": {
+        "name": "교차점",
+        "desc": "위아래 두 줄 검기가 앞 4타일에서 엇갈리며 폭발한다 (각 700% + 폭발 500%)",
+        "projectile": {
+          "burst": null,
+          "lanes": [
+            -20,
+            20
+          ],
+          "meet": {
+            "at": 64,
+            "coef": 500,
+            "radius": 24
+          }
+        }
+      }
+    }
+  },
+  "gs_flash": {
+    "id": "gs_flash",
+    "phases": {
+      "windup": 0.35,
+      "active": 0.1,
+      "recovery": 0.9
+    },
+    "coef": 1300,
+    "hitbox": {
+      "forward": 0,
+      "width": 192,
+      "depth": 12,
+      "z": "both"
+    },
+    "strength": "heavy",
+    "flags": [
+      "knockback"
+    ],
+    "poses": {
+      "windup": "charge",
+      "active": "iai",
+      "recovery": "iai",
+      "charge": "charge"
+    },
+    "fx": {
+      "grade": "heavy",
+      "shake": "horizontal"
+    },
+    "sfx": {
+      "active": "skill_flash",
+      "hit": "hitHeavy"
+    },
+    "weapon": "greatsword",
+    "name": "일섬",
+    "desc": "화면 끝까지 가로로 한 줄 벤다 (12타일). 후딜레이가 길다",
+    "branch": "B",
+    "unlockLevel": 13,
+    "cooldown": 14,
+    "mp": 28,
+    "variants": {
+      "double": {
+        "name": "이중 일섬",
+        "desc": "0.3초 뒤 한 번 더 벤다 (각 750%)",
+        "coef": 750,
+        "after": {
+          "delay": 0.3,
+          "coef": 750
+        }
+      },
+      "trail": {
+        "name": "반환",
+        "desc": "벤 적마다 0.5초 뒤 늦게 한 번 더 베인다 (400%, 적이 움직여도)",
+        "trail": {
+          "delay": 0.5,
+          "coef": 400
+        }
+      }
+    }
+  },
   "st_pillar": {
     "id": "st_pillar",
     "phases": {
@@ -653,9 +1068,9 @@
     },
     "strength": "light",
     "poses": {
-      "windup": "ready",
-      "active": "plant",
-      "recovery": "plant"
+      "windup": "plantRaise",
+      "active": "plantDeep",
+      "recovery": "plantDeep"
     },
     "fx": {
       "grade": "light"
@@ -667,7 +1082,9 @@
     "weapon": "staff",
     "name": "불꽃 기둥",
     "desc": "앞에 2초 동안 불기둥을 세워 8번 태운다",
-    "element": "fire", "lasting": true, "branch": "A",
+    "element": "fire",
+    "lasting": true,
+    "branch": "A",
     "unlockLevel": 2,
     "cooldown": 8,
     "mp": 16,
@@ -724,9 +1141,9 @@
       "time": 0.5
     },
     "poses": {
-      "windup": "ready",
-      "active": "bolt",
-      "recovery": "bolt"
+      "windup": "aimBack",
+      "active": "thrust",
+      "recovery": "thrust"
     },
     "fx": {
       "grade": "medium"
@@ -738,7 +1155,8 @@
     "weapon": "staff",
     "name": "얼음 창",
     "desc": "꿰뚫는 얼음 창을 쏴 0.5초 얼린다",
-    "element": "ice", "branch": "A",
+    "element": "ice",
+    "branch": "A",
     "unlockLevel": 4,
     "cooldown": 4,
     "mp": 8,
@@ -797,9 +1215,9 @@
       "amount": 0.3
     },
     "poses": {
-      "windup": "ready",
-      "active": "area",
-      "recovery": "area"
+      "windup": "gather",
+      "active": "channel",
+      "recovery": "channel"
     },
     "fx": {
       "grade": "light"
@@ -811,7 +1229,8 @@
     "weapon": "staff",
     "name": "부유 구슬",
     "desc": "3초 동안 구슬 안의 적을 8번 때리고 30% 느리게 한다",
-    "lasting": true, "branch": "B",
+    "lasting": true,
+    "branch": "B",
     "unlockLevel": 2,
     "cooldown": 8,
     "mp": 16,
@@ -865,9 +1284,9 @@
     ],
     "launchVz": 150,
     "poses": {
-      "windup": "ready",
-      "active": "area",
-      "recovery": "area"
+      "windup": "scoop",
+      "active": "upswing",
+      "recovery": "upswing"
     },
     "fx": {
       "grade": "medium"
@@ -930,9 +1349,9 @@
       "pull"
     ],
     "poses": {
-      "windup": "ready",
-      "active": "area",
-      "recovery": "area"
+      "windup": "skyRaise",
+      "active": "channel",
+      "recovery": "channel"
     },
     "fx": {
       "grade": "light"
@@ -993,9 +1412,9 @@
       "amount": 0.4
     },
     "poses": {
-      "windup": "ready",
-      "active": "area",
-      "recovery": "area"
+      "windup": "skyRaise",
+      "active": "plantDeep",
+      "recovery": "plantDeep"
     },
     "fx": {
       "grade": "medium"
@@ -1014,6 +1433,17 @@
     "mp": 20,
     "note": "예산 대비 크게 낮음: 4초 감속(걷기·공격 사이 쉬는 시간)이 주 가치, 딜은 의도적으로 낮게",
     "variants": {
+      "haste": {
+        "name": "가속장",
+        "desc": "나와 범위 안 동료의 스킬 쿨이 4초 동안 20% 빨리 돈다 (적 감속은 그대로)",
+        "allyBuff": {
+          "cooldownMul": 1.2,
+          "time": 4
+        },
+        "sfx": {
+          "active": "skill_haste"
+        }
+      },
       "crush": {
         "name": "압축장",
         "desc": "더 세게 짧게: 2초 동안 60% 느리게 한다",
@@ -1021,6 +1451,133 @@
           "type": "slow",
           "time": 2,
           "amount": 0.6
+        }
+      }
+    }
+  },
+  "st_chain": {
+    "id": "st_chain",
+    "phases": {
+      "windup": 0.35,
+      "active": 0.05,
+      "recovery": 0.3
+    },
+    "coef": 600,
+    "chain": {
+      "range": 112,
+      "jump": 56,
+      "count": 5,
+      "interval": 0.06
+    },
+    "strength": "light",
+    "poses": {
+      "windup": "skyRaise",
+      "active": "thrust",
+      "recovery": "thrust"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "active": "skill_chain",
+      "hit": "bolt_hit"
+    },
+    "weapon": "staff",
+    "name": "번개 연쇄",
+    "desc": "앞쪽 7타일 안 가장 가까운 적부터 번개가 최대 5마리까지 튄다",
+    "branch": "A",
+    "unlockLevel": 6,
+    "cooldown": 7,
+    "mp": 14,
+    "variants": {
+      "spread": {
+        "name": "확산",
+        "desc": "8마리까지 튄다 (각 420%)",
+        "coef": 420,
+        "chain": {
+          "count": 8
+        }
+      },
+      "focus": {
+        "name": "집중",
+        "desc": "한 마리에 모은다 (900%)",
+        "coef": 900,
+        "chain": {
+          "count": 1
+        }
+      }
+    }
+  },
+  "st_fireball": {
+    "id": "st_fireball",
+    "phases": {
+      "windup": 0.45,
+      "active": 0.05,
+      "recovery": 0.35
+    },
+    "coef": 800,
+    "projectile": {
+      "speed": 150,
+      "range": 128,
+      "radius": 9,
+      "pierce": false,
+      "blast": {
+        "radius": 28
+      }
+    },
+    "strength": "medium",
+    "flags": [
+      "projectile"
+    ],
+    "poses": {
+      "windup": "gather",
+      "active": "thrust",
+      "recovery": "thrust"
+    },
+    "fx": {
+      "grade": "medium"
+    },
+    "sfx": {
+      "windup": "skill_fireball",
+      "hit": "hitHeavy"
+    },
+    "weapon": "staff",
+    "name": "화염구",
+    "desc": "큰 화염구가 처음 닿은 적이나 8타일 끝에서 폭발한다 (반경 1.75타일)",
+    "element": "fire",
+    "branch": "A",
+    "unlockLevel": 8,
+    "cooldown": 9,
+    "mp": 18,
+    "variants": {
+      "split": {
+        "name": "분열",
+        "desc": "폭발한 자리에서 작은 화염구 4개가 앞뒤로 흩어진다 (각 150%)",
+        "projectile": {
+          "blast": {
+            "radius": 28,
+            "shards": {
+              "coef": 150,
+              "speed": 160,
+              "range": 48,
+              "radius": 5,
+              "lanes": [
+                -10,
+                10
+              ]
+            }
+          }
+        }
+      },
+      "pierce": {
+        "name": "관통",
+        "desc": "느린 화염구가 꿰뚫으며 0.25초마다 다시 태운다 (각 120%, 폭발 없음)",
+        "coef": 120,
+        "projectile": {
+          "speed": 70,
+          "pierce": true,
+          "rehit": 0.25,
+          "blast": null
         }
       }
     }

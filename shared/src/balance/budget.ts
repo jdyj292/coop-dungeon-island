@@ -34,8 +34,9 @@ export function budgetFactors(s: Skill, r: BudgetRules): (keyof BudgetRules['fac
   // 제어: 빙결·정지(경직 연장 포함). 감속은 제외, 체공(hold)은 hold 보정으로 (balance.md 3장 "빙결·정지·경직 연장")
   if (s.status && s.status.type !== 'slow' && s.status.type !== 'hold') out.push('control');
   // 넓은 범위: 원·사각·부채꼴 판정 (문서 검산 예시의 화염 폭발 = 범위와 맞춤)
-  if (s.area || s.zone) out.push('area');
-  const reach = Math.max(s.hitbox?.forward ?? 0, s.area?.at[0] ?? 0, s.projectile?.range ?? 0);
+  // 투사체 끝 폭발(blast)·연쇄(chain)도 여러 적을 맞히는 범위로 본다 (SK-4 1차b)
+  if (s.area || s.zone || s.projectile?.blast || s.chain) out.push('area');
+  const reach = Math.max(s.hitbox?.forward ?? 0, s.area?.at[0] ?? 0, s.projectile?.range ?? 0, s.chain?.range ?? 0);
   if (reach >= r.rangedPx) out.push('ranged');
   if (s.move) out.push('movement');
   if (s.superArmor) out.push('superArmor');
@@ -44,10 +45,10 @@ export function budgetFactors(s: Skill, r: BudgetRules): (keyof BudgetRules['fac
   return out;
 }
 
-/** 한 번 쓸 때 계수 합: 다단(hits)·반복(repeat)·연발(burst)·여러 줄(lanes)은 판정 수만큼 */
+/** 한 번 쓸 때 계수 합: 다단(hits)·반복(repeat)·연발(burst)·여러 줄(lanes)·왕복(back, 갈 때·올 때)은 판정 수만큼 (연쇄는 한 대상 기준) */
 export function totalCoef(s: Skill): number {
   const pr = s.projectile;
-  return s.coef * (s.hits?.count ?? 1) * (s.repeat?.count ?? 1) * (1 + (s.repeat?.copies?.length ?? 0)) * (pr?.burst?.count ?? 1) * (pr?.lanes?.length ?? 1);
+  return s.coef * (s.hits?.count ?? 1) * (s.repeat?.count ?? 1) * (1 + (s.repeat?.copies?.length ?? 0)) * (pr?.burst?.count ?? 1) * (pr?.lanes?.length ?? 1) * (pr?.back ? 2 * pr.back : 1);
 }
 
 export function checkSkill(s: Skill, r: BudgetRules): BudgetResult {

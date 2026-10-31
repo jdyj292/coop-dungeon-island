@@ -1,6 +1,6 @@
 // 대검 충전 (docs/skills.md 2장, combat.md 1장): 스킬 키를 누르고 있으면 준비(windup) 끝에서 멈춰 충전, 떼거나 최대가 되면 발동.
 // 충전한 시간에 비례해 피해·판정 범위가 커진다 (weapons.json trait charge). 충전 중 슈퍼아머, 보조 노드 무거운 손 = 충전 속도·받는 피해
-import type { ActionDef, ActionRun } from './actions';
+import { scaleExtraCoefs, type ActionDef, type ActionRun } from './actions';
 
 /** 충전 진행 (ActionRun.charge). t = 충전한 초, done = 끝남(발동했거나 충전 없이 지나감), armor = 충전 중 슈퍼아머 */
 export interface ChargeState {
@@ -18,7 +18,7 @@ export interface ChargeInput {
 }
 
 /** 충전 중 멈춰 있는 시각: windup 끝 바로 앞 (phaseAt이 계속 windup을 돌려주게) */
-const EPS = 1e-6;
+export const CHARGE_HOLD_EPS = 1e-6;
 
 /** 충전 없이 지나가게 표시 (재입력 변형의 다음 입력) */
 export const noCharge = (): ChargeState => ({ t: 0, done: true, armor: false });
@@ -32,9 +32,13 @@ export const isCharging = (run: ActionRun | null | undefined): boolean => !!run?
  */
 export function stepCharge(run: ActionRun, c: ChargeInput, dt: number): number {
   if (run.kind !== 'skill') return dt;
-  const ch = (run.charge ??= { t: 0, done: false, armor: c.armor });
+  const rule = run.def.chargeRule;
+  // 충전 없는 스킬(즉발 변형)은 처음부터 끝난 것으로
+  const ch = (run.charge ??= rule?.off ? noCharge() : { t: 0, done: false, armor: c.armor });
   if (ch.done) return dt;
-  const end = run.def.phases.windup - EPS;
+  // 스킬별 충전 규칙 (파쇄참 3단 충전: 최대 시간·보너스 ×2)
+  if (rule) c = { ...c, maxTime: c.maxTime * (rule.timeMul ?? 1), bonusMax: c.bonusMax * (rule.bonusMul ?? 1) };
+  const end = run.def.phases.windup - CHARGE_HOLD_EPS;
   if (run.t + dt < end) return dt;
   if (!c.hold) {
     ch.done = true;
@@ -50,7 +54,7 @@ export function stepCharge(run: ActionRun, c: ChargeInput, dt: number): number {
   return toEnd;
 }
 
-/** 충전 보너스(0~bonusMax)만큼 피해(coef·후속·벽꿍)와 판정 범위(상자 길이·깊이, 원·부채꼴 반지름, 투사체 반지름)를 키운 정의 (id는 그대로) */
+/** 충전 보너스(0~bonusMax)만큼 피해(coef·후속·벽꿍·투사체 끝 판정·검흔)와 판정 범위(상자 길이·깊이, 원·부채꼴 반지름, 투사체 반지름)를 키운 정의 (id는 그대로) */
 export function chargedDef(def: ActionDef, bonus: number): ActionDef {
   if (bonus <= 0) return def;
   const k = 1 + bonus;
@@ -64,5 +68,6 @@ export function chargedDef(def: ActionDef, bonus: number): ActionDef {
   if (def.after) out.after = { ...def.after, coef: def.after.coef * k };
   if (def.onWall) out.onWall = { ...def.onWall, coef: def.onWall.coef * k };
   if (def.onStatusEnd) out.onStatusEnd = { ...def.onStatusEnd, coef: def.onStatusEnd.coef * k };
+  scaleExtraCoefs(out, k);
   return out;
 }

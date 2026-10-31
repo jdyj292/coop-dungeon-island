@@ -104,7 +104,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
   "fx": {"type":"smear","pivot":[9,11],"r":[9,14],"arc":[-1.7,0.35]} }
 ```
 - dir: 8방향만 ([±1,0], [0,±1], [±1,±1])
-- body: 몸 전체 변화 (art.md 4장 "몸 자체가 달라지는 경우") `{ bob?, legs? }` — bob = 다리를 뺀 몸을 내리는 px(웅크림), legs = 다리(bottom) 프레임 이름. 걷기 bob과 더해진다
+- body: 몸 전체 변화 (art.md 4장 "몸 자체가 달라지는 경우") `{ bob?, legs?, lean? }` — bob = 다리를 뺀 몸을 내리는 px(웅크림), legs = 다리(bottom) 프레임 이름, lean = 다리를 뺀 몸을 앞(+)·뒤(-)로 px(모션 lean이 있으면 모션 우선). 걷기 bob과 더해진다
 - 두 손으로 쥔 느낌은 뒷손을 detached로 앞손 근처에 둔다 (팔은 어깨에서 최대 6칸이라 머리 위로는 못 올림)
 - behind: true면 weapon_back 층 (몸 뒤에 그림)
 - origin: 손 대신 무기 시작점 지정 (광역 시전의 세운 스태프)
@@ -190,7 +190,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 
 ## 10. 초안 검토 (그림 추가·수정)
 - 승인 데이터는 바로 고치지 않는다. 새 그림은 client/data/sprites/drafts/에 먼저 그린다
-  - drafts/monsters.json: 몬스터 프레임 초안 (monsters.json과 같은 형식, frames·states만)
+  - drafts/monsters.json: 몬스터 프레임 초안 (monsters.json과 같은 형식, frames·states, 새 재질 글자가 필요하면 materials도 — 승인 재질에 더해진다)
   - drafts/poses.json: 포즈 초안 (무기 종류 → 포즈 이름 → 포즈), 모션 초안 (motions → 모션 이름 → 모션)
   - drafts/props.json: 소품 초안 (새 소품은 통째로, 있는 소품은 frames·states만)
   - drafts/island.json: 섬 사물 초안 (새 사물은 통째로, 있는 사물은 frames를 겹치고 rot·animSec은 바꿈)

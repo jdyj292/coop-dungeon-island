@@ -1,17 +1,19 @@
 // 로컬 전투 무대: RoomSim(shared)을 1/60초 틱으로 돌리고, 이벤트로 연출을 붙이고, 그린다. 던전 씬과 tools/motion-preview가 같이 쓴다
 import type Phaser from 'phaser';
 import {
-  arriveSecOf, FixedStep, RoomSim, TICK, weaponDef,
+  arriveSecOf, chargeLevel, FixedStep, RoomSim, TICK, weaponDef,
   type ActionDef, type Bounds, type Monster, type PlayerState, type PotionKind, type RoomDef, type SimEvent, type SimOptions, type Spawn,
   type Vec2, type WeaponDef,
 } from '@game/shared';
 import fx from '../../data/fx.json';
 import { sfx } from '../audio/player';
-import { soundsFor } from '../audio/sfxEvents';
+import { shieldsRaised, soundsFor } from '../audio/sfxEvents';
 import { actionSmear } from '../fx/actionSmear';
 import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
+import { chargeView } from '../fx/chargeFx';
+import { StatusLayer } from '../fx/statusFx';
 import { HazardLayer } from '../fx/hazards';
 import { hitPackage, type FxContext } from '../fx/hitPackage';
 import { FX_GROUND_DEPTH, FxLayer } from '../fx/layer';
@@ -69,6 +71,8 @@ export class CombatStage {
   private wasRunning = false;
   private wasBackstep = false;
   private bolts: BoltLayer;
+  private status: StatusLayer;
+  private shielded = new Set<string>();
   /** 잠든 몬스터 Zzz (층 첫 방) */
   private sleepMarks: SleepMarks;
 
@@ -79,6 +83,7 @@ export class CombatStage {
     this.playerView.weaponVisual = this.weapon.visual;
     this.playerView.teleport = this.weapon.backstepStyle === 'teleport';
     this.bolts = new BoltLayer(scene);
+    this.status = new StatusLayer(scene);
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), ground: new FxLayer(scene, FX_GROUND_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.hazards = new HazardLayer(scene);
     this.ghosts = new Afterimages(scene);
@@ -246,18 +251,23 @@ export class CombatStage {
 
   /** moved = 이번 프레임에 걸은 거리 (틱이 안 돌았으면 null: 걷기 박자 유지) */
   private draw(moved: number | null): void {
-    const data = spriteData(), p = this.player;
+    const data = spriteData(), p = this.player, dt = this.drawDt;
     this.playerView.draw(p, moved, this.rhythm.px, this.clock);
     this.ghosts.update(this.drawDt, !!p.backstep && !this.playerView.teleport, this.playerView.actor.img);
     // 순간이동이 끝나는 순간: 나타나는 자리에 점
     if (this.wasBackstep && !p.backstep && this.playerView.teleport) this.teleportAt(p);
     this.wasBackstep = !!p.backstep;
-    this.bolts.draw(this.sim.bolts.map((b) => ({ x: b.x, y: b.y, dir: b.dir, id: b.def.id, r: b.def.projectile?.radius })));
+    this.bolts.draw(this.sim.bolts.map((b) => ({ x: b.x, y: b.y, dir: b.dir, id: b.def.id, r: b.def.projectile?.radius, ghost: b.ghost })));
     this.drawDt = 0;
 
     this.sim.alive.forEach((m, i) => placeMonster(this.scene, this.view(m), data, m, this.clock, i));
     if (this.sleepMarks.draw(this.sim.alive.map((m) => ({ m, v: this.view(m) })), this.clock)) this.sound('monWake');
     this.hazards.draw(this.sim);
+    const views = [...this.sim.players.values()].map(({ pid, state: q }) => ({
+      id: pid, x: q.pos.x, y: q.pos.y, haste: !!q.haste, shield: (q.shield ?? 0) > 0, aura: q.perks?.aura?.radius ?? 0, charge: chargeView(pid, q, this.weapon, chargeLevel(q, this.weapon)),
+    }));
+    this.status.draw(this.sim.alive, views, dt).forEach((n) => this.sound(n));
+    if (shieldsRaised(this.shielded, new Set(views.filter((v) => v.shield).map((v) => v.id)))) this.sound('shield_up');
     this.fx.ground.draw();
     this.fx.layer.draw();
   }

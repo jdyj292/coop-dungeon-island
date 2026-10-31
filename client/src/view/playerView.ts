@@ -13,6 +13,16 @@ import { newActorView, place, type ActorView } from './actors';
 import { DEFAULT_HAIR, hairColorPath, hairName, type Hair } from './look';
 import { project } from './layout';
 
+/** 도는 스킬(fx.json playerMotion.spin): active(+ 추가 초) 동안 flipSec마다 그림 방향만 번갈아 (art.md 4장, 판정 방향은 그대로) */
+export function spinFacing(p: Pick<PlayerState, 'facing' | 'fighter'>): number {
+  const run = p.fighter.run, S = fx.playerMotion.spin;
+  const extra = run ? (S.actions as Record<string, number>)[run.def.id] : undefined;
+  if (!run || extra === undefined) return p.facing;
+  const since = run.t - run.def.phases.windup;
+  if (since < 0 || since >= run.def.phases.active + extra) return p.facing;
+  return Math.floor(since / S.flipSec) % 2 ? -p.facing : p.facing;
+}
+
 export class PlayerView {
   readonly actor: ActorView;
   /** 번쩍임 남은 시간 (게임 시간) */
@@ -114,7 +124,7 @@ export class PlayerView {
     const hop = p.backstep && !this.teleport ? Math.round(Math.sin(bk * Math.PI) * fx.backstepHop) : 0;
     const vanished = !!p.backstep && this.teleport && bk > tp.visibleStart && bk < tp.visibleEnd;
     place(this.actor, tex, {
-      x: p.pos.x + offsetX * p.facing, y: p.pos.y, z: hop + this.lift + (p.arrive > 0 ? dropZ(p.arrive) : 0), facing: p.facing, flash: this.flash > 0,
+      x: p.pos.x + offsetX * p.facing, y: p.pos.y, z: hop + this.lift + (p.arrive > 0 ? dropZ(p.arrive) : 0), facing: spinFacing(p), flash: this.flash > 0,
       angle: lying ? -90 * p.facing : 0,
     });
     // 기상·부활 무적: 깜빡임 (motion.md 4장)

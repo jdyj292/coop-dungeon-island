@@ -55,9 +55,10 @@ export function endAttack(m: Monster, ctx: AiContext): void {
 /** 보스 공격이 끝나면 다음 순서로 넘기고 쉬는 시간 (data.md 4장 ai.idleBetween) */
 function afterBossAttack(m: Monster, ctx: AiContext): void {
   if (m.def.pattern.type !== 'loop') return;
-  const seq = m.def.pattern.phases[m.loop.phase]!.sequence;
-  m.loop.index = (m.loop.index + 1) % seq.length;
-  const [a, b] = m.def.ai.idleBetween ?? [0, 0];
+  const cur = m.def.pattern.phases[m.loop.phase]!;
+  m.loop.index = (m.loop.index + 1) % cur.sequence.length;
+  // 단계마다 쉬는 시간을 따로 둘 수 있다 (분노 단계, dungeon.md 5장)
+  const [a, b] = cur.idleBetween ?? m.def.ai.idleBetween ?? [0, 0];
   m.timer = a + (b - a) * ctx.rng();
 }
 
@@ -80,6 +81,16 @@ export function stepAttack(m: Monster, dt: number, ctx: AiContext): MonsterEvent
     const blocked = m.body.x !== want;
     if (blocked && def.move && 'speed' in def.move && def.move.stopOnWall) {
       const hit = def.onWallHit;
+      // 튕기기 (3단계 구르기): 방향을 뒤집어 이동 구간 처음부터 다시 구름, 같은 사람을 다시 맞힐 수 있음
+      if (hit && 'groggy' in hit && (a.bounced ?? 0) < (hit.bounce ?? 0)) {
+        a.bounced = (a.bounced ?? 0) + 1;
+        a.dir = -a.dir;
+        m.facing = a.dir;
+        a.t = def.phases.windup;
+        a.struck = [];
+        ev.push({ type: 'wallHit', groggy: false });
+        return ev;
+      }
       const groggy = !!hit && 'groggy' in hit;
       m.cooldowns[def.id] = def.cooldown ?? 0;
       afterBossAttack(m, ctx);

@@ -206,17 +206,19 @@ export class SkillWindow {
     R(g, 12, 63, 224, 104, SK.border);
     R(g, 13, 64, 222, 102, SK.card);
     s.sections.forEach((sec, si) => {
-      const y0 = 64 + si * 50, cy = y0 + 12, xs = sec.ids.map((_, i) => 16 + i * 54);
+      // 칸 간격: 4개까지 54px, 더 많으면(3단계 스킬) 카드 폭 218px에 나눠 담음
+      const step = sec.ids.length > 4 ? Math.floor(218 / sec.ids.length) : 54, pad = (step - 22) >> 1;
+      const y0 = 64 + si * 50, cy = y0 + 12, xs = sec.ids.map((_, i) => 16 + i * step);
       if (si) for (let i = 0; i < 218; i += 2) R(g, 15 + i, y0 - 2, 1, 1, SK.cardBd);
       p.text(18, y0, sec.label, sec.color);
       if (si && xs.length > 1) {
         const last = Math.max(-1, ...sec.ids.map((id, i) => (s.node(id).open ? i : -1)));
-        R(g, xs[0]! + 27, cy + 11, xs.at(-1)! - xs[0]!, 1, SK.cardBd);
-        if (last > 0) R(g, xs[0]! + 27, cy + 11, xs[last]! - xs[0]!, 1, sec.color, 0.8);
+        R(g, xs[0]! + pad + 11, cy + 11, xs.at(-1)! - xs[0]!, 1, SK.cardBd);
+        if (last > 0) R(g, xs[0]! + pad + 11, cy + 11, xs[last]! - xs[0]!, 1, sec.color, 0.8);
       }
       sec.ids.forEach((id, i) => {
-        this.cell(s, id, xs[i]! + 16, cy, 22, false);
-        this.nameUnder(s, id, xs[i]!, 54, cy + 23);
+        this.cell(s, id, xs[i]! + pad, cy, 22, false);
+        this.nameUnder(s, id, xs[i]!, step, cy + 23);
       });
     });
   }

@@ -62,6 +62,17 @@ describe('mirror: 스냅샷 → 그리기 객체', () => {
     expect(p.fighter.run!.t).toBeCloseTo(0.1);
     expect([p.facing, p.hp, p.mp, p.stamina, p.tired, p.potions.hp, p.cooldowns.gs_launch]).toEqual([-1, 800, 70, 40, true, 2, 1.5]);
   });
+  it('플레이어: 대검 충전 중이면 준비 끝에 멈춤, 끝났으면 충전한 시간을 뺀 진행 (SK-3 2차)', () => {
+    const launch = playerAction(weaponDef('greatsword'), 'gs_launch')!.def;
+    const s = { ...ps, actionId: 'gs_launch', actionStart: 0 };
+    const charging = mirrorPlayer({ ...s, chargeMs: 400, chargeLv: 100 }, launch.phases.windup * 1000 + 400, 'greatsword').fighter.run!;
+    expect(charging.t).toBeLessThan(launch.phases.windup);
+    expect(charging.t).toBeCloseTo(launch.phases.windup, 3);
+    expect(charging.charge).toMatchObject({ t: 0.4, done: false });
+    const after = mirrorPlayer({ ...s, chargeMs: 400, chargeLv: 0 }, launch.phases.windup * 1000 + 500, 'greatsword').fighter.run!;
+    expect(after.t).toBeCloseTo(launch.phases.windup + 0.1);
+    expect(after.charge?.done).toBe(true);
+  });
   it('플레이어: 백스텝·다운·쓰러짐', () => {
     expect(mirrorPlayer({ ...ps, state: 'backstep', actionId: '' }, 1000, 'greatsword').backstep!.t).toBeCloseTo(0.1);
     // 회피 시작 시각이 있으면 받은 시각(since)보다 그것을 따른다

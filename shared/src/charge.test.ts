@@ -1,10 +1,10 @@
 // 대검 충전 (skills.md 2장): 준비 끝에서 누르고 있으면 멈춰 충전, 떼거나 최대(1초)면 발동, 피해·범위 최대 +50%, 충전 중 슈퍼아머, 무거운 손
 import { describe, expect, it } from 'vitest';
-import { fighterPhase, skillDef, weaponDef, type ActionDef, type WeaponDef } from './actions';
+import { fighterPhase, fighterPose, skillDef, weaponDef, type ActionDef, type WeaponDef } from './actions';
 import { chargedDef, isCharging } from './charge';
 import { TICK } from './constants';
 import { perksOf } from './passives';
-import { newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from './player';
+import { chargeLevel, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from './player';
 import { hurtPlayer } from './playerHurt';
 import { buildSkill } from './skillLoadout';
 
@@ -109,5 +109,19 @@ describe('대검 충전', () => {
     expect(chargedDef(wave, 0.5).projectile!.radius).toBeCloseTo(wave.projectile!.radius * 1.5);
     expect(chargedDef(wave, 0.5).projectile!.range).toBe(wave.projectile!.range);
     expect(chargedDef(launch, 0)).toBe(launch);
+  });
+  it('충전 중 포즈 = poses.charge (허리 옆 쥐기), 머리 위 준비 스킬은 준비 포즈 그대로, 비율 chargeLevel (SK-3 2차)', () => {
+    const hold = (skill: ActionDef, sec: number) => {
+      const p = player();
+      for (let t = 0; t < sec; t += TICK) stepPlayerState(p, gs, { ...idle, skill: t === 0 ? skill : null, hold: true }, TICK, bounds);
+      return p;
+    };
+    const p = hold(launch, launch.phases.windup + 0.5);
+    expect(fighterPose(p.fighter)).toBe('charge');
+    expect(chargeLevel(p, gs)).toBeCloseTo(0.5, 1);
+    expect(fighterPose(hold(skillDef('gs_earthsplit'), skillDef('gs_earthsplit').phases.windup + 0.3).fighter)).toBe('overhead');
+    // 준비 중에는 아직 준비 포즈
+    expect(fighterPose(hold(launch, launch.phases.windup / 2).fighter)).toBe(launch.poses?.windup);
+    expect(chargeLevel(hold(launch, launch.phases.windup / 2), gs)).toBe(0);
   });
 });

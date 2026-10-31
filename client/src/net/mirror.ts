@@ -1,12 +1,13 @@
 // 서버 스냅샷 → 그리기용 객체 (PlayerState·Monster 모양). 기존 PlayerView·MonsterView·HazardLayer를 그대로 쓰기 위해
 // 행동 포즈는 actionId + actionStart와 데이터로 계산한다 (docs/network.md 5·8장)
 import {
-  buildFrom, buildSkill, COMBAT, newMonster, newPlayerState, PLAYER, weaponDef,
+  buildFrom, buildSkill, CHARGE_HOLD_EPS, COMBAT, newMonster, skillDef, newPlayerState, PLAYER, weaponDef,
   type ActionDef, type ActionRun, type Monster, type PlayerState, type SkillBuild, type WeaponDef,
 } from '@game/shared';
 import type { MonsterSnap, PlayerSnap, PrivateView } from './connection';
 
 const sec = (ms: number) => Math.max(0, ms / 1000);
+const SCAR_VIEW = () => skillDef('gs_scar');
 
 /** 행동 id → 정의와 종류 (평타 단계·대시·스킬). 스킬은 그 사람의 노드(변형·레벨 배율)로 */
 export function playerAction(weapon: WeaponDef, id: string, skills: SkillBuild = {}): Pick<ActionRun, 'def' | 'kind' | 'step'> | null {
@@ -18,6 +19,17 @@ export function playerAction(weapon: WeaponDef, id: string, skills: SkillBuild =
 }
 
 /**
+ * 흐른 시간 → 행동 진행. 서버 actionStart는 충전 시간을 포함한 시작 시각이라 (sync.ts)
+ * 충전 중이면 준비 끝 바로 앞에 멈추고, 충전이 끝났으면 충전한 만큼 뺀다 (대검 충전, charge.ts)
+ */
+function actionRun(act: Pick<ActionRun, 'def' | 'kind' | 'step'>, elapsed: number, s: PlayerSnap): ActionRun {
+  const ct = (s.chargeMs ?? 0) / 1000;
+  if (s.chargeLv) return { ...act, t: Math.min(elapsed, act.def.phases.windup - CHARGE_HOLD_EPS), charge: { t: ct, done: false, armor: true } }; // 충전 무기는 대검뿐 (충전 중 슈퍼아머)
+  if (ct > 0) return { ...act, t: Math.max(0, elapsed - ct), charge: { t: ct, done: true, armor: false } };
+  return { ...act, t: elapsed };
+}
+
+/**
  * t = 그리는 서버 시각 (보간 지연 적용), now = 지금 서버 시각 (본인 쿨타임용)
  * 본인 전용 값(priv)이 있으면 MP·물약·쿨타임도 채운다
  */
@@ -26,7 +38,7 @@ export function mirrorPlayer(s: PlayerSnap, t: number, weaponId: string, priv?: 
   const el = sec(t - s.since);
   p.facing = s.facing;
   const act = s.actionId ? playerAction(weaponDef(weaponId), s.actionId, buildFrom(s.skills ?? '')) : null;
-  if (act) p.fighter.run = { ...act, t: sec(t - s.actionStart) };
+  if (act) p.fighter.run = actionRun(act, sec(t - s.actionStart), s);
   p.run.running = s.state === 'run';
   // 회피 방향은 서버 값 (본인 예측을 다시 계산할 때 앞회피가 뒤로 계산되지 않게)
   if (s.state === 'backstep') {
@@ -48,6 +60,7 @@ export function mirrorPlayer(s: PlayerSnap, t: number, weaponId: string, priv?: 
     p.potions = { hp: priv.potionHp, mp: priv.potionMp };
     p.feathers = priv.feathers;
     priv.cooldowns.forEach((end, id) => { p.cooldowns[id] = sec(end - now); });
+    if (priv.hasteEnd && priv.hasteEnd > now) p.haste = { left: sec(priv.hasteEnd - now), mul: priv.hasteMul ?? 1 };
     if (priv.reinputId) p.reinput = { id: priv.reinputId, left: priv.reinputLeft ?? 0, window: sec((priv.reinputEnd ?? 0) - now) };
   }
   return p;
@@ -74,6 +87,9 @@ export function mirrorMonster(s: MonsterSnap, t: number, prev?: Monster): Monste
   m.slow = { left: s.slowed ? 1 : 0, amount: 0 };
   m.burn = { left: s.burning ? 1 : 0, mul: 1 };
   m.pressed = s.pressed ? 1 : 0;
+  // 검흔: 그리기용 표시만 (터짐 판정은 서버)
+  if (s.scarred) m.scar ??= { pid: '', left: 1, def: SCAR_VIEW(), hops: 0 };
+  else delete m.scar;
   m.hopT = m.moving ? el : 0;
   m.hp = Math.round((s.hpRatio / 255) * m.maxHp);
   return m;
