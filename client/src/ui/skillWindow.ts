@@ -115,7 +115,7 @@ export class SkillWindow {
     g.clear();
     if (!s?.drag) return;
     const n = s.node(s.drag.id);
-    nodeArt(g, n.id, x - 11, y - 11, 22, n.color, false, 0.9);
+    nodeArt(g, n.id, x - 11, y - 11, 22, false, 0.9);
   }
 
   /** 화면 좌표 → 무엇을 눌렀나 (패널 밖이면 null) */
@@ -269,7 +269,7 @@ export class SkillWindow {
 
   /** 노드 그림, 없으면 이름 첫 글자 */
   private art(n: NodeInfo, x: number, y: number, size: number, gray: boolean, alpha: number): void {
-    if (!nodeArt(this.p.g, n.id, x, y, size, n.color, gray, alpha)) this.p.center(x, size, y + Math.floor(size / 2) - 6, [...n.name][0] ?? '', gray ? SK.off : SK.dim, 'koSmall', alpha);
+    if (!nodeArt(this.p.g, n.id, x, y, size, gray, alpha)) this.p.center(x, size, y + Math.floor(size / 2) - 6, [...n.name][0] ?? '', gray ? SK.off : SK.dim, 'koSmall', alpha);
   }
 
   private nameUnder(s: SkillSource, id: string, x: number, w: number, y: number): void {

@@ -62,34 +62,26 @@ export class Painter<H> {
 
 export const R = (g: G, x: number, y: number, w: number, h: number, color: string, alpha = 1) => dot(g, x, y, C(color), w, h, alpha);
 
+/** 안 배운 패시브 회색: 밝은 글자 → keyLabel, 나머지 → offline */
+const LIGHT = new Set(['w', 'l', 'y', 'k', 'a', 'r']);
+
 /** 16×16 HUD 아이콘 (hud_icons.json icons) */
-function hudIcon(g: G, name: string, x: number, y: number, alpha: number): void {
+function hudIcon(g: G, name: string, x: number, y: number, gray: boolean, alpha: number): void {
   const rows = (icons.icons as Record<string, string[]>)[name], pal = icons.palette as Record<string, string>;
-  rows?.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') dot(g, x + i, y + j, C(pal[ch]!), 1, 1, alpha); }));
+  rows?.forEach((row, j) => [...row].forEach((ch, i) => {
+    if (ch !== '.') dot(g, x + i, y + j, C(gray ? (LIGHT.has(ch) ? SK.key : SK.off) : pal[ch]!), 1, 1, alpha);
+  }));
 }
 
-/** 10×10 임시 그림 (hud_icons.json glyphs): 오른쪽 아래 1px 그림자, # = main, + = light */
-function glyph(g: G, name: string, x: number, y: number, main: string, light: string, alpha: number): void {
-  const rows = (icons.glyphs as Record<string, string[]>)[name];
-  rows?.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') dot(g, x + i + 1, y + j + 1, C(SK.shade), 1, 1, alpha); }));
-  rows?.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') dot(g, x + i, y + j, C(ch === '+' ? light : main), 1, 1, alpha); }));
-}
+/** 노드 id → 아이콘 (hud_icons.json slots, 공용 패시브는 무기 이름을 뺀 id) */
+const slotIcon = (id: string): string | undefined => (icons.slots as Record<string, string>)[id.replace(/^\w+\./, '')];
 
-const slotIcon = (id: string): string | undefined => (icons.slots as Record<string, string>)[id];
-const glyphOf = (id: string): string | undefined => (icons.glyphFor as Record<string, string>)[id.replace(/^\w+\./, '')];
-
-/** 노드 그림을 size 칸 가운데에: 16×16 아이콘(20px 이상 칸) → 임시 그림 → 없으면 false (부르는 쪽이 이름 첫 글자). gray = 안 배운 패시브 */
-export function nodeArt(g: G, id: string, x: number, y: number, size: number, color: string, gray: boolean, alpha: number): boolean {
+/** 노드 그림 16×16을 size 칸 가운데에. 없으면 false (부르는 쪽이 이름 첫 글자). gray = 안 배운 패시브 */
+export function nodeArt(g: G, id: string, x: number, y: number, size: number, gray: boolean, alpha: number): boolean {
   const ic = slotIcon(id);
-  if (size >= 20 && ic) {
-    const o = Math.floor((size - 16) / 2);
-    hudIcon(g, ic, x + o, y + o, alpha);
-    return true;
-  }
-  const gl = glyphOf(id);
-  if (!gl) return false;
-  const o = Math.floor((size - 10) / 2);
-  glyph(g, gl, x + o, y + o, gray ? SK.off : color, gray ? SK.key : SK.white, alpha);
+  if (!ic) return false;
+  const o = Math.floor((size - 16) / 2);
+  hudIcon(g, ic, x + o, y + o, gray, alpha);
   return true;
 }
 

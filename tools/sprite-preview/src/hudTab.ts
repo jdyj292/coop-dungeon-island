@@ -7,7 +7,7 @@ import { checkbox, el, slider } from './ui';
 
 type IconSet = { palette: Record<string, string>; slots: Record<string, string>; icons: Record<string, string[]> };
 const A = approved as unknown as IconSet, D = drafts as unknown as IconSet;
-const SLOT = 18, GAP = 4;
+const SLOT = 18, GAP = 4, CELL = 22;
 
 /** 무기별 아래 띠 J U I O P (무기 id·기본 스킬 2·계열 A·B 스킬) */
 const LOADOUTS: [string, string[]][] = [
@@ -27,8 +27,9 @@ export function hudTab(): HTMLElement {
   const slotIcon = (id: string) => D.slots[id] ?? A.slots[id] ?? 'empty';
 
   const draw = () => {
-    const names = [...Object.keys(A.icons), ...Object.keys(D.icons)];
-    const rowW = names.length * (SLOT + GAP) + GAP, w = Math.max(rowW, 5 * (SLOT + 2) + 60), h = SLOT * (LOADOUTS.length + 1) + GAP * (LOADOUTS.length + 2) + 4;
+    const names = [...Object.keys(A.icons), ...Object.keys(D.icons)], drafts = Object.keys(D.icons);
+    const cellsY = SLOT * (LOADOUTS.length + 1) + GAP * (LOADOUTS.length + 2) + 6;
+    const rowW = names.length * (SLOT + GAP) + GAP, w = Math.max(rowW, 5 * (SLOT + 2) + 60), h = cellsY + (drafts.length ? 2 * (CELL + GAP) + 2 : 0);
     canvas.width = w * s.scale;
     canvas.height = h * s.scale;
     const ctx = canvas.getContext('2d')!;
@@ -52,7 +53,20 @@ export function hudTab(): HTMLElement {
     });
     // 2줄부터: 무기별 J U I O P
     LOADOUTS.forEach(([, ids], r) => ids.forEach((id, i) => slotAt(GAP + i * (SLOT + 2), GAP * 2 + SLOT + 4 + r * (SLOT + GAP), slotIcon(id))));
+    // 초안 줄: 스킬 창 22px 칸(hud.md 8장) 위 = 그대로, 아래 = 안 배운 패시브 회색(밝은 글자 → keyLabel, 나머지 → offline)
+    const LIGHT = new Set(['w', 'l', 'y', 'k', 'a', 'r']);
+    const cellAt = (x: number, y: number, icon: string, gray: boolean) => {
+      px(x + 1, y + 1, color('global.ui.skillShade'), CELL, CELL);
+      px(x, y, color('global.ui.panelBorder'), CELL, CELL);
+      px(x + 1, y + 1, color('global.ui.skillLit'), CELL - 2, CELL - 2);
+      px(x + 1, y + 1, color('global.ui.offline'), CELL - 2, 1);
+      iconOf(icon)?.forEach((row, j) => [...row].forEach((ch, i) => {
+        if (ch !== '.') px(x + 3 + i, y + 3 + j, color(gray ? (LIGHT.has(ch) ? 'global.ui.keyLabel' : 'global.ui.offline') : pal[ch]!));
+      }));
+    };
+    drafts.forEach((n, i) => [false, true].forEach((gray, r) => cellAt(GAP + i * (CELL + GAP), cellsY + r * (CELL + GAP), n, gray)));
     labels.replaceChildren(
+      el('span', { text: `맨 아래 2줄 (초안, 스킬 창 22px 칸 · 아래는 안 배운 패시브 회색): ${drafts.join(' · ')}` }),
       el('span', { text: `1줄: ${names.map((n) => (D.icons[n] ? `${n}(초안)` : n)).join(' · ')}` }),
       ...LOADOUTS.map(([w, ids]) => el('span', { text: `${w}: ${ids.map((id, i) => `${KEYS[i]} ${id}`).join(' · ')}` })),
     );
