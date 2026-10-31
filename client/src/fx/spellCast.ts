@@ -1,6 +1,7 @@
 // 행동 → 마법 연출 연결 (MVP 보충 ST-2a). 무엇을 그릴지는 데이터로 고른다:
-// 포즈 fx(poses.json: ready = spark, bolt = bolt, area·plant = circle) + 행동 판정(area 원 = 화염 폭발, status freeze = 얼음 장판, slow = 동토 장판).
-// 계열 스킬(fx.json branch.looks: 불꽃 기둥·부유 구슬·끌어올림)은 원 판정 자리에 자기 그림 (spellBranch), 반복 판정마다 하나씩
+// 포즈 fx(poses.json: ready·gather·skyRaise 등 준비 = spark, bolt·thrust = bolt, area·channel = circle, plantDeep = stamp) + 행동 판정(area 원 = 화염 폭발, status freeze = 얼음 장판, slow = 동토 장판).
+// 계열 스킬(fx.json branch.looks: 불꽃 기둥·부유 구슬·끌어올림·중력 우물·중력장)은 원 판정 자리에 자기 그림 (spellBranch·spellGravity), 반복 판정마다 하나씩.
+// 원형 마법 준비 표적은 불 속성이면 금색, 아니면 하늘색
 import { areaCenter, blastDef, type ActionDef, type EchoLook, type WeaponDef } from '@game/shared';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
@@ -9,9 +10,10 @@ import type { FxContext } from './hitPackage';
 import type { Effect } from './layer';
 import { dust, ring, sparks } from './particles';
 import { cyclone, lookOf } from './branchFx';
-import { boltHit, magicCircle, muzzle, spark } from './spell';
+import { boltHit, magicCircle, muzzle, spark, stampImpact } from './spell';
 import { firePillar, floatOrb, liftUp } from './spellBranch';
 import { fireBurst, fireTarget } from './spellFire';
+import { gravField, gravityWell } from './spellGravity';
 import { iceField, slowField } from './spellIce';
 import { chainBolt, orbBurst, quakeRing, scarBurst, stickSlash } from './tier2Fx';
 
@@ -31,16 +33,16 @@ function poseFx(weapon: WeaponDef, pose: string | undefined, c: Caster): { type:
   return { type: f.type, x: sx + (f.at[0] - fx0) * c.facing, y: sy + (f.at[1] - fy0) };
 }
 
-/** 마법 행동인가 (active 포즈가 bolt·circle 이펙트) */
+/** 마법 행동인가 (active 포즈가 bolt·circle·stamp 이펙트) */
 const isSpell = (weapon: WeaponDef, def: ActionDef, c: Caster) => {
   const t = poseFx(weapon, def.poses?.active, c)?.type;
-  return t === 'bolt' || t === 'circle';
+  return t === 'bolt' || t === 'circle' || t === 'stamp';
 };
 
 /** 이펙트 층: layer = 캐릭터 위, ground = 바닥(마법진·범위 표시·장판, 캐릭터·몬스터 아래) */
 type Layers = Pick<FxContext, 'layer' | 'ground'>;
 
-const AREA_LOOKS: Record<string, (x: number, y: number, r: number) => Effect> = { pillar: firePillar, orb: floatOrb, lift: liftUp, cyclone: (x, y, r) => cyclone(x, y, r, 1) };
+const AREA_LOOKS: Record<string, (x: number, y: number, r: number) => Effect> = { pillar: firePillar, orb: floatOrb, lift: liftUp, well: gravityWell, gravfield: gravField, cyclone: (x, y, r) => cyclone(x, y, r, 1) };
 
 /** 원 판정 자리 그림: 계열 스킬이면 그 그림, 아니면 화염 폭발 */
 function areaBurst(layer: Layers['layer'], def: ActionDef, c: Caster): void {
@@ -55,7 +57,7 @@ export function castStart(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Cas
   if (w?.type === 'spark') fxl.layer.add(spark(w.x, w.y, def.phases.windup));
   if (def.area?.shape === 'circle' && isSpell(weapon, def, c)) {
     const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y);
-    fxl.ground.add(fireTarget(sx, sy, def.area.radius!, def.phases.windup));
+    fxl.ground.add(fireTarget(sx, sy, def.area.radius!, def.phases.windup, def.element === 'fire' ? 'fire' : 'magic'));
   }
 }
 
@@ -64,6 +66,11 @@ export function castActive(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Ca
   const a = poseFx(weapon, def.poses?.active, c);
   if (a?.type === 'bolt') fxl.layer.add(muzzle(a.x, a.y));
   if (a?.type === 'circle') fxl.ground.add(magicCircle(a.x, a.y));
+  if (a?.type === 'stamp') {
+    fxl.ground.add(magicCircle(a.x, a.y));
+    fxl.ground.add(stampImpact(a.x, a.y));
+    dust(a.x, a.y, fx.spell.stamp.dust).forEach((e) => fxl.layer.add(e));
+  }
   if (!def.area || !isSpell(weapon, def, c)) return;
   const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y);
   if (def.status?.type === 'freeze') fxl.ground.add(iceField(sx, sy, def.area.width ?? 32, def.area.depth ?? 16));

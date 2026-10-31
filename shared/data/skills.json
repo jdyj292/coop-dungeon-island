@@ -146,9 +146,9 @@
     ],
     "launchVz": 120,
     "poses": {
-      "windup": "ready",
-      "active": "bolt",
-      "recovery": "bolt"
+      "windup": "gather",
+      "active": "thrust",
+      "recovery": "thrust"
     },
     "fx": {
       "grade": "medium"
@@ -208,9 +208,9 @@
       "time": 1.5
     },
     "poses": {
-      "windup": "ready",
-      "active": "plant",
-      "recovery": "plant"
+      "windup": "plantRaise",
+      "active": "plantDeep",
+      "recovery": "plantDeep"
     },
     "fx": {
       "grade": "medium"
@@ -786,9 +786,9 @@
     },
     "strength": "light",
     "poses": {
-      "windup": "ready",
-      "active": "plant",
-      "recovery": "plant"
+      "windup": "plantRaise",
+      "active": "plantDeep",
+      "recovery": "plantDeep"
     },
     "fx": {
       "grade": "light"
@@ -859,9 +859,9 @@
       "time": 0.5
     },
     "poses": {
-      "windup": "ready",
-      "active": "bolt",
-      "recovery": "bolt"
+      "windup": "aimBack",
+      "active": "thrust",
+      "recovery": "thrust"
     },
     "fx": {
       "grade": "medium"
@@ -933,9 +933,9 @@
       "amount": 0.3
     },
     "poses": {
-      "windup": "ready",
-      "active": "area",
-      "recovery": "area"
+      "windup": "gather",
+      "active": "channel",
+      "recovery": "channel"
     },
     "fx": {
       "grade": "light"
@@ -1002,9 +1002,9 @@
     ],
     "launchVz": 150,
     "poses": {
-      "windup": "ready",
-      "active": "area",
-      "recovery": "area"
+      "windup": "scoop",
+      "active": "upswing",
+      "recovery": "upswing"
     },
     "fx": {
       "grade": "medium"
@@ -1067,9 +1067,9 @@
       "pull"
     ],
     "poses": {
-      "windup": "ready",
-      "active": "area",
-      "recovery": "area"
+      "windup": "skyRaise",
+      "active": "channel",
+      "recovery": "channel"
     },
     "fx": {
       "grade": "light"
@@ -1130,9 +1130,9 @@
       "amount": 0.4
     },
     "poses": {
-      "windup": "ready",
-      "active": "area",
-      "recovery": "area"
+      "windup": "skyRaise",
+      "active": "plantDeep",
+      "recovery": "plantDeep"
     },
     "fx": {
       "grade": "medium"
@@ -1189,9 +1189,9 @@
     },
     "strength": "light",
     "poses": {
-      "windup": "ready",
-      "active": "bolt",
-      "recovery": "bolt"
+      "windup": "skyRaise",
+      "active": "thrust",
+      "recovery": "thrust"
     },
     "fx": {
       "grade": "medium"
@@ -1248,9 +1248,9 @@
       "projectile"
     ],
     "poses": {
-      "windup": "ready",
-      "active": "bolt",
-      "recovery": "bolt"
+      "windup": "gather",
+      "active": "thrust",
+      "recovery": "thrust"
     },
     "fx": {
       "grade": "medium"

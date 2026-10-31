@@ -128,3 +128,21 @@ export const teleportPuff = (x: number, y: number): Effect[] => {
   };
   return [column, ...scatter(x, y, T.count, T.spread, T.sec, 6, S.boltFizzle.spin)];
 };
+
+/** 지팡이 꽂기 (포즈 fx stamp): 지팡이 끝에서 납작한 충격 고리가 퍼지고(흰 → 하늘 → 진한 하늘), 빛 조각이 튀어올랐다 떨어짐 */
+export function stampImpact(x: number, y: number): Effect {
+  const { sky, white, deep } = col(), T = S.stamp;
+  return {
+    ...life(T.sec),
+    draw(g, k) {
+      const t = 1 - k, r = 2 + (T.radius - 2) * easeOut(t), a = 1.2 - t;
+      ellipseDots(g, x, y, r, 0, t < 0.25 ? white : t < 0.6 ? sky : deep, a, 1);
+      if (t < 0.5) ellipseDots(g, x, y, r * 0.55, 0, white, a, 2);
+      for (let i = 0; i < T.shards; i++) {
+        const q = Math.PI * (0.15 + 0.7 * (i / Math.max(1, T.shards - 1))), d = r * 0.8;
+        const sx = x + Math.cos(q) * d * (i % 2 ? 1 : -1), sy = y - T.rise * Math.sin(Math.PI * t) * (0.6 + hash(i) * 0.4);
+        px(g, sx, sy, i % 2 ? white : sky, a);
+      }
+    },
+  };
+}

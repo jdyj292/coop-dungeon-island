@@ -595,6 +595,310 @@
           17
         ]
       }
+    },
+    "gather": {
+      "body": {
+        "lean": -1
+      },
+      "front": {
+        "hand": [
+          12,
+          8
+        ]
+      },
+      "back": {
+        "hand": [
+          11,
+          10
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            -1
+          ]
+        }
+      ],
+      "fx": {
+        "type": "spark",
+        "at": [
+          16,
+          3
+        ]
+      }
+    },
+    "skyRaise": {
+      "body": {
+        "legs": "walkA"
+      },
+      "front": {
+        "hand": [
+          12,
+          5
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            0,
+            -1
+          ]
+        }
+      ],
+      "fx": {
+        "type": "spark",
+        "at": [
+          13,
+          0
+        ]
+      }
+    },
+    "aimBack": {
+      "body": {
+        "bob": 1,
+        "legs": "walkA",
+        "lean": -1
+      },
+      "front": {
+        "hand": [
+          4,
+          12
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            0
+          ],
+          "behind": true
+        }
+      ],
+      "fx": {
+        "type": "spark",
+        "at": [
+          -1,
+          13
+        ]
+      }
+    },
+    "thrust": {
+      "body": {
+        "bob": 1,
+        "legs": "walkA",
+        "lean": 1
+      },
+      "front": {
+        "hand": [
+          13,
+          10
+        ]
+      },
+      "back": {
+        "hand": [
+          11,
+          11
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            0
+          ]
+        }
+      ],
+      "fx": {
+        "type": "bolt",
+        "at": [
+          20,
+          11
+        ]
+      }
+    },
+    "plantRaise": {
+      "body": {
+        "lean": -1
+      },
+      "front": {
+        "hand": [
+          11,
+          7
+        ]
+      },
+      "back": {
+        "hand": [
+          11,
+          9
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            0,
+            -1
+          ]
+        }
+      ],
+      "fx": {
+        "type": "spark",
+        "at": [
+          11,
+          2
+        ]
+      }
+    },
+    "plantDeep": {
+      "body": {
+        "bob": 2,
+        "legs": "walkA",
+        "lean": 1
+      },
+      "front": {
+        "hand": [
+          12,
+          11
+        ]
+      },
+      "back": {
+        "hand": [
+          12,
+          9
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            0,
+            -1
+          ]
+        }
+      ],
+      "fx": {
+        "type": "stamp",
+        "at": [
+          13,
+          16
+        ]
+      }
+    },
+    "channel": {
+      "body": {
+        "bob": 1,
+        "legs": "walkA",
+        "lean": 1
+      },
+      "front": {
+        "hand": [
+          13,
+          10
+        ]
+      },
+      "back": {
+        "hand": [
+          12,
+          12
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            -1
+          ]
+        }
+      ],
+      "fx": {
+        "type": "circle",
+        "at": [
+          7,
+          17
+        ]
+      }
+    },
+    "scoop": {
+      "body": {
+        "bob": 2,
+        "legs": "walkA",
+        "lean": 1
+      },
+      "front": {
+        "hand": [
+          12,
+          13
+        ]
+      },
+      "back": {
+        "hand": [
+          10,
+          13
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            0
+          ]
+        }
+      ],
+      "fx": {
+        "type": "spark",
+        "at": [
+          18,
+          15
+        ]
+      }
+    },
+    "upswing": {
+      "body": {
+        "legs": "walkA",
+        "lean": -1
+      },
+      "front": {
+        "hand": [
+          11,
+          6
+        ]
+      },
+      "back": {
+        "hand": [
+          10,
+          8
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            -1
+          ]
+        }
+      ],
+      "fx": {
+        "type": "circle",
+        "at": [
+          5,
+          17
+        ]
+      }
     }
   },
   "fist": {
