@@ -307,6 +307,164 @@
         ],
         "reverse": true
       }
+    },
+    "spinBack": {
+      "body": {
+        "bob": 1,
+        "legs": "walkA",
+        "lean": -1
+      },
+      "front": {
+        "hand": [
+          5,
+          11
+        ]
+      },
+      "back": {
+        "hand": [
+          4,
+          12
+        ],
+        "detached": true
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            0
+          ],
+          "behind": true
+        }
+      ]
+    },
+    "tackle": {
+      "body": {
+        "bob": 1,
+        "legs": "walkA",
+        "lean": 2
+      },
+      "front": {
+        "hand": [
+          8,
+          13
+        ]
+      },
+      "back": null,
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            0
+          ],
+          "behind": true
+        }
+      ]
+    },
+    "throwWind": {
+      "body": {
+        "bob": 1,
+        "legs": "walkA",
+        "lean": -1
+      },
+      "front": {
+        "hand": [
+          4,
+          12
+        ]
+      },
+      "back": {
+        "hand": [
+          2,
+          10
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            -1,
+            -1
+          ],
+          "behind": true
+        }
+      ]
+    },
+    "throwRelease": {
+      "body": {
+        "legs": "walkA",
+        "lean": 1
+      },
+      "front": {
+        "hand": [
+          13,
+          9
+        ]
+      },
+      "back": {
+        "hand": [
+          -1,
+          11
+        ]
+      },
+      "weapons": []
+    },
+    "iai": {
+      "body": {
+        "bob": 2,
+        "legs": "walkA",
+        "lean": 1
+      },
+      "front": {
+        "hand": [
+          13,
+          10
+        ]
+      },
+      "back": {
+        "hand": [
+          -1,
+          10
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            0
+          ]
+        }
+      ]
+    },
+    "cleave": {
+      "body": {
+        "bob": 1,
+        "legs": "walkA",
+        "lean": 1
+      },
+      "front": {
+        "hand": [
+          12,
+          11
+        ]
+      },
+      "back": {
+        "hand": [
+          -1,
+          10
+        ]
+      },
+      "weapons": [
+        {
+          "hand": "front",
+          "dir": [
+            1,
+            -1
+          ]
+        }
+      ]
     }
   },
   "staff": {

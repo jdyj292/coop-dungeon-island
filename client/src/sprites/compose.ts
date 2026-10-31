@@ -88,7 +88,7 @@ export function composeCharacter(data: SpriteData, look: CharacterLook): Compose
   }
   const frame = motion.legs ?? pose.body?.legs ?? look.frame ?? 'stand';
   const bob = (look.bob ?? 0) + (pose.body?.bob ?? 0) + (motion.bob ?? 0);
-  const lean = motion.lean ?? 0;
+  const lean = motion.lean ?? pose.body?.lean ?? 0;
   const ops: Op[] = [];
   const addPart = (part: Part) => ops.push({ layer: part.layer, pixels: partPixels(part, frame) });
 

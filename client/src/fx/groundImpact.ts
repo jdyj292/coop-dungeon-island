@@ -104,3 +104,22 @@ export function groundImpact(sx: number, sy: number, facing: number, fan?: FanAr
   }) : [];
   return [...lines.map((l) => crack(sx, sy, facing, l)), ring(hx, sy), ...dust(hx, sy, c.dust), ...tips];
 }
+
+/** 제자리 원 판정으로 땅을 치는 행동인가 (fx.json smear.radial.actions, 지진) */
+export const isRadialImpact = (actionId: string): boolean => fx.smear.radial.actions.includes(actionId);
+
+/** 사방 균열 줄들: lines줄을 한 바퀴에 고르게 (줄마다 꺾임이 다름), 길이 = 반지름 − forward */
+export function radialLines(radius: number): CrackLine[] {
+  const n = fx.smear.radial.lines, length = Math.max(8, radius - fx.smear.ground.forward);
+  return Array.from({ length: n }, (_, i) => ({ rot: (i / n) * Math.PI * 2 + 0.2, length, seed: i * 37 }));
+}
+
+/** 제자리 내려치기: 사방 균열 + 발밑 충격 링 + 먼지, 줄 끝마다 먼지 */
+export function radialImpact(sx: number, sy: number, facing: number, radius: number): Effect[] {
+  const lines = radialLines(radius);
+  const tips = lines.flatMap((l) => {
+    const [tx, ty] = turn(fx.smear.ground.forward + l.length, 0, l.rot);
+    return dust(sx + tx * facing, sy + ty, fx.smear.radial.tipDust);
+  });
+  return [...lines.map((l) => crack(sx, sy, facing, l)), ring(sx, sy), ...dust(sx, sy, fx.smear.ground.dust), ...tips];
+}

@@ -8,7 +8,7 @@ import fx from '../../data/fx.json';
 import type { FxContext } from './hitPackage';
 import type { Effect } from './layer';
 import { dust, ring, sparks } from './particles';
-import { lookOf } from './branchFx';
+import { cyclone, lookOf } from './branchFx';
 import { boltHit, magicCircle, muzzle, spark } from './spell';
 import { firePillar, floatOrb, liftUp } from './spellBranch';
 import { fireBurst, fireTarget } from './spellFire';
@@ -40,7 +40,7 @@ const isSpell = (weapon: WeaponDef, def: ActionDef, c: Caster) => {
 /** 이펙트 층: layer = 캐릭터 위, ground = 바닥(마법진·범위 표시·장판, 캐릭터·몬스터 아래) */
 type Layers = Pick<FxContext, 'layer' | 'ground'>;
 
-const AREA_LOOKS: Record<string, (x: number, y: number, r: number) => Effect> = { pillar: firePillar, orb: floatOrb, lift: liftUp };
+const AREA_LOOKS: Record<string, (x: number, y: number, r: number) => Effect> = { pillar: firePillar, orb: floatOrb, lift: liftUp, cyclone: (x, y, r) => cyclone(x, y, r, 1) };
 
 /** 원 판정 자리 그림: 계열 스킬이면 그 그림, 아니면 화염 폭발 */
 function areaBurst(layer: Layers['layer'], def: ActionDef, c: Caster): void {

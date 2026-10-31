@@ -281,7 +281,7 @@
       "during": "active"
     },
     "poses": {
-      "windup": "ready",
+      "windup": "spinBack",
       "active": "sweep",
       "recovery": "sweep",
       "charge": "charge"
@@ -342,9 +342,9 @@
     },
     "superArmor": true,
     "poses": {
-      "windup": "ready",
-      "active": "draw",
-      "recovery": "ready",
+      "windup": "charge",
+      "active": "tackle",
+      "recovery": "tackle",
       "charge": "charge"
     },
     "fx": {
@@ -395,9 +395,9 @@
       "projectile"
     ],
     "poses": {
-      "windup": "ready",
-      "active": "sweep",
-      "recovery": "sweep",
+      "windup": "spinBack",
+      "active": "cleave",
+      "recovery": "cleave",
       "charge": "charge"
     },
     "fx": {
@@ -458,9 +458,9 @@
       "during": "active"
     },
     "poses": {
-      "windup": "ready",
-      "active": "draw",
-      "recovery": "draw",
+      "windup": "charge",
+      "active": "iai",
+      "recovery": "iai",
       "charge": "charge"
     },
     "fx": {
@@ -577,9 +577,9 @@
       "projectile"
     ],
     "poses": {
-      "windup": "ready",
-      "active": "sweep",
-      "recovery": "sweep",
+      "windup": "throwWind",
+      "active": "throwRelease",
+      "recovery": "throwRelease",
       "charge": "charge"
     },
     "fx": {
@@ -641,9 +641,9 @@
       "coef": 200
     },
     "poses": {
-      "windup": "slash",
-      "active": "sweep",
-      "recovery": "sweep",
+      "windup": "draw",
+      "active": "cleave",
+      "recovery": "cleave",
       "charge": "charge"
     },
     "fx": {
@@ -710,9 +710,9 @@
       "amount": 0.3
     },
     "poses": {
-      "windup": "ready",
+      "windup": "spinBack",
       "active": "sweep",
-      "recovery": "sweep",
+      "recovery": "cleave",
       "charge": "charge"
     },
     "fx": {

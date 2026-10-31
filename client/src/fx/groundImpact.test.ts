@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import fx from '../../data/fx.json';
-import { crackPixels, fanLines } from './groundImpact';
+import { crackPixels, fanLines, radialLines } from './groundImpact';
 import { smearPixels, smearShape } from './smear';
 
 describe('대검 이펙트 모양', () => {
   it('대검 평타·스킬 active 포즈마다 스미어 모양이 있다', () => {
-    for (const pose of ['slash', 'sweep', 'rise', 'upslash', 'slam']) expect(smearShape(pose), pose).toBeDefined();
+    for (const pose of ['slash', 'sweep', 'rise', 'upslash', 'slam', 'cleave', 'throwRelease']) expect(smearShape(pose), pose).toBeDefined();
+  });
+  it('지진 사방 균열: 줄 수만큼 한 바퀴에 고르게, 길이 = 반지름 − forward', () => {
+    const lines = radialLines(40);
+    expect(lines).toHaveLength(fx.smear.radial.lines);
+    expect(lines[0]!.length).toBe(40 - fx.smear.ground.forward);
+    expect(lines[1]!.rot - lines[0]!.rot).toBeCloseTo((Math.PI * 2) / lines.length);
   });
   it('가로베기는 납작하다 (세로 폭 < 가로 폭)', () => {
     const px = smearPixels(smearShape('sweep')!, 1);
