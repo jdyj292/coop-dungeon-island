@@ -174,7 +174,11 @@
         "bearBelly": "#F0E0C4",
         "bearNose": "#3a2a2a",
         "tongue": "#E88AA0",
-        "sleepCloud": "#C9C3E8"
+        "sleepCloud": "#C9C3E8",
+        "dummyStraw": "#E8C873",
+        "dummySack": "#D8C49E",
+        "dummyRope": "#8E6B47",
+        "dummyTarget": "#D9645A"
       },
       "env": {
         "glow": "#F3E6A0",

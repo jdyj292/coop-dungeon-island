@@ -14,7 +14,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 | character/outfits.json | 의상 아이템(슬롯별)과 세트 | 확정 |
 | weapons_visual.json | 무기 외형 프로필 | 확정 |
 | poses.json | 무기 종류별 포즈(손 위치, 무기 방향, 이펙트), 걷기 순환 | 확정 |
-| monsters.json | 몬스터 스프라이트 (1층 다섯 종) | 확정 |
+| monsters.json | 몬스터 스프라이트 (1층 다섯 종 + 수련장 허수아비 dummy) | 확정 |
 | props.json | 환경 소품 (장애물·문·귀환 고리·보물상자, 11장) | 확정 (3-2 승인) |
 | island.json | 섬 사물 (시설·장식·배경, 12장) | 확정 (승인 데모에서 옮김 + 4-4 초안 승인) |
 
@@ -154,7 +154,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 - shared/data/monsters.json의 sprite 값 = 이 파일의 키
 - 피격 흰색 번쩍임과 다운(90° 눕힘)은 자동 처리
 - 피격 프레임 `hurt`(찌그러짐: 한 줄 낮고 좌우 1칸 넓게 + 감은 눈)·`hurtAir`(늘어남: 한 줄 높고 좌우 1칸 좁게 + 감은 눈). 없으면 windup 프레임으로 대체 (docs/motion.md 4장)
-  - 포자꽃(고정형, 띄우기 불가)은 hurt만, 이끼곰(보스, 경직 없음)은 둘 다 없음. 어지러움·그로기 중에는 그 자세가 피격 프레임보다 우선
+  - 포자꽃(고정형, 띄우기 불가)은 hurt만, 이끼곰(보스, 경직 없음)은 둘 다 없음. 허수아비(공격 없음)는 대체할 windup이 없어 둘 다 반드시 있어야 한다. 어지러움·그로기 중에는 그 자세가 피격 프레임보다 우선
 - 1층 이후 몬스터도 같은 절차(사양 → 실루엣 → 색 → 동작 검토)로 추가
 
 ## 7. 합성 절차
@@ -190,7 +190,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 
 ## 10. 초안 검토 (그림 추가·수정)
 - 승인 데이터는 바로 고치지 않는다. 새 그림은 client/data/sprites/drafts/에 먼저 그린다
-  - drafts/monsters.json: 몬스터 프레임 초안 (monsters.json과 같은 형식, frames·states, 새 재질 글자가 필요하면 materials도 — 승인 재질에 더해진다)
+  - drafts/monsters.json: 몬스터 프레임 초안 (monsters.json과 같은 형식, frames·states, 새 재질 글자가 필요하면 materials도 — 승인 재질에 더해진다). monsters.json에 없는 새 몬스터(예: 수련장 허수아비 dummy)는 통째로 넣는다 (sprite-preview "초안 보기"를 켜면 종류 목록에 나옴)
   - drafts/poses.json: 포즈 초안 (무기 종류 → 포즈 이름 → 포즈), 모션 초안 (motions → 모션 이름 → 모션)
   - drafts/props.json: 소품 초안 (새 소품은 통째로, 있는 소품은 frames·states만)
   - drafts/island.json: 섬 사물 초안 (새 사물은 통째로, 있는 사물은 frames를 겹치고 rot·animSec은 바꿈)

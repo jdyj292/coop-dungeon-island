@@ -1545,5 +1545,166 @@
    "recovery:bear_yawn": "idle1",
    "groggy": "groggy"
   }
+ },
+ "dummy": {
+  "materials": {
+   "a": "floors.1.monster.dummyStraw",
+   "S": "floors.1.monster.dummySack",
+   "r": "floors.1.monster.dummyRope",
+   "t": "floors.1.monster.dummyTarget",
+   "W": "global.materials.wood"
+  },
+  "idleSec": 0.6,
+  "frames": {
+   "idle1": {
+    "rows": [
+     ".......a.a..a.a.......",
+     ".......aaaaaaaa.......",
+     "......SSSSSSSSSS......",
+     ".....SSSSSSSSSSSS.....",
+     ".....SSSSSSSESSES.....",
+     ".....SSSSSSSESSES.....",
+     ".....SSSSSSBSSSSB.....",
+     "......SSSSSSSSSS......",
+     "...a....rrrrrr....a...",
+     "..aawwwwwwwwwwwwwwaa..",
+     "..aawwSSSSSSSSSSwwaa..",
+     "...a..SSSSSSSSSS..a...",
+     "......SSSttttSSS......",
+     "......SSttSSttSS......",
+     "......SStSttStSS......",
+     "......SStSttStSS......",
+     "......SSttSSttSS......",
+     "......SSSttttSSS......",
+     "......SSSSSSSSSS......",
+     "......rrrrrrrrrr......",
+     ".......aaaaaaaa.......",
+     ".......a.awwa.a.......",
+     "..........ww..........",
+     "..........ww..........",
+     "..........ww..........",
+     "........wWWWWw........",
+     ".......wwwwwwww......."
+    ],
+    "foot": [
+     11,
+     26
+    ]
+   },
+   "idle2": {
+    "rows": [
+     "........a.a..a.a......",
+     ".......aaaaaaaa.......",
+     "......SSSSSSSSSS......",
+     ".....SSSSSSSSSSSS.....",
+     ".....SSSSSSSESSES.....",
+     ".....SSSSSSSESSES.....",
+     ".....SSSSSSBSSSSB.....",
+     "......SSSSSSSSSS......",
+     "...a....rrrrrr....a...",
+     "..aawwwwwwwwwwwwwwaa..",
+     "..aawwSSSSSSSSSSwwaa..",
+     "...a..SSSSSSSSSS..a...",
+     "......SSSttttSSS......",
+     "......SSttSSttSS......",
+     "......SStSttStSS......",
+     "......SStSttStSS......",
+     "......SSttSSttSS......",
+     "......SSSttttSSS......",
+     "......SSSSSSSSSS......",
+     "......rrrrrrrrrr......",
+     ".......aaaaaaaa.......",
+     ".......a.awwa.a.......",
+     "..........ww..........",
+     "..........ww..........",
+     "..........ww..........",
+     "........wWWWWw........",
+     ".......wwwwwwww......."
+    ],
+    "foot": [
+     11,
+     26
+    ]
+   },
+   "hurt": {
+    "rows": [
+     ".....a.a..a.a.........",
+     ".....aaaaaaaa.........",
+     "....SSSSSSSSSS........",
+     "...SSSSSSSSSSSS.......",
+     "...SSSSSSSSSSSS.......",
+     "...SSSSSSSESSES.......",
+     "...SSSSSSBSSSSB.......",
+     "....SSSSSSSSSS........",
+     ".a....rrrrrr....a.....",
+     "aawwwwwwwwwwwwwwaa....",
+     "aawwSSSSSSSSSSwwaa....",
+     "..a..SSSSSSSSSS..a....",
+     ".....SSSttttSSS.......",
+     ".....SSttSSttSS.......",
+     ".....SStSttStSS.......",
+     ".....SStSttStSS.......",
+     ".....SSttSSttSS.......",
+     ".....SSSttttSSS.......",
+     ".....SSSSSSSSSS.......",
+     ".....rrrrrrrrrr.......",
+     "......aaaaaaaa........",
+     ".......a.awwa.a.......",
+     "..........ww..........",
+     "..........ww..........",
+     "..........ww..........",
+     "........wWWWWw........",
+     ".......wwwwwwww......."
+    ],
+    "foot": [
+     11,
+     26
+    ]
+   },
+   "hurtAir": {
+    "rows": [
+     ".......a.a..a.a.......",
+     ".......aaaaaaaa.......",
+     "......SSSSSSSSSS......",
+     ".....SSSSSSSSSSSS.....",
+     ".....SSSSSSSSSSSS.....",
+     ".....SSSSSSSESSES.....",
+     ".....SSSSSSBSSSSB.....",
+     "......SSSSSSSSSS......",
+     "...a....rrrrrr....a...",
+     "..aawwwwwwwwwwwwwwaa..",
+     "..aawwSSSSSSSSSSwwaa..",
+     "...a..SSSSSSSSSS..a...",
+     "......SSSttttSSS......",
+     "......SSttSSttSS......",
+     "......SStSttStSS......",
+     "......SStSttStSS......",
+     "......SSttSSttSS......",
+     "......SSSttttSSS......",
+     "......SSSSSSSSSS......",
+     "......rrrrrrrrrr......",
+     ".......aaaaaaaa.......",
+     ".......a.awwa.a.......",
+     "..........ww..........",
+     "..........ww..........",
+     "..........ww..........",
+     "........wWWWWw........",
+     ".......wwwwwwww......."
+    ],
+    "foot": [
+     11,
+     26
+    ]
+   }
+  },
+  "states": {
+   "idle": [
+    "idle1",
+    "idle2"
+   ],
+   "move": [
+    "idle1"
+   ]
+  }
  }
 }

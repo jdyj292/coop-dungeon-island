@@ -41,8 +41,9 @@ export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: numb
   // 잠든 몬스터는 맞으면 바로 깨어남 (그 몬스터만, dungeon.md 5장)
   m.sleep = 0;
   const damage = damageOf(def.coef * mul, p.atk);
-  const ko = m.hp > 0 && m.hp - damage <= 0;
-  m.hp = Math.max(0, m.hp - damage);
+  // 허수아비(immortal)는 체력이 닳지 않는다 (피해 숫자는 그대로)
+  const ko = !m.def.immortal && m.hp > 0 && m.hp - damage <= 0;
+  m.hp = m.def.immortal ? m.maxHp : Math.max(0, m.hp - damage);
   if (m.hp === 0) m.body.ko = true;
   if (def.status?.type === 'freeze' && !m.body.ko) freezeMonster(m, def.status.time);
   if (def.status?.type === 'slow' && !m.body.ko) slowMonster(m, def.status.time, def.status.amount ?? 0);

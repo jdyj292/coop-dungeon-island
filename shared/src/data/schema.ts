@@ -277,6 +277,8 @@ const pattern = z.discriminatedUnion('type', [
     // idleBetween: 이 단계의 공격 사이 쉬는 시간 (없으면 ai.idleBetween, 분노 단계)
     phases: z.array(z.object({ until: z.string().optional(), sequence: z.array(z.string()).min(1), idleBetween: range.optional() }).strict()).min(1),
   }).strict(),
+  // 공격하지 않음 (수련장 허수아비)
+  z.object({ type: z.literal('none') }).strict(),
 ]);
 
 export const monster = z.object({
@@ -291,10 +293,14 @@ export const monster = z.object({
   detectRange: pos,
   usesToken: z.boolean(),
   superArmor: z.enum(['none', 'attack', 'always']),
+  /** 체력이 닳지 않음: 피해 숫자·피격 반응은 그대로, 기절하지 않는다 (수련장 허수아비, dungeon.md 11장) */
+  immortal: z.boolean().optional(),
   ai: z.object({
-    type: z.enum(['melee', 'charger', 'turret', 'boss']), preferRange: range.optional(), idleBetween: range.optional(),
+    // dummy = 공격·추격 없이 플레이어 쪽만 보고, 밀려나면 처음 자리로 돌아감 (move 속도)
+    type: z.enum(['melee', 'charger', 'turret', 'boss', 'dummy']), preferRange: range.optional(), idleBetween: range.optional(),
   }).strict(),
-  attacks: z.array(monsterAttack).min(1),
+  /** 공격이 없으면 pattern none (허수아비) */
+  attacks: z.array(monsterAttack),
   pattern,
   groggy: z.object({ duration: pos, superArmor: z.boolean(), extend: z.record(z.unknown()).optional() }).strict().optional(),
   reward: z.object({
@@ -366,6 +372,8 @@ export const combat = z.object({
 }).strict();
 
 export const rooms = z.record(z.object({
+  /** 우물 패널 층 탭 이름 (없으면 "N층") */
+  name: z.string().optional(),
   returnAfterRoom: z.number().int().positive(),
   /** 보물상자 (onClear chest): 파티원 모두에게 */
   chest: z.object({ coins: z.number().int().nonnegative(), material: z.number().int().nonnegative() }).strict().optional(),
@@ -380,6 +388,8 @@ export const rooms = z.record(z.object({
     wellDrop: z.boolean().optional(),
     /** 몬스터가 잠든 채 시작: 누군가 착지한 뒤 이 초가 지나거나 맞으면 깨어남 (dungeon.md 5장) */
     wakeSec: pos.optional(),
+    /** 수련장 (dungeon.md 11장): 귀환 고리가 처음부터 켜짐, 스킬 쿨타임·MP 소모 없음, 보상·물약 소모 없음 */
+    training: z.boolean().optional(),
     waves: z.array(z.object({ monsters: z.record(z.number().int().positive()) }).strict()).min(1),
     onClear: z.array(z.string()).optional(),
   }).strict()).min(1),

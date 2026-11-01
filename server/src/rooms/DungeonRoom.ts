@@ -31,7 +31,7 @@ export class DungeonRoom extends Room<DungeonState> {
   onCreate(options: DungeonOptions): void {
     this.party = options?.party;
     this.game = new DungeonGame({
-      room: Number(options?.room) || 1, partySize: this.party?.members.length || Number(options?.partySize) || 1,
+      room: Number(options?.room) || 1, floor: this.party?.floor ?? options?.floor, partySize: this.party?.members.length || Number(options?.partySize) || 1,
       // 개발 명령은 배포(NODE_ENV=production)에서 받지 않는다
       dev: !CONFIG.production,
     }, {
@@ -99,7 +99,8 @@ export class DungeonRoom extends Room<DungeonState> {
       if (!m || !this.pending.has(m.userId)) continue;
       const rest = left[line.pid] ?? { hp: 0, mp: 0 };
       const used = { hp: Math.max(0, m.potions.hp - rest.hp), mp: Math.max(0, m.potions.mp - rest.mp) };
-      saveRun(services().db, party.islandId, Number(m.userId), result.kind, line, used, floor, now, m.weapon);
+      // 수련장은 저장하지 않음 (보상·물약 소모·숙련도·활동 기록 없음, dungeon.md 11장)
+      if (!this.game.training) saveRun(services().db, party.islandId, Number(m.userId), result.kind, line, used, floor, now, m.weapon);
       this.pending.delete(m.userId);
       done.push(m.userId);
     }

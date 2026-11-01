@@ -116,6 +116,7 @@ export class Predictor {
     this.pending = this.pending.filter((p) => p.seq > lastSeq);
     const sim = clone(server);
     sim.perks = this.state.perks;
+    sim.free = this.state.free;
     let held: PlayerInput | null = null;
     // 회피 누름은 시작될 때까지 이어 누른다 (서버가 히트스톱 중 받은 회피를 보관했다 실행하는 것과 같게, server inputs.ts)
     let dodge = false;

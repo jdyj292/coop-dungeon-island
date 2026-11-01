@@ -49,5 +49,5 @@
     { "itemId": "flag", "x": 22, "y": 24, "rot": 0 }
   ],
   "interactRange": 20,
-  "well": { "countdownSec": 10, "maxParty": 4, "floors": ["floor1"] }
+  "well": { "countdownSec": 10, "maxParty": 4, "floors": ["floor1", "training"] }
 }

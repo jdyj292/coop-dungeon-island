@@ -627,5 +627,42 @@
         "perPlayer": true
       }
     }
+  },
+  "dummy": {
+    "name": "허수아비",
+    "floor": 1,
+    "rank": "normal",
+    "sprite": "dummy",
+    "hp": 9999,
+    "weight": "medium",
+    "immortal": true,
+    "hurtbox": {
+      "width": 14,
+      "height": 24,
+      "depth": 10
+    },
+    "move": {
+      "x": 40,
+      "y": 30,
+      "style": "walk"
+    },
+    "detectRange": 999,
+    "usesToken": false,
+    "superArmor": "none",
+    "ai": {
+      "type": "dummy"
+    },
+    "attacks": [],
+    "pattern": {
+      "type": "none"
+    },
+    "reward": {
+      "coins": [
+        0,
+        0
+      ],
+      "exp": 0,
+      "material": 0
+    }
   }
 }

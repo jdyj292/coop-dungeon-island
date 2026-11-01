@@ -42,6 +42,7 @@ function decide(m: Monster, ctx: AiContext): { def?: MonsterAttack; goal?: { x: 
     const near = def.move && 'speed' in def.move ? m.body.x : p.x + side * 24;
     return { goal: { x: near, y: p.y } };
   }
+  if (pat.type === 'none') return {};
   const usable = pat.rules.filter((r) => {
     const def = attacks.get(r.attack)!;
     // 대각선 조준이 되는 공격은 aimDepth만큼 더 비껴 있어도 친다
@@ -100,6 +101,14 @@ export function stepMonsterAi(m: Monster, dt: number, ctx: AiContext): MonsterEv
   // 빙결: 하던 공격은 취소, 움직이지 않음
   if (m.frozen > 0) {
     if (m.attack) endAttack(m, ctx);
+    return ev;
+  }
+  // 허수아비: 공격·추격 없이 플레이어 쪽만 보고, 밀려났으면 처음 자리로 미끄러져 돌아감 (걷기 프레임 없음)
+  if (m.def.ai.type === 'dummy') {
+    const dx = ctx.player.x - m.body.x;
+    if (dx !== 0) m.facing = Math.sign(dx);
+    if (Math.hypot(m.home.x - m.body.x, m.home.y - m.body.y) > 1) moveToward(m, m.home, dt, ctx);
+    m.moving = false;
     return ev;
   }
   if (m.mode === 'selfStun' || m.mode === 'groggy') {

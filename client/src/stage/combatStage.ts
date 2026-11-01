@@ -96,6 +96,7 @@ export class CombatStage {
   /** 방 규칙 (rooms.json): 층 첫 방은 우물에서 떨어져 들어오고 몬스터는 잠든 채 (dungeon.md 2·5장, 서버 dungeonGame과 같음) */
   enterRoom(room: RoomDef): void {
     this.player.arrive = arriveSecOf(room);
+    this.player.free = !!room.training; // 수련장: 쿨타임·MP 없음
     if (room.wakeSec) this.sim.sleepAll(room.wakeSec);
   }
 

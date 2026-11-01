@@ -1,12 +1,14 @@
 // 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·장식·물약·재료) / 게시판(기록·메모·주민) / 우물. 스킬 창(K)은 전용 창 (islandSkills.ts)
 // 키: ↑↓ 고르기, ←→ 수량, Q·E·Tab 탭, Enter 사기·장착·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
 import type Phaser from 'phaser';
-import { facilityName, ISLAND, ITEMS, MVP_WEAPONS, NET, WEAPONS } from '@game/shared';
+import { facilityName, ISLAND, ITEMS, MVP_WEAPONS, NET, ROOMS, WEAPONS } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
 import { moneyLines } from './islandBadges';
 import { ResidentsTab } from './islandResidents';
 import { SkillPanel } from './islandSkills';
+
+const floorName = (f: string): string => ROOMS[f]?.name ?? `${f.replace(/\D/g, '')}층`;
 
 export type PanelKind = 'shop' | 'bag' | 'skill' | 'board' | 'well';
 
@@ -16,8 +18,8 @@ const TABS: Record<PanelKind, { label: string; disabled?: boolean }[]> = {
   // 스킬 창은 전용 창 (무기 탭도 그 안에)
   skill: [],
   board: [{ label: '기록' }, { label: '메모' }, { label: '주민' }],
-  // 층 선택 (해금된 층만, island.json well.floors)
-  well: ISLAND.well.floors.map((f) => ({ label: `${f.replace(/\D/g, '')}층` })),
+  // 층 선택 (해금된 층만, island.json well.floors). 이름은 rooms.json name (수련장), 없으면 "N층"
+  well: ISLAND.well.floors.map((f) => ({ label: floorName(f) })),
 };
 const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', skill: '스킬', board: '게시판', well: '우물' };
 const POTION_COLOR: Record<string, string> = { hpPotion: 'global.ui.hp', mpPotion: 'global.ui.mp' };
@@ -190,7 +192,9 @@ export class IslandPanels {
         : [{ id: 'minus', label: '-' }, { id: 'plus', label: '+' }, { id: 'buy', label: '사기', disabled: !id || total > have }];
     } else if (kind === 'well') {
       const w = c.well, me = c.userId, mine = w.members.includes(me), left = Math.ceil((w.departAt - c.clock.serverNow()) / 1000);
-      footer = w.departAt ? `출발까지 ${Math.max(0, left)}초` : w.members.length ? `${w.members.length}/${ISLAND.well.maxParty}명` : '함께 출발';
+      // 대기 중인 층은 먼저 합류한 사람이 고른 층 (지금 탭과 다를 수 있어 이름을 함께)
+      const at = w.floor ? `${floorName(w.floor)} · ` : '';
+      footer = w.departAt ? `${at}출발까지 ${Math.max(0, left)}초` : w.members.length ? `${at}${w.members.length}/${ISLAND.well.maxParty}명` : '함께 출발';
       buttons = !mine ? [{ id: 'join', label: '합류', disabled: w.members.length >= ISLAND.well.maxParty }]
         : [{ id: 'leave', label: '나가기' }, ...(w.members[0] === me && !w.departAt ? [{ id: 'depart', label: w.members.length > 1 ? '출발' : '혼자 출발' }] : [])];
     } else if (this.onEquip()) {

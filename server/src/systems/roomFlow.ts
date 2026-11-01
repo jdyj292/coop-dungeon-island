@@ -2,10 +2,14 @@
 // 다음 방은 새 RoomSim (플레이어 자원은 그대로, 위치는 시작 지점)
 import { COMBAT, entryPos, mapOf, roomBounds, ROOMS, RoomSim, type RoomDef, type SimOptions } from '@game/shared';
 
+/** 기본 층 (개발 방·run-sim) */
 export const FLOOR = 'floor1';
 
-/** 이 층의 방 목록 (마지막 = 보스 방) */
-export const floorRooms = (): RoomDef[] => ROOMS[FLOOR]!.rooms;
+/** rooms.json에 있는 층이면 그대로, 아니면 기본 층 */
+export const floorKey = (floor: unknown): string => (typeof floor === 'string' && ROOMS[floor] ? floor : FLOOR);
+
+/** 이 층의 방 목록 (마지막 = 보스 방, 수련장은 방 하나) */
+export const floorRooms = (floor = FLOOR): RoomDef[] => ROOMS[floor]!.rooms;
 
 /** 출구 앞에 선 인원 / 필요한 인원 (쓰러진 사람 제외). 출구가 없는 방(보스)은 need 0 */
 export function exitCount(sim: RoomSim, room: RoomDef): { at: number; need: number } {

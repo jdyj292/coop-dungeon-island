@@ -23,6 +23,12 @@ export function roomObjects(room: RoomDef, isBoss: boolean, monsters: Record<str
   START_Y.forEach((k, i) => out.push({ name: 'player_start', x: 3 * TILE, y: r(D * k), props: { index: i } }));
   // 문은 뒤쪽 벽에 붙은 아치 (art.md 6장). 오브젝트는 문 바로 앞 바닥 (깊이 4px)
   out.push({ name: 'door_in', x: 2 * TILE, y: DOOR_Y });
+  // 수련장: 나가는 문 없이 허수아비는 가운데보다 조금 오른쪽, 귀환 고리는 시작 지점 앞 (dungeon.md 11장)
+  if (room.training) {
+    out.push({ name: 'spawn', x: r(W * 0.6), y: r(D / 2), props: { wave: 1, role: 'back' } });
+    out.push({ name: 'return_point', x: 6 * TILE, y: r(D * 0.8) });
+    return out;
+  }
   if (!isBoss) out.push({ name: 'door_out', x: W - 2 * TILE, y: DOOR_Y });
   room.waves.forEach((w, wi) => {
     const kinds = Object.entries(w.monsters).flatMap(([k, n]) => Array<string>(n).fill(k));

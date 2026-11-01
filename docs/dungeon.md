@@ -264,11 +264,22 @@
   - objects (오브젝트 레이어, 점): player_start(속성 index 0~3, 0 = 혼자일 때 자리), door_in, door_out(보스 방 제외, 문은 뒤쪽 벽 아치라 오브젝트는 문 바로 앞 바닥 깊이 4px — art.md 6장), spawn, return_point, chest, env_<종류>
 - spawn 속성: `wave`(1, 2…), `role`(front / back / boss). 고정형(포자꽃 등)은 back, 보스는 boss, 나머지는 front 지점에 우선 배치 (shared/src/sim/roomSetup.ts mapSpawns)
 - **몬스터 종류·수·웨이브는 맵이 아니라 shared/data/rooms.json**에서 정한다. 맵은 위치만
-- rooms.json 층 키: returnAfterRoom (귀환 지점 방), chest (보물상자 보상, balance.md 7장), bgm { room, boss } (층 곡, audio.md 5장), rooms[] (id·name·size·map·waves·onClear, 층 첫 방은 wellDrop·wakeSec — 2장 우물 입장)
+- rooms.json 층 키: name (우물 탭 이름, 없으면 "N층"), returnAfterRoom (귀환 지점 방), chest (보물상자 보상, balance.md 7장), bgm { room, boss } (층 곡, audio.md 5장), rooms[] (id·name·size·map·waves·onClear, 층 첫 방은 wellDrop·wakeSec — 2장 우물 입장, 수련장은 training — 11장)
 - 장애물은 방마다 0~3개, 낮게 (깊이 이동을 막지 않되 돌진·투사체에 쓰이게)
   - 충돌 (shared/src/map/collision.ts): 플레이어·몬스터는 돌아서 지나간다 (막힌 축만 멈춤). 돌진이 막히면 벽 충돌과 같음 (멧돼지 어지러움), 투사체는 사라짐, 넉백은 그 자리에서 멈춤
   - 1층: 1번 방 낮은 바위 2, 2번 방 그루터기 2 (멧돼지 돌진 줄). 그림은 roadmap 3-2 전까지 임시 판
 - 방 진행: 입장 → door_in 닫힘 → 웨이브 순서대로 출현 → 전멸 시 다음 웨이브 → 마지막 웨이브 클리어 시 door_out 열림 (1층은 지금 방마다 웨이브 하나)
 
-## 11. 이후 확장
+## 11. 수련장
+
+스킬을 마음껏 시험해 보는 방. 우물 패널의 "수련장" 탭으로 혼자 또는 파티(최대 4명)로 들어간다 (island.md 6장).
+
+- rooms.json 층 `training` (이름 수련장), 방 하나 `tr_r1` (`training: true`, 26×11, 우물에서 떨어져 들어옴), 맵 maps/training/room1.json (map-gen이 만듦: 나가는 문 없음, 허수아비는 가로 60%·깊이 가운데, 귀환 고리는 시작 지점 앞)
+- 허수아비 (monsters.json `dummy`): `immortal` = 맞아도 체력이 그대로라 기절하지 않음 (피해 숫자·피격 반응·띄우기는 그대로), `ai.type: dummy` = 공격·추격 없이 플레이어 쪽만 보고, 밀려나면 처음 자리로 미끄러져 돌아감 (move 속도), 공격 없음 (`attacks: []`, `pattern: none`)
+- 쿨타임·MP 없음: 방에 들어온 플레이어는 PlayerState.free → 스킬을 써도 쿨타임이 걸리지 않고 MP가 줄지 않음 (shared/src/player.ts startSkill, 서버·예측 같은 함수)
+- 처음부터 열린 방: 귀환 고리가 켜져 있어 전원이 고리 안에 3초 서 있으면 섬 우물 앞으로 (정산 화면 없이 바로). 보스 방이 아니라 clear 결과는 없음
+- 보상 없음: 코인·재료·경험치·콤보 보너스·상자 없음, 물약을 써도 가방에서 빠지지 않고 정산을 저장하지 않음 (활동 기록·숙련도 그대로)
+- 개발: `?floor=training` (로컬), `?online=1&party=1&floor=training` (서버)
+
+## 12. 이후 확장
 - 6층 이후 "심연": 앞 층 테마가 섞인 층. 층 단위 업데이트 (몬스터 3~4종 + 보스 + 기믹 1)

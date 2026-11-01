@@ -155,10 +155,11 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | detectRange | 이 거리 안에 플레이어가 들어오면 반응 |
 | usesToken | 공격 토큰 사용 여부 (일반 true, 정예·보스 false) |
 | superArmor | none / attack(windup~active 동안) / always(그로기 때만 해제) |
-| ai.type | melee(다가가서 때림) / charger(거리 두고 돌진) / turret(제자리 발사) / boss |
+| immortal | true면 맞아도 체력이 그대로 (기절하지 않음, 수련장 허수아비, dungeon.md 11장) |
+| ai.type | melee(다가가서 때림) / charger(거리 두고 돌진) / turret(제자리 발사) / boss / dummy(공격·추격 없음, 밀려나면 처음 자리로) |
 | ai.preferRange | 공격 준비를 시작하는 거리 범위 |
 | ai.idleBetween | 보스: 공격 사이 쉬는 시간 범위 (pattern phase에 idleBetween이 있으면 그 단계는 그 값) |
-| attacks | 행동 목록 (예고 = windup) |
+| attacks | 행동 목록 (예고 = windup). 비어 있으면 pattern은 none |
 | pattern | 공격 선택 규칙 (아래) |
 | groggy | 보스 그로기 `{ duration, superArmor, extend }` (dungeon.md 연장 규칙) |
 | onWallHit | 공격 중 벽 충돌 시 `{ "selfStun": 1.0 }` 또는 `{ "groggy": true, "bounce"?: n }` (bounce = n번은 방향을 뒤집어 이동 구간 처음부터 다시 구르고 그다음 벽에서 그로기) |
@@ -166,6 +167,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 
 ### pattern
 - choose: 조건이 맞는 규칙 중 무작위 선택. 조건 = range(거리 범위), alignDepth(깊이 차이 이내일 때만, 돌진·발사형에 사용), hp 조건
+- none: 공격하지 않음 (허수아비)
 - loop: 보스용. phases 배열을 순서대로, 각 phase는 sequence를 반복. `until: "hp<0.5"`를 만족하면 다음 phase로. phase마다 idleBetween을 따로 둘 수 있다 (분노)
 - 깊이 조건: alignDepth가 없으면 공격 판정 깊이의 절반 (hitbox.depth / 2, area면 radius / 2) 안에서만 공격
 - loop 공격은 거리 조건이 없으므로 닿을 수 있을 때(판정에 들어옴, 돌진형은 깊이 정렬)까지 다가간 뒤 쓴다. 투사체 공격은 사거리 안이면 쏜다. 공격 사이 ai.idleBetween(또는 phase idleBetween) 쉼
@@ -267,7 +269,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | returnWindowSec | 던전에서 나온 뒤 이 초 안에 들어오면 return 자리 |
 | starterDecor | `[{ itemId, x, y, rot }]` 새 섬에 처음부터 놓인 공용 장식 (island.md 7장) |
 | interactRange | 시설 [E] 거리 px (시설 앞 가운데부터, 넓은 시설은 폭 안이면 0) |
-| well | `{ countdownSec, maxParty, floors }` 우물 출발: 카운트다운 초, 파티 최대, 갈 수 있는 층 (rooms.json 키) |
+| well | `{ countdownSec, maxParty, floors }` 우물 출발: 카운트다운 초, 파티 최대, 갈 수 있는 층 (rooms.json 키, training = 수련장) |
 
 - data-validate: 그림 id가 섬 사물 그림에 있는지, 칸이 격자(물가 제외) 안인지, starterDecor가 있는 장식인지. 기본 장식이 모두 놓을 수 있는 자리인지는 placement.test.ts
 

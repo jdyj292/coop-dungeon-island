@@ -9,9 +9,9 @@ type Mode = 'frame' | 'all' | 'state';
 
 export function monsterTab(): HTMLElement {
   const data = () => spriteData();
-  const ids = Object.keys(data().monsters);
+  const ids = () => Object.keys(data().monsters);
   const s = {
-    id: ids[0]!, mode: 'frame' as Mode, frame: '', state: 'idle',
+    id: ids()[0]!, mode: 'frame' as Mode, frame: '', state: 'idle',
     frameMs: 400, superArmor: true, blink: true, blinkMs: 100,
     shake: true, offset: true, spin: true, flip: false, scale: 4, bg: 'dungeon' as Background, shadow: true, foot: false,
   };
@@ -76,15 +76,17 @@ export function monsterTab(): HTMLElement {
 
   const frameSelect = select('프레임', frameNames(), s.frame, on((v: string) => { s.frame = v; }));
   const stateSelect = select('상태', stateNames(), s.state, on((v: string) => { s.state = v; }));
+  const pick = (v: string) => {
+    s.id = v;
+    s.frame = Object.keys(monster().frames)[0]!;
+    s.state = 'idle';
+    frameSelect.set(frameNames(), s.frame);
+    stateSelect.set(stateNames(), s.state);
+  };
+  const kindSelect = select('종류', opts(ids()), s.id, on(pick));
   const panel = el('div', { className: 'panel' },
     el('h3', { text: '몬스터' }),
-    select('종류', opts(ids), s.id, on((v: string) => {
-      s.id = v;
-      s.frame = Object.keys(monster().frames)[0]!;
-      s.state = 'idle';
-      frameSelect.set(frameNames(), s.frame);
-      stateSelect.set(stateNames(), s.state);
-    })).node,
+    kindSelect.node,
     select('보기', [['frame', '프레임 하나'], ['all', '전체 프레임'], ['state', '상태 재생']], s.mode,
       on((v: string) => { s.mode = v as Mode; })).node,
     frameSelect.node,
@@ -92,6 +94,9 @@ export function monsterTab(): HTMLElement {
     slider('상태 프레임 길이', [100, 1000, 50], s.frameMs, ms, on((v: number) => { s.frameMs = v; })),
     checkbox('초안 보기 (drafts/monsters.json)', draftsOn(), on((v: boolean) => {
       setUseDrafts(v);
+      // 초안에만 있는 새 몬스터 (허수아비)도 종류 목록에
+      if (!ids().includes(s.id)) pick(ids()[0]!);
+      kindSelect.set(opts(ids()), s.id);
       frameSelect.set(frameNames(), s.frame = Object.keys(monster().frames).includes(s.frame) ? s.frame : Object.keys(monster().frames)[0]!);
       stateSelect.set(stateNames(), s.state);
     })),

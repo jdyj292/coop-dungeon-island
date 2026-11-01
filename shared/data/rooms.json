@@ -124,5 +124,36 @@
         ]
       }
     ]
+  },
+  "training": {
+    "name": "수련장",
+    "returnAfterRoom": 1,
+    "bgm": {
+      "room": "floor1",
+      "boss": "floor1"
+    },
+    "rooms": [
+      {
+        "id": "tr_r1",
+        "name": "수련장",
+        "training": true,
+        "wellDrop": true,
+        "size": [
+          26,
+          11
+        ],
+        "map": "training/room1",
+        "waves": [
+          {
+            "monsters": {
+              "dummy": 1
+            }
+          }
+        ],
+        "onClear": [
+          "return_point"
+        ]
+      }
+    ]
   }
 }

@@ -35,6 +35,8 @@ export interface PartyMember {
 export interface DungeonOptions {
   /** 시작할 1층 방 번호 1~6 (개발용, 기본 1). 한 판은 여기서 보스 방까지 */
   room?: number;
+  /** 층 (rooms.json 키, 기본 floor1). 섬 파티는 party.floor */
+  floor?: string;
   /** 던전 인원 1~4 (공격 토큰) */
   partySize?: number;
   /** 테스트용 난수 */

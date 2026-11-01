@@ -90,6 +90,7 @@ export interface PrivateView {
 /** 서버 상태 모양 (colyseus.js가 디코드한 객체) */
 type Live = {
   serverTime: number;
+  floor: string;
   roomIndex: number;
   roomCount: number;
   doorOpen: boolean;
@@ -206,10 +207,10 @@ export class Connection {
   }
 
   /** 첫 상태까지 받은 뒤 돌려준다 (방 번호를 알아야 화면을 만든다) */
-  /** 개발 방: ?room=1~6 (기본 1) ?party=1~4 (기본 2) ?weapon ?skills=gs_launch:3:double (스킬 노드, skillTree.encodeBuild) */
-  static devRoom(p: URLSearchParams): { room: number; partySize: number; weapon?: string; skills?: string } {
+  /** 개발 방: ?room=1~6 (기본 1) ?party=1~4 (기본 2) ?floor=training ?weapon ?skills=gs_launch:3:double (스킬 노드, skillTree.encodeBuild) */
+  static devRoom(p: URLSearchParams): { room: number; partySize: number; floor?: string; weapon?: string; skills?: string } {
     const room = Number(p.get('room') ?? 1), partySize = Math.min(4, Math.max(1, Number(p.get('party') ?? 2)));
-    return { room, partySize, ...(p.has('weapon') ? { weapon: p.get('weapon')! } : {}), ...(p.has('skills') ? { skills: p.get('skills')! } : {}) };
+    return { room, partySize, ...(p.has('floor') ? { floor: p.get('floor')! } : {}), ...(p.has('weapon') ? { weapon: p.get('weapon')! } : {}), ...(p.has('skills') ? { skills: p.get('skills')! } : {}) };
   }
 
   /** 개발용 네트워크 흉내 초기값: ?lag=왕복ms&jitter=±ms&loss=% (` 키 패널에서 조정) */
@@ -219,7 +220,7 @@ export class Connection {
   }
 
   /** 개발 방(joinOrCreate, ?online=1) 또는 섬에서 출발한 방(roomId, 세션 쿠키로 인증) */
-  static async join(opts: { room: number; partySize: number; name?: string; weapon?: string } | { roomId: string }, sim: NetSim): Promise<Connection> {
+  static async join(opts: { room: number; partySize: number; floor?: string; name?: string; weapon?: string } | { roomId: string }, sim: NetSim): Promise<Connection> {
     const client = new Client(serverUrl());
     const room = 'roomId' in opts ? await client.joinById(opts.roomId) : await client.joinOrCreate('dungeon', opts);
     const conn = new Connection(room, sim);
@@ -244,11 +245,11 @@ export class Connection {
    * 방 진행 값 (서버 기본값과 같으면 전송되지 않아 비어 있을 수 있다 → 서버 스키마 기본값으로 채움)
    */
   get progress(): {
-    roomIndex: number; roomCount: number; doorOpen: boolean; exitAt: number; exitNeed: number; chestOpen: boolean; returnLeft: number; phase: string;
+    floor: string; roomIndex: number; roomCount: number; doorOpen: boolean; exitAt: number; exitNeed: number; chestOpen: boolean; returnLeft: number; phase: string;
   } {
     const l = this.live;
     return {
-      roomIndex: l.roomIndex ?? 0, roomCount: l.roomCount ?? 6, doorOpen: l.doorOpen ?? false, exitAt: l.exitAt ?? 0, exitNeed: l.exitNeed ?? 0,
+      floor: l.floor ?? 'floor1', roomIndex: l.roomIndex ?? 0, roomCount: l.roomCount ?? 6, doorOpen: l.doorOpen ?? false, exitAt: l.exitAt ?? 0, exitNeed: l.exitNeed ?? 0,
       chestOpen: l.chestOpen ?? false, returnLeft: l.returnLeft ?? 0, phase: l.phase ?? 'play',
     };
   }

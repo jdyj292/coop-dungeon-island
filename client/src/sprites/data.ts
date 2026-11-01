@@ -119,7 +119,11 @@ export function withMonsterDrafts(base: Record<string, unknown>, drafts: Record<
   const out: Record<string, unknown> = { ...base };
   for (const [id, d] of Object.entries(withoutNotes(drafts)) as [string, MonsterDraft][]) {
     const m = base[id] as { materials?: Record<string, string>; frames: Record<string, unknown>; states: Record<string, unknown> } | undefined;
-    if (!m) continue;
+    // 새 몬스터 (예: 수련장 허수아비)는 통째로
+    if (!m) {
+      out[id] = d;
+      continue;
+    }
     out[id] = { ...m, ...(d.materials && { materials: { ...m.materials, ...d.materials } }), frames: { ...m.frames, ...d.frames }, states: { ...m.states, ...d.states } };
   }
   return out;

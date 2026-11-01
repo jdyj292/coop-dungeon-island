@@ -65,6 +65,8 @@ export interface Monster {
   pressed: number;
   /** 검흔 (검흔 베기, sim/scar.ts): 건 사람·남은 시간·건 스킬 정의·남은 옮겨가기 횟수 */
   scar?: { pid: string; left: number; def: ActionDef; hops: number };
+  /** 나온 자리 (허수아비 ai dummy는 밀려나면 여기로 돌아감) */
+  home: { x: number; y: number };
 }
 
 /** 빙결 (얼음 장판 등 status freeze). 더 긴 쪽으로 */
@@ -83,7 +85,7 @@ export function newMonster(id: number, kind: string, x: number, y: number, hpMul
   if (!def) throw new Error(`몬스터 '${kind}' 없음`);
   return {
     id, kind, def, body: newBody(x, y, def.weight), hp: Math.round(def.hp * hpMul), maxHp: Math.round(def.hp * hpMul), facing: -1, mode: 'idle', timer: 0, frozen: 0, slow: { left: 0, amount: 0 }, sleep: 0, burn: { left: 0, mul: 1 }, pressed: 0,
-    attack: null, hasToken: false, cooldowns: {}, aware: false, moving: false, hopT: 0, loop: { phase: 0, index: 0 },
+    attack: null, hasToken: false, cooldowns: {}, aware: false, moving: false, hopT: 0, loop: { phase: 0, index: 0 }, home: { x, y },
   };
 }
 

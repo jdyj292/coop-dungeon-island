@@ -1,4 +1,4 @@
-// 실행: pnpm map-gen [--force] — 1층 방 Tiled 맵 초기 생성 + 편집용 타일셋 그림 (docs/dungeon.md 10장)
+// 실행: pnpm map-gen [--force] — 1층·수련장 방 Tiled 맵 초기 생성 + 편집용 타일셋 그림 (docs/dungeon.md 10장)
 // 맵 원본은 maps/<map>.json (Tiled가 그대로 열고 저장하는 JSON 맵). 이미 있으면 덮어쓰지 않는다 (--force면 덮어씀)
 // 타일셋 PNG는 Tiled 편집 화면용 (palette.json 색). 게임은 그리지 않고 장애물 칸·오브젝트 위치만 읽는다
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -71,12 +71,14 @@ function mapJson(id: string, room: (typeof ROOMS)[string]['rooms'][number], isBo
 mkdirSync(join(root, 'maps/tilesets'), { recursive: true });
 writeFileSync(join(root, 'maps/tilesets/floor1.png'), tilesetPng());
 let made = 0;
-const rooms = ROOMS.floor1!.rooms;
-rooms.forEach((room, i) => {
-  const file = join(root, 'maps', `${room.map}.json`);
-  if (existsSync(file) && !force) return;
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, JSON.stringify(mapJson(room.map, room, i === rooms.length - 1), null, 2) + '\n');
-  made++;
-});
+// 모든 층 (1층·수련장). 층 마지막 방 = 보스 방 (수련장은 제외)
+for (const { rooms } of Object.values(ROOMS)) {
+  rooms.forEach((room, i) => {
+    const file = join(root, 'maps', `${room.map}.json`);
+    if (existsSync(file) && !force) return;
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify(mapJson(room.map, room, !room.training && i === rooms.length - 1), null, 2) + '\n');
+    made++;
+  });
+}
 console.log(`map-gen: 타일셋 maps/tilesets/floor1.png, 맵 ${made}개 생성 (있는 맵은 그대로${force ? ', --force로 덮어씀' : ''})`);

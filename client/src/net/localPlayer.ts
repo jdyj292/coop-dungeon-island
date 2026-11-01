@@ -1,5 +1,5 @@
 // 내 캐릭터 (온라인): 키 입력 보내기 + 1/60초 예측 + 서버 패치마다 보정 (docs/network.md 7장, predict.ts)
-import { buildFrom, FixedStep, perksOf, PLAYER, TICK, weaponDef, zoneSpeedMul, type Bounds, type ZoneArea } from '@game/shared';
+import { buildFrom, FixedStep, floorRoom, perksOf, PLAYER, TICK, weaponDef, zoneSpeedMul, type Bounds, type ZoneArea } from '@game/shared';
 import type { Connection } from './connection';
 import { InputSender, type KeyInput } from './inputSender';
 import { mirrorPlayer } from './mirror';
@@ -30,6 +30,9 @@ export class LocalPlayer {
     if (!this.predictor) {
       this.weapon = s.weapon;
       this.predictor = new Predictor(weaponDef(this.weapon), this.bounds, { x: s.x, y: s.y }, perksOf(weaponDef(this.weapon), buildFrom(s.skills)));
+      // 수련장: 서버처럼 쿨타임·MP를 쓰지 않게 예측
+      const live = c.progress;
+      this.predictor.state.free = !!floorRoom(live.floor, live.roomIndex + 1).training;
     }
     const server = mirrorPlayer(s, snap.t, this.weapon, c.mine, snap.t);
     const r = (this.lastCorrection = this.predictor.reconcile(server, s.lastInputSeq, TICK));

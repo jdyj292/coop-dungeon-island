@@ -36,6 +36,8 @@ export interface PlayerState extends Vitals {
   aegisCd?: number;
   /** 배운 보조 노드 효과 (passives.ts perksOf). 서버 상태로 보내지 않음: RoomSim·예측이 빌드에서 채운다 */
   perks?: Perks;
+  /** 수련장 (rooms.json training): 스킬 쿨타임·MP를 쓰지 않음. 서버 상태로 보내지 않음: 서버·예측이 방에서 채운다 */
+  free?: boolean;
 }
 
 export const newPlayerState = (pos: Vec2): PlayerState => ({
@@ -219,8 +221,8 @@ function startSkill(p: PlayerState, run: ActionRun): void {
     p.reinput = left > 0 ? { id: def.id, left, window } : null;
     return;
   }
-  if (def.cooldown) p.cooldowns[def.id] = def.cooldown * COMBAT.cooldownScale;
-  p.mp -= def.mp ?? 0;
+  if (def.cooldown && !p.free) p.cooldowns[def.id] = def.cooldown * COMBAT.cooldownScale;
+  if (!p.free) p.mp -= def.mp ?? 0;
   p.reinput = def.reinput ? { id: def.id, left: def.reinput, window } : null;
 }
 

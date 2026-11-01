@@ -158,7 +158,8 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
       uniqueId(a.id, `${at}.attacks.${i}`);
       checkSfx(`${at}.attacks.${i}`, a.sfx);
     });
-    const used = m.pattern.type === 'choose' ? m.pattern.rules.map((r) => r.attack) : m.pattern.phases.flatMap((p) => p.sequence);
+    const used = m.pattern.type === 'choose' ? m.pattern.rules.map((r) => r.attack) : m.pattern.type === 'loop' ? m.pattern.phases.flatMap((p) => p.sequence) : [];
+    if (!m.attacks.length && m.pattern.type !== 'none') err(`${at}.attacks`, '공격이 없으면 pattern none');
     for (const a of new Set(used)) if (!attacks.has(a)) err(`${at}.pattern`, `공격 '${a}'가 attacks에 없음`);
     if (m.rank === 'boss' && !m.groggy) err(at, '보스에는 groggy 필요');
   }

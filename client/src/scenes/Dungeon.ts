@@ -1,4 +1,4 @@
-// 던전 씬: 1층 방 (?room=1~6, 기본 1), 웨이브 순서대로. J 평타(달리면 대시) · K 회피 · U 올려베기 · I 대지가르기 · Z/X 물약 · E 상호작용 (combat.md 1장)
+// 던전 씬: 1층 방 (?room=1~6, 기본 1) 또는 수련장 (?floor=training), 웨이브 순서대로. J 평타(달리면 대시) · K 회피 · U 올려베기 · I 대지가르기 · Z/X 물약 · E 상호작용 (combat.md 1장)
 // 기본은 서버 없이 로컬 (방 하나 전투 테스트). ?online=1&party=2면 서버 던전 방에 접속해 ?room부터 보스 방까지 한 판 (roadmap 3-3), ?weapon=staff면 스태프 (섬에서 출발하면 우물에서 고른 무기, registry weapon)
 // 서버 방 번호가 바뀌면 같은 접속으로 씬을 다시 시작해 방 화면(배경·소품·장애물)을 새로 만든다
 import Phaser from 'phaser';
@@ -27,8 +27,8 @@ import { PropLayer } from '../view/props';
 import { drawRoomBg } from '../view/roomBg';
 import { enterFadeMs } from '../fx/wellArrival';
 
+/** 그림·색은 1층 숲 (수련장도 같은 숲, palette floors.1) */
 const FLOOR = 1;
-const floorRooms = () => ROOMS.floor1!.rooms;
 const NO_KEYS: KeyInput = { x: 0, y: 0, attack: false, skill: null, backstep: false, potion: null, hold: false };
 /** 카메라 데드존 ±2타일 (art.md 1장) */
 const DEADZONE = 2 * TILE;
@@ -49,7 +49,9 @@ type KeyName = 'up' | 'down' | 'left' | 'right' | 'attack' | 'backstep' | SlotKe
 
 export class Dungeon extends Phaser.Scene {
   private params = new URLSearchParams(location.search);
-  private room = floorRoom('floor1', Number(this.params.get('room') ?? 1));
+  /** 층 (rooms.json 키): 온라인은 서버 상태, 로컬은 ?floor=training (기본 floor1) */
+  private floor = 'floor1';
+  private room!: RoomDef;
   private onlineMode = this.params.get('online') === '1';
   private weapon = 'greatsword';
   /** 마지막에 누른 스킬 키 (누르고 있으면 대검 충전) */
@@ -108,7 +110,9 @@ export class Dungeon extends Phaser.Scene {
     this.intro = null;
     this.events.once('shutdown', () => { if (!this.keepConn) this.conn?.leave(); });
     if (!this.onlineMode) {
-      const { bounds } = this.buildRoom(this.room);
+      const want = this.params.get('floor') ?? '';
+      this.floor = ROOMS[want] ? want : 'floor1';
+      const { bounds } = this.buildRoom(floorRoom(this.floor, Number(this.params.get('room') ?? 1)));
       const stage = (this.stage = new CombatStage(this, bounds, entryPos(this.room, 0), this.waves.next(), { skills: buildFrom(this.params.get('skills') ?? '') }, weaponDef(this.weapon)));
       stage.onWipe = () => this.time.delayedCall(WIPE_RESTART_MS, () => this.scene.restart());
       stage.enterRoom(this.room); // 층 첫 방: 우물에서 떨어져 들어오고 몬스터는 잠든 채 (dungeon.md 2·5장)
@@ -133,9 +137,10 @@ export class Dungeon extends Phaser.Scene {
     this.add.image(0, 0, key).setOrigin(0, 0).setDepth(-1000);
     this.cameras.main.fadeIn(enterFadeMs(room));
     this.props = new PropLayer(this, mapOf(room));
+    if (room.training) this.props.setCleared(true); // 수련장: 귀환 고리가 처음부터 켜짐 (dungeon.md 11장)
     // BGM: 방 1~5 = 층 곡 (방을 옮겨도 이어서), 보스 방 = 보스 곡 첫 마디부터 (audio.md 5장)
-    const bgm = ROOMS.floor1!.bgm;
-    music.play(floorRooms().indexOf(room) === floorRooms().length - 1 ? bgm.boss : bgm.room);
+    const bgm = ROOMS[this.floor]!.bgm;
+    music.play(this.floorRooms().indexOf(room) === this.floorRooms().length - 1 ? bgm.boss : bgm.room);
     this.camCenter = entryPos(room, 0).x;
     return { bounds };
   }
@@ -143,7 +148,8 @@ export class Dungeon extends Phaser.Scene {
   /** 접속한 서버 방의 지금 방 번호로 화면을 만든다 */
   private setupOnline(conn: Connection): void {
     this.conn = conn;
-    const { bounds } = this.buildRoom(floorRoom('floor1', conn.progress.roomIndex + 1));
+    this.floor = conn.progress.floor;
+    const { bounds } = this.buildRoom(floorRoom(this.floor, conn.progress.roomIndex + 1));
     const online = (this.online = new OnlineStage(this, conn, bounds));
     if (import.meta.env.DEV) {
       const panel = new LagPanel(conn, online);
@@ -154,6 +160,8 @@ export class Dungeon extends Phaser.Scene {
     // 재접속에 성공하면 같은 접속으로 화면을 다시 만든다 (전체 상태를 다시 받음, network.md 10장)
     conn.onReconnected = () => { this.keepConn = true; this.scene.restart(); };
     online.onResult = (r) => {
+      // 수련장: 정산 화면 없이 바로 섬으로 (보상 없음)
+      if (this.room.training) return this.endRun();
       this.result = new ResultPanel(this, HUD_DEPTH + 10, r, conn.myId, (pid) => online.lookOf(pid));
       // 정산 화면: 음악은 0.5초에 걸쳐 줄이고 정지 (정산 효과음이 주인공)
       music.stop();
@@ -207,12 +215,24 @@ export class Dungeon extends Phaser.Scene {
     this.awaitingKey = true;
     this.input.keyboard!.once('keydown', () => {
       this.awaitingKey = false;
-      this.conn?.leave();
-      this.conn = null;
-      if (!this.islandRoom) return this.scene.restart();
-      this.registry.remove('dungeonRoom');
-      this.scene.start('Island');
+      this.endRun();
     });
+  }
+
+  /** 한 판 끝: 섬에서 왔으면 섬 우물 앞으로, 개발 방은 새 판 */
+  private endRun(): void {
+    this.conn?.leave();
+    this.conn = null;
+    if (!this.islandRoom) {
+      this.scene.restart();
+      return;
+    }
+    this.registry.remove('dungeonRoom');
+    this.scene.start('Island');
+  }
+
+  private floorRooms(): RoomDef[] {
+    return ROOMS[this.floor]!.rooms;
   }
 
   /** 로컬 전투 테스트의 보스 체력 (보스 HP 바) */
@@ -255,7 +275,8 @@ export class Dungeon extends Phaser.Scene {
     } else if (this.online) {
       const live = this.online.conn.progress;
       // 다음 방 (출구에 전원 모임): 같은 접속으로 방 화면을 다시 만든다
-      if (floorRoom('floor1', live.roomIndex + 1) !== this.room) {
+      // 층은 첫 상태에 늦게 올 수 있어 층이 달라져도 다시 만든다
+      if (live.floor !== this.floor || floorRoom(this.floor, live.roomIndex + 1) !== this.room) {
         this.keepConn = true;
         this.scene.restart();
         return;
@@ -288,8 +309,8 @@ export class Dungeon extends Phaser.Scene {
     }
     this.overlay.draw(view.combo, dt, width);
     const live = this.online?.conn.progress;
-    const roomIndex = live ? live.roomIndex : floorRooms().indexOf(this.room);
-    const count = live ? live.roomCount : floorRooms().length;
+    const roomIndex = live ? live.roomIndex : this.floorRooms().indexOf(this.room);
+    const count = live ? live.roomCount : this.floorRooms().length;
     this.roomHud.draw(roomIndex, count, width, (live ? live.doorOpen : this.waves.cleared) && roomIndex < count - 1);
 
     const boss = this.online ? this.online.boss() : this.localBoss();

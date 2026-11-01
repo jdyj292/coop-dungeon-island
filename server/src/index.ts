@@ -21,7 +21,7 @@ const server = new Server({
 });
 matchMaker.controller.getCorsHeaders = (req) => corsHeadersFor(req, CONFIG.publicOrigin);
 // 개발용 방 배정: 같은 방 번호·인원 조건의 빈자리에 들어가고, 없으면 새로 (섬 우물 출발은 M4)
-server.define('dungeon', DungeonRoom).filterBy(['room', 'partySize']);
+server.define('dungeon', DungeonRoom).filterBy(['room', 'partySize', 'floor']);
 // 섬마다 방 하나 (입장 인증은 IslandRoom.onAuth)
 server.define('island', IslandRoom).filterBy(['islandId']);
 

@@ -9,7 +9,7 @@ import { eventsFor, projectileEvents, type Outgoing } from './events';
 import { InputQueue } from './inputs';
 import { dungeonRules, RateLimit } from './rateLimit';
 import { LootBook, type LootMessage } from './reward';
-import { buildRoom, exitCount, floorRooms, FLOOR } from './roomFlow';
+import { buildRoom, exitCount, floorKey, floorRooms } from './roomFlow';
 import { lagCompensate } from './lagComp';
 import { Presence } from './presence';
 import { RunFlow } from './runFlow';
@@ -28,6 +28,8 @@ export class DungeonGame {
   private members = new Map<string, Member>();
   private joined = 0;
   private room: RoomDef;
+  /** 층 (rooms.json 키: floor1, training) */
+  readonly floor: string;
   private readonly simOpts: SimOptions;
   private readonly dev: boolean;
   private readonly loot: LootBook;
@@ -37,13 +39,14 @@ export class DungeonGame {
   readonly dropped: ReturnType<typeof settle>[] = [];
 
   constructor(opts: DungeonOptions, private out: Outbox) {
-    const rooms = floorRooms();
+    this.floor = floorKey(opts.floor);
+    const rooms = floorRooms(this.floor);
     const n = Math.min(rooms.length, Math.max(1, Math.floor(opts.room ?? 1)));
     const party = Math.min(4, Math.max(1, Math.floor(opts.partySize ?? 1)));
     this.simOpts = { partySize: party, rng: opts.rng, hitstop: 'entity' };
     this.dev = !!opts.dev;
     this.loot = new LootBook(opts.rng ?? Math.random);
-    this.state.assign({ partySize: party, roomCount: rooms.length });
+    this.state.assign({ partySize: party, roomCount: rooms.length, floor: this.floor });
     this.room = rooms[n - 1]!;
     this.sim = buildRoom(this.room, weaponDef('greatsword'), this.simOpts, null, () => 0);
     this.waves = new WaveRunner(this.room);
@@ -57,14 +60,15 @@ export class DungeonGame {
     this.state.zones.clear();
     this.sim.spawn(this.waves.next());
     if (this.room.wakeSec) this.sim.sleepAll(this.room.wakeSec);
-    this.state.assign({ roomIndex: index, wave: this.waves.wave, doorOpen: false, exitAt: 0, exitNeed: 0, chestOpen: false });
+    // 수련장은 처음부터 열린 방 (귀환 고리가 켜짐, dungeon.md 11장)
+    this.state.assign({ roomIndex: index, wave: this.waves.wave, doorOpen: this.training, exitAt: 0, exitNeed: 0, chestOpen: false });
     syncWorld(this.state, this.sim, this.now);
   }
 
   /** 다음 방: 플레이어를 데려와 새 시뮬레이션 (dungeon.md 2장) */
   private nextRoom(): Outgoing {
     const index = this.state.roomIndex + 1;
-    this.room = floorRooms()[index]!;
+    this.room = floorRooms(this.floor)[index]!;
     this.sim = buildRoom(this.room, this.sim.weapon, this.simOpts, this.sim, (pid) => this.members.get(pid)?.index ?? 0);
     this.waves = new WaveRunner(this.room);
     this.enter(index);
@@ -85,6 +89,7 @@ export class DungeonGame {
     // 부활의 깃털은 솔로만 (dungeon.md 3장). 파티는 동료 부활
     if (this.state.partySize > 1) sp.state.feathers = 0;
     sp.state.arrive = arriveSecOf(this.room); // 층 첫 방은 우물에서 떨어져 들어옴 (dungeon.md 2장)
+    sp.state.free = this.training;
     const level = party?.level ?? 1;
     if (party) Object.assign(sp.state, { maxHp: maxHpFor(level), hp: maxHpFor(level), atk: atkFor(level), potions: { ...party.potions } });
     const raw = party?.name ?? name;
@@ -94,6 +99,11 @@ export class DungeonGame {
     syncPlayer(s, sp, 0, this.now);
     this.state.players.set(pid, s);
     this.members.set(pid, { inputs: new InputQueue(), limit: new RateLimit(dungeonRules()), index, level, levelExp: party?.levelExp ?? 0 });
+  }
+
+  /** 수련장 방인가 (쿨타임·MP 없음, 보상·저장 없음) */
+  get training(): boolean {
+    return !!this.room.training;
   }
 
   /** 정산에 쓸 파티원 (이름·숙련도) */
@@ -191,7 +201,7 @@ export class DungeonGame {
           return 'ok';
         }
         // 기절 처리: 보상은 처치와 같게, 웨이브 진행은 다음 틱
-        for (const mon of this.sim.alive.filter((x) => !x.body.ko)) {
+        for (const mon of this.sim.alive.filter((x) => !x.body.ko && !x.def.immortal)) {
           Object.assign(mon, { hp: 0 }).body.ko = true;
           this.deliver(this.loot.kill(mon.def, this.pids()));
         }
@@ -214,6 +224,7 @@ export class DungeonGame {
   }
 
   private deliver(list: LootMessage[]): void {
+    if (this.training) return; // 수련장은 보상 없음
     for (const m of list) {
       if (m.to) this.out.send(m.to, m.type, m.msg as never);
       else this.out.broadcast(m.type, m.msg as never);
@@ -222,7 +233,7 @@ export class DungeonGame {
 
   /** 보물상자: 방 클리어 뒤, 가까이 (combat.json interactRange), 방마다 한 번 (rooms.json chest) */
   private openChest(sp: SimPlayer): void {
-    const at = mapOf(this.room).chest, c = ROOMS[FLOOR]!.chest;
+    const at = mapOf(this.room).chest, c = ROOMS[this.floor]!.chest;
     if (!at || !c || !this.state.doorOpen || this.state.chestOpen || Math.hypot(sp.state.pos.x - at.x, sp.state.pos.y - at.y) > COMBAT.interactRange) return;
     this.state.chestOpen = true;
     this.deliver(this.loot.chest(c, this.pids()));
@@ -282,10 +293,11 @@ export class DungeonGame {
     if (this.state.doorOpen) {
       const { at, need } = exitCount(this.sim, this.room);
       this.state.assign({ exitAt: at, exitNeed: need });
-      if (need > 0 && at === need && this.state.roomIndex + 1 < floorRooms().length) out.push(this.nextRoom());
+      if (need > 0 && at === need && this.state.roomIndex + 1 < floorRooms(this.floor).length) out.push(this.nextRoom());
     }
     // 부활·귀환·전멸·보스 처치
-    const run = this.flow.tick(this.sim, this.room, this.state.doorOpen, this.state.roomIndex === floorRooms().length - 1, this.now);
+    const last = !this.training && this.state.roomIndex === floorRooms(this.floor).length - 1;
+    const run = this.flow.tick(this.sim, this.room, this.state.doorOpen, last, this.now);
     this.state.returnLeft = run.returnLeft;
     for (const sp of this.sim.players.values()) {
       const s = this.state.players.get(sp.pid);

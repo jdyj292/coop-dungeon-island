@@ -6,9 +6,11 @@ import f1r3 from '../../../maps/floor1/room3.json';
 import f1r4 from '../../../maps/floor1/room4.json';
 import f1r5 from '../../../maps/floor1/room5.json';
 import f1boss from '../../../maps/floor1/boss.json';
+import tr1 from '../../../maps/training/room1.json';
 
 const RAW: Record<string, unknown> = {
   'floor1/room1': f1r1, 'floor1/room2': f1r2, 'floor1/room3': f1r3, 'floor1/room4': f1r4, 'floor1/room5': f1r5, 'floor1/boss': f1boss,
+  'training/room1': tr1,
 };
 
 const cache = new Map<string, RoomMap>();
