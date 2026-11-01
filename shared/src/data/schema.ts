@@ -60,7 +60,8 @@ const zone = z.object({
 }).strict();
 
 const move = z.union([
-  z.object({ distance: z.number(), during: phase }).strict(),
+  // instant = 구간 동안 고르게가 아니라 구간이 끝나는 순간 한 번에 (발도: 사라진 동안 제자리 → 앞에 나타남)
+  z.object({ distance: z.number(), during: phase, instant: z.literal(true).optional() }).strict(),
   z.object({ speed: pos, maxDistance: pos, during: phase, stopOnWall: z.boolean().optional() }).strict(),
 ]);
 
@@ -85,7 +86,8 @@ export const actionFields = {
     windup: z.string(), active: z.string(), recovery: z.string(), charge: z.string(), lead: z.string(), follow: z.string(),
   }).partial().strict().optional(),
   fx: z.object({ grade: z.enum(GRADES), shake: z.enum(['vertical', 'horizontal']).optional() }).strict().optional(),
-  sfx: z.object({ windup: z.string(), active: z.string(), hit: z.string() }).partial().strict().optional(),
+  // delayed = 늦은 반복(repeat.delay) 첫 판정 소리 (없으면 active 소리. 발도: 사라질 때 active, 늦게 벨 때 delayed)
+  sfx: z.object({ windup: z.string(), active: z.string(), hit: z.string(), delayed: z.string() }).partial().strict().optional(),
   telegraph: z.object({
     type: z.enum(['shake', 'area', 'line', 'glow', 'shake+line']), length: pos.optional(),
   }).strict().optional(),
@@ -168,6 +170,8 @@ export const skill = playerActionObj.extend({
   repeatEnd: z.object({ coef: z.number().nonnegative(), launch: z.literal(true).optional() }).strict().optional(),
   // 맞힌 적마다 delay초 뒤 그 적에게 한 번 더 coef (어디로 움직였든, 일섬 반환)
   trail: z.object({ delay: pos, coef: z.number().nonnegative() }).strict().optional(),
+  // active 동안 사라짐: 그림·그림자가 안 보이고 맞지 않음 (발도)
+  vanish: z.literal(true).optional(),
 }).strict().superRefine(oneShape);
 
 /** 숫자 하나 또는 포인트별 값 배열 (길이 = combat.json skillTree.maxPoints, crossCheck) */

@@ -34,11 +34,11 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | flags | | combat.md 2장 속성 플래그 (launch, knockback, down, downhit, pull, hold, grab, multi, projectile) |
 | launchVz | | launch 세기. 생략 시 combat.md 기본값 |
 | hits | | 다단히트 `{ "count": 6, "interval": 0.1 }` (multi 플래그와 함께). active 시작부터 interval마다 판정 한 번, active 길이 ≥ count × interval |
-| move | | 행동 중 이동 `{ "distance": 32, "during": "active" }` 또는 `{ "speed": 160, "maxDistance": 96, "during": "active", "stopOnWall": true }` |
+| move | | 행동 중 이동 `{ "distance": 32, "during": "active", "instant"?: true }`(instant = 구간이 끝나는 순간 한 번에, 발도) 또는 `{ "speed": 160, "maxDistance": 96, "during": "active", "stopOnWall": true }` |
 | status | | 상태이상 `{ "type": "freeze", "time": 1.5 }` (freeze / slow / stun / hold = 공중 대상 체공 유지) |
 | poses | 플레이어 | 구간별 포즈 이름 (poses.json의 해당 무기 세트). lead = 준비 앞부분, follow = 후딜레이 앞부분 포즈 (앞 combat.json poseSplit 비율, 없으면 그 구간 포즈 하나, actions.ts fighterPose), charge = 대검 충전 중. 몬스터: 구간별 스프라이트 상태 이름 — 다른 공격 그림을 같이 쓸 때 (예: `"windup:bear_paw"`, 없으면 `구간:공격 id`, 그것도 없으면 idle) |
 | fx | | `{ "grade": "light|medium|heavy|ultimate", "shake": "vertical|horizontal" }` 연출 등급은 combat.md 5장 |
-| sfx | | `{ "windup"?, "active"?, "hit"? }` 소리 이름 (client/data/sfx.json, docs/audio.md) |
+| sfx | | `{ "windup"?, "active"?, "hit"?, "delayed"? }` 소리 이름 (delayed = 늦은 반복 repeat.delay 판정 소리, 없으면 active) (client/data/sfx.json, docs/audio.md) |
 | telegraph | 몬스터 | 예고 표시 `{ "type": "shake|area|line|glow|shake+line", "length": 96 }`. area는 판정 모양을 그대로 표시 |
 | cooldown | | 스킬: 기준 쿨. 몬스터: 같은 공격 재사용 대기 |
 
@@ -118,6 +118,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | armorBreak | 슈퍼아머 대상도 이 초만큼 경직 (파쇄참, sim/strike.ts) |
 | keepDown | true면 땅의 적을 밀지 않고 바로 다운 (다시 맞으면 다운 시간 처음부터, 대지붕괴) |
 | repeatEnd | 반복이 끝날 때 마지막 판정 자리에서 한 번 더 `{coef, launch?}` (launch = 땅·공중·다운 모두 띄움, 대지붕괴 솟구침. 보조 구슬 확장도 이 필드를 붙임) |
+| vanish | `true` = active 동안 사라짐 (그림·그림자 안 보임, 맞지 않음. 발도, actions.ts isVanished) |
 | trail | `{delay, coef}` 맞힌 적마다 delay초 뒤 그 적에게 한 번 더 coef (어디로 움직였든, 기절·다운이면 없음. 일섬 반환, sim/phantom.ts) |
 
 - 특수 필드: reinput(재입력 횟수), repeat(`{count, interval, step?, seek?, copies?, coef?}` 반복: step = 판정마다 앞으로 px, seek = 판정마다 가까운 맞을 몬스터 쪽으로 px, copies = `[[앞, 깊이], ...]` 자리에 같은 반복을 첫 판정부터 더, coef = 묶음 첫 판정 뒤 판정들의 계수 = 다단(가벼운 경직 light·적중 소리 hitLight·판정마다 시전 소리 없음, 검의 장막·일섬, sim/skillExtras.ts), delay = active 순간에는 판정 없이 이 초 뒤부터 첫 판정(자리·방향은 active 때 그대로, 일섬. trail은 묶음 첫 판정에서만)), after(`{delay, coef}` 후속 판정), onStatusEnd(상태이상 해제 시 판정), onWall(`{coef}` 벽꿍). 기본 스킬에 repeat가 있으면 변형은 일부 키만 덮어써도 됨

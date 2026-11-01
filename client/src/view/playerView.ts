@@ -1,7 +1,7 @@
 // 플레이어 그리기: 상태 → 이동·상태 모션 (art.md 4장, motion.md 6장, 데이터 poses.json motions, 시간 fx.json playerMotion)
 // 우선순위: 쓰러짐 > 우물에서 떨어짐·착지 > 다운 > 피격 > 기상 > 백스텝 > (공격 중이면 공격 포즈) > 방향 전환 > 달리기 > 걷기 > 대기 숨쉬기
 import type Phaser from 'phaser';
-import { fighterPose, PLAYER, type PlayerState } from '@game/shared';
+import { fighterPose, isVanished, PLAYER, type PlayerState } from '@game/shared';
 import fx from '../../data/fx.json';
 import { dot } from '../fx/layer';
 import { dropZ } from '../fx/wellArrival';
@@ -122,14 +122,16 @@ export class PlayerView {
     // 백스텝: 뛰어 물러나는 높이는 위치 오프셋으로만 (판정은 지상, motion.md 6장)
     const bk = p.backstep ? p.backstep.t / PLAYER.backstep.sec : 0, tp = fx.spell.teleport;
     const hop = p.backstep && !this.teleport ? Math.round(Math.sin(bk * Math.PI) * fx.backstepHop) : 0;
-    const vanished = !!p.backstep && this.teleport && bk > tp.visibleStart && bk < tp.visibleEnd;
+    // 순간이동 백스텝 가운데 구간, 사라지는 스킬(발도)의 active: 그림이 안 보임 (발도는 그림자도)
+    const gone = isVanished(p.fighter.run);
+    const vanished = gone || (!!p.backstep && this.teleport && bk > tp.visibleStart && bk < tp.visibleEnd);
     place(this.actor, tex, {
       x: p.pos.x + offsetX * p.facing, y: p.pos.y, z: hop + this.lift + (p.arrive > 0 ? dropZ(p.arrive) : 0), facing: spinFacing(p), flash: this.flash > 0,
       angle: lying ? -90 * p.facing : 0,
     });
     // 기상·부활 무적: 깜빡임 (motion.md 4장)
     this.actor.img.setVisible(!this.hidden && !vanished && !(p.invuln > 0 && Math.floor(clock / fx.reaction.stunBlink) % 2 === 1));
-    this.actor.shadow.setVisible(!this.hidden);
+    this.actor.shadow.setVisible(!this.hidden && !gone);
     if (this.depthOverride !== undefined) this.actor.img.setDepth(this.depthOverride);
     this.drawStars(p, clock);
   }

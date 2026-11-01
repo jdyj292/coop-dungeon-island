@@ -9,7 +9,7 @@ export type FxGrade = 'light' | 'medium' | 'heavy' | 'ultimate';
 
 
 /** 플레이어 행동 (평타·대시·스킬). 스킬이면 mp·슈퍼아머가 있고, 특수 필드(재입력·후속·반복·해제·벽꿍 판정)가 있을 수 있음. 형식은 data/schema.ts */
-export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp' | 'superArmor' | 'repeat' | 'element' | 'lasting' | 'chain' | 'mark' | 'allyBuff' | 'chargeRule' | 'armorBreak' | 'keepDown' | 'repeatEnd' | 'trail'>> & Partial<Omit<VariantExtra, 'name' | 'desc' | 'repeat'>>;
+export type ActionDef = PlayerAction & Partial<Pick<Skill, 'mp' | 'superArmor' | 'repeat' | 'element' | 'lasting' | 'chain' | 'mark' | 'allyBuff' | 'chargeRule' | 'armorBreak' | 'keepDown' | 'repeatEnd' | 'trail' | 'vanish'>> & Partial<Omit<VariantExtra, 'name' | 'desc' | 'repeat'>>;
 export type WeaponDef = Weapon;
 
 export function weaponDef(id: string): WeaponDef {
@@ -185,6 +185,11 @@ export function canTurn(f: Fighter, weapon: WeaponDef): boolean {
   return f.run.kind === 'basic' && since >= 0 && since < COMBAT.turnWindow;
 }
 
+/** 사라진 중인가 (vanish 스킬의 active: 안 보이고 맞지 않음) */
+export function isVanished(run: ActionRun | null | undefined): boolean {
+  return !!run?.def.vanish && phaseAt(run.def, run.t) === 'active';
+}
+
 /** 구간의 시작·끝 시각 */
 export function phaseRange(def: { phases: Record<Phase, number> }, phase: Phase): [number, number] {
   const { windup, active, recovery } = def.phases;
@@ -195,12 +200,13 @@ export function phaseRange(def: { phases: Record<Phase, number> }, phase: Phase)
 
 /**
  * 행동 중 이동 (data.md 1장 move): t0 → t1 사이에 바라보는 방향으로 움직일 거리 (px, 0 이상).
- * distance형은 해당 구간 동안 고르게, speed형은 maxDistance까지 일정 속도. 벽(stopOnWall)은 호출하는 쪽에서 처리
+ * distance형은 해당 구간 동안 고르게(instant면 구간이 끝나는 순간 한 번에), speed형은 maxDistance까지 일정 속도. 벽(stopOnWall)은 호출하는 쪽에서 처리
  */
 export function actionMoveDelta(def: { phases: Record<Phase, number>; move?: ActionMove }, t0: number, t1: number): number {
   const m = def.move;
   if (!m || t1 <= t0) return 0;
   const [s, e] = phaseRange(def, m.during);
+  if ('distance' in m && m.instant) return t0 < e && t1 >= e ? m.distance : 0;
   if (e <= s) return 'distance' in m && t0 <= s && t1 >= s ? m.distance : 0;
   const a = Math.min(e, Math.max(s, t0)), b = Math.min(e, Math.max(s, t1));
   if (b <= a) return 0;

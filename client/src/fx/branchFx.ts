@@ -1,10 +1,10 @@
 // 계열 스킬 근접 연출 (SK-2 2차, art.md 7장): 회전베기 = 몸을 도는 초승달 고리, 어깨 들이받기 = 몸 뒤 속도선 + 몸 앞 충격 괄호,
-// 발도 = 출발 자리에서 벤 자리까지 한 줄 섬광, 검기 날리기 = 놓는 순간 칼끝 섬광·앞으로 뻗는 바람 줄. 색은 스미어와 같음 (흰 → 금 → 어두운 금). 어떤 그림인지는 fx.json branch.looks
+// 발도 = 사라짐(잔상 기둥·바람 줄) → 앞에 나타남(칼끝 별) → 늦은 판정 때 출발 자리에서 벤 자리까지 한 줄 섬광, 검기 날리기 = 놓는 순간 칼끝 섬광·앞으로 뻗는 바람 줄. 색은 스미어와 같음 (흰 → 금 → 어두운 금). 어떤 그림인지는 fx.json branch.looks
 import type { ActionDef } from '@game/shared';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
 import { type Effect } from './layer';
-import { clamp01, ellipseDots, hash, life, px } from './spellDraw';
+import { clamp01, ellipseDots, hash, life, px, star4 } from './spellDraw';
 
 const B = fx.branch;
 
@@ -92,12 +92,11 @@ export function shoulder(foot: Foot, def: ActionDef): Effect {
   };
 }
 
-/** 발도: 출발 자리(sx)에서 벤 끝까지 한 줄. thickSec 동안 3px 흰 줄 → 1px 금색 → 바둑판으로 사라짐, 줄 위아래 잔금 */
+/** 발도 늦은 판정: 출발 자리(sx)에서 벤 끝까지 한 줄. thickSec 동안 3px 흰 줄 → 1px 금색 → 바둑판으로 사라짐, 줄 위아래 잔금 */
 export function drawSlash(sx: number, sy: number, facing: number, def: ActionDef): Effect {
   const D = B.draw, [white, gold, edge] = tones();
-  const width = def.hitbox?.width ?? 30, m = def.move, dist = m && 'distance' in m ? m.distance : 0;
-  // 뒤로 빠지며 벨 때는 출발 자리 앞만, 앞으로 나갈 때는 지나간 길 + 판정 끝까지
-  const len = dist > 0 ? dist + width / 2 : width, y = sy + D.y;
+  // 판정 상자 끝까지 (앞으로 나갈 때는 지나간 길 전체, 뒤로 빠질 때는 출발 자리 앞만)
+  const len = (def.hitbox?.forward ?? 0) + (def.hitbox?.width ?? 30), y = sy + D.y;
   return {
     ...life(D.sec),
     draw(g, k) {
@@ -129,6 +128,36 @@ export function drawSlash(sx: number, sy: number, facing: number, def: ActionDef
         const ex = sx + len * facing;
         px(g, ex + facing, y, white); px(g, ex, y - 1, white); px(g, ex, y + 1, white);
       }
+    },
+  };
+}
+
+/**
+ * 발도 사라짐·나타남 (active 순간, sx·sy = 출발 자리 발밑): 출발 자리 잔상 기둥이 좁아지며 바둑판으로 사라지고 바람 줄이 가는 쪽으로 뻗음.
+ * active가 끝나 앞(move.distance)에 나타나는 순간 칼끝에 별, 몸 둘레 세로 빛이 잠깐
+ */
+export function drawVanish(sx: number, sy: number, facing: number, def: ActionDef): Effect {
+  const V = B.draw.vanish, [white, gold, edge] = tones();
+  const m = def.move, dist = m && 'distance' in m ? m.distance : 0, appear = def.phases.active;
+  const ex = sx + dist * facing, dir = Math.sign(dist) * facing || facing;
+  return {
+    ...life(V.sec),
+    draw(g, k) {
+      const e = (1 - k) * V.sec, a = clamp01(k * 1.4);
+      // 잔상 기둥: 몸 높이, 좁아짐
+      const w = Math.round(V.w * k);
+      for (let y = 0; y < V.h; y++) for (let dx = -w; dx <= w; dx++) px(g, sx + dx, sy - y, Math.abs(dx) === w ? edge : gold, a * 0.8);
+      // 바람 줄: 가는 쪽으로 뻗었다가 꼬리부터 사라짐
+      const reach = Math.round(V.lineLen * Math.min(1, e * 8)), cut = Math.round(V.lineLen * (1 - a));
+      V.lines.forEach((dy, i) => {
+        for (let d = cut + i; d < reach; d++) px(g, sx + d * dir, sy + dy, d > reach - 3 ? white : gold, a);
+      });
+      // 나타남
+      const t = (e - appear) / V.sparkSec;
+      if (t < 0 || t >= 1) return;
+      const r = Math.round(V.spark * Math.sin(Math.PI * t));
+      if (r > 0) star4(g, ex + V.tip[0]! * facing, sy + V.tip[1]!, r, white, gold);
+      if (e - appear < V.flickerSec) for (let y = 2; y < V.h; y += 2) { px(g, ex - 5, sy - y, white); px(g, ex + 5, sy - y, white); }
     },
   };
 }

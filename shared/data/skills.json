@@ -444,20 +444,28 @@
     "id": "gs_draw",
     "phases": {
       "windup": 0.1,
-      "active": 0.1,
-      "recovery": 0.4
+      "active": 0.08,
+      "recovery": 0.55
     },
     "coef": 400,
     "hitbox": {
       "forward": 0,
-      "width": 30,
+      "width": 88,
+      "back": 8,
       "depth": 13,
       "z": "both"
     },
     "strength": "medium",
     "move": {
-      "distance": 32,
-      "during": "active"
+      "distance": 64,
+      "during": "active",
+      "instant": true
+    },
+    "vanish": true,
+    "repeat": {
+      "count": 1,
+      "interval": 0.1,
+      "delay": 0.38
     },
     "poses": {
       "windup": "charge",
@@ -469,12 +477,13 @@
       "grade": "medium"
     },
     "sfx": {
-      "active": "skill_draw",
+      "active": "dash",
+      "delayed": "skill_draw",
       "hit": "hitHeavy"
     },
     "weapon": "greatsword",
     "name": "발도",
-    "desc": "2타일을 순식간에 나아가며 벤다",
+    "desc": "사라졌다가 4타일 앞에 나타난다. 잠시 뒤 지나온 길의 적이 한꺼번에 베인다",
     "branch": "B",
     "unlockLevel": 4,
     "cooldown": 5,
@@ -487,9 +496,13 @@
       },
       "back": {
         "name": "후퇴 발도",
-        "desc": "앞을 베면서 뒤로 빠진다",
+        "desc": "앞을 베고 2타일 뒤로 사라졌다 나타난다. 잠시 뒤 벤 자리의 적이 베인다",
         "move": {
           "distance": -32
+        },
+        "hitbox": {
+          "width": 30,
+          "back": null
         }
       }
     }

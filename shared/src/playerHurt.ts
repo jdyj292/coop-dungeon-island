@@ -1,5 +1,5 @@
 // 플레이어 피격·다운·기상·쓰러짐, HP·MP·물약 (docs/combat.md 4장, docs/balance.md 5·6장, docs/dungeon.md 3장 쓰러짐)
-import { newFighter, type Strength } from './actions';
+import { isVanished, newFighter, type Strength } from './actions';
 import { isCharging } from './charge';
 import { PLAYER } from './data/load';
 import { atkFor } from './hit';
@@ -43,9 +43,10 @@ export function newVitals(level = 1): Vitals {
   };
 }
 
-/** 맞지 않는 상태: 백스텝 앞부분, 기상·부활 무적, 우물에서 떨어지는 중, 다운 중(downhit 없음), 쓰러짐 */
+/** 맞지 않는 상태: 백스텝 앞부분, 기상·부활 무적, 우물에서 떨어지는 중, 다운 중(downhit 없음), 쓰러짐, 사라진 중(발도) */
 export function isInvulnerable(p: PlayerState): boolean {
-  return (!!p.backstep && p.backstep.t < PLAYER.backstep.invuln) || p.invuln > 0 || p.arrive > 0 || p.hurt?.kind === 'down' || p.downed;
+  return (!!p.backstep && p.backstep.t < PLAYER.backstep.invuln) || p.invuln > 0 || p.arrive > 0 || p.hurt?.kind === 'down' || p.downed
+    || isVanished(p.fighter.run);
 }
 
 /** 몬스터 공격 적중. 약·중 → 경직, 강 → 다운. 하던 행동은 끊긴다. pushDir = 밀려날 방향 (1 오른쪽, -1 왼쪽, 0 = 밀리지 않음) */

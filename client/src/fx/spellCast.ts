@@ -9,7 +9,7 @@ import fx from '../../data/fx.json';
 import type { FxContext } from './hitPackage';
 import type { Effect, FxLayer } from './layer';
 import { dust, ring, sparks } from './particles';
-import { cyclone, lookOf } from './branchFx';
+import { cyclone, drawSlash, lookOf } from './branchFx';
 import { boltHit, magicCircle, muzzle, spark, stampImpact } from './spell';
 import { firePillar, floatOrb, liftUp } from './spellBranch';
 import { fireBurst, fireTarget } from './spellFire';
@@ -121,6 +121,13 @@ export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' |
   }
   if (def.area?.shape === 'circle') {
     areaBurst(c.layer, def, at);
+    return;
+  }
+  // 발도: 사라졌다 나타난 뒤 늦게, 출발 자리에서 벤 끝까지 한 줄 섬광 + 흔들림
+  if (lookOf(def.id) === 'draw') {
+    const { sx, sy } = project(at.x, at.y);
+    c.layer.add(drawSlash(sx, sy, at.facing, def));
+    c.shake.start(fx.downShake.sec, fx.downShake.px);
     return;
   }
   // 일섬: 검기 다단은 맞은 몬스터마다 긁기(적중 때 flashStab)라 자리 그림 없음, 이중 일섬 마지막은 같은 베기 초승달

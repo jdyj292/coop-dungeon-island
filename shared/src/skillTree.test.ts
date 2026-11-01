@@ -125,7 +125,7 @@ describe('노드 규칙', () => {
     expect(slotSkills(gs, {})).toEqual(['gs_launch', 'gs_earthsplit', null, null, null, null]);
     expect(buildSkill(gs, {}, 'gs_whirl')).toBeUndefined();
     expect(slotSkills(gs, { gs_shoulder: { points: 1 }, gs_draw: { points: 3, variant: 'back' } })).toEqual(['gs_launch', 'gs_earthsplit', 'gs_shoulder', 'gs_draw', null, null]);
-    expect(weaponSkills(gs, { gs_draw: { points: 3, variant: 'back' } })[2]?.move).toEqual({ distance: -32, during: 'active' });
+    expect(weaponSkills(gs, { gs_draw: { points: 3, variant: 'back' } })[2]?.move).toEqual({ distance: -32, during: 'active', instant: true });
   });
 });
 
