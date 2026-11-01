@@ -1,7 +1,7 @@
 // 카드 테두리 (hud.md 8장, 승인 데모 docs/refs/demos/card_redesign.html): 계열마다 모양·색이 다르다. 티어는 별 개수로만 (테두리 색 아님)
 // 기본·공용 = 얇은 강철 / 대검 A 파쇄 = 두꺼운 돌(깎인 모서리·금·아래 묵직) / B 검기 = 왼쪽 위·오른쪽 아래 사선 + 칼끝 /
 // 스태프 A 원소 = 위 불꽃 혀·아래 불씨 / B 중력 = 이중 테두리 + 모서리 밖 별. 없는 카드는 같은 모양의 그림자.
-// 강화 = 몸통 위로 지나가는 빛줄기 + 반짝이는 별 (금테 없음). 붓(Paint)만 받아 카드 창(Graphics)·카드 상점(캔버스)이 같이 쓴다
+// 강화 = 몸통 윗줄 금색 + 오른쪽 위 금색 십자 (움직이지 않음, 금테 없음). 붓(Paint)만 받아 카드 창(Graphics)·카드 상점(캔버스)이 같이 쓴다
 import { mix } from './shopPix';
 
 export type FrameStyle = 'base' | 'gsA' | 'gsB' | 'stA' | 'stB';
@@ -68,32 +68,17 @@ export function cardShell(R: Paint, s: FrameStyle, x: number, y: number, h: numb
   return ins;
 }
 
-/** 강화 반짝임 (몸통 bx, by, bw, bh 안): 2.6초마다 빛줄기가 지나가고, 별 두 개가 깜빡임. t = 초, ph = 카드마다 어긋남 */
-export function cardShine(R: Paint, bx: number, by: number, bw: number, bh: number, t: number, ph: number): void {
-  const k = ((t + ph) % 2.6) / 0.7;
-  if (k < 1) {
-    const x0 = bx - bh / 2 - 3 + k * (bw + bh / 2 + 6);
-    for (let j = 0; j < bh; j++) {
-      const sx = Math.round(x0 + (bh - j) / 2);
-      for (let i = 0; i < 3; i++) if (sx + i >= bx && sx + i < bx + bw) R(sx + i, by + j, 1, 1, FLASH, i === 1 ? 0.7 : 0.35);
-    }
-  }
-  for (const [dx, dy, o] of [[bw - 4, 3, 0], [3, bh - 5, 1.3]] as const) {
-    const a = Math.sin((t + ph) * 3.1 + o * 2.4);
-    if (a <= 0.2) continue;
-    const cx = bx + dx, cy = by + dy;
-    R(cx, cy, 1, 1, FLASH);
-    if (a > 0.6) { R(cx - 1, cy, 1, 1, COIN); R(cx + 1, cy, 1, 1, COIN); R(cx, cy - 1, 1, 1, COIN); R(cx, cy + 1, 1, 1, COIN); }
-  }
+/** 강화 표시 (몸통 bx, by, 폭 bw, 움직이지 않음): 몸통 윗줄 금색 + 오른쪽 위 금색 십자 5×5 (그늘 받침) */
+export function enhancedMark(R: Paint, bx: number, by: number, bw: number): void {
+  R(bx, by, bw, 1, COIN);
+  const cx = bx + bw - 4, cy = by + 4;
+  R(cx - 1, cy - 2, 3, 5, SHADE); R(cx - 2, cy - 1, 5, 3, SHADE);
+  R(cx, cy - 2, 1, 5, COIN); R(cx - 2, cy, 5, 1, COIN); R(cx, cy, 1, 1, FLASH);
 }
 
-/** 강화 가능 (같은 카드 3장): 카드 아래 가운데 금색 ▲, 0.4초마다 깜빡 */
-export function readyMark(R: Paint, x: number, y: number, h: number, t: number): void {
-  if (Math.floor(t * 2.5) % 2) return;
+/** 강화 가능 (같은 카드 3장): 카드 아래 가운데 금색 ▲ (움직이지 않음) */
+export function readyMark(R: Paint, x: number, y: number, h: number): void {
   const cx = x + W / 2;
   R(cx - 3, y + h - 2, 7, 4, SHADE);
   R(cx, y + h - 1, 1, 1, COIN); R(cx - 1, y + h, 3, 1, COIN); R(cx - 2, y + h + 1, 5, 1, COIN);
 }
-
-/** 카드마다 반짝임 어긋남 (같은 카드는 늘 같게) */
-export const shinePhase = (id: string): number => ([...id].reduce((s, ch) => s + ch.charCodeAt(0), 0) % 10) * 0.26;

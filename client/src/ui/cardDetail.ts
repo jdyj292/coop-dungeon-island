@@ -1,13 +1,13 @@
-// 카드 창 오른쪽 상세 (hud.md 8장, 승인 데모 card_redesign.html): 머리(계열 색·카드·이름(강화 = 금색 +)·종류·티어 별·모자란 장착 Lv) /
+// 카드 창 오른쪽 상세 (hud.md 8장, 글자는 고해상도 hiText.ts): 머리(계열 색·카드·이름(강화 = 금색 +)·종류·티어 별·모자란 장착 Lv) /
 // 보유 줄(n/3 · 3장 모임 강화 가능 · 강화 · 남는 장수 · 없으면 지정 구매 가격) / 설명 3줄 / 액티브 = 강화면 변형 2장 고르기, 아니면 변형 이름만 ·
 // 패시브 = 기본/강화 효과·비용 / 아래 = 알림 또는 강화(3장 모이면)·갈기·끼우기 버튼. 계열 보너스 줄에 마우스를 올리면 보너스 상세. 머리 카드는 cardWindow가 그림
-import { buttonBox, cardIcon, dustGem, fitKo, lockIcon, R, roman, SK, star, tiny, type Painter } from './cardParts';
+import { buttonBox, cardIcon, dustGem, lockIcon, R, roman, SK, star, tiny, type Painter } from './cardParts';
 import type { CardBtn, CardHit, CardSource } from './cardTypes';
-import { koWidth, wrapKo } from './koText';
+import { fitHi, hiWidth, wrapHi } from './hiText';
 
 const X = 246, MW = 122;
-const w7 = (t: string) => koWidth(t, 'koSmall');
-/** 머리 카드 자리 (cardWindow가 반짝임과 함께 그림) */
+const w7 = (t: string) => hiWidth(t);
+/** 머리 카드 자리 (cardWindow가 그림) */
 export const DETAIL_CARD = { x: X - 1, y: 31 } as const;
 
 export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
@@ -19,8 +19,8 @@ export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
   const id = s.hover ?? s.sel, c = s.card(id), mine = id === s.sel && !s.busy;
   R(g, 241, 27, 130, 36, c.color, 0.2);
   R(g, 241, 63, 130, 1, SK.border);
-  const nw = p.text(X + 28, 30, fitKo(c.name, 90), c.owned ? SK.txt : SK.dim);
-  if (c.enhanced) p.text(X + 29 + nw, 30, '+', SK.coin);
+  const nw = p.text(X + 28, 30, fitHi(c.name, 86, 'title'), c.owned ? SK.txt : SK.dim, 'title');
+  if (c.enhanced) p.text(X + 29 + nw, 30, '+', SK.coin, 'title');
   p.text(X + 28, 41, c.kind, c.color);
   for (let i = 0; i < c.tier; i++) star(g, X + 29 + i * 4, 54, SK.txt);
   if (s.level < c.equipLevel) p.text(X + 31 + c.tier * 4, 51, `장착 Lv${c.equipLevel}`, SK.danger);
@@ -33,13 +33,13 @@ export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
     p.text(X + MW - w7(pt), RY, pt, SK.key);
   } else if (!c.enhanced) {
     for (let i = 0; i < s.merge; i++) { R(g, X + i * 7, RY + 2, 6, 6, SK.shade); R(g, X + i * 7, RY + 2, 6, 5, i < c.count ? SK.coin : SK.track); }
-    p.text(X + s.merge * 7 + 3, RY, c.ready ? `${s.merge}장 모임 · 강화할 수 있어요` : `보유 ${c.count}/${s.merge}장`, c.ready ? SK.coin : SK.txt);
+    p.text(X + s.merge * 7 + 3, RY, c.ready ? `${s.merge}장 모임 · 강화 가능` : `보유 ${c.count}/${s.merge}장`, c.ready ? SK.coin : SK.txt);
     if (c.count > s.merge) p.text(X + MW - w7(`+${c.count - s.merge}`), RY, `+${c.count - s.merge}`, SK.spare);
   } else {
     p.text(X, RY, c.active ? `강화 · 위력 ×${s.enhancedMul}` : '강화', SK.coin);
     if (c.spare) p.text(X + MW - w7(`남는 ${c.spare}장`), RY, `남는 ${c.spare}장`, SK.spare);
   }
-  wrapKo(c.desc.replace(/\n/g, ' '), MW, 3, 'koSmall').forEach((l, i) => p.text(X, 78 + i * 10, l, SK.dim));
+  wrapHi(c.desc.replace(/\n/g, ' '), MW, 3).forEach((l, i) => p.text(X, 78 + i * 10, l, SK.dim));
   for (let i = 0; i < 126; i += 2) R(g, 243 + i, 109, 1, 1, SK.cardBd);
   if (c.active && c.enhanced) {
     p.text(X, 111, '변형 고르기', SK.key);
@@ -51,7 +51,7 @@ export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
       R(g, X + 3, cy + 4, 3, 3, on ? SK.white : SK.title);
       p.text(X + 10, cy, v.name, on ? SK.coin : SK.txt);
       tiny(g, String(i + 1), X + MW - 3, cy + 3, SK.off);
-      wrapKo(v.desc, MW - 4, 2, 'koSmall').forEach((l, j) => p.text(X + 2, cy + 10 + j * 8, l, SK.dim));
+      wrapHi(v.desc, MW - 4, 2, 'small').forEach((l, j) => p.text(X + 2, cy + 10 + j * 8, l, SK.dim, 'small'));
       if (mine) p.hit(X - 2, cy, MW + 4, 29, { kind: 'var', i });
     });
   } else if (c.active) {
@@ -66,24 +66,25 @@ export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
       const on = c.owned && (i === 1) === c.enhanced, cy = 123 + i * 22;
       if (on) { R(g, X - 2, cy, MW + 4, 21, SK.pick); R(g, X - 2, cy, 1, 21, SK.coin); }
       p.text(X + 1, cy, i ? '강화' : '기본', on ? SK.coin : SK.off);
-      p.text(X + 1, cy + 10, fitKo(t, MW - 4), on ? SK.coin : SK.dim);
+      p.text(X + 1, cy + 10, fitHi(t, MW - 4), on ? SK.coin : SK.dim);
     });
   }
   // 아래: 알림(서버 거절·안내, 출발 카운트다운) 또는 버튼
   const warn = s.note ?? (s.busy ? { text: '출발 카운트다운 중에는 못 바꿉니다', color: SK.danger } : null);
   if (warn) {
     R(g, 241, 184, 130, 22, SK.title);
-    wrapKo(warn.text, MW, 2, 'koSmall').forEach((l, i) => p.text(X, 185 + i * 10, l, warn.color));
+    wrapHi(warn.text, MW, 2).forEach((l, i) => p.text(X, 185 + i * 10, l, warn.color));
     return;
   }
   const BY = 190;
-  if (c.ready) button(p, s, 'enhance', '강화 (U)', X - 1, BY, mine, SK.coin, 16);
+  if (c.ready) button(p, s, 'enhance', '강화', X - 1, BY, mine, SK.coin, 16);
   else if (c.owned && c.count > 0) {
     const n = c.spare > 1 ? c.spare : 1, arm = s.grindArm === id;
     button(p, s, 'grind', arm ? `한 번 더 · +${c.dust * n}` : `갈기 +${c.dust * n}`, X - 1, BY, mine, arm ? SK.danger : undefined);
   }
   if (c.owned && !c.locked) {
-    const lab = c.equipped ? '빼기' : '끼우기', w = w7(lab) + 14;
+    const pk = s.picker, out = pk?.kind === 'active' ? s.active[pk.slot] === id : c.equipped;
+    const lab = out ? '빼기' : pk?.kind === 'active' ? `${'ASDF'[pk.slot]}에 끼우기` : '끼우기', w = w7(lab) + 14;
     button(p, s, 'equip', lab, X + MW + 1 - w, BY, mine);
   } else if (c.owned) {
     const t = `Lv${c.equipLevel}부터`;
@@ -96,7 +97,7 @@ export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
 function button(p: Painter<CardHit>, s: CardSource, b: CardBtn, label: string, x: number, y: number, can: boolean, border?: string, pad = 12): void {
   const w = w7(label) + pad, hover = can && s.hoverBtn === b, gold = border === SK.coin;
   buttonBox(p.g, x, y, w, { hover: hover || gold, ...(border ? { border } : {}) });
-  p.center(x, w, y + 1, label, hover || gold ? SK.coin : SK.txt, 'koSmall', can ? 1 : 0.35);
+  p.center(x, w, y + 1, label, hover || gold ? SK.coin : SK.txt, 'body', can ? 1 : 0.35);
   if (can) p.hit(x, y, w, 12, { kind: 'btn', b });
 }
 
@@ -105,8 +106,7 @@ function bonusDetail(p: Painter<CardHit>, s: CardSource): void {
   const g = p.g, b = s.bonus.find((x) => x.branch === s.hoverBonus)!;
   R(g, 241, 27, 130, 36, b.color, 0.2);
   R(g, 241, 63, 130, 1, SK.border);
-  p.text(X, 31, b.branch, b.color);
-  p.text(X + 10, 31, `${b.name} 계열 보너스`, SK.txt);
+  p.text(X, 31, `${b.name} 계열 보너스`, b.color, 'title');
   p.text(X, 45, `끼운 ${b.name} 카드 ${b.ids.length}장`, SK.key);
   b.steps.forEach((lines, i) => {
     const cy = 68 + i * 34, on = b.step === i + 1;
@@ -115,7 +115,7 @@ function bonusDetail(p: Painter<CardHit>, s: CardSource): void {
     p.text(X + 10, cy, `${s.bonusAt[i]}장`, on ? SK.coin : SK.key);
     lines.forEach((t, j) => p.text(X + 3, cy + 10 + j * 10, t, on ? SK.coin : SK.dim));
   });
-  wrapKo(`액티브·패시브 모두 셈. 기본 스킬·공용 패시브는 안 셈. ${s.bonusAt.at(-1)}장이 되면 ${s.bonusAt[0]}장 보너스 대신`, MW, 3, 'koSmall')
+  wrapHi(`액티브·패시브 모두 셈. 기본 스킬·공용 패시브는 안 셈. ${s.bonusAt.at(-1)}장이 되면 ${s.bonusAt[0]}장 보너스 대신`, MW, 3)
     .forEach((l, j) => p.text(X, 140 + j * 10, l, SK.off));
   b.ids.forEach((id, i) => {
     const x = X + i * 18, y = 176;

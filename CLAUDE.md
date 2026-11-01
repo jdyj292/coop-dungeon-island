@@ -118,6 +118,6 @@ deploy/                  서버 설치 파일: Nginx 틀·systemd·백업 cron·
 - [ ] M5 배포
 
 ## 현재 상태 (3줄, 작업마다 덧붙이지 말고 새로 쓴다. 완료 기록은 docs/changelog.md)
-- M0~M4 완료, M5 배포 준비(5-1~5-4) 완료. 스킬은 대검 A·B 3단계까지, 스태프 2단계까지. 지금 진행: 스킬 카드 개편 CD (CD-1~CD-6 완료 + 카드 개편: 직접 강화(U)·계열 테두리·강화 = 이름 +·반짝임·간단한 카드 창·화면 글자 갈무리7, 승인 데모 card_redesign.html)
+- M0~M4 완료, M5 배포 준비(5-1~5-4) 완료. 스킬은 대검 A·B 3단계까지, 스태프 2단계까지. 지금 진행: 스킬 카드 개편 CD (CD-1~CD-6 완료 + 카드 개편(직접 강화 U·계열 테두리) + 카드 창 개선: 장착 화면/고르기 창 분리·거르기 탭·스크롤, 강화 표시 정적, 계열 글자 A·B 뺌, 카드 창 글자만 고해상도 hiText.ts)
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?floor=training, ?weapon=staff, ?skills=gs_launch:2:double, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
 - 다음: 스킬 카드 CD-7(가격·확률·한도·계열 보너스 조정, run-sim·ttk-sim·실제 플레이). 실제 배포 (docs/deploy.md 5장 순서). 스태프 3단계는 카드 개편 뒤

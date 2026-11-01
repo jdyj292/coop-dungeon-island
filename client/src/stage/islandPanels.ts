@@ -228,7 +228,7 @@ export class IslandPanels {
   /** 키 (패널이 열려 있으면 모두 여기서) */
   onKey(code: string): void {
     if (!this.open) return;
-    if (this.onCards()) return code === 'Escape' ? this.close() : this.cards.onKey(code);
+    if (this.onCards()) return code === 'Escape' || code === 'KeyX' ? void (this.cards.back() || this.close()) : this.cards.onKey(code);
     if (this.open === 'cardShop') return void (this.cardShop.onKey(code) || this.close());
     const tabs = TABS[this.open], n = this.rows().rows.length;
     const nextTab = (d: number) => {
@@ -271,14 +271,15 @@ export class IslandPanels {
     return w.members[0] === me && !w.departAt ? 'depart' : '';
   }
 
-  /** 마우스 이동·떼기 (카드 창 마우스 올림·끌어다 장착) */
+  /** 마우스 이동 (카드 창·카드 상점 마우스 올림) */
   onPointerMove(x: number, y: number): void {
     if (this.onCards()) this.cards.onPointerMove(x, y);
     else if (this.open === 'cardShop') this.cardShop.onPointerMove(x, y);
   }
 
-  onPointerUp(x: number, y: number): void {
-    if (this.onCards()) this.cards.onPointerUp(x, y);
+  /** 휠 (카드 고르기 창 넘기기) */
+  onWheel(dy: number): void {
+    if (this.onCards()) this.cards.onWheel(dy);
   }
 
   /** fieldH = 아래 띠 위까지 (목록 패널), height = 화면 전체 (카드 창은 아래 띠를 덮음) */

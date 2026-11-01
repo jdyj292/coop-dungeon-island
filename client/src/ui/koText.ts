@@ -99,16 +99,21 @@ export function koWidth(text: string, font: FontKey = DEFAULT_FONT): number {
 
 /** maxW 안에 들어가게 줄 나누기 (띄어쓰기 우선, 안 되면 글자 단위). maxLines를 넘으면 마지막 줄 끝을 '…'로 */
 export function wrapKo(text: string, maxW: number, maxLines: number, font: FontKey = DEFAULT_FONT): string[] {
+  return wrapBy(text, maxW, maxLines, (t) => koWidth(t, font));
+}
+
+/** wrapKo와 같은 줄 나누기, 폭 재기만 다름 (고해상도 글자 hiText.ts도 씀) */
+export function wrapBy(text: string, maxW: number, maxLines: number, width: (t: string) => number): string[] {
   const lines: string[] = [];
   let cur = '';
   const push = () => { lines.push(cur); cur = ''; };
   for (const word of text.split(' ')) {
     const cand = cur ? `${cur} ${word}` : word;
-    if (koWidth(cand, font) <= maxW) { cur = cand; continue; }
+    if (width(cand) <= maxW) { cur = cand; continue; }
     if (cur) push();
     // 한 단어가 너무 길면 글자 단위로
     for (const ch of word) {
-      if (koWidth(cur + ch, font) > maxW && cur) push();
+      if (width(cur + ch) > maxW && cur) push();
       cur += ch;
     }
   }
@@ -116,7 +121,7 @@ export function wrapKo(text: string, maxW: number, maxLines: number, font: FontK
   if (lines.length > maxLines) {
     const keep = lines.slice(0, maxLines);
     let last = keep[maxLines - 1]!;
-    while (last && koWidth(`${last}…`, font) > maxW) last = [...last].slice(0, -1).join('');
+    while (last && width(`${last}…`) > maxW) last = [...last].slice(0, -1).join('');
     keep[maxLines - 1] = `${last}…`;
     return keep;
   }
