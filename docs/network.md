@@ -71,8 +71,8 @@
 | memo | `{ text }` 1줄 1~40자 (NET.memoMaxLen, 제어 문자·줄바꿈은 공백으로). 저장 후 `board` 다시 보냄 |
 | look | `{ hair: 0~2, hairColor: 0~3 }` (shared LOOK) 외형 바꾸기 → users.hair_style·hair_color 저장, 주민 상태 hair·hairColor |
 | weapon | `{ id }` (shared MVP_WEAPONS) 무기 고르기 → users.weapon 저장, 주민 상태 weapon, `me` 다시 보냄(그 무기 숙련도). 출발 카운트다운 중인 대기자는 무시 |
-| card | (CD-3, skills.md 1장) `{ op, ... }`: `open { weapon, pack, pay: coin·dust·gift }` 카드팩 사서 열기 → `pack { weapon, pack, cards: [{ id, tier, isNew }], merged: [id], pity }` + `cards` / `craft { cardId }` 지정 구매 / `grind { cardId, n }` 갈기 / `variant { cardId, variant\|null }` 강화 액티브 변형 / `equip { weapon, kind, slot, cardId\|null }` 장착·빼기. 서버가 shared 카드 검사(보유·티어 장착 숙련도·패시브 한도·같은 카드 중복)로 확인 → DB 트랜잭션, 굴림·천장은 서버. 결과 `cards { dust, gifts, weapons[무기·숙련도·패시브 한도·보유 카드·장착], fail? }` (fail: coin·dust·locked·owned·cap·slot·card·variant). 장착은 출발 카운트다운 중이면 fail busy (사기·열기·갈기는 됨). 옛 `skill` 메시지는 CD-3에서 없앰 |
-- chat은 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }` (저장 안 함). 이모트(emote)는 2026-11 없앰. 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
+| card | (CD-3, skills.md 1장) `{ op, ... }`: `open { weapon, pack, pay: coin·dust·gift }` 카드팩 사서 열기 → `pack { weapon, pack, cards: [{ id, tier, isNew }], merged: [id], pity }` + `cards` / `craft { cardId }` 지정 구매 / `grind { cardId, n }` 갈기 / `variant { cardId, variant\|null }` 강화 액티브 변형 / `equip { weapon, kind, slot, cardId\|null }` 장착·빼기. 서버가 shared 카드 검사(보유·티어 장착 숙련도·패시브 한도·같은 카드 중복)로 확인 → DB 트랜잭션, 굴림·천장은 서버. 결과 `cards { dust, gifts, weapons[무기·숙련도·패시브 한도·보유 카드·장착], fail? }` (fail: coin·dust·locked·owned·cap·slot·card·variant). 장착은 출발 카운트다운 중이면 fail busy (사기·열기·갈기는 됨). CD-3 전까지는 옛 `skill` 메시지 |
+- chat은 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
 | loadout | 무기 교체·스킬 장착·의상 장착 (MVP 이후 의상) |
 
 ### 검증과 제한
@@ -101,16 +101,16 @@ DungeonState
 PlayerState
   id, name, look            look = 외형 키 "의상:머리 번호:머리색 번호:플레이어 색" (예: beginner:1:2:0, 섬 출발 파티 정보에서)
   weapon, x, y, facing      x·y는 정수 px
-  skills                    던전용 빌드 (출발 때 서버가 장착 카드만 담음, CD-3부터 카드 빌드 "id:1|2[:변형][@슬롯],..." 1 = 기본·2 = 강화, 액티브 슬롯 0~3. 옛 SK-6 형식 "id:포인트[:변형][@슬롯]"). 변형마다 행동 시간·판정이 달라 다른 사람 그리기·본인 예측이 이 값으로 스킬 정의를 찾는다
+  skills                    던전용 빌드 (출발 때 서버가 장착 카드만 담음, CD-3부터 카드 빌드 "id:1|2[:변형][@슬롯],..." 1 = 기본·2 = 강화, 액티브 슬롯 0~3. CD-3 전 형식 "id:포인트[:변형][@슬롯]"). 변형마다 행동 시간·판정이 달라 다른 사람 그리기·본인 예측이 이 값으로 스킬 정의를 찾는다
   dodgeDir, dodgeDy         회피 이동 방향 좌우 (1/−1/0)·깊이 (1 아래/−1 위/0). 회피 아니면 둘 다 0. 앞회피면 dodgeDir = facing
   dodgeStart                회피 시작 서버 시각 (회피 아니면 0). 본인 예측 재계산의 회피 진행 시간 (state 바뀐 걸 받은 시각은 최대 한 패치 늦어 회피 끝에 앞으로 당겨짐)
   state                     idle / walk / run / action / backstep / hitstun / down / knocked / disconnected / arrive(층 첫 방에 우물에서 떨어지는 중, 클라이언트는 상태가 시작된 뒤 흐른 시간으로 높이를 그리고 본인 예측도 입력을 받지 않음) (기상 무적은 연출만)
   actionId, actionStart     진행 중 행동과 시작 서버 시각 (구간은 데이터로 계산). 1ms 이상 바뀌면 갱신 (히트스톱으로 멈춘 동안만 바뀜. 20ms로 두면 본인 예측 재계산이 대시를 약 5px 앞서 계산했다가 뒤로 당겨짐). 대검 충전 시간도 흐른 시간에 넣어 충전 중에도 그대로
-  chargeMs, chargeLv        대검 충전 (SK-3 2차): 이 행동에서 충전한 ms (충전 중이면 지금까지, 떼면 최종, 없으면 0)·충전 중 비율 1~255 (아니면 0). 클라이언트 mirror는 충전 중이면 준비 끝에 멈추고 끝났으면 경과 − chargeMs로 진행, 충전 포즈·모이는 빛·소리를 그린다
+  chargeMs, chargeLv        대검 충전: 이 행동에서 충전한 ms (충전 중이면 지금까지, 떼면 최종, 없으면 0)·충전 중 비율 1~255 (아니면 0). 클라이언트 mirror는 충전 중이면 준비 끝에 멈추고 끝났으면 경과 − chargeMs로 진행, 충전 포즈·모이는 빛·소리를 그린다
   hp, maxHp, ultGauge
   reviveProgress            쓰러진 동안 동료 부활 진행도 (0~255)
   hasted, shielded          가속장 가속 중·역장 보호막이 있음 (모두에게 보이는 표시용, 시간·배율은 priv·서버만)
-  aura                      전장 장악 둘레 반지름 px (0 = 없음, 발밑 고리 표시용, SK-7)
+  aura                      전장 장악 둘레 반지름 px (0 = 없음, 발밑 고리 표시용)
   lastInputSeq              서버가 처리한 마지막 입력 번호 (본인 보정용, 작아서 전원에게 보냄)
   priv: PlayerPrivate       @filter로 본인에게만
 
@@ -158,7 +158,7 @@ IslandState
 ```
 - 구현 (4-5): server/src/rooms/IslandRoom.ts (섬마다 한 방, `filterBy(['islandId'])`), 진행 systems/islandGame.ts. 입장 인증은 onAuth에서 세션 쿠키(sid) → 그 섬 주민만, 같은 계정의 이전 연결은 종료 코드 4002로 끊음
 - 이동: 클라이언트는 던전과 같은 input 메시지, 서버 60Hz로 마지막 입력 적용(shared/src/island/walker.ts), 내 캐릭터는 같은 함수로 예측·보정(client/src/net/walkPredict.ts, 7장 보정 규칙), 다른 주민은 100ms 보간
-- 입장 때 본인에게 `me { wallet, level }`·`cards { ... }` (위 card 메시지 결과, CD-3. 옛 SK-6 `skills`), 가방이 바뀔 때마다 `inv { items }` 메시지. 배치는 systems/islandPlacement.ts (규칙 검사 → DB 트랜잭션 db/islandStore.ts → 상태), 걸을 수 없는 장식은 서버·클라이언트 예측 모두 장애물. 끊기면 2초마다 다시 입장 (섬은 전체 상태를 새로 받으면 됨)
+- 입장 때 본인에게 `me { wallet, level }`·`cards { ... }` (위 card 메시지 결과, CD-3 전까지는 `skills`), 가방이 바뀔 때마다 `inv { items }` 메시지. 배치는 systems/islandPlacement.ts (규칙 검사 → DB 트랜잭션 db/islandStore.ts → 상태), 걸을 수 없는 장식은 서버·클라이언트 예측 모두 장애물. 끊기면 2초마다 다시 입장 (섬은 전체 상태를 새로 받으면 됨)
 - 개발: `pnpm island-bot --island <섬 번호>` 봇 주민이 가입·입장 신청 → 섬 주인이 게시판 주민 탭에서 허용하면 입장해 우물 앞을 걷는다 (브라우저 하나로 2인 확인). 섬 번호는 `GET /api/me`의 island.id
 - 섬 방 최대 접속 10명 (AUTH.islandResidents). 섬 주인에게만 `joinRequest { nickname }` (입장 신청 알림). 신청이 허용되면 접속 전에도 주민 목록에 넣음 (islandBus joined)
 - 개인 지갑·인벤토리는 본인 전용 메시지로 전송
@@ -172,7 +172,7 @@ IslandState
 |---|---|---|
 | hit | `{ attacker, target, damage, strength, flags, hitstop, recoil, act, actT, by, x, y, z, t }` (recoil = 공격자 멈춤 초, act·actT = 공격자가 지금 하는 행동 id·진행 시간, 히트스톱 동기화. by = 실제로 때린 판정의 행동 id: 검의 장막처럼 스킬이 끝난 뒤에도 남는 판정은 act와 다름, 적중 연출·등급·소리용) | 데미지 숫자, 섬광, 흰색 번쩍임, 히트스톱, 흔들림 |
 | projSpawn / projEnd | 위 참고 | 투사체 그리기 |
-| bolt / boltEnd | 플레이어 투사체 (스태프 평타·검기·얼음 창) `bolt { id, kind(행동 id), pid, x, y, dir, t0, speed, r, dy?, ghost? }` (speed·r = 변형까지 적용한 값, dy = 깊이 방향 성분(몬스터 투사체와 같은 뜻, 십자 검기 사방·교차점), ghost = 보조 잔상이 다시 쏜 것(반투명으로 그림), SK-7), `boltEnd { id, reason, x, y }`. 왕복 투사체(대검 투척)는 돌아설 때 같은 id로 bolt를 다시 보냄(그 자리·새 방향), 분열 조각은 새 bolt | 투사체 그리기 (MVP 보충 ST-2, 계열 스킬 그림 SK-2 2차) |
+| bolt / boltEnd | 플레이어 투사체 (스태프 평타·검기·얼음 창) `bolt { id, kind(행동 id), pid, x, y, dir, t0, speed, r, dy?, ghost? }` (speed·r = 변형까지 적용한 값, dy = 깊이 방향 성분(몬스터 투사체와 같은 뜻, 십자 검기 사방·교차점), ghost = 보조 잔상이 다시 쏜 것(반투명으로 그림)), `boltEnd { id, reason, x, y }`. 왕복 투사체(대검 투척)는 돌아설 때 같은 id로 bolt를 다시 보냄(그 자리·새 방향), 분열 조각은 새 bolt | 투사체 그리기 (MVP 보충 ST-2, 계열 스킬 그림 SK-2 2차) |
 | echo | 변형 예약 판정 순간 `{ pid, kind: repeat·after·shatter, act(스킬 id), x, y, facing, t, look?, fx?, fy? }` (반복·후속은 시전 자리, 해제는 몬스터 자리. look = 전용 그림 chain·scar·blast·stick·quake·orbEnd, fx·fy = 번개 줄 시작 자리) | 그 사람의 skills로 정의를 찾아 로컬과 같은 연출·소리 (fx/spellCast castEcho), 그리는 시각이 t에 닿을 때 |
 | playerHit | 내가 맞음 `{ damage, strength, from }` | 피격 표정, 화면 붉은 테두리 없이 흔들림 |
 | reward | `{ coins, material, exp }` 본인에게 (몬스터 기절·보물상자) | coin 효과음, HUD 숫자 튐 |
@@ -209,7 +209,7 @@ IslandState
 - 서버 확인: PlayerState.actionId/actionStart가 오면 그 시각 기준으로 맞춘다 (차이가 작으면 그대로)
 - 서버 거절(rejected): 행동을 취소하고 대기 포즈로 (드문 경우). 다시 적용할 때도 그 누름은 뺀다
 - 행동 중 이동(대시 공격, 돌진 스킬)도 같은 공유 함수로 예측
-- 대검 충전도 예측: 키를 누르고 있는 동안 준비 끝에서 멈춘다. 서버 actionStart는 충전 시간을 포함한 시작 시각이라 충전 중에도 바뀌지 않고(행동 시작 소리가 다시 나지 않음), chargeMs·chargeLv로 다른 사람 화면에서도 충전 포즈·빛으로 보인다 (SK-3 2차)
+- 대검 충전도 예측: 키를 누르고 있는 동안 준비 끝에서 멈춘다. 서버 actionStart는 충전 시간을 포함한 시작 시각이라 충전 중에도 바뀌지 않고(행동 시작 소리가 다시 나지 않음), chargeMs·chargeLv로 다른 사람 화면에서도 충전 포즈·빛으로 보인다
 
 ### 예측하지 않는 것
 - 내가 맞는 것(경직·넉백·다운): 서버 상태가 오면 반영. 넉백은 서버 위치를 향해 부드럽게
@@ -323,5 +323,5 @@ IslandState
   - `?online=1`에서 ` 키로 패널 열기 (client/src/net/lagPanel.ts). 초기값 `?lag=왕복ms&jitter=±ms&loss=%`. RTT·보정 횟수·최대 오차 표시
   - 손실 흉내: WebSocket(TCP)은 패킷을 잃지 않고 재전송하므로 손실 확률만큼 재전송 지연(+200ms)을 더하고 순서는 유지 (뒤 메시지도 밀림). 상태 패치는 변경분이라 버리지 않는다 (client/src/net/delayLine.ts)
 - `pnpm net-smoke` (서버가 떠 있을 때): 봇 2개가 접속해 이동·평타·핑·채팅·거절을 보내고 적중·본인 전용 필터·lastInputSeq를 확인
-- 측정 (2026-10, 지연 100ms·흔들림 ±20ms, 2인): 내 화면 위치 프레임당 이동 95% 1.8px·최대 4.3px, 보정 무시 199·부드럽게 19·즉시 0 (최대 오차 7.6px). 다른 플레이어 보간 프레임당 95% 1.2px·최대 2.5px
+- 측정 (지연 100ms·흔들림 ±20ms, 2인): 내 화면 위치 프레임당 이동 95% 1.8px·최대 4.3px, 보정 무시 199·부드럽게 19·즉시 0 (최대 오차 7.6px). 다른 플레이어 보간 프레임당 95% 1.2px·최대 2.5px
 - M2 확인 기준: 지연 100ms·흔들림 ±20ms에서 내 이동이 끊기지 않고, 13px 라인 판정이 체감상 공정한가

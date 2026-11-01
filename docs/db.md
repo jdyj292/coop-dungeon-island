@@ -25,7 +25,7 @@ MVP 열: O = MVP에 포함, — = MVP 이후.
 | weapon_loadout | user_id, weapon, skin_id (무기 종류별 장착 외형) | — | island |
 | boss_drop_pity | user_id, boss_id, kills_since_drop (천장 카운트) | — | island |
 | skill_nodes | (SK-1~SK-7) CD-3 마이그레이션에서 지움 | — | skills |
-| skill_slots | (SK-6) CD-3 마이그레이션에서 지움 | — | skills |
+| skill_slots | CD-3 마이그레이션에서 지움 | — | skills |
 | cards | user_id, card_id, count(보관 중인 기본 카드 장수), enhanced(0·1), variant(강화 액티브 변형, null = 기본). PK(user_id, card_id). 같은 카드 3장이 되면 서버가 바로 count −3·enhanced 1 (CD-3) | O (CD) | skills |
 | card_slots | user_id, weapon, kind(active·passive), slot(액티브 0~3 = A S D F, 패시브 0~ 순서), card_id. PK(user_id, weapon, kind, slot). 행이 없는 무기는 기본 배치 (A S = 처음 카드) (CD-3) | O (CD) | skills |
 | card_pity | user_id, weapon, pack, opened(마지막 높은 티어 뒤로 연 팩 수). PK(user_id, weapon, pack) (CD-3) | O (CD) | balance |
