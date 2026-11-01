@@ -1,7 +1,8 @@
 {
   "_doc": "BGM 레시피 (승인 2026-10). 형식은 docs/audio.md 5장. 원본 소리는 tools/bgm-preview/reference.html",
   "pools": {
-    "spores": ["D6", "E6", "F6", "A6", "C7", "G6", "D7"]
+    "spores": ["D6", "E6", "F6", "A6", "C7", "G6", "D7"],
+    "twinkle": ["C6", "E6", "G6", "B6", "D7"]
   },
   "arps": {
     "forest": [0, 2, 1, 3, 2, 1, 3, 2],
@@ -122,6 +123,39 @@
         { "inst": "tom", "barList": [7, 15], "steps": [8, 9, 10, 11, 12, 13, 14, 15],
           "hz": { "seq": [150, 140, 128, 118, 108, 98, 90, 82], "from": 8 }, "v": { "start": 8, "base": 0.22, "add": 0.02 } },
         { "inst": "riser", "barList": [6, 14], "steps": [0], "len": 32, "v": 0.11, "args": { "top": 3000 } }
+      ]
+    },
+    "cardshop": {
+      "name": "카드 상점 · 반짝이는 가판대",
+      "style": "오르골 로파이 (층 3겹)",
+      "bpm": 84, "swing": 0.12, "stepsPerBar": 16, "delaySteps": 3, "lift": 2,
+      "chords": [
+        ["C2", "E3 G3 B3 D4"], ["A1", "C3 E3 G3 B3"], ["F1", "A3 C4 E4 G4"], ["G1", "F3 A3 C4 D4"],
+        ["E2", "D3 G3 B3 E4"], ["A1", "G3 C4 E4 A4"], ["D2", "F3 A3 C4 E4"], ["G1", "F3 B3 D4 E4"]
+      ],
+      "melody": [
+        "E5:0:4 G5:4:2 B5:6:6 A5:12:4", "G5:0:4 E5:4:4 C5:8:8",
+        "A5:0:4 C6:4:2 B5:6:2 A5:8:4 G5:12:4", "F5:0:6 D5:8:8",
+        "E5:0:2 G5:2:2 B5:4:4 D6:8:4 B5:12:4", "C6:0:6 A5:8:4 E5:12:4",
+        "F5:0:4 A5:4:4 C6:8:4 E6:12:4", "D6:0:8 B5:8:4 G5:12:4"
+      ],
+      "lead": [ { "inst": "softLead", "v": 0.09 }, { "inst": "flute", "v": 0.06, "layer": 3 } ],
+      "parts": [
+        { "inst": "rhodes", "steps": [0], "note": "chord", "len": 10, "v": 0.07, "args": { "strum": 0.04 } },
+        { "inst": "rhodes", "steps": [10], "note": "chord", "len": 6, "v": 0.06, "args": { "strum": 0.04 } },
+        { "inst": "sub", "steps": [0], "note": "bass", "len": 8, "v": 0.28 },
+        { "inst": "sub", "steps": [10], "note": "bass", "len": 4, "v": 0.24 },
+        { "inst": "kick", "steps": [0, 10], "v": 0.42, "args": { "soft": true } },
+        { "inst": "rim", "steps": [4, 12], "v": 0.08 },
+        { "inst": "shaker", "every": [2, 0], "v": 0.03 },
+        { "inst": "glock", "every": [1, 0], "note": "pick", "pool": "twinkle", "chance": 0.04, "jitter": true, "v": 0.02 },
+        { "inst": "marimba", "layer": 2, "every": [2, 0], "note": "arp", "arp": "up", "arpDiv": 2, "mul": 2, "v": 0.05, "pan": { "mod": 4, "eq": 0, "then": -0.3, "else": 0.3 } },
+        { "inst": "hat", "layer": 2, "every": [2, 1], "v": 0.025 },
+        { "inst": "pad", "layer": 3, "steps": [0], "note": "chord", "len": 16, "v": 0.011, "args": { "c1": 900, "c2": 2000 } },
+        { "inst": "bigSnare", "layer": 3, "steps": [8], "v": 0.16 },
+        { "inst": "kick", "layer": 3, "steps": [7], "v": 0.35, "args": { "soft": true } },
+        { "inst": "tom", "layer": 3, "barMod": [2, 1], "steps": [12, 14], "hz": { "seq": [130, 115, 100], "from": 12 }, "v": 0.18 },
+        { "inst": "glock", "layer": 3, "every": [2, 0], "note": "arp", "arp": "up", "arpDiv": 1, "mul": 4, "v": 0.025 }
       ]
     }
   }

@@ -35,6 +35,18 @@
       "port": 5176
     },
     {
+      "name": "bgm-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "exec",
+        "vite",
+        ".",
+        "--port",
+        "5177"
+      ],
+      "port": 5177
+    },
+    {
       "name": "prod-local",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": [

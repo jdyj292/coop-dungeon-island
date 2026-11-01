@@ -49,11 +49,13 @@
 | 스킬 | skill_slash, skill_fireburst, skill_icefield. 계열 1단계 (승인 원본 비교 대상 아님): skill_whirl (칼날 울림 + 0.3초 간격 휘두름 3번, 회전 0.9초), skill_shoulder (묵직한 돌진 + 찌그러진 저음), skill_wave (딱 + 높게 찢는 휘두름 + 금속 울림), skill_draw (짧은 스침 뒤 칭, 긴 금속 울림), skill_pillar (0.45초 차오름 → 쿵 → 2초 화르륵, 준비 시작에 재생), skill_icelance (높은 쉭 + 유리 같은 쨍 2겹), skill_orb (낮게 커지는 우웅), skill_lift (빨려드는 소리 → 솟는 휘익). 계열 2단계·보조: skill_throw (딱 + 멀어지며 붕붕 도는 바람 4번 + 금속 울림), throw_stick (꽂기 한 번 짧은 휘익), skill_scar (날카롭게 긋는 슥 + 높은 칭), scar_burst (찢어지는 파열 + 낮은 쿵), skill_chain (지지직 5번 + 내려가는 톱니파), chain_hop (연쇄 한 번 찌릿), skill_fireball (0.45초 차오르는 불 → 발사 화륵, 준비 시작에 재생), fire_blast (화염구 끝 폭발), aftershock (여진 땅 울림), orb_burst (부푸는 우웅 → 퐁), skill_haste (가속장 변형: 올라가는 째깍 3번 + 반짝임), shield_up (역장 보호막이 씌워질 때 맑은 웅). 대검 충전: charge_start (충전 시작, 낮게 올라가는 우웅 + 옅은 금속 반짝임), charge_full (최대 충전으로 발동, 딱 + 칭 + 올라가는 맑은 음), charge_gather (충전 중 반복하는 낮은 후웅: 저음 쪽 바람 차오름 + 낮게 올라가는 음), charge_ready (다 참: 딱 + 높은 칭 + 높은 띵-띵 두 음 + 긴 금속 울림, 모이는 소리와 높이로 구분). 대검 A 계열 3단계: skill_crush (짧게 내려 긋는 바람 → 깊은 쾅 + 긴 금속 울림 + 찌그러진 흙 무너짐), skill_collapse (대지붕괴 반복마다 짧은 쿵 + 흙 부스러짐), collapse_rise (솟구침: 낮은 쾅 + 솟는 거친 바람 + 쿵), charge_stage (3단 충전 단계마다 딱 + 맑은 칭 + 올라가는 짧은 음). 대검 B 계열 3단계: skill_cross (휘익 + 딱 + 칭을 0.25초 간격 두 번 = 2연발), cross_meet (교차점 폭발: 딱 + 찢는 파열 + 쿵 + 높은 금속), skill_flash (아주 짧은 쉭 → 강한 딱 + 내려가는 높은 음 + 0.9초 긴 금속 울림), flash_cut (반환: 짧은 슥 + 작은 칭), phantom_slash (잔상 베기: 옅은 휘익 + 올라가는 맑은 음) | |
 | 몬스터 | mon_mushroom_windup, mon_boar_charge, mon_spore_shot, mon_bear_roar | bearYawn |
 | 보상·UI | | coin, potion, levelup, roomClear, click, place |
+| 카드 상점 | | card_shake (팩 흔들기 0.6초, 빨라지는 바스락 + 올라가는 음), card_tear (찢기), card_flip (뒤집기, 티어 1 공개), card_glow2 (뒷면 티어 2 빛), card_glow3 (뒷면 티어 3 빛 · 뒤집기 전 0.7초 멈춤, 차오름 + 빨라지는 반짝임), card_reveal2 (티어 2 공개, 벨 두 음), card_reveal3 (티어 3 공개, 쿵 + 마림바 팡파르 + 긴 벨), card_merge (합치기, 모이는 마림바 → 0.75초 쿵 + 금빛 벨), card_grind (갈기, 사각사각 → 조각 음 3개), card_buy (지정 구매, 코인 + 착) — 승인, 승인 원본 비교 대상 아님 |
 | 우물 입장 | wellJump (우물로 뛰어듦, 휘익 내려감), wellLand (던전 첫 방 착지, 쿵), monWake (잠든 몬스터가 깨어남, 뽀잉) — 승인, 승인 원본 비교 대상 아님 | |
 
 - 데이터 연결: 행동(action) 데이터에 `sfx: { windup?, active?, hit? }` 키로 소리 이름 지정 (예: 대검 평타 active = swing, hit = hitLight). 이름은 두 버스에서 겹치지 않으므로 버스 없이 쓴다. data-validate가 sfx.json에 있는지 검사
 - 지금 연결 (데이터 sfx): 대검 1·2타 swing/hitLight, 3타 swingHeavy/hitHeavy, 대시 dash/hitHeavy, 올려베기 launch/hitLight, 대지가르기 skill_slash/hitHeavy, 버섯 박치기 예고 mon_mushroom_windup, 멧돼지 돌진 mon_boar_charge, 포자탄 mon_spore_shot, 이끼곰 하품 예고 bearYawn, 스태프 평타 bolt_cast/bolt_hit, 스태프 대시 dash/hitHeavy, 화염 폭발 준비 skill_fireburst(레시피 안 0.45초 뒤 폭발음 = 준비 0.5초 끝), 얼음 장판 skill_icefield/hitLight, 회전베기 skill_whirl/hitLight, 어깨 들이받기 skill_shoulder/hitHeavy, 검기 날리기 skill_wave/hitLight, 발도 skill_draw/hitHeavy, 불꽃 기둥 준비 skill_pillar/hitLight, 얼음 창 skill_icelance/bolt_hit, 부유 구슬 skill_orb/hitLight, 끌어올림 skill_lift/hitLight, 대검 투척 skill_throw/hitLight, 검흔 베기 skill_scar/hitHeavy, 번개 연쇄 skill_chain/bolt_hit, 화염구 준비 skill_fireball/hitHeavy, 중력장 skill_orb(가속장 변형 skill_haste)/hitLight. 예약 판정의 전용 그림(echo look)은 그림별 소리: 연쇄 chain_hop, 검흔 터짐 scar_burst, 화염구 폭발 fire_blast, 꽂기 throw_stick, 여진 aftershock, 구슬 확장 끝 orb_burst, 솟구침 collapse_rise (audio/sfxEvents.ts). 파쇄참 skill_crush/hitHeavy, 대지붕괴 skill_collapse/hitLight (반복마다 skill_collapse), 십자 검기 skill_cross/hitHeavy(검의 장막이 임시로 그대로 씀), 일섬 skill_flash/hitHeavy (다단 반복 repeat.coef = 검의 장막·일섬 칼바람은 판정마다 시전 소리 없이 hitLight만, client/audio/sfxEvents.ts·onlineStage. 이중 일섬 마지막은 skill_flash), 교차점 cross_meet·반환 flash_cut·잔상 베기 phantom_slash (echo look, 잔상 투사체는 소리 없음) 역장 보호막이 새로 생긴 순간 shield_up
 - 지금 연결 (화면 연출): 섬에서 우물로 뛰어들 때 wellJump (client/src/scenes/Island.ts). 던전 층 첫 방: 내가 착지할 때 wellLand, 잠든 몬스터가 깨어날 때 monWake (client/src/stage/combatStage.ts·onlineStage.ts). 대검 충전: 충전 포즈로 멈출 때 charge_start, 충전 중 0.28초마다 charge_gather(다 찰수록 간격 최대 40% 짧게, 다 차면 멈춤, fx.json chargeGlow.sound), 다 차는 순간 charge_ready, 최대까지 충전해 발동할 때 charge_full (client/src/fx/chargeFx.ts, 동료 충전도 들림)
+- 지금 연결 (카드 상점, client/src/stage/cardShopOpen.ts·cardShop.ts·islandCards.ts): 팩 흔들기 시작 card_shake, 찢김 card_tear, 뒤집기 시작 card_flip (티어 3은 멈춤 시작에 card_glow3, 멈춤 끝 card_flip), 앞면 공개 티어 2 card_reveal2·티어 3 card_reveal3, 뒷면 빛 card_glow2·3 (카드마다 처음 한 번), 합치기 시작 card_merge (합칠 카드마다), 지정 구매 성공 0.3초 card_buy, 갈기 서버 답 card_grind. noJitter에 card_reveal3·card_merge
 - 지금 연결 (이벤트, client/src/audio/sfxEvents.ts): 달리기 시작 dash, 백스텝 backstep(순간이동 무기 = teleport), 몬스터 바운드 bounce·다운 down, 플레이어 피격 hitLight(강 공격이면 hitHeavy), 이끼곰 그로기 진입 mon_bear_roar, 물약 potion, 방 클리어 roomClear
 - 아직 연결 안 함 (기능이 생길 때): levelup, click, place, guard
 - 아직 없는 소리(멧돼지 벽 충돌, 포자탄 적중, 문 열림, 잡화점 구매, 채팅 알림, 오류 등)는 만들 때 같은 절차로 추가
@@ -82,7 +84,7 @@
 | island | 섬 · 오후의 바닷바람 | 로파이 (로즈 피아노, 스윙 드럼, 바이닐 잡음) | 78 | 8 | 섬 |
 | floor1 | 던전 1층 · 포자빛 숲길 | 신비로운 숲 (마림바, 피리, 숲 바람, 포자 반짝임) | 96 | 8 | 1층 방 1~5 |
 | boss1 | 보스전 · 깨어난 숲의 주인 | 시네마틱 (낮은 맥박, 충격음, 큰 스네어, 신스 리드 + 피리) | 100 | 16 | 1층 보스 방 |
-| cardshop | 카드 상점 (CD-6 예정, bgm-preview 승인 뒤) | 섬 곡과 어울리는 잔잔한 곡 + 층 3겹 | — | — | 카드 상점 화면. 층: 바탕(늘) / 티어 2 빛이 보이면 한 겹 더 / 티어 3 빛이 보이면 조 바꿈·웅장하게, 다 뒤집으면 바탕으로 천천히 (island.md 5장 카드 상점) |
+| cardshop | 카드 상점 · 반짝이는 가판대 | 오르골 로파이, 층 3겹 (1 바탕: 로즈·저음·부드러운 킥·림·셰이커·소프트 리드·가끔 글로켄 / 2: + 마림바 아르페지오·하이햇 / 3: 온음 위로 조옮김(C → D) + 패드·큰 스네어·탐·플루트 겹 멜로디·글로켄 아르페지오) | 84 | 8 | 카드 상점 화면. 층: 바탕(늘) / 티어 2 빛이 보이면 2 / 티어 3 빛이 보이면 3, 다 뒤집으면 바탕으로 (island.md 5장 카드 상점) |
 
 - **floor1과 boss1은 한 쌍**: 같은 D단조, 같은 화음(Dm9, B♭maj7#11), 같은 마림바 음형·숲 바람. boss1 멜로디는 floor1 주제를 한 옥타브 낮추고 B → B♭처럼 반음 내린 변주 ("평화롭던 숲이 어두워졌다")
 - boss1 구성: 0~3마디 정적(맥박·패드) → 4~7 드럼 + 피리가 주제를 조용히 → 8~15 전체 + 리드
@@ -101,6 +103,7 @@
 } }
 ```
 - chords: 마디마다 [베이스, 화음]. melody: 마디마다 "음:시작칸:길이칸" (빈 문자열 = 쉼). lead: 멜로디를 연주할 악기 (bars로 구간 지정, 여러 개면 겹쳐 연주)
+- 층 (카드 상점): part·lead의 `layer` = 이 단계부터 연주 (기본 1). 곡의 `lift` = 3단계에서 화음·베이스·멜로디·pick을 몇 반음 옮길지 (hz 고정 음은 그대로). 단계는 올라갈 땐 다음 박(4칸), 내려갈 땐 다음 마디 첫 칸에 바뀜
 
 | part 필드 | 설명 |
 |---|---|
@@ -118,12 +121,13 @@
 
 ### 재생 규칙
 - 섬 = island, 던전 방 = 층 곡, 보스 방 입장 = 보스 곡(첫 마디부터). 전환은 1초 크로스페이드
+- 카드 상점 화면을 열면 cardshop, 닫으면 island (1초 크로스페이드). 층 단계는 music.setLevel = 팩 열기 연출의 music (1 · 2 · 3, 0과 열지 않을 때 = 1)
 - 정산 화면: 0.5초에 걸쳐 줄이고 정지 (정산 효과음이 주인공)
 - 음악 볼륨 기본 70% (4장 볼륨 설정). 첫 입력 전에는 재생 불가 (4장)
 - 구현: client/src/audio/bgm/ (engine.js를 TypeScript로 옮김. 악기 코드는 reference.html과 같게)
   - instruments.ts (Rig: 곡 하나의 버스·잔향·딜레이·잡음 버퍼) · voices.ts (악기 21개) · engine.ts (bgm.json 해석, 25ms마다 0.2초 앞까지 예약) · music.ts (재생 규칙)
   - 원본은 전역 하나로 한 곡만 돌렸지만, 크로스페이드를 위해 곡마다 인스턴스 (노드·값·연결은 같음). 곡 출력 → 크로스페이드 게인 → 효과음 플레이어의 음악 버스(전체 × 음악 볼륨)
-  - 원본과 같은지: bgm.test.ts가 engine.js와 이식본을 같은 난수·기록용 가짜 AudioContext로 돌려 노드·값·연결 기록 전체를 비교 (섬·1층 2마디, 보스 9마디). `pnpm test`
+  - 원본과 같은지: bgm.test.ts가 engine.js와 이식본을 같은 난수·기록용 가짜 AudioContext로 돌려 노드·값·연결 기록 전체를 비교 (섬·1층 2마디, 보스 9마디, 카드 상점 6마디 동안 1 → 2 → 3 → 1). `pnpm test`
 - 층별 곡: shared/data/rooms.json 층.bgm { room, boss }. 섬 곡 island는 섬 씬(client/src/scenes/Island.ts)에 들어갈 때
 
 ### 수정 절차
@@ -144,4 +148,4 @@
 ## 7. 도구
 - tools/sfx-preview (완성, `pnpm sfx-preview`, 포트 5176): sfx.json을 게임과 같은 엔진으로 재생, 레이어 값 슬라이더 조정 → 바꾼 소리만 `{ "버스.이름": [레이어...] }` JSON 복사, 조합(combos) 재생, 승인 원본 두 개를 나란히 띄워 듣기 + 원본 자동 비교(✓/✗)
 - 새 효과음 초안: client/data/drafts/sfx.json (sfx.json과 같은 형식). sfx-preview 목록에 "(초안)"으로 나오고, 게임은 개발 모드 `?drafts=1`에서 재생된다 (client/src/audio/player.ts addDraftSounds). 승인되면 sfx.json으로 옮기고 초안 파일에서 지운다
-- tools/bgm-preview (완성): index.html = bgm.json 재생 / reference.html = 승인 원본 / engine.js = 합성 엔진
+- tools/bgm-preview (완성): index.html = bgm.json 재생 + 초안 client/data/drafts/bgm.json("(초안)", pools·arps는 더해짐) + 층이 있는 곡은 단계 버튼 / reference.html = 승인 원본 / engine.js = 합성 엔진 (setLevel). 열기: 저장소 루트에서 `pnpm exec vite . --port 5177` → /tools/bgm-preview/ (.claude/launch.json bgm-preview)

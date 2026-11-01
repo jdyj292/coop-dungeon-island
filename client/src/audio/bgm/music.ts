@@ -42,6 +42,11 @@ export class MusicPlayer {
     this.cur = { id, track, fade };
   }
 
+  /** 층 단계 (카드 상점: 1 바탕 · 2 한 겹 더 · 3 조옮김·웅장). 같은 곡 안에서 올라갈 땐 다음 박, 내려갈 땐 다음 마디 */
+  setLevel(n: number): void {
+    if (this.cur) this.cur.track.want = n;
+  }
+
   /** 줄이고 정지 (정산 화면 0.5초) */
   stop(sec = FADE_OUT_SEC): void {
     this.wanted = null;

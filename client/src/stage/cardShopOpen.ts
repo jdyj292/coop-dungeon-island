@@ -1,8 +1,9 @@
 // 카드팩 열기 연출 (island.md 5장 팩 열기 연출, 승인 데모 docs/refs/demos/card_shop.html): 떨어짐 → 클릭·Enter → 흔들림 → 찢김 → 뒷면 4장 펼침 →
 // 마우스·←→로 고르면 뒷면이 티어 색으로 빛남 → 한 장씩(클릭·Enter) 또는 모두(A) 뒤집기 (티어 1 먼지 · 2 섬광 · 3 멈춤·빛기둥·흔들림·이름 크게, NEW) →
 // 3장이 된 카드는 합치기(세 장이 모여 녹음 → 금테) → 변형 고르기 → 끝(한 팩 더·확인). 지정 구매로 3장이 되면 합치기부터 (mergeOnly).
-// 결과(카드·NEW·강화)는 서버 pack 메시지. music = 지금 곡 단계 (1 잔잔 · 2 티어 2 빛 · 3 티어 3 빛 · 0 원래 곡으로, CD-6 소리가 씀)
+// 결과(카드·NEW·강화)는 서버 pack 메시지. music = 지금 곡 단계 (1 잔잔 · 2 티어 2 빛 · 3 티어 3 빛 · 0 바탕으로, cardShop이 BGM 층으로). 효과음 audio.md 3장
 import { CARD, isActiveCard, SKILLS, type Collection } from '@game/shared';
+import { sfx } from '../audio/player';
 import { MAT, variantPanel, type ShopHit } from '../ui/cardShopScreen';
 import type { CardInfo } from '../ui/cardTypes';
 import { BH, BW, drawFlip, faceImage, glow, packArt, packTop } from '../ui/shopCards';
@@ -37,6 +38,8 @@ export class PackOpening {
   private boom = false;
   private lastFace = 0;
   private banner: { id: string; t0: number } | null = null;
+  /** 한 번만 낼 소리 (카드별 빛 g0~3, 합치기 m0~) */
+  private heard = new Set<string>();
 
   constructor(readonly pack: number, readonly pay: 'gift' | 'coin' | 'dust', readonly packColor: string, now: number, private before: Collection, readonly fromBuy = false) {
     this.stage = fromBuy ? 'merge' : 'drop';
@@ -65,6 +68,7 @@ export class PackOpening {
     if (!this.ready) return void (this.wantOpen = true);
     this.stage = 'shake';
     this.t0 = now;
+    sfx.play('card_shake');
   }
 
   private flip(i: number, now: number): void {
@@ -72,6 +76,7 @@ export class PackOpening {
     if (!f || f.s !== 'back') return;
     f.s = this.cards[i]!.tier >= 3 ? 'pre' : 'flipping';
     f.t0 = now;
+    sfx.play(f.s === 'pre' ? 'card_glow3' : 'card_flip');
   }
 
   private flipAll(now: number): void {
@@ -99,12 +104,13 @@ export class PackOpening {
     if (this.stage === 'drop' && T > 0.55) { this.stage = 'ready'; this.t0 = now; }
     else if (this.stage === 'ready' && this.wantOpen && this.ready) { this.wantOpen = false; this.open(now); }
     else if (this.stage === 'shake' && T > 0.6) {
-      this.stage = 'tear'; this.t0 = now;
+      this.stage = 'tear'; this.t0 = now; sfx.play('card_tear');
       fx.burst(CX, M.y + 44, 16, this.packColor, 1.4, 0.6); fx.burst(CX, M.y + 44, 8, 'island.paper', 1.2, 0.8);
     } else if (this.stage === 'tear' && T > 0.3) { this.stage = 'fan'; this.t0 = now; }
     else if (this.stage === 'fan' && T > 0.7) { this.stage = 'backs'; this.t0 = now; }
     if (this.stage === 'backs') this.updateBacks(now, dt, fx, info);
     else if (this.stage === 'merge' && T >= 0) {
+      if (!this.heard.has(`m${this.mi}`)) { this.heard.add(`m${this.mi}`); sfx.play('card_merge'); }
       if (T > 0.75 && !this.boom) { this.boom = true; fx.burst(CX, SLOT_Y + BH / 2, 30, SC.coin, 1.6, 0.3); fx.burst(CX, SLOT_Y + BH / 2, 12, SC.flash, 1); }
       if (T > 0.9 && Math.random() < 0.4) fx.rise(CX - BW / 2, SLOT_Y + BH, BW, SC.coin);
       if (T > 2) {
@@ -121,12 +127,16 @@ export class PackOpening {
       if (f.queue && now >= f.queue && f.s === 'back') { f.queue = 0; this.flip(i, now); }
       const want = f.s === 'back' && (i === this.hov || (i === this.sel && this.keyed)) ? 1 : f.s === 'pre' ? 1.4 : 0;
       f.gA += (want - f.gA) * Math.min(1, dt * 10);
-      if (f.s === 'back' && f.gA > 0.5) this.music = Math.max(this.music, c.tier);
+      if (f.s === 'back' && f.gA > 0.5) {
+        this.music = Math.max(this.music, c.tier);
+        if (c.tier >= 2 && !this.heard.has(`g${i}`)) { this.heard.add(`g${i}`); sfx.play(`card_glow${Math.min(3, c.tier)}`); }
+      }
       if (f.s === 'pre') {
         if (Math.random() < 0.5) fx.rise(x, SLOT_Y + BH, BW, tc);
-        if (now - f.t0 > PRE3) { f.s = 'flipping'; f.t0 = now; }
+        if (now - f.t0 > PRE3) { f.s = 'flipping'; f.t0 = now; sfx.play('card_flip'); }
       } else if (f.s === 'flipping' && now - f.t0 > FLIP) {
         f.s = 'face'; f.t0 = now; this.lastFace = now;
+        if (c.tier >= 2) sfx.play(c.tier >= 3 ? 'card_reveal3' : 'card_reveal2');
         if (c.tier <= 1) fx.burst(x + BW / 2, SLOT_Y + BH - 4, 6, SC.dust, 0.6);
         else if (c.tier === 2) fx.burst(x + BW / 2, SLOT_Y + BH / 2, 16, tc, 1.2);
         else { fx.burst(x + BW / 2, SLOT_Y + BH / 2, 34, tc, 1.8, 0.4); fx.shake = 0.35; this.banner = { id: c.id, t0: now }; this.music = 3; }

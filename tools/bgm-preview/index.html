@@ -11,11 +11,12 @@ body{font-family:system-ui,sans-serif;max-width:440px;margin:24px auto;padding:0
 button{width:44px;height:44px;border-radius:50%;border:1px solid #999;background:#fff;font-size:16px;cursor:pointer}
 .nm{margin:0;font-weight:600}.ds,.st{margin:2px 0 0;font-size:13px;color:#666}.st{color:#185FA5}
 .err{color:#a32d2d;font-size:13px}
+.lv{display:flex;gap:6px;margin-top:6px}.lv button{width:auto;height:28px;border-radius:14px;padding:0 10px;font-size:12px}.lv button.on{background:#378ADD;color:#fff;border-color:#378ADD}
 </style>
 </head>
 <body>
 <h1 style="font-size:18px">BGM 미리보기</h1>
-<p style="font-size:13px;color:#666">client/data/bgm.json을 읽어 engine.js로 재생. 저장소 루트에서 정적 서버로 열기 (예: <code>npx serve .</code> → /tools/bgm-preview/). 원본 비교는 reference.html.</p>
+<p style="font-size:13px;color:#666">client/data/bgm.json (+ 초안 client/data/drafts/bgm.json)을 읽어 engine.js로 재생. 층이 있는 곡은 단계 버튼 (올라갈 땐 다음 박, 내려갈 땐 다음 마디). 저장소 루트에서 정적 서버로 열기 (예: <code>npx serve .</code> → /tools/bgm-preview/). 원본 비교는 reference.html.</p>
 <div id="list"></div>
 <label style="font-size:13px">음량 <input type="range" id="vol" min="0" max="100" value="70"></label>
 <p id="err" class="err"></p>
@@ -29,14 +30,20 @@ function render(){
     const c=document.createElement('div');c.className='trk';c.id='c-'+id;
     const b=document.createElement('button');b.textContent='▶';b.setAttribute('aria-label',tr.name+' 재생');
     const info=document.createElement('div');
-    const nm=document.createElement('p');nm.className='nm';nm.textContent=tr.name;
+    const nm=document.createElement('p');nm.className='nm';nm.textContent=tr.name+(tr._draft?' (초안)':'');
     const ds=document.createElement('p');ds.className='ds';ds.textContent=tr.style+' · '+tr.bpm+' BPM · '+tr.chords.length+'마디';
     const st=document.createElement('p');st.className='st';
     info.append(nm,ds,st);c.append(b,info);list.append(c);
+    const max=Math.max(1,...tr.parts.map(p=>p.layer||1),...tr.lead.map(l=>l.layer||1));
+    if(max>1){const lv=document.createElement('div');lv.className='lv';
+      ['1 바탕','2 한 겹 더','3 조옮김·웅장'].slice(0,max).forEach((t,i)=>{const x=document.createElement('button');x.textContent=t;if(!i)x.className='on';
+        x.onclick=()=>{BGM.setLevel(i+1);lv.querySelectorAll('button').forEach((y,j)=>y.classList.toggle('on',j==i))};lv.append(x)});
+      info.append(lv)}
     b.onclick=()=>{
       if(cur===id){BGM.stop();set(id,false);cur=null;return}
       if(cur)set(cur,false);
       cur=id;set(id,true);
+      c.querySelectorAll('.lv button').forEach((y,j)=>y.classList.toggle('on',!j));
       BGM.play(data,id,(bar,n)=>{if(cur===id)st.textContent='재생 중 · '+(bar+1)+' / '+n+'마디'});
       BGM.setVolume(document.getElementById('vol').value/100);
     };
@@ -44,7 +51,8 @@ function render(){
 }
 function set(id,on){const c=document.getElementById('c-'+id);c.classList.toggle('on',on);c.querySelector('button').textContent=on?'❚❚':'▶';if(!on)c.querySelector('.st').textContent=''}
 document.getElementById('vol').oninput=e=>BGM.setVolume(e.target.value/100);
-fetch('../../client/data/bgm.json').then(r=>r.json()).then(d=>{data=d;render()})
+Promise.all([fetch('../../client/data/bgm.json').then(r=>r.json()),fetch('../../client/data/drafts/bgm.json').then(r=>r.ok?r.json():null).catch(()=>null)])
+  .then(([d,dr])=>{if(dr){Object.assign(d.pools,dr.pools||{});Object.assign(d.arps,dr.arps||{});for(const[k,t]of Object.entries(dr.tracks||{}))d.tracks[k]={...t,_draft:true}}data=d;render()})
   .catch(()=>{document.getElementById('err').textContent='bgm.json을 읽지 못했습니다. 저장소 루트에서 정적 서버로 여세요.'});
 </script>
 </body>

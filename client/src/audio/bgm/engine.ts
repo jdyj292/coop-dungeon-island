@@ -23,6 +23,8 @@ export interface Part {
   chance?: number;
   jitter?: boolean;
   args?: Record<string, number>;
+  /** 이 단계부터 연주 (기본 1, 카드 상점 층) */
+  layer?: number;
 }
 
 export interface Track {
@@ -33,8 +35,10 @@ export interface Track {
   delaySteps: number;
   chords: [string, string][];
   melody: string[];
-  lead: { inst: string; v: number; bars?: [number, number]; args?: Record<string, number> }[];
+  lead: { inst: string; v: number; bars?: [number, number]; args?: Record<string, number>; layer?: number }[];
   parts: Part[];
+  /** 3단계 조옮김 (반음) */
+  lift?: number;
 }
 
 export interface BgmData {
@@ -118,11 +122,22 @@ export function compile(data: BgmData, id: string): Compiled {
   };
 }
 
-/** 마디 b·칸 s의 소리를 시각 t에 예약 */
-export function runStep(C: Compiled, b: number, s: number, t: number, sd: number, call: (inst: string, t: number, e: Ev) => void): void {
-  const ch = C.ch[b]!;
+const SN = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const NI: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+/** 음 이름을 k반음 옮김 */
+export function tn(n: string, k: number): string {
+  if (!k) return n;
+  const m = n.match(/^([A-G])(#|b)?(-?\d)$/)!, x = (+m[3]! + 1) * 12 + NI[m[1]!]! + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + k;
+  return SN[x % 12]! + (Math.floor(x / 12) - 1);
+}
+
+/** 마디 b·칸 s의 소리를 시각 t에 예약. level = 층 단계 (그 이하 layer만 연주, 3단계는 lift 조옮김) */
+export function runStep(C: Compiled, b: number, s: number, t: number, sd: number, call: (inst: string, t: number, e: Ev) => void, level = 1): void {
+  const k = level >= 3 ? C.tr.lift ?? 0 : 0, q = Math.pow(2, k / 12), c0 = C.ch[b]!;
+  const ch = k ? { b: tn(c0.b, k), n: c0.n.map((n) => tn(n, k)) } : c0;
   for (const p of C.tr.parts) {
-    if (!inBars(p, b) || !onStep(p, s)) continue;
+    if ((p.layer ?? 1) > level || !inBars(p, b) || !onStep(p, s)) continue;
     if (p.chance != null && Math.random() >= p.chance) continue;
     const mul = val(p.mul, s) ?? 1;
     const e: Ev = { s, sd, args: p.args || {}, v: val(p.v, s), pan: val(p.pan, s), hz: val(p.hz, s), d: (p.len || 0) * sd };
@@ -135,15 +150,15 @@ export function runStep(C: Compiled, b: number, s: number, t: number, sd: number
       e.f = nf(ch.n[i % ch.n.length]!) * mul;
     } else if (p.note === 'pick') {
       const pl = C.pools[p.pool!]!;
-      e.f = pl[Math.floor(Math.random() * pl.length)]! * mul;
+      e.f = pl[Math.floor(Math.random() * pl.length)]! * mul * q;
     }
     call(p.inst, p.jitter ? t + Math.random() * sd : t, e);
   }
   for (const n of C.mel[b]!) {
     if (n.s !== s) continue;
     for (const L of C.tr.lead) {
-      if (L.bars && (b < L.bars[0] || b > L.bars[1])) continue;
-      call(L.inst, t, { s, sd, f: n.f, d: n.l * sd, v: L.v, args: L.args || {} });
+      if ((L.layer ?? 1) > level || (L.bars && (b < L.bars[0] || b > L.bars[1]))) continue;
+      call(L.inst, t, { s, sd, f: n.f * q, d: n.l * sd, v: L.v, args: L.args || {} });
     }
   }
 }
@@ -158,6 +173,9 @@ export class BgmTrack {
   private C: Compiled;
   private step = 0;
   private nextT: number;
+  /** 층 단계: 올라갈 땐 다음 박, 내려갈 땐 다음 마디에 바뀜 */
+  private level = 1;
+  want = 1;
   private timer: ReturnType<typeof setInterval> | null = null;
 
   constructor(ctx: BaseAudioContext, out: AudioNode, data: BgmData, readonly id: string,
@@ -182,7 +200,8 @@ export class BgmTrack {
     const tr = this.C.tr, sd = 60 / tr.bpm / 4, spb = tr.stepsPerBar, tot = spb * this.C.ch.length;
     while (this.nextT < this.rig.ctx.currentTime + AHEAD) {
       const b = Math.floor(this.step / spb), s = this.step % spb, t = this.nextT + (s % 2 === 1 ? sd * tr.swing : 0);
-      runStep(this.C, b, s, t, sd, (name, tt, e) => CALL[name]!(this.rig, tt, e));
+      if (this.want > this.level ? s % 4 === 0 : this.want < this.level && s === 0) this.level = this.want;
+      runStep(this.C, b, s, t, sd, (name, tt, e) => CALL[name]!(this.rig, tt, e), this.level);
       this.nextT += sd;
       this.step = (this.step + 1) % tot;
     }

@@ -5,6 +5,8 @@ import Phaser from 'phaser';
 import {
   CARD, MVP_WEAPONS, PACK_NUMBERS, packDef, packOpen, tierDef, tierOf, weaponCards, WEAPONS, WELCOME_PACKS, type Collection,
 } from '@game/shared';
+import { music } from '../audio/bgm/music';
+import { sfx } from '../audio/player';
 import type { IslandConnection } from '../net/islandNet';
 import { colorInt } from '../palette';
 import { background, buyMenu, packMenu, SH, SIDE, SW, titleBand, weaponTabs, type PackRow, type ShopHit, type ShopTab, type ShopView } from '../ui/cardShopScreen';
@@ -38,8 +40,7 @@ export class CardShop {
   private note: { text: string; color: string; until: number } | null = null;
   /** 무기|팩 → 천장 횟수 (마지막으로 연 팩에서) */
   private pity = new Map<string, number>();
-  private ox = 0;
-  private oy = 0;
+  private ox = 0; private oy = 0;
   private last = 0;
 
   constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private myWeapon: () => string) {
@@ -63,17 +64,16 @@ export class CardShop {
     this.visible = true;
     this.wi = Math.max(0, MVP_WEAPONS.indexOf(this.myWeapon() as (typeof MVP_WEAPONS)[number]));
     this.last = this.now;
-    this.img.setVisible(true);
-    this.cover.setVisible(true);
+    music.play('cardshop');
+    this.img.setVisible(true); this.cover.setVisible(true);
   }
 
   hide(): void {
+    if (this.visible) music.play('island');
     this.visible = false;
-    this.opening = null;
-    this.bought = null;
+    this.opening = null; this.bought = null;
     this.fx.clear();
-    this.img.setVisible(false);
-    this.cover.setVisible(false);
+    this.img.setVisible(false); this.cover.setVisible(false);
   }
 
   destroy(): void {
@@ -160,10 +160,11 @@ export class CardShop {
     this.netUpdate(now);
     this.fx.step(dt);
     this.opening?.update(now, dt, this.fx, this.info);
+    music.setLevel(this.opening?.music || 1);
     if (this.opening?.finished) this.opening = null;
     const b = this.bought;
     if (b && !b.fired && now - b.t0 >= 0.3) {
-      b.fired = true;
+      b.fired = true; sfx.play('card_buy');
       const t = tierOf(b.id), cx = SIDE.x + SIDE.w / 2, cy = SIDE.y + 38 + 32;
       this.fx.burst(cx, cy, t <= 1 ? 6 : t === 2 ? 14 : 26, t <= 1 ? SC.dust : `global.ui.card.${tierDef(t)?.color ?? 'tier1'}`, t >= 3 ? 1.6 : 1);
       if (t >= 3) this.fx.shake = 0.25;

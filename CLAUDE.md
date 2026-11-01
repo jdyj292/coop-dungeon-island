@@ -45,7 +45,7 @@ deploy/                  서버 설치 파일: Nginx 틀·systemd·백업 cron·
 ### 도구 (tools/)
 | 도구 | 상태 | 용도 |
 |---|---|---|
-| bgm-preview | 완성 | bgm.json 재생. reference.html = 승인 원본 |
+| bgm-preview | 완성 | bgm.json + 초안 drafts/bgm.json 재생, 층 단계 버튼. reference.html = 승인 원본. `pnpm exec vite . --port 5177` → /tools/bgm-preview/ |
 | sprite-preview | 완성 | 스프라이트 조합·확대 보기, 승인 캡처 비교, HUD 아이콘 탭. `pnpm sprite-preview` |
 | motion-preview | 완성 | 모션 슬로우·프레임 넘기기·값 조정 → JSON 복사, 승인 데모와 비교, 변형·보조 노드 고르기. `pnpm motion-preview` |
 | sfx-preview | 완성 | 효과음 재생·조정 → JSON 복사, 승인 원본 나란히 듣기·자동 비교. `pnpm sfx-preview` |
@@ -118,6 +118,6 @@ deploy/                  서버 설치 파일: Nginx 틀·systemd·백업 cron·
 - [ ] M5 배포
 
 ## 현재 상태 (3줄, 작업마다 덧붙이지 말고 새로 쓴다. 완료 기록은 docs/changelog.md)
-- M0~M4 완료, M5 배포 준비(5-1~5-4) 완료. 스킬은 대검 A·B 3단계까지, 스태프 2단계까지. 지금 진행: 스킬 카드 개편 CD (CD-1~CD-5 완료: 데이터·공용 로직·DB·서버·카드 창 K·던전 HUD 4칸·섬 카드 상점(팩 열기 연출·지정 구매), 소리 없음)
+- M0~M4 완료, M5 배포 준비(5-1~5-4) 완료. 스킬은 대검 A·B 3단계까지, 스태프 2단계까지. 지금 진행: 스킬 카드 개편 CD (CD-1~CD-6 완료: 데이터·공용 로직·DB·서버·카드 창 K·던전 HUD 4칸·섬 카드 상점(팩 열기 연출·지정 구매)·카드 효과음 10개·카드 상점 BGM 층 3겹)
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?floor=training, ?weapon=staff, ?skills=gs_launch:2:double, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
-- 다음: 스킬 카드 CD-6(팩 흔들기·찢기·뒤집기·티어 빛·합치기·갈기·지정 구매 효과음 + 카드 상점 BGM 층 3겹, 곡 단계는 stage/cardShopOpen.ts music, sfx-preview·bgm-preview 승인 먼저) → CD-7. 실제 배포 (docs/deploy.md 5장 순서). 스태프 3단계는 카드 개편 뒤
+- 다음: 스킬 카드 CD-7(가격·확률·한도·계열 보너스 조정, run-sim·ttk-sim·실제 플레이). 실제 배포 (docs/deploy.md 5장 순서). 스태프 3단계는 카드 개편 뒤

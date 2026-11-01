@@ -95,34 +95,39 @@ function compile(data,id){
     mel:tr.melody.map(bar=>bar?bar.split(' ').map(x=>{const [n,s,l]=x.split(':');return{f:nf(n),s:+s,l:+l}}):[]),
     arps:data.arps,pools:Object.fromEntries(Object.entries(data.pools).map(([k,a])=>[k,a.map(nf)]))};
 }
-function runStep(C,b,s,t,sd,call){
-  const ch=C.ch[b];
+// 층(layer): 단계 level 이상인 파트·리드만 연주. 3단계는 곡의 lift 반음만큼 조옮김 (카드 상점, audio.md 5장)
+const SN=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function tn(n,k){if(!k)return n;const m=n.match(/^([A-G])(#|b)?(-?\d)$/),x=(+m[3]+1)*12+NI[m[1]]+(m[2]=='#'?1:m[2]=='b'?-1:0)+k;return SN[x%12]+(Math.floor(x/12)-1)}
+function runStep(C,b,s,t,sd,call,level){
+  level=level||1;const k=level>=3?C.tr.lift||0:0,ch=k?{b:tn(C.ch[b].b,k),n:C.ch[b].n.map(n=>tn(n,k))}:C.ch[b],q=Math.pow(2,k/12);
   for(const p of C.tr.parts){
-    if(!inBars(p,b)||!onStep(p,s))continue;
+    if((p.layer||1)>level||!inBars(p,b)||!onStep(p,s))continue;
     if(p.chance!=null&&Math.random()>=p.chance)continue;
     const mul=val(p.mul,s)??1,e={s,sd,args:p.args||{},v:val(p.v,s),pan:val(p.pan,s),hz:val(p.hz,s),d:(p.len||0)*sd};
     if(p.note=='bass')e.f=nf(ch.b)*mul;
     else if(p.note=='chord'){e.names=ch.n;e.notes=ch.n.map(n=>nf(n)*mul)}
     else if(p.note=='arp'){const a=C.arps[p.arp],i=a[(p.arpDiv?Math.floor(s/p.arpDiv):s)%a.length];e.f=nf(ch.n[i%ch.n.length])*mul}
-    else if(p.note=='pick'){const pl=C.pools[p.pool];e.f=pl[Math.floor(Math.random()*pl.length)]*mul}
+    else if(p.note=='pick'){const pl=C.pools[p.pool];e.f=pl[Math.floor(Math.random()*pl.length)]*mul*q}
     call(p.inst,p.jitter?t+Math.random()*sd:t,e);
   }
   for(const n of C.mel[b])if(n.s==s)for(const L of C.tr.lead){
-    if(L.bars&&(b<L.bars[0]||b>L.bars[1]))continue;
-    call(L.inst,t,{s,sd,f:n.f,d:n.l*sd,v:L.v,args:L.args||{}});
+    if((L.layer||1)>level||L.bars&&(b<L.bars[0]||b>L.bars[1]))continue;
+    call(L.inst,t,{s,sd,f:n.f*q,d:n.l*sd,v:L.v,args:L.args||{}});
   }
 }
-let C=null,onBar=null;
+let C=null,onBar=null,level=1,want=1;
 function tickE(){const tr=C.tr,sd=60/tr.bpm/4,spb=tr.stepsPerBar,tot=spb*C.ch.length;
   while(nextT<ctx.currentTime+.2){const b=Math.floor(step/spb),s=step%spb,t=nextT+(s%2==1?sd*tr.swing:0);
-    runStep(C,b,s,t,sd,(name,tt,e)=>CALL[name](tt,e));
+    if(want>level?s%4==0:want<level&&s==0)level=want;
+    runStep(C,b,s,t,sd,(name,tt,e)=>CALL[name](tt,e),level);
     if(s==0&&onBar){const bb=b;setTimeout(()=>onBar&&onBar(bb,C.ch.length),Math.max(0,(t-ctx.currentTime)*1000))}
     nextT+=sd;step=(step+1)%tot}}
 const BGM={
-  play(data,id,barCb){init();ctx.resume();BGM.stop();C=compile(data,id);onBar=barCb||null;step=0;prevF=null;
+  play(data,id,barCb){init();ctx.resume();BGM.stop();C=compile(data,id);onBar=barCb||null;step=0;prevF=null;level=want=1;
     delay.delayTime.value=60/C.tr.bpm/4*C.tr.delaySteps;nextT=ctx.currentTime+.1;timer=setInterval(tickE,25)},
   stop(){if(timer)clearInterval(timer);timer=null;onBar=null},
   setVolume(v){if(master)master.gain.value=v},
+  setLevel(n){want=n},
   _compile:compile,_runStep:runStep
 };
 if(typeof module!='undefined')module.exports=BGM;else window.BGM=BGM;

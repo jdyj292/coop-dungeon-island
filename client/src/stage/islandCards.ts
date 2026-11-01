@@ -6,6 +6,7 @@ import {
   ACTIVE_SLOTS, CARD, checkEquip, checkGrind, checkVariant, dustOf, equipLevelOf, isActiveCard, MVP_WEAPONS, owns, passiveCap, passiveUsed,
   SKILLS, weaponCards, WEAPONS, type Branch, type CardKind, type CardLoadout, type CardMsgFail, type Collection,
 } from '@game/shared';
+import { sfx } from '../audio/player';
 import type { IslandConnection } from '../net/islandNet';
 import { SK } from '../ui/cardParts';
 import { PASS_AREA, type BonusInfo, type CardHit, type CardInfo, type CardSource, type CardView } from '../ui/cardTypes';
@@ -91,7 +92,7 @@ export class CardPanel implements CardSource {
       this.seenSeq = this.conn.cardsSeq;
       const fail = this.conn.cards.fail;
       if (fail) this.say(FAIL_TEXT[fail], SK.danger);
-      else if (this.pending) this.say(this.pending, SK.coin);
+      else if (this.pending) { this.say(this.pending, SK.coin); sfx.play('card_grind'); }
       this.pending = null;
     }
     const now = Date.now();

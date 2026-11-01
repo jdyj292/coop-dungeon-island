@@ -1,0 +1,6 @@
+{
+  "_note": "BGM 초안 (bgm-preview 목록 \"(초안)\"). bgm.json과 같은 형식, pools·arps는 bgm.json에 더해짐. 승인되면 bgm.json으로 옮기고 여기서 지운다 (audio.md 5장)",
+  "pools": {},
+  "arps": {},
+  "tracks": {}
+}
