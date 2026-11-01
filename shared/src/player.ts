@@ -196,7 +196,7 @@ export function stepPlayerState(
 function chargeInput(p: PlayerState, weapon: WeaponDef, input: PlayerInput): ChargeInput | undefined {
   const tr = weapon.trait;
   if (tr?.type !== 'charge') return undefined;
-  return { hold: !!input.hold, maxTime: tr.maxTime / (p.perks?.chargeSpeedMul ?? 1), bonusMax: tr.bonusMax + (p.perks?.chargeBonusAdd ?? 0), armor: tr.superArmorWhileCharging };
+  return { hold: !!input.hold, maxTime: tr.maxTime / (p.perks?.chargeSpeedMul ?? 1), bonusMax: tr.bonusMax + (p.perks?.chargeBonusAdd ?? 0), holdMax: tr.holdMax, armor: tr.superArmorWhileCharging };
 }
 
 /** 충전 비율 0~1 (충전 중이 아니면 0, 연출·동기화용) */

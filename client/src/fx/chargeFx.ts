@@ -1,5 +1,6 @@
 // 대검 충전 모이는 빛 (SK-3 2차, art.md 7장): 충전하는 동안 손 둘레의 금빛 점이 소용돌이치며 손으로 빨려들고,
-// 충전 비율만큼 손 빛이 커진다. 키를 떼는 순간 별, 최대(fullAt 이상)면 큰 별 + 퍼지는 빛살. 매 프레임 다시 그린다. 값 fx.json chargeGlow.
+// 충전 비율만큼 손 빛이 커진다. 다 차는 순간 큰 별 + 빛살 + 몸 둘레 고리(소리 charge_ready), 다 찬 채 들고 있으면 손 둘레 반짝이.
+// 키를 떼는 순간 별, 최대(fullAt 이상)면 큰 별 + 퍼지는 빛살. 충전 중 모이는 소리 charge_gather 반복. 매 프레임 다시 그린다. 값 fx.json chargeGlow.
 // 일섬은 준비·충전 동안 발밑 앞 부채꼴 범위(충전한 만큼 커짐, 바닥 층, flashFx.drawFlashFan)와 기 모으기 바람(drawFlashGather)도
 import type Phaser from 'phaser';
 import { fighterPose, phaseAt, type PlayerState, type WeaponDef } from '@game/shared';
@@ -45,6 +46,17 @@ interface Burst {
   y: number;
   left: number;
   full: boolean;
+  /** 다 차는 순간 (몸 둘레 고리, 발밑 화면 위치) */
+  ready?: { fx: number; fy: number };
+}
+
+/** 지난 프레임 충전 상태: 비율·손 위치(떼는 순간 별 자리)·단계·다음 모이는 소리까지 남은 초 */
+interface Last {
+  level: number;
+  x: number;
+  y: number;
+  stage?: number;
+  gather: number;
 }
 
 /** 포즈 앞손 → 화면 위치 (발밑 = base.foot, 포즈 bob만큼 아래) */
@@ -60,7 +72,7 @@ export class ChargeLayer {
   /** 바닥 층 (일섬 부채꼴 범위) */
   private ground: Phaser.GameObjects.Graphics;
   /** 지난 프레임 충전 비율·손 위치 (떼는 순간 별 자리) */
-  private last = new Map<string, { level: number; x: number; y: number; stage?: number }>();
+  private last = new Map<string, Last>();
   private bursts: Burst[] = [];
 
   constructor(scene: Phaser.Scene) {
@@ -68,7 +80,7 @@ export class ChargeLayer {
     this.ground = scene.add.graphics().setDepth(FX_GROUND_DEPTH);
   }
 
-  /** dt = 지난 그리기 뒤 흐른 초. 반환 = 낼 소리 (충전 시작 charge_start, 최대 충전으로 발동 charge_full) */
+  /** dt = 지난 그리기 뒤 흐른 초. 반환 = 낼 소리 (충전 시작 charge_start, 충전 중 charge_gather, 다 참 charge_ready, 최대 충전으로 발동 charge_full) */
   draw(views: ChargeView[], dt: number): string[] {
     const g = this.g, now = performance.now() / 1000, cues: string[] = [];
     g.clear();
@@ -90,9 +102,21 @@ export class ChargeLayer {
       if (!prev) cues.push('charge_start');
       const stage = v.stages > 1 ? Math.min(v.stages, Math.floor(v.level * v.stages + 1e-6)) : 0;
       if (stage > (prev?.stage ?? 0)) cues.push('charge_stage');
-      this.last.set(v.id, { level: v.level, ...h, stage });
+      const full = v.level >= 1;
+      let gather = (prev?.gather ?? C.sound.every) - dt;
+      if (!full && gather <= 0) {
+        cues.push('charge_gather');
+        gather = C.sound.every * (1 - C.sound.faster * v.level);
+      }
+      if (full && (prev?.level ?? 0) < 1) {
+        cues.push('charge_ready');
+        const { sx, sy } = project(v.x, v.y);
+        this.bursts.push({ ...h, left: C.ready.sec, full: true, ready: { fx: sx, fy: sy } });
+      }
+      this.last.set(v.id, { level: v.level, ...h, stage, gather });
       this.gather(h.x, h.y, v.level, now);
       if (stage) this.pips(h.x, h.y, stage, now);
+      if (full) this.sparkles(h.x, h.y, now);
     }
     for (const [id, prev] of this.last) if (!seen.has(id)) this.release(id, prev, cues);
     this.bursts = this.bursts.filter((b) => (b.left -= dt) > 0);
@@ -100,7 +124,7 @@ export class ChargeLayer {
     return cues;
   }
 
-  private release(id: string, prev: { level: number; x: number; y: number }, cues: string[]): void {
+  private release(id: string, prev: Last, cues: string[]): void {
     this.last.delete(id);
     const full = prev.level >= C.fullAt;
     if (full) cues.push('charge_full');
@@ -132,12 +156,31 @@ export class ChargeLayer {
     }
   }
 
-  /** 떼는 순간: 별, 최대면 큰 별 + 빛살 */
+  /** 다 찬 채 들고 있음: 손 둘레 반짝이가 차례로 깜빡임 */
+  private sparkles(x: number, y: number, now: number): void {
+    const g = this.g, R = C.ready, { gold, white } = col();
+    for (let i = 0; i < R.sparkles; i++) {
+      const t = (now / R.sparkleSec + i / R.sparkles) % 1;
+      if (t > 0.5) continue;
+      const a = (i / R.sparkles + 0.125) * Math.PI * 2, r = t < 0.25 ? 1 : 0;
+      star4(g, Math.round(x + Math.cos(a) * R.sparkleR), Math.round(y + Math.sin(a) * R.sparkleR * 0.7), r, white, gold);
+    }
+  }
+
+  /** 떼는 순간: 별, 최대면 큰 별 + 빛살. 다 차는 순간: 더 큰 별 + 빛살 + 몸 둘레 고리 */
   private burst(b: Burst): void {
-    const g = this.g, { gold, white } = col(), S = b.full ? C.full : C.release, k = b.left / S.sec;
+    const g = this.g, { gold, white, amber } = col(), S = b.ready ? C.ready : b.full ? C.full : C.release, k = b.left / S.sec;
     star4(g, b.x, b.y, Math.max(1, Math.round(S.radius * k)), white, gold);
     if (!b.full) return;
-    const F = C.full, d = F.rayLen * (1 - k);
+    if (b.ready) {
+      const R = C.ready, r = R.ring[0]! + (R.ring[1]! - R.ring[0]!) * (1 - k), cy = b.ready.fy + R.ringY;
+      const n = Math.round(Math.PI * 2 * r);
+      for (let i = 0; i < n; i += 2) {
+        const q = (i / n) * Math.PI * 2;
+        px(g, b.ready.fx + Math.cos(q) * r, cy + Math.sin(q) * r * R.ry, i % 4 ? gold : amber, k * 1.5);
+      }
+    }
+    const F = b.ready ? C.ready : C.full, d = F.rayLen * (1 - k);
     for (let i = 0; i < F.rays; i++) {
       const a = (i / F.rays) * Math.PI * 2;
       px(g, b.x + Math.cos(a) * d, b.y + Math.sin(a) * d * 0.7, i % 2 ? gold : white, k * 1.5);

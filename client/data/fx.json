@@ -154,11 +154,13 @@
     "sweep": { "sec": 0.38, "pass": 0.55, "from": 6, "trail": 8, "step": 5, "star": 3 },
     "fan": { "every": 3, "flow": 24, "spin": 10, "alpha": 1, "ring": 24, "inner": 0.5 }
   },
-  "_chargeGlow": "대검 충전 모이는 빛 (SK-3 2차, art.md 7장, client/src/fx/chargeFx.ts). 손(포즈 front.hand) 둘레 from px에서 빛 점 motes개가 gatherSec마다 소용돌이(swirl 바퀴)치며 빨려듦, 충전 비율이 오를수록 보이는 점 수 minShare → 1. 손 빛 반지름 core[0] → core[1], pulseSec마다 1px 밝게. 떼는 순간 별 release(비율 fullAt 이상이면 full: 별 + 빛살 rays개가 rayLen px까지 퍼짐), 시간 초",
+  "_chargeGlow": "대검 충전 모이는 빛 (SK-3 2차, art.md 7장, client/src/fx/chargeFx.ts). 손(포즈 front.hand) 둘레 from px에서 빛 점 motes개가 gatherSec마다 소용돌이(swirl 바퀴)치며 빨려듦, 충전 비율이 오를수록 보이는 점 수 minShare → 1. 손 빛 반지름 core[0] → core[1], pulseSec마다 1px 밝게. 떼는 순간 별 release(비율 fullAt 이상이면 full: 별 + 빛살 rays개가 rayLen px까지 퍼짐), 시간 초. 소리 sound: 충전 중 every초마다 charge_gather(다 찰수록 간격 × (1 − faster)), 다 차면 멈춤. 다 차는 순간 ready: 손에 큰 별(radius) + 빛살 rays개(rayLen px) + 몸 가운데(발밑 ringY px)에서 금빛 고리가 ring[0] → ring[1] px로 퍼짐(세로 ry배), sec초 + charge_ready. 다 찬 채 들고 있으면 손 둘레 sparkleR px에 반짝이 sparkles개가 sparkleSec마다 차례로 깜빡임",
   "chargeGlow": {
     "motes": 8, "from": 13, "swirl": 0.35, "gatherSec": 0.4, "minShare": 0.4,
     "core": [1, 2], "pulseSec": 0.12, "fullAt": 0.9,
     "release": { "sec": 0.1, "radius": 3 },
-    "full": { "sec": 0.2, "radius": 5, "rays": 8, "rayLen": 14 }
+    "full": { "sec": 0.2, "radius": 5, "rays": 8, "rayLen": 14 },
+    "sound": { "every": 0.28, "faster": 0.4 },
+    "ready": { "sec": 0.35, "radius": 7, "rays": 12, "rayLen": 20, "ring": [6, 22], "ringY": -12, "ry": 0.6, "sparkles": 4, "sparkleR": 7, "sparkleSec": 0.5 }
   }
 }

@@ -258,7 +258,7 @@ export const weapon = z.object({
   poseSet: z.string(),
   backstepStyle: z.literal('teleport').optional(),
   trait: z.discriminatedUnion('type', [
-    z.object({ type: z.literal('charge'), maxTime: pos, bonusMax: pos, superArmorWhileCharging: z.boolean() }).strict(),
+    z.object({ type: z.literal('charge'), maxTime: pos, bonusMax: pos, holdMax: z.number().min(0), superArmorWhileCharging: z.boolean() }).strict(),
     z.object({ type: z.literal('cast'), note: z.string().optional() }).strict(),
     z.object({ type: z.literal('backAttack'), mul: pos }).strict(),
   ]).nullable(),

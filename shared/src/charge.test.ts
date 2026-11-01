@@ -46,9 +46,16 @@ describe('대검 충전', () => {
     expect(r.def.id).toBe(launch.id);
   });
 
-  it('최대 1초에서 저절로 발동, +50%', () => {
+  it('최대 1초에 다 차도 바로 나가지 않고, 다 찬 뒤 2초(holdMax) 들고 있으면 저절로 발동, +50%', () => {
     const r = cast(player(), launch, 5);
-    expect(r.at).toBeCloseTo(launch.phases.windup + 1, 1);
+    expect(r.at).toBeCloseTo(launch.phases.windup + 1 + 2, 1);
+    expect(r.def.coef).toBeCloseTo(launch.coef * 1.5);
+  });
+
+  it('다 찬 뒤 들고 있다가 떼면 그때 발동, 보너스는 최대 +50% 그대로', () => {
+    const p = player();
+    const r = cast(p, launch, launch.phases.windup + 1.6);
+    expect(r.at).toBeCloseTo(launch.phases.windup + 1.6, 1);
     expect(r.def.coef).toBeCloseTo(launch.coef * 1.5);
   });
 
@@ -81,8 +88,12 @@ describe('대검 충전', () => {
   });
 
   it('무거운 손: 충전 30% 빠르게 (1 / 1.3초에 최대)', () => {
-    const r = cast(player(['gs_heavyhand']), launch, 5);
-    expect(r.at).toBeCloseTo(launch.phases.windup + 1 / 1.3, 1);
+    const p = player(['gs_heavyhand']);
+    stepPlayerState(p, gs, { ...idle, skill: launch, hold: true }, TICK, bounds);
+    const steps = Math.round((launch.phases.windup + 1 / 1.3) / TICK);
+    for (let i = 1; i < steps; i++) stepPlayerState(p, gs, { ...idle, hold: true }, TICK, bounds);
+    expect(chargeLevel(p, gs)).toBeCloseTo(1, 1);
+    const r = cast(player(['gs_heavyhand']), launch, launch.phases.windup + 1 / 1.3);
     expect(r.def.coef).toBeCloseTo(launch.coef * 1.5);
   });
 

@@ -1,6 +1,6 @@
 // run-sim 봇: 서버 DungeonGame에 메시지를 보내는 단순한 플레이어 (사람보다 덜 피하고 덜 똑똑함 → 시간은 참고값)
-// 가까운 몬스터 옆으로 가서 평타, 쿨이 되면 스킬, 예고를 보면 백스텝, HP 40% 아래면 물약, 쓰러진 동료 부활, 클리어 뒤 상자·출구
-import { attackPhase, canDodge, mapOf, skillDef, skillReady, weaponDef, type Monster, type RoomDef } from '../../shared/src';
+// 가까운 몬스터 옆으로 가서 평타, 쿨이 되면 스킬(대검 충전은 다 차면 뗌), 예고를 보면 백스텝, HP 40% 아래면 물약, 쓰러진 동료 부활, 클리어 뒤 상자·출구
+import { attackPhase, canDodge, chargeLevel, isCharging, mapOf, skillDef, skillReady, weaponDef, type Monster, type RoomDef } from '../../shared/src';
 import type { DungeonGame } from '../../server/src/systems/dungeonGame';
 
 /** 행동 메시지 간격 (서버 제한 초당 10회 안) */
@@ -27,7 +27,8 @@ export class Bot {
   private seq = 0;
   private last = { mx: 0, my: 0, run: false };
   private nextAction = 0;
-  private skills = weaponDef('greatsword').baseSkills;
+  private weapon = weaponDef('greatsword');
+  private skills = this.weapon.baseSkills;
   private lastPos = { x: 0, y: 0, at: 0 };
   /** 막혔을 때: until까지 깊이 방향으로 비킨 뒤, passUntil까지는 가로로만 (비스듬히 가다 같은 장애물에 다시 걸리지 않게) */
   private sidestep: { dir: number; until: number; passUntil: number } | null = null;
@@ -78,7 +79,7 @@ export class Bot {
     return this.g.sim.players.get(this.pid)!.state;
   }
 
-  private act(kind: 'basic' | 'skill' | 'backstep', skillId?: string): void {
+  private act(kind: 'basic' | 'skill' | 'backstep' | 'chargeRelease', skillId?: string): void {
     if (this.g.now < this.nextAction) return;
     this.nextAction = this.g.now + ACTION_GAP_MS;
     const p = this.me;
@@ -89,6 +90,8 @@ export class Bot {
   step(room: RoomDef): void {
     const g = this.g, p = this.me, st = g.state;
     if (st.phase === 'result' || p.downed || !g.sim.players.get(this.pid)) return;
+    // 대검 충전: 다 차면 뗀다 (다 찬 뒤에는 holdMax까지 계속 들고 있으므로)
+    if (isCharging(p.fighter.run) && chargeLevel(p, this.weapon) >= 1) this.act('chargeRelease');
     // 물약
     if (p.hp < p.maxHp * POTION_HP && p.potions.hp > 0 && p.potionCd.hp <= 0) this.send('item', { seq: ++this.seq, t: g.now, slot: 'hp' });
     // 쓰러진 동료

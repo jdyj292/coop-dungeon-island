@@ -1,19 +1,21 @@
-// 대검 충전 (docs/skills.md 2장, combat.md 1장): 스킬 키를 누르고 있으면 준비(windup) 끝에서 멈춰 충전, 떼거나 최대가 되면 발동.
+// 대검 충전 (docs/skills.md 2장, combat.md 1장): 스킬 키를 누르고 있으면 준비(windup) 끝에서 멈춰 충전, 떼면 발동.
+// 최대까지 차도 계속 들고 있을 수 있고, 다 찬 뒤 holdMax초가 지나면 저절로 발동.
 // 충전한 시간에 비례해 피해·판정 범위가 커진다 (weapons.json trait charge). 충전 중 슈퍼아머, 보조 노드 무거운 손 = 충전 속도·받는 피해
 import { scaleExtraCoefs, type ActionDef, type ActionRun } from './actions';
 
-/** 충전 진행 (ActionRun.charge). t = 충전한 초, done = 끝남(발동했거나 충전 없이 지나감), armor = 충전 중 슈퍼아머 */
+/** 충전 진행 (ActionRun.charge). t = 충전한 초 (다 찬 뒤 들고 있는 시간 포함), done = 끝남(발동했거나 충전 없이 지나감), armor = 충전 중 슈퍼아머 */
 export interface ChargeState {
   t: number;
   done: boolean;
   armor: boolean;
 }
 
-/** 이번 틱 충전 입력: hold = 그 스킬 키를 누르고 있음, maxTime = 최대까지 걸리는 초 (충전 속도 반영), bonusMax = 최대 보너스 */
+/** 이번 틱 충전 입력: hold = 그 스킬 키를 누르고 있음, maxTime = 최대까지 걸리는 초 (충전 속도 반영), bonusMax = 최대 보너스, holdMax = 다 찬 뒤 더 들고 있을 수 있는 초 */
 export interface ChargeInput {
   hold: boolean;
   maxTime: number;
   bonusMax: number;
+  holdMax: number;
   armor: boolean;
 }
 
@@ -28,7 +30,7 @@ export const isCharging = (run: ActionRun | null | undefined): boolean => !!run?
 
 /**
  * 한 틱 충전. 반환 = 이번 틱에 run.t를 얼마나 진행할지.
- * 준비 중이면 그대로, 준비 끝에서 키를 누르고 있으면 멈추고 충전, 떼거나 최대면 충전한 만큼 정의를 키우고 발동
+ * 준비 중이면 그대로, 준비 끝에서 키를 누르고 있으면 멈추고 충전, 떼거나 다 찬 뒤 holdMax가 지나면 충전한 만큼(최대까지) 정의를 키우고 발동
  */
 export function stepCharge(run: ActionRun, c: ChargeInput, dt: number): number {
   if (run.kind !== 'skill') return dt;
@@ -42,12 +44,13 @@ export function stepCharge(run: ActionRun, c: ChargeInput, dt: number): number {
   if (run.t + dt < end) return dt;
   if (!c.hold) {
     ch.done = true;
-    if (ch.t > 0) run.def = chargedDef(run.def, (c.bonusMax * ch.t) / c.maxTime);
+    if (ch.t > 0) run.def = chargedDef(run.def, (c.bonusMax * Math.min(ch.t, c.maxTime)) / c.maxTime);
     return dt;
   }
   const toEnd = Math.max(0, end - run.t);
-  ch.t = Math.min(c.maxTime, ch.t + dt - toEnd);
-  if (ch.t >= c.maxTime) {
+  const limit = c.maxTime + c.holdMax;
+  ch.t = Math.min(limit, ch.t + dt - toEnd);
+  if (ch.t >= limit) {
     ch.done = true;
     run.def = chargedDef(run.def, c.bonusMax);
   }

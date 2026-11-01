@@ -12,6 +12,7 @@
       "type": "charge",
       "maxTime": 1.0,
       "bonusMax": 0.5,
+      "holdMax": 2.0,
       "superArmorWhileCharging": true
     },
     "comboWindow": 0.3,
