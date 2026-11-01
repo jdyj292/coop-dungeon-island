@@ -19,8 +19,8 @@ const demoPath = (x: number, y: number) => (y >= 70 && y < 80 && x >= 40 && x < 
 
 /** 초안 사물 늘어놓기 (회전 번호 포함) */
 const DRAFT_SCENE: [string, number, number, number?][] = [
-  ['storage', 40, 52], ['weaponRack', 92, 50], ['fountain', 160, 64], ['pot', 222, 40], ['flag', 246, 40], ['campfire', 270, 40],
-  ['fence', 222, 66, 1], ['fence', 222, 76, 1], ['dock', 196, 109], ['bench', 252, 74, 1], ['bench', 40, 100, 2], ['mailbox', 90, 98, 1], ['mailbox', 110, 98, 2], ['mailbox', 130, 98, 3],
+  ['tree', 20, 40], ['cardShop', 72, 84], ['well', 152, 70], ['shop', 224, 80], ['board', 112, 100], ['lamp', 266, 70],
+  ['flowerBed', 120, 110, 0], ['bench', 40, 110], ['mailbox', 200, 110],
 ];
 
 type Placed = [id: string, x: number, y: number, rot?: number];
