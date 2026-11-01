@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>카드 창 K · 던전 HUD 4칸 (시안)</title>
-<!-- CD-4 시안 데모. 승인되면 docs/refs/demos/card_window.html로 옮김 (그때부터 수정 금지). 게임 화면 384×216. 글자 = 게임과 같은 갈무리 .bin(파일 안에 넣음), 색 = palette.json, 아이콘 = hud_icons.json, 카드·값 = shared/data (cards.json·skills.json·passives.json·combat.json card) -->
+<title>카드 창 K · 던전 HUD 4칸 (확정)</title>
+<!-- 대화 중 승인된 원본 데모 (2026-11-01, CD-4). 수정 금지. 게임 화면 384×216. 글자 = 게임과 같은 갈무리 .bin(파일 안에 넣음), 색 = palette.json, 아이콘 = hud_icons.json, 카드·값 = shared/data (cards.json·skills.json·passives.json·combat.json card) -->
 <style>
 body{font-family:system-ui,sans-serif;max-width:1180px;margin:16px auto;padding:0 16px;background:#f6f5f1;color:#222}
 canvas{image-rendering:pixelated;display:block;width:100%;max-width:1152px;border-radius:6px;outline:none}
@@ -12,7 +12,7 @@ kbd{background:#e6e3da;border-radius:3px;padding:0 4px;font-size:13px}
 button{font-size:13px;padding:3px 10px}
 h3{font-size:16px;margin:22px 0 4px}
 </style></head><body>
-<h2 style="font-size:18px;margin:0 0 4px">카드 창 시안 1 (K): 위 장착 줄 · 계열 보너스 · 아래 보유 카드 · 오른쪽 상세</h2>
+<h2 style="font-size:18px;margin:0 0 4px">카드 창 (K, 확정): 위 장착 줄 · 계열 보너스 · 아래 보유 카드 · 오른쪽 상세</h2>
 <p class="note" style="margin:0 0 8px">캔버스를 한 번 클릭하면 키보드가 먹어요. 아래 막대·버튼은 데모용 (게임에는 없음): 숙련도를 바꾸거나 고른 카드를 1장 더해 3장 합치기를 볼 수 있어요.</p>
 <canvas id="cv" width="384" height="216" tabindex="0"></canvas>
 <div class="ctl">숙련도 (데모) <input id="lv" type="range" min="1" max="20" value="9" style="width:260px"> <span id="lvt"></span>

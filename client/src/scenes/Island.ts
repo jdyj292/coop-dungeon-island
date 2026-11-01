@@ -24,7 +24,7 @@ const ENTER_FADE_MS = 250;
 /** 도움말 탭 번호 (settingsPanel) */
 const HELP_TAB = 2;
 /** 아래 띠 버튼 이름 (마우스 올림 이름표 첫 줄) */
-const BUTTON_NAME: Record<HudButton, string> = { B: '섬 꾸미기 (B)', I: '가방 (I)', K: '스킬 (K)', M: '게시판 (M)' };
+const BUTTON_NAME: Record<HudButton, string> = { B: '섬 꾸미기 (B)', I: '가방 (I)', K: '카드 (K)', M: '게시판 (M)' };
 /** 구매 실패 이유 → 알림 */
 const BUY_FAIL: Record<string, string> = { money: '코인이 모자랍니다', treasury: '공동 금고가 모자랍니다', unknown: '살 수 없는 품목입니다' };
 const WELL_FAIL: Record<string, string> = { far: '우물 앞에서 합류할 수 있습니다', full: '파티가 가득 찼습니다 (최대 4명)', notHost: '대기를 시작한 사람만 출발할 수 있습니다', busy: '잠시 뒤 다시' };

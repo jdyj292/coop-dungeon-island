@@ -85,7 +85,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | basic | 평타 단계별 행동 |
 | dash | 달리기 중 평타 |
 | baseSkills | 공용 기본 스킬 id (skills.json) |
-| branches | 계열 이름·특징 `{ A: { name, desc }, B: {…} }` (스킬 창 계열 버튼). 계열 스킬이 있는 무기는 필수 |
+| branches | 계열 이름·특징 `{ A: { name, desc }, B: {…} }` (카드 창 계열 이름). 계열 스킬이 있는 무기는 필수 |
 
 ### 평타 입력 규칙
 - active~recovery 중 J 입력은 다음 단계로 예약 (선입력). recovery가 끝나면 바로 다음 단계
@@ -101,7 +101,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 |---|---|
 | weapon | 무기 id |
 | name | 표시 이름 |
-| desc | 스킬 창(K) 설명 (필수, 2줄 안: 패널 폭 196px). 변형에도 desc 필수 = 기본 스킬과 무엇이 다른지. 변형 desc는 판정에 덮어쓰지 않음 |
+| desc | 카드 창(K) 설명 (필수, 2줄 안: 패널 폭 196px). 변형에도 desc 필수 = 기본 스킬과 무엇이 다른지. 변형 desc는 판정에 덮어쓰지 않음 |
 | branch | base / A / B |
 | superArmor | 시전 중 슈퍼아머 (combat.md 3장) |
 | repeat | 기본 스킬에도 둘 수 있는 반복 판정 (아래 특수 필드) |

@@ -1,4 +1,4 @@
-// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·장식·물약·재료) / 게시판(기록·메모·주민) / 우물. 스킬 창(K)은 전용 창 (islandSkills.ts)
+// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·장식·물약·재료) / 게시판(기록·메모·주민) / 우물. 카드 창(K)은 전용 창 (islandCards.ts)
 // 키: ↑↓ 고르기, ←→ 수량, Q·E·Tab 탭, Enter 사기·장착·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
 import type Phaser from 'phaser';
 import { CARDS, facilityName, ISLAND, ITEMS, MVP_WEAPONS, NET, PASSIVES, ROOMS, SKILLS, WEAPONS } from '@game/shared';
@@ -6,7 +6,7 @@ import type { IslandConnection } from '../net/islandNet';
 import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
 import { moneyLines } from './islandBadges';
 import { ResidentsTab } from './islandResidents';
-import { SkillPanel } from './islandSkills';
+import { CardPanel } from './islandCards';
 
 const floorName = (f: string): string => ROOMS[f]?.name ?? `${f.replace(/\D/g, '')}층`;
 
@@ -15,13 +15,13 @@ export type PanelKind = 'shop' | 'bag' | 'skill' | 'board' | 'well';
 const TABS: Record<PanelKind, { label: string; disabled?: boolean }[]> = {
   shop: [{ label: '물약' }, { label: '장식' }, { label: '의상', disabled: true }],
   bag: [{ label: '장비' }, { label: '장식' }, { label: '물약' }, { label: '재료' }],
-  // 스킬 창은 전용 창 (무기 탭도 그 안에)
+  // 카드 창은 전용 창 (무기 탭도 그 안에)
   skill: [],
   board: [{ label: '기록' }, { label: '메모' }, { label: '주민' }],
   // 층 선택 (해금된 층만, island.json well.floors). 이름은 rooms.json name (수련장), 없으면 "N층"
   well: ISLAND.well.floors.map((f) => ({ label: floorName(f) })),
 };
-const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', skill: '스킬', board: '게시판', well: '우물' };
+const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', skill: '카드', board: '게시판', well: '우물' };
 const POTION_COLOR: Record<string, string> = { hpPotion: 'global.ui.hp', mpPotion: 'global.ui.mp' };
 const VERB: Record<string, string> = {
   found: '섬을 만듦', 'dungeon:clear': '1층 클리어', 'dungeon:return': '1층에서 귀환', 'dungeon:wipe': '1층 전멸', join: '섬에 들어옴', invite: '초대 코드를 바꿈', place: '놓음', move: '옮김', remove: '치움', buy: '삼', treasury: '금고로 삼',
@@ -58,13 +58,13 @@ export class IslandPanels {
   private confirm = false;
   private panel: ListPanel;
   private residents: ResidentsTab;
-  private skills: SkillPanel;
+  private cards: CardPanel;
 
   /** writeMemo = 메모 입력창 열기 (DOM, Scene이 띄움) */
   constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private writeMemo: () => void) {
     this.panel = new ListPanel(scene, depth);
     this.residents = new ResidentsTab(conn);
-    this.skills = new SkillPanel(scene, conn, depth, () => this.weaponLocked(), () => this.myWeapon());
+    this.cards = new CardPanel(scene, conn, depth, () => this.weaponLocked(), () => this.myWeapon());
     // 섬 주인이면 기다리는 신청 수 (M 버튼 이름표)
     this.residents.refresh();
   }
@@ -86,7 +86,7 @@ export class IslandPanels {
     this.qty = 1;
     this.confirm = false;
     if (kind === 'board') this.conn.send('board', {});
-    if (kind === 'skill') this.skills.show();
+    if (kind === 'skill') this.cards.show();
   }
 
   private setTab(t: number): void {
@@ -103,7 +103,7 @@ export class IslandPanels {
     return this.open === 'bag' && this.tab === EQUIP_TAB;
   }
 
-  private onSkills(): boolean {
+  private onCards(): boolean {
     return this.open === 'skill';
   }
 
@@ -124,12 +124,12 @@ export class IslandPanels {
   close(): void {
     this.open = null;
     this.panel.hide();
-    this.skills.hide();
+    this.cards.hide();
   }
 
   destroy(): void {
     this.panel.destroy();
-    this.skills.destroy();
+    this.cards.destroy();
   }
 
   /** 지금 탭의 줄과 줄마다의 품목 id */
@@ -238,7 +238,7 @@ export class IslandPanels {
   /** 키 (패널이 열려 있으면 모두 여기서) */
   onKey(code: string): void {
     if (!this.open) return;
-    if (this.onSkills()) return code === 'Escape' ? this.close() : this.skills.onKey(code);
+    if (this.onCards()) return code === 'Escape' ? this.close() : this.cards.onKey(code);
     const tabs = TABS[this.open], n = this.rows().rows.length;
     const nextTab = (d: number) => {
       let t = this.tab;
@@ -261,8 +261,8 @@ export class IslandPanels {
   /** 마우스 (화면 좌표). 패널이 열려 있으면 true */
   onPointer(x: number, y: number): boolean {
     if (!this.open) return false;
-    if (this.onSkills()) {
-      if (!this.skills.onPointerDown(x, y)) this.close();
+    if (this.onCards()) {
+      if (!this.cards.onPointerDown(x, y)) this.close();
       return true;
     }
     const h = this.panel.hit(x, y);
@@ -280,18 +280,18 @@ export class IslandPanels {
     return w.members[0] === me && !w.departAt ? 'depart' : '';
   }
 
-  /** 마우스 이동·떼기 (스킬 창 마우스 올림·끌어다 장착) */
+  /** 마우스 이동·떼기 (카드 창 마우스 올림·끌어다 장착) */
   onPointerMove(x: number, y: number): void {
-    if (this.onSkills()) this.skills.onPointerMove(x, y);
+    if (this.onCards()) this.cards.onPointerMove(x, y);
   }
 
   onPointerUp(x: number, y: number): void {
-    if (this.onSkills()) this.skills.onPointerUp(x, y);
+    if (this.onCards()) this.cards.onPointerUp(x, y);
   }
 
-  /** fieldH = 아래 띠 위까지 (목록 패널), height = 화면 전체 (스킬 창은 아래 띠를 덮음) */
+  /** fieldH = 아래 띠 위까지 (목록 패널), height = 화면 전체 (카드 창은 아래 띠를 덮음) */
   update(width: number, fieldH: number, height: number): void {
-    if (this.onSkills()) this.skills.update(width, height);
+    if (this.onCards()) this.cards.update(width, height);
     else if (this.open) this.panel.render(this.view(), width, fieldH);
   }
 

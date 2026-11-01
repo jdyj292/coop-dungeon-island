@@ -57,7 +57,7 @@ export class IslandConnection {
   me: S2C['me'] = { wallet: 0, level: 1 };
   /** 내 가방 (inv 메시지) */
   inventory: Record<string, number> = {};
-  /** 내 카드 (조각·선물 팩, 무기마다 숙련도·패시브 한도·보유·장착, 스킬 창(K)). cardsSeq = 받을 때마다 1씩 (실패 알림 구분) */
+  /** 내 카드 (조각·선물 팩, 무기마다 숙련도·패시브 한도·보유·장착, 카드 창(K)). cardsSeq = 받을 때마다 1씩 (실패 알림 구분) */
   cards: S2C['cards'] = { dust: 0, gifts: 0, weapons: [] };
   cardsSeq = 0;
   /** 마지막으로 연 카드팩 (packSeq = 받을 때마다 1씩) */

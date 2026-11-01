@@ -42,8 +42,8 @@ const REVIVE_SEND_MS = 150;
 /** 스킬 키 순서대로 (code = 스킬 노드: 온라인은 서버 값, 로컬은 개발 옵션 ?skills=) */
 const skillsOf = (weapon: string, code: string) => weaponSkills(weaponDef(weapon), buildFrom(code));
 
-/** 스킬 슬롯 키 A S D F G H (combat.md 1장) */
-const SLOT_KEYS = ['skill1', 'skill2', 'skill3', 'skill4', 'skill5', 'skill6'] as const;
+/** 스킬 슬롯 키 A S D F (combat.md 1장, 액티브 카드 4칸) */
+const SLOT_KEYS = ['skill1', 'skill2', 'skill3', 'skill4'] as const;
 type SlotKey = (typeof SLOT_KEYS)[number];
 type KeyName = 'up' | 'down' | 'left' | 'right' | 'attack' | 'backstep' | SlotKey | 'potionHp' | 'potionMp' | 'interact';
 
@@ -122,7 +122,7 @@ export class Dungeon extends Phaser.Scene {
     const K = Phaser.Input.Keyboard.KeyCodes;
     this.keys = this.input.keyboard!.addKeys({
       up: K.UP, down: K.DOWN, left: K.LEFT, right: K.RIGHT, attack: K.Z, backstep: K.SPACE,
-      skill1: K.A, skill2: K.S, skill3: K.D, skill4: K.F, skill5: K.G, skill6: K.H, potionHp: K.ONE, potionMp: K.TWO, interact: K.E,
+      skill1: K.A, skill2: K.S, skill3: K.D, skill4: K.F, potionHp: K.ONE, potionMp: K.TWO, interact: K.E,
     }) as typeof this.keys;
   }
 
@@ -255,7 +255,7 @@ export class Dungeon extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     const k = this.keys, dt = delta / 1000, sk = skillsOf(this.weapon, this.online ? this.online.conn.mySkills : this.params.get('skills') ?? '');
-    // A S D F G H = 장착한 슬롯 순서 (skillLoadout.slotSkills). 마지막에 누른 스킬 키를 누르고 있으면 대검 충전
+    // A S D F = 장착한 슬롯 순서 (skillLoadout.slotSkills). 마지막에 누른 스킬 키를 누르고 있으면 대검 충전
     const pressed = SLOT_KEYS.findIndex((n, i) => Phaser.Input.Keyboard.JustDown(k[n]) && sk[i]);
     if (pressed >= 0) this.skillKey = SLOT_KEYS[pressed]!;
     const input: KeyInput = {
