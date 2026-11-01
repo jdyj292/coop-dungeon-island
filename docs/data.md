@@ -103,7 +103,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | name | 표시 이름 |
 | desc | 스킬 창(K) 설명 (필수, 2줄 안: 패널 폭 196px). 변형에도 desc 필수 = 기본 스킬과 무엇이 다른지. 변형 desc는 판정에 덮어쓰지 않음 |
 | branch | base / A / B |
-| unlockLevel | 계열 스킬이 열리는 숙련도 레벨 (skills.md 1장, 계열마다 2·4·6·8, 3단계 11·13). 기본 스킬은 없음(처음부터) — data-validate가 검사 |
+| unlockLevel | 옛 열림 레벨 (SK-6). CD-2에서 뺌 → 카드 티어는 cards.json (10장) |
 | superArmor | 시전 중 슈퍼아머 (combat.md 3장) |
 | repeat | 기본 스킬에도 둘 수 있는 반복 판정 (아래 특수 필드) |
 | onWall | 벽꿍 `{coef}` (아래 특수 필드) |
@@ -126,7 +126,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 - 특수 필드: reinput(재입력 횟수), repeat(`{count, interval, step?, seek?, copies?, coef?, delay?, follow?}` 반복: step = 판정마다 앞으로 px, seek = 판정마다 가까운 맞을 몬스터 쪽으로 px, copies = `[[앞, 깊이], ...]` 자리에 같은 반복을 첫 판정부터 더, coef = 묶음 첫 판정 뒤 판정들의 계수 = 다단(가벼운 경직 light·적중 소리 hitLight·판정마다 시전 소리 없음, 검의 장막·일섬, sim/skillExtras.ts), delay = active 순간에는 판정 없이 이 초 뒤부터 첫 판정(자리·방향은 active 때 그대로, 일섬. trail은 묶음 첫 판정에서만), follow = true면 판정마다 자리·방향을 시전자 지금 자리로(나를 따라다니는 영역, 검의 장막 변형 따라다니는 장막)), after(`{delay, coef}` 후속 판정), onStatusEnd(상태이상 해제 시 판정), onWall(`{coef}` 벽꿍). 기본 스킬에 repeat가 있으면 변형은 일부 키만 덮어써도 됨
 - 적용은 shared/src/skillTree.ts resolveSkill (덮어쓰기 + 특수 필드 + 계수에 레벨 배율), 특수 판정은 shared/src/sim/skillExtras.ts: 반복·후속 = 시전한 자리·방향에 같은 판정을 예약(반복은 count번 중 첫 판정 뒤 나머지), 해제 = 그 행동이 건 빙결이 풀릴 때 그 몬스터에 한 번(빙결·띄우기 없이), 재입력 = 같은 스킬을 쿨타임·MP 없이 (스킬 recovery 또는 끝난 뒤 combat.json skillTree.reinputWindow 안). status slow = 몬스터 걷는 속도·공격 쿨타임·공격 사이 쉬는 시간이 × (1 − amount)로 흐름
 - 현재 파일: 대검·스태프 공용 기본 스킬 + A·B 계열 액티브(Lv 2~8), 대검 A·B 계열 3단계(SK-7). 나머지는 skills.md 표를 이 형식으로 옮겨 추가
-- **passives.json (패시브: 계열 보조·공용)**: `{ id, weapon, branch: A|B|common, unlockLevel, name, desc, pointDesc: [1·2·3포인트 줄], effect }`. 0~maxPoints(combat.json skillTree) 포인트, effect 값이 배열이면 포인트별(길이 = maxPoints, data-validate), 숫자 하나면 포인트와 상관없음 (passives.ts perksOf). effect 키: chargeSpeedMul(대검 충전 속도 배율, 최대까지 maxTime / 값), chargeTakenMul(충전 중 받는 피해 배율), skillArmor(모든 스킬 슈퍼아머), skillTakenMul(스킬 시전 중 받는 피해 배율), far `{minDist, mul}`(나와 적 거리가 minDist px 넘으면 피해 배율), projectileRangeMul(투사체 스킬 사거리 배율), lastingMul(lasting 스킬 상태 이상 시간·repeat count 배율, 횟수는 반올림), burn `{element, time, takenMul}`(그 원소 스킬 적중 대상이 time초 동안 받는 피해 배율), press `{takenMul}`(내 status slow에 맞은 적이 감속 동안 받는 피해 배율), dodge `{distanceMul, cooldownAdd}`(회피 거리 배율·쿨 더하기), quickRise(다운 중 회피로 기상), quickRiseCooldownAdd(기상 회피로 시작한 회피의 쿨 더하기), SK-4 3차: aftershock `{coef, radius}`(내 down 판정이 맞힌 적 자리 충격파), downDamage(다운 대상 피해 배율, 기본 combat.json downDamageMul), launchWave `{skill, coef, speed, range, radius}`(그 스킬 active 때 관통 검기), cycle `{sec}`(스킬 투사체 적중 시 시전 한 번에 한 번 다른 스킬 쿨 감소), freezeAdd(빙결 시간 더하기), overheat `{time, delay}`(스킬 적중 뒤 time초 동안 평타 투사체 한 발 더), repeatEnd `{skill, radiusMul, coef}`(그 반복 스킬 반지름 배율·마지막 판정 뒤 한 번 더), aegis `{radius, time, cooldown}`(스킬 사용 시 범위 안 아군 피해 1회 무효 보호막·내부 쿨), SK-7: chargeBonusAdd(대검 충전 최대 보너스 더하기), aura `{radius, amount}`(내 둘레 radius px 안 적 감속 amount, 매 틱 0.2초씩 다시 걺), phantom `{delay, mul}`(잔상: 근접 상자·투사체 스킬을 delay초 뒤 같은 자리·방향에서 계수 × mul로 한 번 더, sim/phantom.ts), dance `{window, mul}`(검의 춤: 스킬이 끝나고 window초 안에 시작한 다음 스킬 계수 × mul, actions.ts withCoefMul). launchWave·repeatEnd의 skill은 그 무기 스킬이어야 함(repeatEnd는 repeat 스킬, data-validate). 공용 패시브 = weapon "*"·branch common, 무기마다 `<무기>.<id>` 노드로 펼침 (load.ts). 노드 id는 행동 id와 겹치면 안 됨 (data-validate). 예산 검사 대상 아님
+- **passives.json (패시브: 계열 보조·공용)**: `{ id, weapon, branch: A|B|common, unlockLevel, name, desc, pointDesc: [1·2·3포인트 줄], effect }`. 0~maxPoints(combat.json skillTree) 포인트, effect 값이 배열이면 포인트별(길이 = maxPoints, data-validate). **CD-2에서 바뀜**: unlockLevel 뺌, 배열·pointDesc는 길이 2 = [기본 카드, 강화 카드] (옛 1포인트 값 → 기본, 3포인트 값 → 강화), 숫자 하나면 포인트와 상관없음 (passives.ts perksOf). effect 키: chargeSpeedMul(대검 충전 속도 배율, 최대까지 maxTime / 값), chargeTakenMul(충전 중 받는 피해 배율), skillArmor(모든 스킬 슈퍼아머), skillTakenMul(스킬 시전 중 받는 피해 배율), far `{minDist, mul}`(나와 적 거리가 minDist px 넘으면 피해 배율), projectileRangeMul(투사체 스킬 사거리 배율), lastingMul(lasting 스킬 상태 이상 시간·repeat count 배율, 횟수는 반올림), burn `{element, time, takenMul}`(그 원소 스킬 적중 대상이 time초 동안 받는 피해 배율), press `{takenMul}`(내 status slow에 맞은 적이 감속 동안 받는 피해 배율), dodge `{distanceMul, cooldownAdd}`(회피 거리 배율·쿨 더하기), quickRise(다운 중 회피로 기상), quickRiseCooldownAdd(기상 회피로 시작한 회피의 쿨 더하기), SK-4 3차: aftershock `{coef, radius}`(내 down 판정이 맞힌 적 자리 충격파), downDamage(다운 대상 피해 배율, 기본 combat.json downDamageMul), launchWave `{skill, coef, speed, range, radius}`(그 스킬 active 때 관통 검기), cycle `{sec}`(스킬 투사체 적중 시 시전 한 번에 한 번 다른 스킬 쿨 감소), freezeAdd(빙결 시간 더하기), overheat `{time, delay}`(스킬 적중 뒤 time초 동안 평타 투사체 한 발 더), repeatEnd `{skill, radiusMul, coef}`(그 반복 스킬 반지름 배율·마지막 판정 뒤 한 번 더), aegis `{radius, time, cooldown}`(스킬 사용 시 범위 안 아군 피해 1회 무효 보호막·내부 쿨), SK-7: chargeBonusAdd(대검 충전 최대 보너스 더하기), aura `{radius, amount}`(내 둘레 radius px 안 적 감속 amount, 매 틱 0.2초씩 다시 걺), phantom `{delay, mul}`(잔상: 근접 상자·투사체 스킬을 delay초 뒤 같은 자리·방향에서 계수 × mul로 한 번 더, sim/phantom.ts), dance `{window, mul}`(검의 춤: 스킬이 끝나고 window초 안에 시작한 다음 스킬 계수 × mul, actions.ts withCoefMul). launchWave·repeatEnd의 skill은 그 무기 스킬이어야 함(repeatEnd는 repeat 스킬, data-validate). 공용 패시브 = weapon "*"·branch common, 무기마다 `<무기>.<id>` 노드로 펼침 (load.ts). 노드 id는 행동 id와 겹치면 안 됨 (data-validate). 예산 검사 대상 아님
 - 예산 검사(balance-check)는 한 번 쓸 때 계수 합 = (coef + (repeat.count − 1) × (repeat.coef ?? coef)) × hits·copies·burst·lanes 수 × 왕복(back × 2). 연쇄는 한 대상 기준, blast·mark 계수는 빠짐. 레벨 배율·대검 충전은 blast·shards·mark·trail·meet·repeat.coef 계수도 키움 (actions.ts scaleExtraCoefs, 검의 춤은 coef·repeat.coef)
 
 ---
@@ -232,7 +232,8 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 (무기 basicTurn false면 없음) |
 | poseSplit | 행동 포즈 lead·follow가 준비·후딜레이 앞에서 차지하는 비율 (0.5) |
 | cooldownScale | 전역 쿨타임 배율 (balance.md 2장). 실제 쿨 = 기준 쿨 × 이 값 |
-| skillTree | 스킬 포인트 (skills.md 1장): maxPoints(노드 최대, 액티브·패시브), levelMul(액티브 포인트별 레벨 배율, balance.md 1장), reinputWindow(변형 재입력을 받는 시간, 스킬이 끝난 뒤 초) |
+| skillTree | 스킬 포인트 (SK-6): maxPoints·levelMul은 CD-2에서 뺌, reinputWindow(변형 재입력을 받는 시간, 스킬이 끝난 뒤 초)는 card로 옮김 |
+| card | 스킬 카드 (CD, skills.md 1장): enhancedMul(강화 액티브 계수 배율 1.2), mergeCount(강화에 드는 같은 카드 수 3), activeSlots(액티브 칸 4), passiveCap `{ base, every }`(패시브 비용 한도 = base + floor((숙련도 − 1) / every)), branchBonusAt `[3, 5]`(계열 보너스 Ⅰ·Ⅱ 장수), welcomePacks `{ pack, count }`(환영 선물), reinputWindow |
 | stunExitSec | 기절(체력 0) 뒤 퇴장까지 시간 |
 | stun.{light,medium,heavy} | `{ time, push }` 경직 시간·밀림 거리 |
 | weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |
@@ -291,3 +292,25 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 
 - 회전 1·3이면 차지하는 칸의 가로·세로가 바뀜 (shared footprint). 그림 모습은 sprites.md 12장 rot
 - data-validate: 그림이 있는지(ground 제외), 가입 선물이 있는 장식인지
+
+---
+
+## 10. cards.json · packs.json (CD)
+
+스킬 카드와 카드팩 (skills.md 1장, 값은 balance.md 7장 카드 경제). 형식 shared/src/data/cardSchema.ts (CD-2)
+
+### cards.json
+| 필드 | 설명 |
+|---|---|
+| tiers.<N> | 티어 N (숫자 키 "1"·"2"…, 빠진 번호 없이) `{ equipLevel, dust, craft, color }`: 장착 숙련도, 갈면 조각, 지정 구매 조각, 테두리 색 키(palette.json card.tier<N>) |
+| cards.<id> | `{ weapon, kind: active\|passive, branch: base\|A\|B\|common, tier, cost? }`. id = skills.json 행동 id 또는 passives.json id (공용 패시브는 `<무기>.<id>`). cost = 패시브 비용 (없으면 티어, 강화 +1). 이름·아이콘·설명은 skills.json·passives.json·hud_icons.json에서 |
+| starter.<무기> | 처음 카드 id 목록 (기본 스킬 2장) |
+| branchBonus.<무기>.<A\|B> | `[Ⅰ, Ⅱ]` 각각 effect 묶음 (passives.json effect 키를 함께 씀 + chargeSpeedMul·projectileRangeMul·cooldownMul·areaMul·mpMul·slowTimeMul·slowAdd) |
+
+### packs.json
+| 필드 | 설명 |
+|---|---|
+| packs.<N> | 팩 번호 N (숫자 키) `{ unlockLevel, price, size, minTier, maxTier, odds, lastMinTier, lastOdds?, pity?, color }`: 열리는 숙련도, 가격(코인 = 조각 같은 수), 장수(4), 나오는 티어 범위, odds = 티어별 확률(%, 합 100, 1~3번째 장), lastMinTier·lastOdds = 마지막 장, pity `{ tier, packs }` = 그 수만큼 열도록 그 티어가 없으면 마지막 장 확정, color = palette.json card.pack<N> |
+
+- 무기별 팩은 따로 데이터를 두지 않는다 (팩 번호 × 무기, 카드 목록은 cards.json weapon으로 거름)
+- data-validate (CD-2): 모든 액티브·패시브가 카드인지, 카드 id가 있는 행동·패시브인지, tier·팩 티어 범위가 tiers 안인지, 확률 합 100, starter가 그 무기 base 카드인지, palette 색 키가 있는지

@@ -8,7 +8,7 @@ MVP 범위, 마일스톤별 목표·읽을 문서·완료 기준, 세션 단위 
 
 ### 포함
 - 계정: 가입·로그인·로그아웃, Argon2id, 쿠키 세션, 복구 코드, 요청 제한, 입력 검증
-- 섬: 생성·섬 목록에서 입장 신청(주인 허용, 주민 10명), 고정 시설 5종, 장식 10종 + 분수, 배치·회전·이동·치우기, 잡화점(물약·장식), 게시판 기록, 우물 출발 대기
+- 섬: 생성·섬 목록에서 입장 신청(주인 허용, 주민 10명), 고정 시설 5종(CD에서 카드 상점 더해 6종), 장식 10종 + 분수, 배치·회전·이동·치우기, 잡화점(물약·장식), 게시판 기록, 우물 출발 대기
 - 캐릭터: 16px 기본 캐릭터, 머리 모양 3종, 초보 모험가 의상, 표정 3종
 - 무기: 대검(평타·대시 공격·기본 스킬 2) + 스태프(같은 구성)
 - 조작·전투: 걷기·달리기·백스텝, 경직·다운·바운드, HP·MP, 물약 2종, 기절·부활, 귀환, 정산
@@ -20,7 +20,7 @@ MVP 범위, 마일스톤별 목표·읽을 문서·완료 기준, 세션 단위 
 - 운영: HTTPS·WSS, 백업, 관리자 명령줄 도구
 
 ### 제외 (MVP 이후)
-- 2층 이상, 주먹·쌍검, 계열 스킬·공용 패시브·슬롯 장착, 필살기 (기본 스킬 포인트·변형은 MVP 보충 SK-1, 계열 1단계 액티브는 SK-2, 계열 2단계·슬롯 장착은 SK-4, 공용 패시브는 SK-5, 레벨 열림·계열 선택으로 개편은 SK-6, 계열 3단계는 SK-7)
+- 2층 이상, 주먹·쌍검, 계열 스킬·공용 패시브·슬롯 장착, 필살기 (기본 스킬 포인트·변형은 MVP 보충 SK-1, 계열 1단계 액티브는 SK-2, 계열 2단계·슬롯 장착은 SK-4, 공용 패시브는 SK-5, 레벨 열림·계열 선택으로 개편은 SK-6, 계열 3단계는 SK-7, 스킬 카드로 개편은 CD)
 - 폭탄 버섯 등 환경 기믹, 층 해금 건물·연마, 공방 제작, 낚시
 - 의상 판매·장착(마법사·도적·기사), 무기 외형(제작·보스 드롭·색 변형), 개인 집, 섬 방문·확장
 - 계정 삭제 화면, 소셜 로그인, 모바일·게임패드, Steam, 2층 이후 BGM
@@ -132,3 +132,16 @@ MVP 범위, 마일스톤별 목표·읽을 문서·완료 기준, 세션 단위 
 | SK-5 | 공용 패시브(skills.md 1장): 스킬 캔슬 1~3(스킬 recovery → 다른 스킬, 이은 스킬 windup ×1.5/1.3/1.15)·기상 회피 1(다운 중 회피 키로 기상, 기상 무적 대신 회피 무적), passives.json weapon "*" → 무기마다 노드, 스킬 창 맨 위 (완료). 스킬 캔슬은 2026-11 없앰 | 테스트, ?skills=greatsword.quickrise:1 로 다운 중 K |
 | SK-6 | 스킬 창 개편(skills.md 1장, 승인 데모 docs/refs/demos/skill_window.html): 단계·택1 없앰 → 스킬·패시브는 숙련도 레벨로 열림(unlockLevel, 액티브 Lv2·4·6·8·보조 Lv3·5·7·9), 무기마다 계열 하나 선택(weapon_mastery.branch)·계열마다 장착 기억(skill_slots), SP로 액티브 2·3포인트·패시브 1~3포인트(포인트별 값, 굳건함·기상 회피 2·3포인트 새 효과), 변형은 열리면 바로, 던전은 출발 때 effectiveBuild. 1차: 규칙·저장·메시지(마이그레이션 0011), 스킬 창은 임시 목록 (완료). 2차: 트리형 스킬 창(계열 버튼·액티브/패시브 탭·상세·끌어다 장착, 임시 10×10 그림 hud_icons.json glyphs·패널 명암 색 palette.json global.ui.skill*, hud.md 8장) (완료). 3차: 아이콘 없는 스킬·패시브 정식 16×16 아이콘 14개(sprite-preview 승인, hud_icons.json, 임시 그림 glyphs 없앰, hud.md 2·8장) (완료) | 테스트·data-validate·balance-check·net-smoke, 섬 K에서 계열 바꾸기·장착 기억, ?online=1 출발 → 고른 계열 스킬만 U I O P |
 | SK-7 | 계열 3단계 (skills.md 1·2장): 액티브 Lv11·13·보조 Lv12·14. 1차: 대검 A 파쇄참(슈퍼아머 경직 armorBreak·3단 충전/즉발 chargeRule)·대지붕괴(다운 유지 keepDown·확산·솟구침 repeatEnd launch)·거인의 힘(chargeBonusAdd)·전장 장악(aura), 연출(fx/tier3Fx.ts·3단 충전 단계 점·온라인 aura)·효과음 4개·아이콘 4개·스킬 창 6칸 (완료, 미리보기 생략 요청). 2차: 대검 B 십자 검기(2연발·사방 projectile.aims·교차점 meet)·일섬(192px 한 줄·이중 after·반환 trail)·잔상(phantom, 같은 자리 반투명 다시 베기·쏘기)·검의 춤(dance, 스킬 끝 1초 안 다음 스킬 계수), 연출(fx/tier3bFx.ts·shotDraw.crossWave·온라인 bolt dy·ghost)·효과음 5개·아이콘 4개 (완료, 미리보기 생략 요청). 다음: 스태프 A·B 3단계 | 테스트·data-validate·balance-check·net-smoke, ?skills=gs_crush:1:tri,gs_giant:1 길게 누르기, ?skills=gs_collapse:1:rise,gs_dominate:3, ?skills=gs_cross:1:meet,gs_flash:1:trail,gs_phantom:1 (O·P), ?skills=gs_scar:1,gs_wave:1,gs_dance:1 (검흔 베기 끝나고 1초 안에 검기) |
+
+### 스킬 카드 (CD, 2026-11, skills.md 1장)
+SP·레벨 열림·계열 선택 → 카드팩으로 카드를 모으고 3장이면 강화(변형), 액티브 4칸·패시브 비용 한도, 계열 섞기·계열 보너스, 섬 카드 상점·팩 열기 연출. 읽을 문서: skills 1장, balance 7장 카드 경제, island 2·5장, data 10장, db, network 4장, hud 8장, audio 5장
+
+| 단계 | 작업 | 확인 |
+|---|---|---|
+| CD-1 | 문서 개편 (skills 1장·balance·island·data·db·network·hud·audio·roadmap) | 문서 검토·승인 |
+| CD-2 | 데이터·공용 로직: cards.json·packs.json·combat.json card, shared/src/cards/(팩 굴림·합치기·장착 검사·패시브 한도·계열 보너스·카드 빌드), passives 값 [기본, 강화], unlockLevel·SP 코드 뺌, 액티브 칸 4 | pnpm test·data-validate·balance-check |
+| CD-3 | DB·서버: users.dust·cards·card_slots·card_pity, skill_nodes·skill_slots·sp·branch 지우는 마이그레이션 + 처음 카드·환영 선물, card 메시지(열기·지정 구매·갈기·변형·장착), 던전 빌드를 카드로, ADMIN 조각 | pnpm test·net-smoke·run-sim |
+| CD-4 | 카드 창(K)·던전 HUD A S D F 4칸 | 새 승인 데모 HTML → 반영 |
+| CD-5 | 카드 상점 시설 그림·자리 + 카드 상점 화면·팩 열기·합치기 연출, 카드 테두리(티어·강화) | sprite-preview·데모 HTML 승인 → 반영 |
+| CD-6 | 효과음(팩 흔들기·찢기·뒤집기·티어 2·3 빛·공개·합치기·갈기·지정 구매) + 카드 상점 BGM(층 3겹) | sfx-preview·bgm-preview 승인 → 반영 |
+| CD-7 | 가격·확률·한도·계열 보너스 조정 | run-sim·ttk-sim·실제 플레이 |
