@@ -142,6 +142,31 @@ describe('시설 옮기기 (island.md 2장)', () => {
     expect(db.select().from(activityLog).all().map((r) => [r.action, r.itemId])).toEqual([['move', 'shop']]);
   });
 
+  it('새로 더한 시설(카드 상점)의 기본 칸이 장식에 막힌 섬은 가장 가까운 빈칸에 저장, 기록 없음', () => {
+    const a = user('a'), cs = ISLAND.facilities.find((f) => f.id === 'cardShop')!;
+    const store = new IslandStore(db, islandId);
+    store.give(a, 'flowerBed', 1);
+    store.place(a, 'flowerBed', cs.x + 1, cs.y, 0, 'mine', 0);
+    db.delete(activityLog).run();
+    const { g } = game();
+    const at = g.state.facilities.get('cardShop')!;
+    expect({ x: at.x, y: at.y }).not.toEqual({ x: cs.x, y: cs.y });
+    expect(store.facilities().find((f) => f.id === 'cardShop')).toMatchObject({ x: at.x, y: at.y });
+    expect(g.state.placements.size).toBe(1);
+    expect(db.select().from(activityLog).all()).toEqual([]);
+    // 다시 열어도 같은 자리
+    expect(game().g.state.facilities.get('cardShop')).toMatchObject({ x: at.x, y: at.y });
+  });
+
+  it('자리 잡기 clear: 막던 장식은 놓은 사람 가방으로', () => {
+    const a = user('a'), store = new IslandStore(db, islandId);
+    store.give(a, 'flowerBed', 1);
+    const row = store.place(a, 'flowerBed', 12, 14, 0, 'mine', 0)!;
+    store.settleFacility('cardShop', 12, 14, [row.id]);
+    expect(store.placements()).toEqual([]);
+    expect(store.inventory(a)).toEqual({ flowerBed: 1 });
+  });
+
   it('옮긴 시설은 걷기 장애물', () => {
     const a = String(user('a'));
     const { g } = game();

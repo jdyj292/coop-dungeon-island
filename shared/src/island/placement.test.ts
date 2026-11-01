@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ISLAND, ITEMS } from '../data/load';
 import { TILE } from '../constants';
-import { canMoveFacility, canPlace, footprint, placedAt, placementBlocks, reservedCells, type Placed } from './placement';
+import { blockingPlaced, canMoveFacility, canPlace, footprint, placedAt, placementBlocks, reservedCells, settleFacility, type Placed } from './placement';
 import { defaultFacilities, facilitiesWith } from './world';
 
 const well = ISLAND.facilities.find((f) => f.id === 'well')!;
@@ -47,6 +47,25 @@ describe('장식 배치 규칙', () => {
     const someone = [{ x: (free.x + 0.5) * TILE, y: (free.y + 0.5) * TILE }];
     expect(canPlace('fence', free.x, free.y, 0, [], someone)).toBe('occupied');
     expect(canPlace('flowerBed', free.x, free.y, 0, [], someone)).toBeNull();
+  });
+
+  it('새로 더한 시설: 기본 칸이 비면 그대로, 막히면 가장 가까운 빈칸, 빈칸이 없으면 치우기 (island.md 2장)', () => {
+    const facs = defaultFacilities(), cs = facs.find((f) => f.id === 'cardShop')!;
+    expect(settleFacility('cardShop', facs, [])).toBeNull();
+    expect(settleFacility('well', facs, [])).toBeNull();
+    const bed: Placed = { id: 'a', itemId: 'flowerBed', x: cs.x + 1, y: cs.y, rot: 0 };
+    const to = settleFacility('cardShop', facs, [bed]);
+    expect(to).not.toBeNull();
+    expect(to).not.toBe('clear');
+    const at = to as { x: number; y: number };
+    expect(canMoveFacility('cardShop', at.x, at.y, facs, [bed])).toBeNull();
+    expect(Math.abs(at.x - cs.x) + Math.abs(at.y - cs.y)).toBeLessThanOrEqual(4);
+    // 놓는 영역을 울타리로 가득 채우면 갈 곳이 없음 → 기본 칸의 장식을 치움
+    const fences: Placed[] = [];
+    for (let y = P.y; y < P.y + P.h; y++) for (let x = P.x; x < P.x + P.w; x++) fences.push({ id: `${x},${y}`, itemId: 'fence', x, y, rot: 0 });
+    expect(settleFacility('cardShop', facs, fences)).toBe('clear');
+    expect(blockingPlaced(cs, fences).map((p) => p.id).sort()).toEqual(
+      [0, 1, 2].flatMap((dx) => [0, 1, 2].map((dy) => `${cs.x + dx},${cs.y + dy}`)).sort());
   });
 
   it('장애물은 걸을 수 없는 장식만', () => {

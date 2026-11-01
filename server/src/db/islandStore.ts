@@ -43,6 +43,23 @@ export class IslandStore {
     });
   }
 
+  /**
+   * 새로 더한 시설 자리 잡기 (게시판 기록 없음, island.md 2장): 자리를 저장하고, clear = 그 자리를 막던 장식을 치움
+   * (놓은 사람 가방으로, 공용·놓은 사람 없음은 공용 창고로)
+   */
+  settleFacility(facilityId: string, x: number, y: number, clear: number[] = []): void {
+    this.db.transaction((tx) => {
+      for (const id of clear) {
+        const p = tx.select().from(placements).where(and(eq(placements.id, id), eq(placements.islandId, this.islandId))).get();
+        if (!p) continue;
+        tx.delete(placements).where(eq(placements.id, id)).run();
+        this.add(tx, p.communal || p.placedBy === null ? 'storage' : { userId: p.placedBy }, p.itemId, 1);
+      }
+      tx.insert(islandFacilities).values({ islandId: this.islandId, facilityId, x, y })
+        .onConflictDoUpdate({ target: [islandFacilities.islandId, islandFacilities.facilityId], set: { x, y } }).run();
+    });
+  }
+
   inventory(userId: number): Record<string, number> {
     return toRecord(this.db.select({ itemId: inventory.itemId, count: inventory.count }).from(inventory).where(eq(inventory.userId, userId)).all());
   }

@@ -1,27 +1,23 @@
 // 카드 창 (K, hud.md 8장, skills.md 1장, 승인 데모 docs/refs/demos/card_window.html): 상태·입력. 그리기는 ui/cardWindow.ts·cardDetail.ts
 // 무기 탭, 액티브/패시브 카드 탭, 카드 고르기·마우스 올림 미리 보기, 끌어다 장착(위 칸으로 놓기, 위 칸에서 끌어 내리면 빼기), 변형(강화 액티브), 갈기(두 번 눌러 확인).
-// 임시 팩 열기 버튼·O 키 (CD-5 카드 상점 전까지): 팩 1을 선물 → 조각 → 코인 순으로 사서 열고 결과를 알림에.
-// 키: ↑↓←→ 카드 · Tab 액티브/패시브 · Q E 무기 · A S D F 그 칸에 끼우기 · Enter 끼우기/빼기 · X 빼기 · 1 2 변형 · G 갈기 · O 팩 열기. 검사는 서버, 미리 shared 카드 검사로 막음
+// 키: ↑↓←→ 카드 · Tab 액티브/패시브 · Q E 무기 · A S D F 그 칸에 끼우기 · Enter 끼우기/빼기 · X 빼기 · 1 2 변형 · G 갈기. 검사는 서버, 미리 shared 카드 검사로 막음
 import type Phaser from 'phaser';
 import {
-  ACTIVE_SLOTS, CARD, checkEquip, checkGrind, checkVariant, dustOf, equipLevelOf, isActiveCard, MVP_WEAPONS, owns, packDef, passiveCap, passiveUsed,
-  SKILLS, weaponCards, WEAPONS, WELCOME_PACKS, type Branch, type CardKind, type CardLoadout, type CardMsgFail, type Collection,
+  ACTIVE_SLOTS, CARD, checkEquip, checkGrind, checkVariant, dustOf, equipLevelOf, isActiveCard, MVP_WEAPONS, owns, passiveCap, passiveUsed,
+  SKILLS, weaponCards, WEAPONS, type Branch, type CardKind, type CardLoadout, type CardMsgFail, type Collection,
 } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { SK } from '../ui/cardParts';
 import { PASS_AREA, type BonusInfo, type CardHit, type CardInfo, type CardSource, type CardView } from '../ui/cardTypes';
 import { CardWindow } from '../ui/cardWindow';
-import { FAIL_TEXT, packText } from './cardText';
+import { FAIL_TEXT } from './cardText';
 import { cardBonus, cardInfo, cardRows } from './cardView';
 
 /** 알림 시간 */
 const NOTE_MS = 2000;
-const NOTE_PACK_MS = 5000;
 const SLOT_KEYS = ['KeyA', 'KeyS', 'KeyD', 'KeyF'].slice(0, ACTIVE_SLOTS);
 /** 장착 줄 (끌어 내리면 빼기 판정) */
 const EQUIP_ROW = { x: 12, y: 26, w: 224, h: 46 };
-/** 임시 팩 열기 버튼이 여는 팩 */
-const TEMP_PACK = WELCOME_PACKS.pack;
 type Weapon = (typeof MVP_WEAPONS)[number];
 
 export class CardPanel implements CardSource {
@@ -39,7 +35,6 @@ export class CardPanel implements CardSource {
   private noteUntil = 0;
   private grindUntil = 0;
   private seenSeq = 0;
-  private seenPack = 0;
   /** 갈기를 보낸 뒤 서버 답이 오면 보여 줄 알림 */
   private pending: string | null = null;
   private pointer = { x: 0, y: 0 };
@@ -69,11 +64,6 @@ export class CardPanel implements CardSource {
   get active(): (string | null)[] { return (this.mine?.active ?? Array<string>(ACTIVE_SLOTS).fill('')).map((id) => id || null); }
   get passive(): string[] { return this.mine?.passive ?? []; }
   get busy(): boolean { return this.locked(); }
-  /** 임시 팩 열기 버튼 글자 */
-  get packLabel(): string {
-    const c = this.conn.cards;
-    return c.gifts > 0 ? `선물 팩 ${c.gifts} (O)` : `조각 ${packDef(TEMP_PACK)?.price ?? 0} · 팩 (O)`;
-  }
   get drag(): CardSource['drag'] {
     const d = this.dragging;
     if (!d?.moved) return null;
@@ -103,11 +93,6 @@ export class CardPanel implements CardSource {
       if (fail) this.say(FAIL_TEXT[fail], SK.danger);
       else if (this.pending) this.say(this.pending, SK.coin);
       this.pending = null;
-    }
-    if (this.conn.packSeq !== this.seenPack) {
-      this.seenPack = this.conn.packSeq;
-      const pk = this.conn.lastPack;
-      if (pk) this.say(packText(pk), SK.coin, NOTE_PACK_MS);
     }
     const now = Date.now();
     if (this.note && now > this.noteUntil) this.note = null;
@@ -143,7 +128,6 @@ export class CardPanel implements CardSource {
     if (code === 'Digit1' || code === 'Digit2') return this.variant(Number(code.slice(-1)) - 1);
     if (code === 'KeyG') return this.grind(this.sel);
     if (code === 'KeyQ' || code === 'KeyE') return this.setTab((this.tabIndex + (code === 'KeyQ' ? -1 : 1) + MVP_WEAPONS.length) % MVP_WEAPONS.length);
-    if (code === 'KeyO') this.openPack();
   }
 
   /** 누름. 패널 밖이면 false (닫기) */
@@ -190,8 +174,7 @@ export class CardPanel implements CardSource {
       const id = this.passive[h.i];
       if (id) { this.view = 'pas'; this.sel = id; drag(id, `p${h.i}`); }
     } else if (h.kind === 'btn') {
-      if (h.b === 'pack') this.openPack();
-      else if (h.b === 'grind') this.grind(this.sel);
+      if (h.b === 'grind') this.grind(this.sel);
       else this.toggle(this.sel);
     } else if (h.kind === 'var') this.variant(h.i);
   }
@@ -285,16 +268,8 @@ export class CardPanel implements CardSource {
     this.conn.send('card', { op: 'variant', cardId: id, variant });
   }
 
-  /** 임시 팩 열기 (CD-5 카드 상점 전까지): 지금 무기 팩 1, 선물 → 조각 → 코인 */
-  private openPack(): void {
-    if (this.blocked(this.busy ? 'busy' : null)) return;
-    const c = this.conn.cards, price = packDef(TEMP_PACK)?.price ?? 0;
-    const pay = c.gifts > 0 ? 'gift' : c.dust >= price ? 'dust' : 'coin';
-    this.conn.send('card', { op: 'open', weapon: this.weapon, pack: TEMP_PACK, pay });
-  }
-
-  private say(text: string, color: string, ms = NOTE_MS): void {
+  private say(text: string, color: string): void {
     this.note = { text, color };
-    this.noteUntil = Date.now() + ms;
+    this.noteUntil = Date.now() + NOTE_MS;
   }
 }

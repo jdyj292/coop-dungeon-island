@@ -1,53 +1,38 @@
-// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·장식·물약·재료) / 게시판(기록·메모·주민) / 우물. 카드 창(K)은 전용 창 (islandCards.ts)
+// 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·장식·물약·재료) / 게시판(기록·메모·주민) / 우물. 카드 창(K)·카드 상점은 전용 창 (islandCards.ts·cardShop.ts)
 // 키: ↑↓ 고르기, ←→ 수량, Q·E·Tab 탭, Enter 사기·장착·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
 import type Phaser from 'phaser';
-import { CARDS, facilityName, ISLAND, ITEMS, MVP_WEAPONS, NET, PASSIVES, ROOMS, SKILLS, WEAPONS } from '@game/shared';
+import { ISLAND, ITEMS, MVP_WEAPONS, NET, ROOMS } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
 import { moneyLines } from './islandBadges';
+import { ago, itemName, logText, weaponName } from './panelText';
 import { ResidentsTab } from './islandResidents';
+import { CardShop } from './cardShop';
 import { CardPanel } from './islandCards';
 
 const floorName = (f: string): string => ROOMS[f]?.name ?? `${f.replace(/\D/g, '')}층`;
 
-export type PanelKind = 'shop' | 'bag' | 'skill' | 'board' | 'well';
+export type PanelKind = 'shop' | 'bag' | 'skill' | 'cardShop' | 'board' | 'well';
 
 const TABS: Record<PanelKind, { label: string; disabled?: boolean }[]> = {
   shop: [{ label: '물약' }, { label: '장식' }, { label: '의상', disabled: true }],
   bag: [{ label: '장비' }, { label: '장식' }, { label: '물약' }, { label: '재료' }],
-  // 카드 창은 전용 창 (무기 탭도 그 안에)
+  // 카드 창·카드 상점은 전용 창 (무기 탭도 그 안에)
   skill: [],
+  cardShop: [],
   board: [{ label: '기록' }, { label: '메모' }, { label: '주민' }],
   // 층 선택 (해금된 층만, island.json well.floors). 이름은 rooms.json name (수련장), 없으면 "N층"
   well: ISLAND.well.floors.map((f) => ({ label: floorName(f) })),
 };
-const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', skill: '카드', board: '게시판', well: '우물' };
+const TITLE: Record<PanelKind, string> = { shop: '잡화점', bag: '가방', skill: '카드', cardShop: '카드 상점', board: '게시판', well: '우물' };
 const POTION_COLOR: Record<string, string> = { hpPotion: 'global.ui.hp', mpPotion: 'global.ui.mp' };
-const VERB: Record<string, string> = {
-  found: '섬을 만듦', 'dungeon:clear': '1층 클리어', 'dungeon:return': '1층에서 귀환', 'dungeon:wipe': '1층 전멸', join: '섬에 들어옴', invite: '초대 코드를 바꿈', place: '놓음', move: '옮김', remove: '치움', buy: '삼', treasury: '금고로 삼',
-};
-/** 기록 한 줄 (card = 티어 3 이상 뽑음, island.md 5장) */
-const logText = (action: string, id: string | null): string => (action === 'card' && id
-  ? `${weaponName(CARDS[id]?.weapon)} 카드 '${SKILLS[id]?.name ?? PASSIVES[id]?.name ?? id}'을 뽑음` : `${id ? `${itemName(id)} ` : ''}${VERB[action] ?? action}`);
 const MAX_QTY = 99;
-/** 무기 이름 (우물 대기 줄·가방 장비 탭) */
-const weaponName = (id = 'greatsword') => WEAPONS[id]?.name ?? id;
 /** 가방 장비 탭 번호 */
 const EQUIP_TAB = 0;
 /** 가방 장식·물약·재료 탭 번호 */
 const DECO_TAB = 1, POTION_TAB = 2;
 /** 게시판 주민 탭 번호 */
 const RESIDENTS_TAB = 2;
-
-/** 몇 분 전 */
-export function ago(at: number, now: number): string {
-  const m = Math.floor((now - at) / 60_000);
-  if (m < 1) return '방금';
-  if (m < 60) return `${m}분 전`;
-  return m < 1440 ? `${Math.floor(m / 60)}시간 전` : `${Math.floor(m / 1440)}일 전`;
-}
-
-const itemName = (id: string | null) => (id ? ITEMS.decorations[id]?.name ?? ITEMS.consumables[id]?.name ?? ITEMS.materials[id]?.name ?? facilityName(id) ?? id : '');
 
 export class IslandPanels {
   open: PanelKind | null = null;
@@ -59,12 +44,14 @@ export class IslandPanels {
   private panel: ListPanel;
   private residents: ResidentsTab;
   private cards: CardPanel;
+  private cardShop: CardShop;
 
   /** writeMemo = 메모 입력창 열기 (DOM, Scene이 띄움) */
   constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private writeMemo: () => void) {
     this.panel = new ListPanel(scene, depth);
     this.residents = new ResidentsTab(conn);
     this.cards = new CardPanel(scene, conn, depth, () => this.weaponLocked(), () => this.myWeapon());
+    this.cardShop = new CardShop(scene, conn, depth, () => this.myWeapon());
     // 섬 주인이면 기다리는 신청 수 (M 버튼 이름표)
     this.residents.refresh();
   }
@@ -87,6 +74,7 @@ export class IslandPanels {
     this.confirm = false;
     if (kind === 'board') this.conn.send('board', {});
     if (kind === 'skill') this.cards.show();
+    if (kind === 'cardShop') this.cardShop.show();
   }
 
   private setTab(t: number): void {
@@ -125,11 +113,13 @@ export class IslandPanels {
     this.open = null;
     this.panel.hide();
     this.cards.hide();
+    this.cardShop.hide();
   }
 
   destroy(): void {
     this.panel.destroy();
     this.cards.destroy();
+    this.cardShop.destroy();
   }
 
   /** 지금 탭의 줄과 줄마다의 품목 id */
@@ -239,6 +229,7 @@ export class IslandPanels {
   onKey(code: string): void {
     if (!this.open) return;
     if (this.onCards()) return code === 'Escape' ? this.close() : this.cards.onKey(code);
+    if (this.open === 'cardShop') return void (this.cardShop.onKey(code) || this.close());
     const tabs = TABS[this.open], n = this.rows().rows.length;
     const nextTab = (d: number) => {
       let t = this.tab;
@@ -261,8 +252,8 @@ export class IslandPanels {
   /** 마우스 (화면 좌표). 패널이 열려 있으면 true */
   onPointer(x: number, y: number): boolean {
     if (!this.open) return false;
-    if (this.onCards()) {
-      if (!this.cards.onPointerDown(x, y)) this.close();
+    if (this.onCards() || this.open === 'cardShop') {
+      if (!(this.onCards() ? this.cards : this.cardShop).onPointerDown(x, y)) this.close();
       return true;
     }
     const h = this.panel.hit(x, y);
@@ -283,6 +274,7 @@ export class IslandPanels {
   /** 마우스 이동·떼기 (카드 창 마우스 올림·끌어다 장착) */
   onPointerMove(x: number, y: number): void {
     if (this.onCards()) this.cards.onPointerMove(x, y);
+    else if (this.open === 'cardShop') this.cardShop.onPointerMove(x, y);
   }
 
   onPointerUp(x: number, y: number): void {
@@ -292,6 +284,7 @@ export class IslandPanels {
   /** fieldH = 아래 띠 위까지 (목록 패널), height = 화면 전체 (카드 창은 아래 띠를 덮음) */
   update(width: number, fieldH: number, height: number): void {
     if (this.onCards()) this.cards.update(width, height);
+    else if (this.open === 'cardShop') this.cardShop.update(width, height);
     else if (this.open) this.panel.render(this.view(), width, fieldH);
   }
 

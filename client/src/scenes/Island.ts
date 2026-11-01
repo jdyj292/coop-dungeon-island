@@ -37,7 +37,7 @@ const PLACE_FAIL: Record<string, string> = {
 
 /**
  * 섬 씬 (docs/island.md, hud.md 4·8장): 섬 방에 접속해 주민과 함께 걷고, 꾸미고, 사고, 이야기하고, 우물에서 던전으로 출발한다
- * 조작: 방향키·WASD 이동(좌우 두 번 = 달리기), B 배치 모드, I 가방, K 스킬, M 게시판, E 잡화점·게시판·우물(앞에서), Enter 채팅, Esc 설정(도움말 탭), L 로그아웃 (개발 임시)
+ * 조작: 방향키·WASD 이동(좌우 두 번 = 달리기), B 배치 모드, I 가방, K 스킬, M 게시판, E 잡화점·카드 상점·게시판·우물(앞에서), Enter 채팅, Esc 설정(도움말 탭), L 로그아웃 (개발 임시)
  * 아래 띠 B·I·K·M 클릭, 마우스를 올리면 이름표 (hud.md 8장)
  */
 export class Island extends Phaser.Scene {
@@ -177,6 +177,7 @@ export class Island extends Phaser.Scene {
     else if (e.code === 'KeyE') {
       const near = nearFacility(s.myPos, s.conn.facilities);
       if (near === 'shop') s.panels.show('shop');
+      else if (near === 'cardShop') s.panels.show('cardShop');
       else if (near === 'board') s.panels.show('board');
       else if (near === 'well') {
         // 이미 대기 중이면 바로 합류 (층은 먼저 합류한 사람 것). 아무도 없으면 패널에서 층(탭)을 고르고 합류

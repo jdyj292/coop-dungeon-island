@@ -1,5 +1,5 @@
 // 카드 창 (K) 그리기 (hud.md 8장, 승인 데모 docs/refs/demos/card_window.html, 게임 화면 384×216 기준 좌표):
-// 제목 띠(카드 그림·무기 탭·임시 팩 열기·무기 Lv·조각) / 위 장착 줄(액티브 A S D F · 패시브 비용 막대·칸) / 계열 보너스 줄 /
+// 제목 띠(카드 그림·무기 탭·무기 Lv·조각) / 위 장착 줄(액티브 A S D F · 패시브 비용 막대·칸) / 계열 보너스 줄 /
 // 액티브·패시브 카드 탭 / 보유 카드(줄 = 기본·공용 / A / B, 티어 짝) / 오른쪽 상세 (cardDetail.ts). 상태·입력은 stage/islandCards.ts (CardSource)
 import type Phaser from 'phaser';
 import { drawDetail } from './cardDetail';
@@ -106,11 +106,6 @@ export class CardWindow {
     R(g, rx, 11, lw, 11, SK.border);
     R(g, rx + 1, 12, lw - 2, 9, SK.lit);
     p.text(rx + 5, 12, lv, SK.txt);
-    // 임시 팩 열기 (CD-5 카드 상점 전까지, O 키)
-    const pw = labW(s.packLabel) + 12, px = Math.max(tx + 6, rx - pw - 6), hv = s.hoverBtn === 'pack' && !s.busy;
-    buttonBox(g, px, 10, pw, { hover: hv });
-    p.center(px, pw, 10, s.packLabel, hv ? SK.coin : SK.txt, 'koSmall', s.busy ? 0.35 : 1);
-    if (!s.busy) p.hit(px, 10, pw, 12, { kind: 'btn', b: 'pack' });
   }
 
   /** 위 장착 줄: 액티브 A S D F 22×22 / 패시브 비용 막대 "사용/한도" + 16×16 칸 + 빈 자리 + */

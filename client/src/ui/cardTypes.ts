@@ -3,7 +3,7 @@ import type { Branch } from '@game/shared';
 import type { FaceLook } from './cardParts';
 
 export type CardView = 'act' | 'pas';
-export type CardBtn = 'grind' | 'equip' | 'pack';
+export type CardBtn = 'grind' | 'equip';
 export type CardHit =
   | { kind: 'tab'; i: number } | { kind: 'view'; v: CardView } | { kind: 'card'; id: string } | { kind: 'aslot'; k: number } | { kind: 'pslot'; i: number }
   | { kind: 'passArea' } | { kind: 'bonus'; b: Branch } | { kind: 'btn'; b: CardBtn } | { kind: 'var'; i: number } | { kind: 'inside' };
@@ -68,8 +68,6 @@ export interface CardSource {
   hoverBonus: Branch | null;
   /** 갈기 확인 중인 카드 */
   grindArm: string | null;
-  /** 임시 팩 열기 버튼 글자 (CD-5 카드 상점 전까지) */
-  packLabel: string;
   /** 끌고 있는 카드 (움직였을 때만): 어디서, 놓을 액티브 칸·패시브 칸 위 */
   drag: { id: string; from: string; aslot: number; pass: boolean } | null;
   note: { text: string; color: string } | null;

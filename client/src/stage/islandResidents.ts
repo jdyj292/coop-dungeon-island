@@ -4,7 +4,7 @@ import { AUTH, type JoinRequestItem } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { API_ERROR_TEXT, api } from '../net/api';
 import type { PanelButton, PanelRow } from '../ui/listPanel';
-import { ago } from './islandPanels';
+import { ago } from './panelText';
 
 /** 아래 줄 알림 시간 */
 const NOTE_MS = 2000;

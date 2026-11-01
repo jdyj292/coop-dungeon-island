@@ -1,6 +1,6 @@
 // 섬 장식 배치·시설 옮기기 (docs/island.md 2·3장, CLAUDE.md 방 구조): 메시지를 받은 순서대로 처리 → 같은 칸은 먼저 온 요청만 성공
 // 규칙(shared canPlace·canMoveFacility) 검사 → DB 트랜잭션(IslandStore) → 상태(placements·facilities·storage) 반영 → 바뀐 가방은 본인에게
-import { canMoveFacility, canPlace, defaultFacilities, facilitiesWith, ITEMS, parseC2S, type Facility, type Placed, type Vec2 } from '@game/shared';
+import { blockingPlaced, canMoveFacility, canPlace, defaultFacilities, facilitiesWith, ITEMS, parseC2S, settleFacility, type Facility, type Placed, type Vec2 } from '@game/shared';
 import type { IslandStore, PlacementRow } from '../db/islandStore';
 import { FacilityPos, Placement, type IslandState } from '../schema/IslandState';
 
@@ -17,9 +17,23 @@ export class IslandPlacement {
     private residents: () => Vec2[],
     private dev: boolean,
   ) {
+    this.settleNew();
     for (const p of store.placements()) this.show(p);
     for (const f of facilitiesWith(store.facilities())) state.facilities.set(f.id, Object.assign(new FacilityPos(), { x: f.x, y: f.y }));
     this.syncStorage();
+  }
+
+  /** 옮긴 적 없는 시설(새로 더한 카드 상점 등)이 장식·시설에 막혔으면 가장 가까운 빈칸에, 빈칸이 없으면 막던 장식을 치우고 기본 칸에 (island.md 2장) */
+  private settleNew(): void {
+    const saved = this.store.facilities();
+    for (const f of defaultFacilities()) {
+      if (saved.some((s) => s.id === f.id)) continue;
+      const rows = this.store.placements(), placed = rows.map((p) => ({ id: String(p.id), itemId: p.itemId, x: p.x, y: p.y, rot: p.rot }));
+      const facs = facilitiesWith(this.store.facilities());
+      const to = settleFacility(f.id, facs, placed);
+      if (to === 'clear') this.store.settleFacility(f.id, f.x, f.y, blockingPlaced(f, placed).map((p) => Number(p.id)));
+      else if (to) this.store.settleFacility(f.id, to.x, to.y);
+    }
   }
 
   /** 이 섬의 시설 위치 (상태에서) */

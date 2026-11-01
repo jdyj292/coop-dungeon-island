@@ -79,6 +79,28 @@ export function canMoveFacility(id: string, x: number, y: number, facs: readonly
   return null;
 }
 
+/**
+ * 새로 더한 시설의 자리 (island.md 2장 "시설을 새로 더할 때"): 이미 있는 섬에서 옮긴 적 없는 시설이 기본 칸에 놓일 수 있으면 null,
+ * 장식·시설에 막혔으면 놓을 수 있는 가장 가까운 칸, 그런 칸이 없으면 'clear' (기본 칸·입구의 장식을 치움)
+ */
+export function settleFacility(id: string, facs: readonly Facility[], placed: readonly Placed[]): { x: number; y: number } | 'clear' | null {
+  const f = facs.find((o) => o.id === id);
+  if (!f || isFixedFacility(id) || !canMoveFacility(id, f.x, f.y, facs, placed)) return null;
+  const P = ISLAND.place;
+  let best: { x: number; y: number } | null = null, bd = Infinity;
+  for (let y = P.y; y < P.y + P.h; y++) {
+    for (let x = P.x; x < P.x + P.w; x++) {
+      const d = (x - f.x) ** 2 + (y - f.y) ** 2;
+      if (d < bd && !canMoveFacility(id, x, y, facs, placed)) { best = { x, y }; bd = d; }
+    }
+  }
+  return best ?? 'clear';
+}
+
+/** 시설 칸이나 입구를 막는 장식 (settleFacility 'clear' 때 치울 것) */
+export const blockingPlaced = (f: CellRect, placed: readonly Placed[]): Placed[] =>
+  placed.filter((p) => { const r = footprint(p.itemId, p.x, p.y, p.rot); return overlaps(r, f) || overlaps(r, entranceOf(f)); });
+
 /** 걸을 수 없는 장식 → 이동 장애물 (islandBounds에 더함) */
 export const placementBlocks = (placed: readonly Placed[]): Block[] =>
   placed.filter((p) => !ITEMS.decorations[p.itemId]?.walkable).map((p) => cellBlock(footprint(p.itemId, p.x, p.y, p.rot), p.itemId));
