@@ -21,7 +21,7 @@ const hitIds = (ev: SimEvent[]) => ev.flatMap((e) => (e.type === 'hit' ? [e.m.id
 const cast = (variant?: string): PlayerInput => ({ ...none, skill: resolveSkill('gs_draw', variant ? { points: 3, variant } : { points: 1 }) });
 
 describe('발도', () => {
-  it('active 동안 사라져 제자리·무적, 끝나면 64px 앞에 나타난다', () => {
+  it('active 동안 사라져 제자리·무적, 끝나면 84px 앞에 나타난다', () => {
     const sim = room(), p = sim.player;
     step(sim, cast(), 0.12);
     expect(isVanished(p.fighter.run)).toBe(true);
@@ -29,12 +29,12 @@ describe('발도', () => {
     expect(hurtPlayer(p, 5, 'heavy', -1)).toEqual([]);
     step(sim, null, 0.1);
     expect(isVanished(p.fighter.run)).toBe(false);
-    expect(p.pos.x).toBe(164);
+    expect(p.pos.x).toBe(184);
   });
 
   it('바로는 안 맞고, 나타난 뒤 지나온 길의 적이 한꺼번에 베인다', () => {
     const sim = room();
-    const ms = sim.spawn([{ kind: 'capknight', x: 130, y: 50 }, { kind: 'capknight', x: 170, y: 50 }, { kind: 'capknight', x: 240, y: 50 }]);
+    const ms = sim.spawn([{ kind: 'capknight', x: 130, y: 50 }, { kind: 'capknight', x: 170, y: 50 }, { kind: 'capknight', x: 205, y: 50 }]);
     ms.forEach(tough);
     expect(hitIds(step(sim, cast(), 0.3))).toEqual([]);
     // 한 틱에 둘 다
@@ -43,12 +43,12 @@ describe('발도', () => {
     expect(tick.sort()).toEqual([ms[0]!.id, ms[1]!.id].sort());
   });
 
-  it('후퇴 발도: 32px 뒤에 나타나고 출발 자리 앞의 적이 늦게 베인다', () => {
+  it('후퇴 발도: 42px 뒤에 나타나고 출발 자리 앞의 적이 늦게 베인다', () => {
     const sim = room(), p = sim.player;
     const [m] = sim.spawn([{ kind: 'capknight', x: 116, y: 50 }]);
     tough(m!);
     expect(hitIds(step(sim, cast('back'), 0.3))).toEqual([]);
-    expect(p.pos.x).toBe(68);
+    expect(p.pos.x).toBe(58);
     expect(hitIds(step(sim, null, 0.4))).toEqual([m!.id]);
   });
 });
