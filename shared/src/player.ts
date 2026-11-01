@@ -214,7 +214,7 @@ export function hastePlayer(p: PlayerState, sec: number, mul: number): void {
 
 /** 스킬 시작: 재입력이면 횟수만 줄이고(충전 없음), 아니면 쿨타임·MP를 쓰고 재입력 변형이면 대기를 연다 */
 function startSkill(p: PlayerState, run: ActionRun): void {
-  const window = COMBAT.skillTree.reinputWindow, def = run.def;
+  const window = COMBAT.card.reinputWindow, def = run.def;
   if (canReinput(p, def)) {
     run.charge = noCharge();
     const left = p.reinput!.left - 1;

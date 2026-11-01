@@ -5,7 +5,7 @@ import { TICK } from '../constants';
 import type { Monster } from '../monster/state';
 import { perksOf, withPerks } from '../passives';
 import { chargeLevel, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from '../player';
-import { resolveSkill, type SkillBuild } from '../skillTree';
+import { resolveSkill, type SkillBuild } from '../cards/build';
 import { AURA_SEC } from './echoes';
 import { RoomSim, type SimEvent } from './room';
 
@@ -22,7 +22,7 @@ const spawn = (sim: RoomSim, kind: string, ...at: [number, number][]) =>
   sim.spawn(at.map(([x, y]) => ({ kind, x, y }))).map((m) => Object.assign(m, { hp: 50000, maxHp: 50000 }));
 const hits = (ev: SimEvent[]) => ev.flatMap((e) => (e.type === 'hit' ? [e.damage] : []));
 const hitsOn = (ev: SimEvent[], m: Monster) => ev.filter((e) => e.type === 'hit' && e.m === m).length;
-const cast = (skills: SkillBuild, id: string): PlayerInput => ({ ...none, skill: withPerks(resolveSkill(id, skills[id] ?? { points: 1 }), perksOf(gs, skills)) });
+const cast = (skills: SkillBuild, id: string): PlayerInput => ({ ...none, skill: withPerks(resolveSkill(id, skills[id] ?? { level: 1 }), perksOf(gs, skills)) });
 
 /** 혼자 충전: holdSec 동안 누르고 있다가 뗀다. 발동 순간 정의와 그때까지 가장 높았던 충전 비율 */
 function charge(p: PlayerState, skill: ActionDef, holdSec: number): { def: ActionDef; peak: number } {
@@ -54,12 +54,12 @@ describe('파쇄참', () => {
   });
 
   it('3단 충전: 최대 2초까지 모여 1000% → 2000%, 즉발은 누르고 있어도 충전 없음', () => {
-    const tri = resolveSkill('gs_crush', { points: 1, variant: 'tri' });
+    const tri = resolveSkill('gs_crush', { level: 1, variant: 'tri' });
     const half = charge(player(), tri, tri.phases.windup + 1.0);
     expect(Math.abs(half.def.coef - 1500)).toBeLessThan(20);
     expect(half.peak).toBeCloseTo(0.5, 1);
     expect(charge(player(), tri, 5).def.coef).toBeCloseTo(2000);
-    const inst = resolveSkill('gs_crush', { points: 1, variant: 'instant' });
+    const inst = resolveSkill('gs_crush', { level: 1, variant: 'instant' });
     const r = charge(player(), inst, 5);
     expect(r.def.coef).toBe(1100);
     expect(r.peak).toBe(0);
@@ -70,8 +70,8 @@ describe('거인의 힘', () => {
   it('충전 최대 보너스 +50% → +80% (3포인트 +100%)', () => {
     const crush = resolveSkill('gs_crush');
     expect(charge(player(), crush, 5).def.coef).toBeCloseTo(2250);
-    expect(charge(player({ gs_giant: { points: 1 } }), crush, 5).def.coef).toBeCloseTo(2700);
-    expect(charge(player({ gs_giant: { points: 3 } }), crush, 5).def.coef).toBeCloseTo(3000);
+    expect(charge(player({ gs_giant: { level: 1 } }), crush, 5).def.coef).toBeCloseTo(2700);
+    expect(charge(player({ gs_giant: { level: 2 } }), crush, 5).def.coef).toBeCloseTo(3000);
   });
 });
 
@@ -85,14 +85,14 @@ describe('대지붕괴', () => {
   });
 
   it('확산은 넓고 각 90%, 솟구침은 끝에 모두 띄움 (300%)', () => {
-    const wide = { gs_collapse: { points: 1, variant: 'spread' } };
+    const wide = { gs_collapse: { level: 1, variant: 'spread' } };
     const sim = room(wide);
     const [far] = spawn(sim, 'capknight', [190, 50]);
     expect(hitsOn(run(sim, cast(wide, 'gs_collapse'), 3.6), far!)).toBeGreaterThan(3);
     const base = room();
     const [far2] = spawn(base, 'capknight', [190, 50]);
     expect(hitsOn(run(base, cast({}, 'gs_collapse'), 3.6), far2!)).toBe(0);
-    const rise = { gs_collapse: { points: 1, variant: 'rise' } };
+    const rise = { gs_collapse: { level: 1, variant: 'rise' } };
     const sim2 = room(rise);
     const [m] = spawn(sim2, 'capknight', [140, 50]);
     const ev = run(sim2, cast(rise, 'gs_collapse'), 3.35);
@@ -104,7 +104,7 @@ describe('대지붕괴', () => {
 
 describe('전장 장악', () => {
   it('둘레 3타일 안 적만 감속, 벗어나면 곧 풀림', () => {
-    const sim = room({ gs_dominate: { points: 1 } });
+    const sim = room({ gs_dominate: { level: 1 } });
     const [near, far] = spawn(sim, 'capknight', [140, 50], [200, 50]);
     run(sim, none, 0.1);
     expect(near!.slow.amount).toBeCloseTo(0.3);

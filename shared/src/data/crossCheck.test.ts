@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { applyVariant, basicDps, crossCheck, type CrossRefs, type GameData } from './crossCheck';
-import { COMBAT, MONSTERS, PASSIVES, ROOMS, SKILLS, WEAPONS } from './load';
+import { CARD_DATA, COMBAT, MONSTERS, PACKS, PASSIVES, ROOMS, SKILLS, WEAPONS } from './load';
 import { FILE_SCHEMAS, monsterAttack, playerAction, withoutNotes } from './schema';
 
 const readJson = (p: string) => JSON.parse(readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8'));
@@ -12,9 +12,10 @@ const refs: CrossRefs = {
   visuals: Object.keys(readJson('client/data/sprites/weapons_visual.json').profiles),
   sprites: Object.keys(withoutNotes(readJson('client/data/sprites/monsters.json'))),
   sounds: ['action', 'clear'].flatMap((bus) => Object.keys(readJson('client/data/sfx.json')[bus])),
+  cardColors: Object.keys(withoutNotes(readJson('client/data/palette.json').global.ui.card)),
 };
 const rules = { basicDps: {}, tolerance: 0.15 };
-const fresh = (): GameData => structuredClone({ weapons: WEAPONS, skills: SKILLS, passives: PASSIVES, monsters: MONSTERS, rooms: ROOMS, combat: COMBAT });
+const fresh = (): GameData => structuredClone({ weapons: WEAPONS, skills: SKILLS, passives: PASSIVES, monsters: MONSTERS, rooms: ROOMS, cards: CARD_DATA, packs: { packs: PACKS }, combat: COMBAT });
 const errors = (d: GameData) => crossCheck(d, refs, rules).filter((i) => i.level === 'error').map((i) => i.where);
 
 describe('현재 데이터', () => {
@@ -78,6 +79,31 @@ describe('applyVariant', () => {
   });
 });
 
+describe('카드 교차 참조 (data.md 10장)', () => {
+  it('카드가 없는 스킬, 없는 스킬을 가리키는 카드, 계열이 다른 카드', () => {
+    const d = fresh();
+    delete d.cards.cards.gs_whirl;
+    d.cards.cards.gs_nope = { weapon: 'greatsword', kind: 'active', branch: 'A', tier: 1 };
+    d.cards.cards.gs_wave!.branch = 'A';
+    expect(errors(d)).toEqual(['cards.cards.gs_wave.branch', 'cards.cards.gs_nope', 'skills.gs_whirl']);
+  });
+
+  it('없는 티어, 팩 확률 합, 처음 카드가 기본 스킬이 아님, 색 키', () => {
+    const d = fresh();
+    d.cards.cards.gs_crush!.tier = 9;
+    d.packs.packs['1']!.odds = [80, 30];
+    d.cards.starter.greatsword = ['gs_whirl'];
+    d.packs.packs['2']!.color = 'zzz';
+    expect(errors(d)).toEqual(['cards.cards.gs_crush.tier', 'cards.starter.greatsword', 'packs.packs.1.odds', 'packs.packs.2.color']);
+  });
+
+  it('계열 보너스 효과는 passives.json effect 키만', () => {
+    const d = fresh();
+    d.cards.branchBonus.greatsword!.A[0] = { damageMul: 1.1 };
+    expect(errors(d)).toEqual(['cards.branchBonus.greatsword.A.0']);
+  });
+});
+
 describe('스키마', () => {
   const base = { id: 'a', phases: { windup: 0.1, active: 0.1, recovery: 0.1 }, coef: 100, poses: {} };
   const box = { forward: 0, width: 10, depth: 13, z: 'both' };
@@ -93,6 +119,6 @@ describe('스키마', () => {
     expect(monsterAttack.safeParse({ ...m, damage: 5 }).success).toBe(false);
   });
   it('모든 파일 스키마가 있음', () => {
-    expect(Object.keys(FILE_SCHEMAS)).toHaveLength(9);
+    expect(Object.keys(FILE_SCHEMAS)).toHaveLength(11);
   });
 });

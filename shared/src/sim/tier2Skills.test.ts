@@ -4,7 +4,7 @@ import { weaponDef } from '../actions';
 import { TICK } from '../constants';
 import type { Monster } from '../monster/state';
 import type { PlayerInput } from '../player';
-import { resolveSkill } from '../skillTree';
+import { resolveSkill } from '../cards/build';
 import { RoomSim, type SimEvent } from './room';
 
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
@@ -17,7 +17,7 @@ const run = (sim: RoomSim, first: PlayerInput, sec: number): SimEvent[] => {
 };
 const tough = (m: Monster) => Object.assign(m, { hp: 5000, maxHp: 5000 });
 const hits = (ev: SimEvent[]) => ev.flatMap((e) => (e.type === 'hit' ? [e.damage] : []));
-const cast = (id: string, variant?: string): PlayerInput => ({ ...none, skill: resolveSkill(id, variant ? { points: 3, variant } : { points: 1 }) });
+const cast = (id: string, variant?: string): PlayerInput => ({ ...none, skill: resolveSkill(id, variant ? { level: 2, variant } : { level: 1 }) });
 
 describe('지진', () => {
   it('둘레(뒤쪽 포함) 땅의 적을 띄운다', () => {
@@ -92,7 +92,7 @@ describe('중력장', () => {
   });
 
   it('압축장: 2초 동안 60% 느리게', () => {
-    const def = resolveSkill('st_gravfield', { points: 3, variant: 'crush' });
+    const def = resolveSkill('st_gravfield', { level: 2, variant: 'crush' });
     expect(def.status).toMatchObject({ type: 'slow', time: 2, amount: 0.6 });
   });
 });

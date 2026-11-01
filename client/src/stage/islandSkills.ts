@@ -1,10 +1,11 @@
 // 스킬 창 (K, hud.md 8장, skills.md 1장, 승인 데모 docs/refs/demos/skill_window.html): 상태·입력. 그리기는 ui/skillWindow.ts
-// 무기 탭, 계열 A·B 고르기(고른 계열만 보임), 액티브/패시브 보기, 칸 고르기·마우스 올림 미리 보기, - + 포인트, 변형 카드, 장착(끌어다 놓기 또는 A S D F G H), 초기화(두 번).
-// 키: ↑↓←→ 칸 · Tab 액티브/패시브 · B 계열 바꾸기 · + - 포인트 · 1 2 변형 · A S D F G H 장착 · Q E 무기 · R 초기화. 검사는 서버(islandShop skill), 미리 같은 규칙으로 막고 사유를 보여 줌
+// CD-4 카드 창 전까지 임시 연결 (shared cards/interim.ts): 모든 카드를 가진 것으로 보고 - + 로 기본(1)·강화(2), 패시브는 0 = 안 낌.
+// 무기 탭, 계열 A·B 보기(섞어 낄 수 있음), 액티브/패시브 보기, 칸 고르기·마우스 올림 미리 보기, - + 단계, 변형 카드(강화만), 장착(끌어다 놓기 또는 A S D F), 초기화(두 번).
+// 키: ↑↓←→ 칸 · Tab 액티브/패시브 · B 계열 보기 · + - 단계 · 1 2 변형 · A S D F 장착 · Q E 무기 · R 초기화. 검사는 서버(islandShop skill), 미리 같은 규칙으로 막고 사유를 보여 줌
 import type Phaser from 'phaser';
 import {
-  branchOf, buildFrom, checkEquip, checkNode, isOpen, maxPointsOf, MVP_WEAPONS, nodeOf, PASSIVES, pointsAt, SKILLS, SLOT_COUNT, treeSkills, unlockLevelOf,
-  weaponDef, weaponPassives, WEAPONS, type Branch, type Loadout, type NodeFail, type S2C,
+  ACTIVE_SLOTS, cardBranch, passiveCost, checkInterimEquip, checkInterimNode, equipLevelOf, MAX_CARD_LEVEL, MVP_WEAPONS, PASSIVES, SKILLS, tierOf, weaponCards,
+  weaponDef, WEAPONS, type Branch, type InterimFail, type InterimNodes, type S2C,
 } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { SK } from '../ui/skillParts';
@@ -12,11 +13,16 @@ import { SkillWindow, type NodeInfo, type SkillHit, type SkillSource, type Skill
 
 /** 알림 시간 */
 const NOTE_MS = 2000;
-const SLOT_KEYS = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH'];
-const FAIL_TEXT: Record<NonNullable<S2C['skills']['fail']> | NodeFail, string> = {
-  skill: '이 무기 스킬이 아닙니다', points: '더 올리거나 내릴 수 없습니다', variant: '없는 변형입니다', sp: 'SP가 모자랍니다',
-  locked: '아직 레벨이 모자랍니다', branch: '선택한 계열 스킬만 됩니다', slot: '없는 슬롯입니다', busy: '출발 카운트다운 중에는 못 바꿉니다',
+const SLOT_KEYS = ['KeyA', 'KeyS', 'KeyD', 'KeyF'].slice(0, ACTIVE_SLOTS);
+const FAIL_TEXT: Record<NonNullable<S2C['skills']['fail']>, string> = {
+  skill: '이 무기 액티브 카드가 아닙니다', points: '더 올리거나 내릴 수 없습니다', variant: '변형은 강화 카드만 고릅니다', cap: '패시브 비용 한도를 넘습니다',
+  locked: '아직 숙련도가 모자랍니다', slot: '없는 칸입니다', busy: '출발 카운트다운 중에는 못 바꿉니다',
 };
+/** 저장 문자열 "id:단계[:변형]" → 노드 */
+const nodesFrom = (s: string): InterimNodes => Object.fromEntries(s.split(',').filter(Boolean).map((part) => {
+  const [id = '', lv = '', variant] = part.split(':');
+  return [id, { points: Number(lv), ...(variant ? { variant } : {}) }];
+}));
 type Weapon = (typeof MVP_WEAPONS)[number];
 
 export class SkillPanel implements SkillSource {
@@ -32,8 +38,8 @@ export class SkillPanel implements SkillSource {
   private seenSeq = 0;
   private pointer = { x: 0, y: 0 };
   private dragging: { id: string; from: number; sx: number; sy: number; moved: boolean } | null = null;
-  /** 계열을 바꿔 서버 값을 기다리는 중: 오면 같은 자리 칸을 고름 */
-  private afterBranch: { b: Branch; at: number } | null = null;
+  /** 보고 있는 계열 (무기마다, 계열 선택이 아니라 보기만) */
+  private viewBranch: Record<string, Branch> = {};
   private win: SkillWindow;
 
   constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private locked: () => boolean, private myWeapon: () => string) {
@@ -45,13 +51,13 @@ export class SkillPanel implements SkillSource {
   get tab(): number { return this.tabIndex; }
   private get weapon(): Weapon { return MVP_WEAPONS[this.tabIndex] ?? 'greatsword'; }
   private get mine() { return this.conn.skills.weapons.find((w) => w.weapon === this.weapon); }
-  private get build() { return buildFrom(this.mine?.build ?? ''); }
+  private get nodes(): InterimNodes { return nodesFrom(this.mine?.build ?? ''); }
   get level(): number { return this.mine?.level ?? 1; }
-  get sp(): number { return this.mine?.sp ?? 0; }
-  get spent(): number { return this.mine?.spent ?? 0; }
-  get branch(): Branch { return this.mine?.branch ?? 'A'; }
+  get sp(): number { return this.mine?.cap ?? 0; }
+  get spent(): number { return this.mine?.used ?? 0; }
+  get branch(): Branch { return this.viewBranch[this.weapon] ?? 'A'; }
   get branches() { return weaponDef(this.weapon).branches; }
-  get slots(): (string | null)[] { return (this.mine?.slots ?? Array<string>(SLOT_COUNT).fill('')).map((id) => id || null); }
+  get slots(): (string | null)[] { return (this.mine?.slots ?? Array<string>(ACTIVE_SLOTS).fill('')).map((id) => id || null); }
   get busy(): boolean { return this.locked(); }
   get drag(): SkillSource['drag'] {
     const d = this.dragging;
@@ -62,27 +68,27 @@ export class SkillPanel implements SkillSource {
   branchColor(b: Branch): string { return `global.ui.skillBranch.${this.weapon}.${b}`; }
 
   get sections(): SkillSource['sections'] {
-    const w = weaponDef(this.weapon), br = this.branch, name = this.branches?.[br].name ?? br, byLv = (a: string, b: string) => unlockLevelOf(a) - unlockLevelOf(b);
+    const br = this.branch, name = this.branches?.[br].name ?? br, byTier = (a: string, b: string) => tierOf(a) - tierOf(b);
+    const of = (kind: 'active' | 'passive', b: string) => weaponCards(this.weapon, kind).filter((id) => cardBranch(id) === b).sort(byTier);
     if (this.view === 'act') {
       return [
-        { label: '기본 스킬', color: SK.key, ids: [...w.baseSkills] },
-        { label: `${name} 액티브`, color: this.branchColor(br), ids: treeSkills(w).filter((id) => branchOf(id) === br) },
+        { label: '기본 스킬', color: SK.key, ids: of('active', 'base') },
+        { label: `${name} 액티브`, color: this.branchColor(br), ids: of('active', br) },
       ];
     }
-    const pv = weaponPassives(w);
     return [
-      { label: '공용 패시브', color: SK.key, ids: pv.filter((id) => branchOf(id) === 'common').sort(byLv) },
-      { label: `${name} 보조`, color: this.branchColor(br), ids: pv.filter((id) => branchOf(id) === br).sort(byLv) },
+      { label: '공용 패시브', color: SK.key, ids: of('passive', 'common') },
+      { label: `${name} 보조`, color: this.branchColor(br), ids: of('passive', br) },
     ];
   }
 
   node(id: string): NodeInfo {
-    const s = SKILLS[id], pv = PASSIVES[id], br = branchOf(id), plain = br === 'base' || br === 'common';
-    const vars = s?.variants ?? {}, chosen = nodeOf(this.build, id).variant;
+    const s = SKILLS[id], pv = PASSIVES[id], br = cardBranch(id), plain = br === 'base' || br === 'common';
+    const vars = s?.variants ?? {}, n = this.nodes[id], chosen = n?.variant, lv = equipLevelOf(id), open = this.level >= lv;
     return {
-      id, name: s?.name ?? pv?.name ?? id, open: isOpen(id, this.level), lv: unlockLevelOf(id), points: pointsAt(this.build, id, this.level), max: maxPointsOf(id),
+      id, name: s?.name ?? pv?.name ?? id, open, lv, points: open ? (n?.points ?? (s ? 1 : 0)) : 0, max: MAX_CARD_LEVEL,
       passive: !!pv, plain, color: plain ? SK.steel : this.branchColor(br as Branch), variant: chosen ? Object.keys(vars).indexOf(chosen) : -1,
-      variants: Object.values(vars).map((v) => ({ name: v.name, desc: v.desc })), desc: s?.desc ?? pv?.desc ?? '', ...(pv ? { pointDesc: pv.pointDesc } : {}),
+      variants: Object.values(vars).map((v) => ({ name: v.name, desc: v.desc })), desc: s?.desc ?? pv?.desc ?? '', ...(pv ? { pointDesc: pv.pointDesc } : {}), cost: passiveCost(id, false),
       slot: this.slots.indexOf(id),
       kind: br === 'base' ? '기본 스킬' : br === 'common' ? '공용 패시브' : `${br} ${this.branches?.[br as Branch].name ?? ''} · ${pv ? '보조' : '액티브'}`,
     };
@@ -96,7 +102,6 @@ export class SkillPanel implements SkillSource {
     this.hover = this.hoverBtn = null;
     this.resetArm = false;
     this.dragging = null;
-    this.afterBranch = null;
   }
 
   update(width: number, height: number): void {
@@ -109,13 +114,7 @@ export class SkillPanel implements SkillSource {
     const now = Date.now();
     if (this.note && now > this.noteUntil) this.note = null;
     if (this.resetArm && now > this.armUntil) this.resetArm = false;
-    const ab = this.afterBranch;
-    if (ab && this.branch === ab.b) {
-      const row = this.sections[1]?.ids ?? [];
-      if (ab.at >= 0 && row.length) this.sel = row[Math.min(ab.at, row.length - 1)]!;
-      this.afterBranch = null;
-    }
-    if (!this.afterBranch && !this.grid().some((r) => r.includes(this.sel))) this.sel = this.grid()[0]![0]!;
+    if (!this.grid().some((r) => r.includes(this.sel))) this.sel = this.grid()[0]![0]!;
     const d = this.drag;
     this.win.render(this, JSON.stringify([this.mine, this.tabIndex, this.view, this.sel, this.hover, this.hoverBtn, this.resetArm, d, this.note, this.busy]), width, height);
     this.win.drawGhost(d ? this : null, this.pointer.x, this.pointer.y);
@@ -176,7 +175,7 @@ export class SkillPanel implements SkillSource {
     else if (h.kind === 'view') this.setView(h.v);
     else if (h.kind === 'cell') {
       this.sel = h.id;
-      if (SKILLS[h.id] && isOpen(h.id, this.level)) this.dragging = { id: h.id, from: -1, sx: x, sy: y, moved: false };
+      if (SKILLS[h.id] && this.node(h.id).open) this.dragging = { id: h.id, from: -1, sx: x, sy: y, moved: false };
     } else if (h.kind === 'slot') {
       const id = this.slots[h.k];
       if (!id) return;
@@ -209,7 +208,6 @@ export class SkillPanel implements SkillSource {
 
   private setTab(i: number): void {
     this.tabIndex = i;
-    this.afterBranch = null;
     this.view = 'act';
     this.sel = this.grid()[0]![0]!;
   }
@@ -220,31 +218,28 @@ export class SkillPanel implements SkillSource {
     this.sel = this.grid()[0]![0]!;
   }
 
-  private loadout(): Loadout {
-    return { level: this.level, branch: this.branch, slots: this.slots };
-  }
-
   /** 막혔으면 사유를 보여 주고 true */
-  private blocked(fail: NodeFail | 'busy' | null): boolean {
+  private blocked(fail: InterimFail | 'busy' | null): boolean {
     if (!fail) return false;
     this.say(FAIL_TEXT[fail], SK.danger);
     return true;
   }
 
+  /** 계열 보기 바꾸기 (같은 자리 칸을 계속 고름, 서버에 보내지 않음) */
   private setBranch(b: Branch): void {
-    if (!this.branches || b === this.branch || this.blocked(this.busy ? 'busy' : null)) return;
-    // 같은 자리 칸을 계속 고름
+    if (!this.branches || b === this.branch) return;
     const at = this.sections[1]?.ids.indexOf(this.sel) ?? -1;
-    this.conn.send('skill', { weapon: this.weapon, op: 'branch', branch: b });
-    this.say(`${this.branches[b].name} 계열로 바꿨습니다`, SK.coin);
-    this.afterBranch = { b, at };
+    this.viewBranch[this.weapon] = b;
+    const row = this.sections[1]?.ids ?? [];
+    if (at >= 0 && row.length) this.sel = row[Math.min(at, row.length - 1)]!;
   }
 
+  /** 단계 바꾸기 (기본으로 내리면 변형은 빠짐) */
   private points(id: string, d: number): void {
-    const n = this.node(id), points = n.points + d, variant = nodeOf(this.build, id).variant;
+    const points = this.node(id).points + d, variant = points >= MAX_CARD_LEVEL ? this.nodes[id]?.variant : undefined;
     if (this.blocked(this.busy ? 'busy' : null)) return;
     const node = { points, ...(variant ? { variant } : {}) };
-    if (this.blocked(checkNode(weaponDef(this.weapon), this.build, id, node, this.sp, this.loadout()))) return;
+    if (this.blocked(checkInterimNode(this.weapon, this.level, this.nodes, id, node))) return;
     this.conn.send('skill', { weapon: this.weapon, op: 'set', skillId: id, ...node });
   }
 
@@ -252,12 +247,12 @@ export class SkillPanel implements SkillSource {
     const id = this.sel, n = this.node(id), key = Object.keys(SKILLS[id]?.variants ?? {})[i];
     if (!key || this.blocked(this.busy ? 'busy' : !n.open ? 'locked' : null)) return;
     const variant = n.variant === i ? undefined : key, node = { points: n.points, ...(variant ? { variant } : {}) };
-    if (this.blocked(checkNode(weaponDef(this.weapon), this.build, id, node, this.sp, this.loadout()))) return;
+    if (this.blocked(checkInterimNode(this.weapon, this.level, this.nodes, id, node))) return;
     this.conn.send('skill', { weapon: this.weapon, op: 'set', skillId: id, ...node });
   }
 
   private equip(id: string, slot: number): void {
-    if (this.blocked(this.busy ? 'busy' : checkEquip(weaponDef(this.weapon), this.loadout(), id, slot))) return;
+    if (this.blocked(this.busy ? 'busy' : checkInterimEquip(this.weapon, this.level, this.nodes, this.slots, id, slot))) return;
     if (this.slots[slot] !== id) this.conn.send('skill', { weapon: this.weapon, op: 'equip', skillId: id, slot });
   }
 
@@ -270,7 +265,7 @@ export class SkillPanel implements SkillSource {
     }
     this.resetArm = false;
     this.conn.send('skill', { weapon: this.weapon, op: 'reset' });
-    this.say('포인트·변형을 초기화했습니다', SK.coin);
+    this.say('강화·변형·패시브를 초기화했습니다', SK.coin);
   }
 
   private say(text: string, color: string): void {

@@ -4,7 +4,7 @@ import { weaponDef } from '../actions';
 import { TICK } from '../constants';
 import type { Monster } from '../monster/state';
 import type { PlayerInput } from '../player';
-import { resolveSkill } from '../skillTree';
+import { resolveSkill } from '../cards/build';
 import { RoomSim, type SimEvent } from './room';
 
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
@@ -19,7 +19,7 @@ const tough = (m: Monster) => Object.assign(m, { hp: 5000, maxHp: 5000 });
 const hits = (ev: SimEvent[]) => ev.flatMap((e) => (e.type === 'hit' ? [e.damage] : []));
 
 describe('재입력 (연속 올려베기)', () => {
-  const double = resolveSkill('gs_launch', { points: 3, variant: 'double' });
+  const double = resolveSkill('gs_launch', { level: 2, variant: 'double' });
 
   it('끝난 뒤 짧은 시간 안에 한 번 더: 쿨타임·MP를 다시 쓰지 않는다', () => {
     const sim = room('greatsword'), p = sim.player;
@@ -52,33 +52,33 @@ describe('재입력 (연속 올려베기)', () => {
 });
 
 describe('후속 판정 (균열)', () => {
-  it('1초 뒤 같은 자리에 2차 판정 300% (3포인트 ×1.3 → 39)', () => {
+  it('1초 뒤 같은 자리에 2차 판정 300% (강화 ×1.2 → 36)', () => {
     const sim = room('greatsword');
     const [m] = sim.spawn([{ kind: 'mushroom', x: 130, y: 50 }]);
     tough(m!);
-    const ev = run(sim, { ...none, skill: resolveSkill('gs_earthsplit', { points: 3, variant: 'crack' }) }, 1.6);
-    expect(hits(ev)).toEqual([78, 39]);
+    const ev = run(sim, { ...none, skill: resolveSkill('gs_earthsplit', { level: 2, variant: 'crack' }) }, 1.6);
+    expect(hits(ev)).toEqual([72, 36]);
     expect(ev.filter((e) => e.type === 'echo')).toHaveLength(1);
   });
 });
 
 describe('반복 판정 (연쇄)', () => {
-  it('0.2초 간격 3번, 각 300% (×1.3 → 39)', () => {
+  it('0.2초 간격 3번, 각 300% (×1.2 → 36)', () => {
     const sim = room('staff');
     const [m] = sim.spawn([{ kind: 'mushroom', x: 164, y: 50 }]);
     tough(m!);
-    const ev = run(sim, { ...none, skill: resolveSkill('st_fireburst', { points: 3, variant: 'chain' }) }, 1.2);
-    expect(hits(ev)).toEqual([39, 39, 39]);
+    const ev = run(sim, { ...none, skill: resolveSkill('st_fireburst', { level: 2, variant: 'chain' }) }, 1.2);
+    expect(hits(ev)).toEqual([36, 36, 36]);
   });
 });
 
 describe('해제 판정 (빙결 폭발)', () => {
-  it('빙결이 풀릴 때 400% (×1.3 → 52)', () => {
+  it('빙결이 풀릴 때 400% (×1.2 → 48)', () => {
     const sim = room('staff');
     const [m] = sim.spawn([{ kind: 'mushroom', x: 148, y: 50 }]);
     tough(m!);
-    const ev = run(sim, { ...none, skill: resolveSkill('st_icefield', { points: 3, variant: 'shatter' }) }, 2.5);
-    expect(hits(ev)).toEqual([20, 52]);
+    const ev = run(sim, { ...none, skill: resolveSkill('st_icefield', { level: 2, variant: 'shatter' }) }, 2.5);
+    expect(hits(ev)).toEqual([18, 48]);
     expect(ev.some((e) => e.type === 'echo' && e.echo.kind === 'shatter')).toBe(true);
     expect(m!.frozenBy).toBeUndefined();
   });
@@ -96,7 +96,7 @@ describe('감속 (동토)', () => {
     const sim = room('staff');
     const [m] = sim.spawn([{ kind: 'mushroom', x: 170, y: 50 }]);
     tough(m!);
-    run(sim, { ...none, skill: resolveSkill('st_icefield', { points: 3, variant: 'permafrost' }) }, 0.6);
+    run(sim, { ...none, skill: resolveSkill('st_icefield', { level: 2, variant: 'permafrost' }) }, 0.6);
     expect(m!.frozen).toBe(0);
     expect(m!.slow.amount).toBeCloseTo(0.4);
     expect(m!.slow.left).toBeGreaterThan(3.5);

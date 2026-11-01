@@ -1,0 +1,10 @@
+{
+  "_note": "카드팩 (skills.md 1장·island.md 5장, 형식 data.md 10장, 값 balance.md 7장 카드 경제). 무기별 팩 = 팩 번호 × 무기. odds = minTier부터 티어별 확률(%, 1~size−1번째 장), 마지막 장은 lastMinTier 이상만: lastOdds(lastMinTier부터) 없으면 odds에서 그 티어들만 다시 나눔. pity = packs번째 팩까지 tier가 없으면 그 팩 마지막 장 = tier",
+  "packs": {
+    "1": { "unlockLevel": 1, "price": 100, "size": 4, "minTier": 1, "maxTier": 2, "odds": [80, 20], "lastMinTier": 2, "color": "pack1" },
+    "2": {
+      "unlockLevel": 6, "price": 250, "size": 4, "minTier": 1, "maxTier": 3, "odds": [60, 32, 8],
+      "lastMinTier": 2, "lastOdds": [80, 20], "pity": { "tier": 3, "packs": 10 }, "color": "pack2"
+    }
+  }
+}

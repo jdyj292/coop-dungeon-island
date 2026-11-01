@@ -30,6 +30,7 @@ if (!issues.length) {
     visuals: Object.keys(readJson('client/data/sprites/weapons_visual.json').profiles),
     sprites: Object.keys(withoutNotes(readJson('client/data/sprites/monsters.json'))),
     sounds: ['action', 'clear'].flatMap((bus) => Object.keys(readJson('client/data/sfx.json')[bus])),
+    cardColors: Object.keys(withoutNotes(readJson('client/data/palette.json').global.ui.card ?? {})),
   };
   issues.push(...crossCheck(data as unknown as GameData, refs, readJson('tools/data-validate/rules.json') as Rules));
   // 3. 맵 (maps/*.json, 위치·장애물)

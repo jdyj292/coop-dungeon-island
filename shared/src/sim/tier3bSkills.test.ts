@@ -6,14 +6,14 @@ import { MUZZLE } from '../monster/hazards';
 import type { Monster } from '../monster/state';
 import { perksOf, withPerks } from '../passives';
 import type { PlayerInput } from '../player';
-import { resolveSkill, type SkillBuild } from '../skillTree';
+import { resolveSkill, type SkillBuild } from '../cards/build';
 import { RoomSim, type SimEvent } from './room';
 
 const gs = weaponDef('greatsword');
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
 const none: PlayerInput = { x: 0, y: 0, attack: false, skill: null, backstep: false };
 const room = (skills: SkillBuild = {}) => new RoomSim(gs, bounds, { x: 100, y: 50 }, { ai: false, skills });
-const cast = (skills: SkillBuild, id: string): PlayerInput => ({ ...none, skill: withPerks(resolveSkill(id, skills[id] ?? { points: 1 }), perksOf(gs, skills)) });
+const cast = (skills: SkillBuild, id: string): PlayerInput => ({ ...none, skill: withPerks(resolveSkill(id, skills[id] ?? { level: 1 }), perksOf(gs, skills)) });
 /** inputs[i] = i번째 틱 입력 (없으면 입력 없음) */
 const run = (sim: RoomSim, sec: number, inputs: Record<number, PlayerInput>): SimEvent[] => {
   const events: SimEvent[] = [];
@@ -62,7 +62,7 @@ describe('검의 장막', () => {
   });
 
   it('조여드는 장막: 끝날 때 한 번 더 300%', () => {
-    const b = { gs_cross: { points: 1, variant: 'close' } };
+    const b = { gs_cross: { level: 1, variant: 'close' } };
     const sim = room(b);
     const [m] = spawn(sim, [110, 50]);
     const hits = hitsOn(run(sim, 4, { 0: cast(b, 'gs_cross') }), m!);
@@ -71,7 +71,7 @@ describe('검의 장막', () => {
   });
 
   it('따라다니는 장막: 내가 다가간 적을 벤다', () => {
-    const b = { gs_cross: { points: 1, variant: 'follow' } };
+    const b = { gs_cross: { level: 1, variant: 'follow' } };
     const sim = room(b);
     const [m] = spawn(sim, [220, 50]);
     expect(hitsOn(run(sim, 1.2, { 0: cast(b, 'gs_cross') }), m!)).toEqual([]);
@@ -106,11 +106,11 @@ describe('일섬', () => {
   });
 
   it('이중 일섬은 검기 각 50% 뒤 마지막 300%, 반환은 첫 검기 0.5초 뒤 맞은 적에게 한 번 300% (움직여도)', () => {
-    const dbl = { gs_flash: { points: 1, variant: 'double' } };
+    const dbl = { gs_flash: { level: 1, variant: 'double' } };
     const sim = room(dbl);
     const [m] = spawn(sim, [160, 50]);
     expect(hitsOn(run(sim, 2.4, { 0: cast(dbl, 'gs_flash') }), m!)).toEqual([8, ...Array(10).fill(5), 30]);
-    const tr = { gs_flash: { points: 1, variant: 'trail' } };
+    const tr = { gs_flash: { level: 1, variant: 'trail' } };
     const sim2 = room(tr);
     const [a, b, c] = spawn(sim2, [160, 50], [300, 50], [170, 40]);
     const first = run(sim2, 1.0, { 0: cast(tr, 'gs_flash') });
@@ -134,7 +134,7 @@ describe('일섬', () => {
 
 describe('잔상', () => {
   it('베기 스킬은 0.5초 뒤 처음 자리에서 한 번 더 (50%), 원 판정 스킬은 없음', () => {
-    const b = { gs_phantom: { points: 1 } };
+    const b = { gs_phantom: { level: 1 } };
     const sim = room(b);
     const [m] = spawn(sim, [120, 50]);
     const ev = run(sim, 1.2, { 0: cast(b, 'gs_scar') });
@@ -146,7 +146,7 @@ describe('잔상', () => {
   });
 
   it('검기는 처음 쏜 자리에서 반투명 검기로 한 번 더 (3포인트 60%)', () => {
-    const b = { gs_phantom: { points: 3 } };
+    const b = { gs_phantom: { level: 2 } };
     const sim = room(b);
     const [m] = spawn(sim, [160, 50]);
     const ev = run(sim, 1.5, { 0: cast(b, 'gs_wave'), 5: { ...none, x: -1 } });
@@ -160,13 +160,13 @@ describe('검의 춤', () => {
   const chain = (b: SkillBuild, gap: number) => {
     const sim = room(b);
     const [m] = spawn(sim, [180, 50]);
-    const { windup, active, recovery } = resolveSkill('gs_scar', { points: 1 }).phases;
+    const { windup, active, recovery } = resolveSkill('gs_scar', { level: 1 }).phases;
     const ev = run(sim, 3, { 0: cast(b, 'gs_scar'), [tick(windup + active + recovery + gap)]: cast(b, 'gs_wave') });
     return hitsOn(ev, m!);
   };
   it('스킬이 끝나고 1초 안에 쓴 다음 스킬 +20% (1초 넘으면 그대로)', () => {
     expect(chain({}, 0.3)).toEqual([35]);
-    expect(chain({ gs_dance: { points: 1 } }, 0.3)).toEqual([42]);
-    expect(chain({ gs_dance: { points: 1 } }, 1.2)).toEqual([35]);
+    expect(chain({ gs_dance: { level: 1 } }, 0.3)).toEqual([42]);
+    expect(chain({ gs_dance: { level: 1 } }, 1.2)).toEqual([35]);
   });
 });

@@ -297,7 +297,6 @@
     "name": "회전베기",
     "desc": "검을 휘두르며 앞으로 돌아 주변 적을 6번 벤다",
     "branch": "A",
-    "unlockLevel": 2,
     "cooldown": 9,
     "mp": 18,
     "variants": {
@@ -358,7 +357,6 @@
     "name": "어깨 들이받기",
     "desc": "3타일 돌진해 적을 밀어낸다. 시전 중 슈퍼아머",
     "branch": "A",
-    "unlockLevel": 4,
     "cooldown": 6,
     "mp": 12,
     "variants": {
@@ -413,7 +411,6 @@
     "name": "검기 날리기",
     "desc": "앞 5타일을 꿰뚫는 검기를 날린다",
     "branch": "B",
-    "unlockLevel": 2,
     "cooldown": 4,
     "mp": 8,
     "variants": {
@@ -485,7 +482,6 @@
     "name": "발도",
     "desc": "사라졌다가 5타일 앞에 나타난다. 잠시 뒤 지나온 길의 적이 한꺼번에 베인다",
     "branch": "B",
-    "unlockLevel": 4,
     "cooldown": 5,
     "mp": 10,
     "variants": {
@@ -546,7 +542,6 @@
     "name": "지진",
     "desc": "땅을 내리쳐 둘레 2.5타일 안 땅의 적을 살짝 띄운다",
     "branch": "A",
-    "unlockLevel": 6,
     "cooldown": 10,
     "mp": 20,
     "variants": {
@@ -608,7 +603,6 @@
     "name": "대검 투척",
     "desc": "대검을 던져 꿰뚫으며 6타일 날아갔다가 나에게 돌아온다 (갈 때·올 때 각 300%)",
     "branch": "A",
-    "unlockLevel": 8,
     "cooldown": 8,
     "mp": 16,
     "variants": {
@@ -673,7 +667,6 @@
     "name": "파쇄참",
     "desc": "대검을 크게 내리찍는 전방 일격. 슈퍼아머 적도 0.3초 경직",
     "branch": "A",
-    "unlockLevel": 11,
     "cooldown": 15,
     "mp": 30,
     "variants": {
@@ -746,7 +739,6 @@
     "name": "대지붕괴",
     "desc": "앞 땅을 무너뜨려 3초 동안 12번 (각 120%). 땅의 적은 계속 다운",
     "branch": "A",
-    "unlockLevel": 13,
     "cooldown": 18,
     "mp": 36,
     "variants": {
@@ -809,7 +801,6 @@
     "name": "검흔 베기",
     "desc": "앞을 베어 맞은 적에 3초 검흔을 남긴다. 검흔 있는 적을 내 검기(투사체)가 맞히면 터진다 (200%)",
     "branch": "B",
-    "unlockLevel": 6,
     "cooldown": 8,
     "mp": 16,
     "note": "예산 대비 −62%: 검흔 터짐(200%)은 내 투사체를 맞혀야 하는 조건부라 자동 계산에서 빠짐, 터짐까지 더해도 표식 준비 스킬",
@@ -883,7 +874,6 @@
     "name": "회오리 검기",
     "desc": "2초 동안 앞으로 나아가는 큰 회오리가 적을 가운데로 빨아들이며 10번 베고, 맞은 적을 1초 동안 30% 느리게 한다",
     "branch": "B",
-    "unlockLevel": 8,
     "cooldown": 10,
     "mp": 20,
     "note": "예산 대비 +25%: 감속이 짧고 계수가 낮음 (2026-11 끌어당김 추가로 10번을 다 맞히기 쉬워짐, 띄움은 약하게 airVz 40)",
@@ -971,7 +961,6 @@
     "name": "검의 장막",
     "desc": "칼을 땅에 꽂아 둘레 2.5타일에 칼날 장막을 3초 동안 세운다 (꽂은 자리에 남음). 펼칠 때 200%, 그 뒤 0.25초마다 장막 안의 적을 제자리에 묶어 베고(85%, 공중 적도) 느리게 한다 (40%)",
     "branch": "B",
-    "unlockLevel": 11,
     "cooldown": 12,
     "mp": 24,
     "variants": {
@@ -1047,7 +1036,6 @@
     "desc": "키를 누르는 동안(최대 2초) 앞 부채꼴 범위가 커지고, 떼면 한 번 베고 칼을 거둔다. 0.5초 뒤 범위 안 적을 검기가 사방에서 0.08초마다 11번 벤다 (각 80%, 맞는 동안 묶임). 후딜레이가 길다",
     "note": "예산 대비 약 −33%: 검기 11번 모두 80%로 일부러 낮춤 (범위가 넓고 충전으로 ×1.5까지 커지며 맞는 동안 묶음)",
     "branch": "B",
-    "unlockLevel": 13,
     "cooldown": 14,
     "mp": 28,
     "variants": {
@@ -1112,7 +1100,6 @@
     "element": "fire",
     "lasting": true,
     "branch": "A",
-    "unlockLevel": 2,
     "cooldown": 8,
     "mp": 16,
     "variants": {
@@ -1184,7 +1171,6 @@
     "desc": "꿰뚫는 얼음 창을 쏴 0.5초 얼린다",
     "element": "ice",
     "branch": "A",
-    "unlockLevel": 4,
     "cooldown": 4,
     "mp": 8,
     "variants": {
@@ -1258,7 +1244,6 @@
     "desc": "3초 동안 구슬 안의 적을 8번 때리고 30% 느리게 한다",
     "lasting": true,
     "branch": "B",
-    "unlockLevel": 2,
     "cooldown": 8,
     "mp": 16,
     "note": "예산 대비 낮음: 3초 감속(중압 표식)이 주 가치, 딜은 의도적으로 낮게",
@@ -1326,7 +1311,6 @@
     "name": "끌어올림",
     "desc": "앞 자리로 적을 끌어모아 살짝 띄운다",
     "branch": "B",
-    "unlockLevel": 4,
     "cooldown": 6,
     "mp": 12,
     "variants": {
@@ -1392,7 +1376,6 @@
     "desc": "앞 자리로 2초 동안 적을 끌어당긴다 (6번)",
     "lasting": true,
     "branch": "B",
-    "unlockLevel": 6,
     "cooldown": 12,
     "mp": 24,
     "note": "예산 대비 크게 낮음: 끌어모으기(2초 pull)가 주 가치, 딜은 의도적으로 낮게",
@@ -1455,7 +1438,6 @@
     "desc": "범위 안 적을 4초 동안 40% 느리게 한다 (걷기·공격 사이 쉬는 시간)",
     "lasting": true,
     "branch": "B",
-    "unlockLevel": 8,
     "cooldown": 10,
     "mp": 20,
     "note": "예산 대비 크게 낮음: 4초 감속(걷기·공격 사이 쉬는 시간)이 주 가치, 딜은 의도적으로 낮게",
@@ -1513,7 +1495,6 @@
     "name": "번개 연쇄",
     "desc": "앞쪽 7타일 안 가장 가까운 적부터 번개가 최대 5마리까지 튄다",
     "branch": "A",
-    "unlockLevel": 6,
     "cooldown": 7,
     "mp": 14,
     "variants": {
@@ -1573,7 +1554,6 @@
     "desc": "큰 화염구가 처음 닿은 적이나 8타일 끝에서 폭발한다 (반경 1.75타일)",
     "element": "fire",
     "branch": "A",
-    "unlockLevel": 8,
     "cooldown": 9,
     "mp": 18,
     "variants": {

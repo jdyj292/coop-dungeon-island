@@ -8,7 +8,7 @@ import { TICK } from '../constants';
 import type { Monster } from '../monster/state';
 import type { PlayerInput } from '../player';
 import { withPerks } from '../passives';
-import { resolveSkill } from '../skillTree';
+import { resolveSkill } from '../cards/build';
 import { RoomSim, type SimEvent } from './room';
 
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
@@ -23,7 +23,7 @@ const tough = (m: Monster) => Object.assign(m, { hp: 5000, maxHp: 5000 });
 const spawn = (sim: RoomSim, ...at: [number, number][]) => sim.spawn(at.map(([x, y]) => ({ kind: 'capknight', x, y }))).map(tough);
 const hits = (ev: SimEvent[]) => ev.flatMap((e) => (e.type === 'hit' ? [e.damage] : []));
 const hitsOn = (ev: SimEvent[], m: Monster) => ev.filter((e) => e.type === 'hit' && e.m === m).length;
-const cast = (id: string, variant?: string): PlayerInput => ({ ...none, skill: resolveSkill(id, variant ? { points: 3, variant } : { points: 1 }) });
+const cast = (id: string, variant?: string): PlayerInput => ({ ...none, skill: resolveSkill(id, variant ? { level: 2, variant } : { level: 1 }) });
 
 describe('대검 투척', () => {
   it('꿰뚫으며 날아갔다 돌아온다: 갈 때·올 때 한 번씩', () => {
@@ -86,7 +86,7 @@ describe('검흔 베기', () => {
     const [a, b] = spawn(sim, [120, 50], [170, 50]);
     run(sim, cast('gs_scar', 'deep'), 1);
     const ev = run(sim, cast('gs_wave'), 1);
-    expect(hits(ev)).toContain(52);
+    expect(hits(ev)).toContain(48);
     expect([hitsOn(ev, a!), hitsOn(ev, b!)]).toEqual([2, 1]);
   });
 });
@@ -108,7 +108,7 @@ describe('번개 연쇄', () => {
     expect(hits(run(sim, cast('st_chain', 'spread'), 1))).toHaveLength(6);
     const one = room('staff');
     line(one);
-    expect(hits(run(one, cast('st_chain', 'focus'), 1))).toEqual([117]);
+    expect(hits(run(one, cast('st_chain', 'focus'), 1))).toEqual([108]);
   });
 
   it('앞쪽 7타일 안에 적이 없으면 헛방', () => {
@@ -165,15 +165,15 @@ describe('가속장', () => {
   });
 
   it('원소 친화(lasting)는 가속 시간도 늘린다', () => {
-    expect(withPerks(resolveSkill('st_gravfield', { points: 1, variant: 'haste' }), { lastingMul: 1.25 }).allyBuff?.time).toBe(5);
+    expect(withPerks(resolveSkill('st_gravfield', { level: 1, variant: 'haste' }), { lastingMul: 1.25 }).allyBuff?.time).toBe(5);
   });
 });
 
 describe('계수 배율·예산 (SK-4 1차b 필드)', () => {
-  it('레벨 배율·충전은 끝 판정·분열·검흔 계수도 키운다', () => {
-    expect(resolveSkill('gs_scar', { points: 3, variant: 'deep' }).mark?.coef).toBeCloseTo(520);
-    expect(resolveSkill('st_fireball', { points: 3, variant: 'split' }).projectile?.blast?.shards?.coef).toBeCloseTo(195);
-    const stick = chargedDef(resolveSkill('gs_throw', { points: 1, variant: 'stick' }), 0.5);
+  it('강화 배율·충전은 끝 판정·분열·검흔 계수도 키운다', () => {
+    expect(resolveSkill('gs_scar', { level: 2, variant: 'deep' }).mark?.coef).toBeCloseTo(480);
+    expect(resolveSkill('st_fireball', { level: 2, variant: 'split' }).projectile?.blast?.shards?.coef).toBeCloseTo(180);
+    const stick = chargedDef(resolveSkill('gs_throw', { level: 1, variant: 'stick' }), 0.5);
     expect(stick.projectile?.blast?.coef).toBeCloseTo(90);
     expect(stick.projectile?.back).toBeUndefined();
   });

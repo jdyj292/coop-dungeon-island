@@ -5,7 +5,7 @@ import { TICK } from '../constants';
 import type { Monster } from '../monster/state';
 import type { PlayerInput } from '../player';
 import { hurtPlayer } from '../playerHurt';
-import { resolveSkill } from '../skillTree';
+import { resolveSkill } from '../cards/build';
 import { RoomSim, type SimEvent } from './room';
 
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
@@ -18,7 +18,7 @@ const step = (sim: RoomSim, first: PlayerInput | null, sec: number): SimEvent[] 
 };
 const tough = (m: Monster) => Object.assign(m, { hp: 5000, maxHp: 5000 });
 const hitIds = (ev: SimEvent[]) => ev.flatMap((e) => (e.type === 'hit' ? [e.m.id] : []));
-const cast = (variant?: string): PlayerInput => ({ ...none, skill: resolveSkill('gs_draw', variant ? { points: 3, variant } : { points: 1 }) });
+const cast = (variant?: string): PlayerInput => ({ ...none, skill: resolveSkill('gs_draw', variant ? { level: 2, variant } : { level: 1 }) });
 
 describe('발도', () => {
   it('active 동안 사라져 제자리·무적, 끝나면 84px 앞에 나타난다', () => {

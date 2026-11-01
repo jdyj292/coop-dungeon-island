@@ -1,11 +1,13 @@
 // shared/data 로더: 스키마로 검사한 뒤 원본 객체를 그대로 타입만 붙여 내보낸다
 // (복사하지 않으므로 tools/motion-preview가 메모리에서 바꾼 값이 게임 코드에 바로 반영된다)
 import type { z } from 'zod';
+import cardsJson from '../../data/cards.json';
 import combatJson from '../../data/combat.json';
 import islandJson from '../../data/island.json';
 import itemsJson from '../../data/items.json';
 import passivesJson from '../../data/passives.json';
 import monstersJson from '../../data/monsters.json';
+import packsJson from '../../data/packs.json';
 import playerJson from '../../data/player.json';
 import roomsJson from '../../data/rooms.json';
 import skillsJson from '../../data/skills.json';
@@ -34,8 +36,10 @@ export const PLAYER = load('player.json', playerJson);
 export const COMBAT = load('combat.json', combatJson);
 export const ISLAND = load('island.json', islandJson);
 export const ITEMS = load('items.json', itemsJson);
+export const CARD_DATA = load('cards.json', cardsJson);
+export const PACKS = load('packs.json', packsJson).packs;
 
-/** 공용 패시브(weapon '*')를 무기마다 노드 '<무기>.<id>'로 펼친다 (SP·DB 노드가 무기별, skills.md 1장) */
+/** 공용 패시브(weapon '*')를 무기마다 카드 '<무기>.<id>'로 펼친다 (카드가 무기별, skills.md 1장) */
 function expandCommon(raw: Record<string, Passive>): Record<string, Passive> {
   const out: Record<string, Passive> = {};
   const common = Object.values(raw).filter((p) => p.weapon === '*');

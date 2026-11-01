@@ -8,7 +8,7 @@ import type { PlayerInput, PlayerState } from '../player';
 import type { HurtEvent, PotionKind } from '../playerHurt';
 import type { Bolt } from './bolts';
 import type { HitLog } from './hitLog';
-import type { SkillBuild } from '../skillTree';
+import type { SkillBuild } from '../cards/build';
 import type { Echo, EchoKind } from './skillExtras';
 
 export interface Spawn {

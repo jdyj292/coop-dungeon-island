@@ -7,7 +7,7 @@
 
 ## 1. 시스템 — 스킬 카드
 
-스킬은 **카드**로 얻고 장착한다 (CD에서 구현 중, 그 전 코드는 SP 방식). 가격·확률·조각 값은 balance.md 7장 카드 경제, 카드 상점은 island.md 2·5장, 카드 창은 hud.md 8장.
+스킬은 **카드**로 얻고 장착한다 (CD에서 구현 중: 카드 데이터·공용 로직은 됨. 보유·카드팩·카드 창 전까지 섬 스킬 창·서버 저장은 임시 연결 = 그 무기 카드를 모두 가진 것으로 보고 - + 로 기본·강화, 7장). 가격·확률·조각 값은 balance.md 7장 카드 경제, 카드 상점은 island.md 2·5장, 카드 창은 hud.md 8장.
 
 ### 카드
 - 스킬 하나 = 카드 하나. 액티브(기본 스킬·계열 액티브)도, 패시브(계열 보조·공용 패시브)도 카드. 카드는 무기마다 따로 (대검 카드는 대검에만)
@@ -64,7 +64,7 @@
 - 모든 계정에 무기별 처음 카드 2장 + 환영 선물 팩 1 3개(무기 아무거나 열 수 있음, balance.md 7장 카드 경제)
 
 ### 개발
-- `?skills=gs_whirl:2:rush,gs_heavyhand:1` (로컬 던전 빌드, 보유·티어·숙련도 검사 없음). `id:1` = 기본, `id:2` = 강화, 셋째 = 변형(강화일 때만). 장착 순서대로 액티브 A S D F, 패시브는 한도 검사 없음
+- `?skills=gs_whirl:2:rush,gs_heavyhand:1` (로컬 던전 빌드, 보유·티어·숙련도 검사 없음). `id:1` = 기본, `id:2` = 강화, 셋째 = 변형(강화일 때만). 장착 순서대로 액티브 A S D F(액티브를 안 적으면 처음 카드), 패시브는 한도 검사 없음. 계열 보너스는 빌드에 든 카드로 셈
 - 테스트 계정 ADMIN은 조각도 채움 (playtest.md 1장)
 
 ### 트리 구조 → 카드 목록 (모든 무기 공통)
@@ -101,7 +101,7 @@ Lv 열이 "3단계"·"각성"인 줄은 아직 없는 카드 (3단계 = 티어 3
 
 ## 2. 대검
 고유: 충전(홀드 최대 1초, 데미지·범위 최대 +50%, 충전 중 슈퍼아머) / 이동 ×0.9
-- 충전 규칙 (shared/src/charge.ts, weapons.json trait): 대검 스킬(A S D F G H) 키를 누르고 있으면 준비(windup) 끝에서 멈춰 충전, 떼면 발동. 최대(maxTime 1초)까지 차도 바로 나가지 않고 계속 들고 있을 수 있으며(보너스는 최대 그대로, 슈퍼아머 유지), 다 찬 뒤 holdMax(2초)가 지나면 저절로 발동. 준비 안에 떼면 충전 없이 지금처럼 바로
+- 충전 규칙 (shared/src/charge.ts, weapons.json trait): 대검 스킬(A S D F) 키를 누르고 있으면 준비(windup) 끝에서 멈춰 충전, 떼면 발동. 최대(maxTime 1초)까지 차도 바로 나가지 않고 계속 들고 있을 수 있으며(보너스는 최대 그대로, 슈퍼아머 유지), 다 찬 뒤 holdMax(2초)가 지나면 저절로 발동. 준비 안에 떼면 충전 없이 지금처럼 바로
 - 보너스 = bonusMax(0.5) × 충전 시간 / 최대 시간: 계수(후속·벽꿍·해제 판정 포함) × (1 + 보너스), 범위는 상자 길이(width·back)·깊이, 원·부채꼴·사각 장판 크기, 투사체 반지름 × (1 + 보너스). 상자 시작 위치(forward)·투사체 사거리는 그대로
 - 연출: 충전 포즈(skills.json poses.charge, 허리 옆 쥐기·머리 위 스킬은 그대로)·모이는 빛·효과음 charge_start/charge_full, 충전 중 모이는 소리 charge_gather·다 찰 때 charge_ready와 큰 별·빛살·몸 둘레 고리, 다 찬 채 들고 있으면 손 둘레 반짝이 (art.md 4·7장, audio.md 3장)
 - 충전 중(준비 끝에서 멈춘 동안)만 슈퍼아머, 이동 불가. 쿨타임·MP는 지금처럼 스킬을 시작할 때. 평타·대시 공격, 재입력 변형의 다음 입력은 충전 없음
@@ -320,8 +320,8 @@ Lv 열이 "3단계"·"각성"인 줄은 아직 없는 카드 (3단계 = 티어 3
   → 템플릿을 코드로, 개별 스킬과 변형은 skills.json 파라미터로
 - 변형은 "기본 스킬 파라미터 덮어쓰기 + 플래그 추가"로 표현 (새 코드 최소화)
 - 서버는 DB에 저장된 보유 카드(강화·변형)·장착으로 만든 던전용 빌드 기준으로 판정 (클라이언트 신고값 신뢰 금지)
-- 카드 (CD): 카드·티어·팩 굴림·합치기·장착 검사·계열 보너스·던전용 빌드 shared/src/cards/ (CD-2), 저장 server/src/db/cardStore.ts (CD-3). 아래 skillTree.ts·skillLoadout.ts·skillStore.ts의 SP·계열·노드 부분은 CD-2·CD-3에서 카드로 바뀜
-- 코드: 노드 목록·열림 레벨·계열·변형 적용·레벨 배율·저장 문자열(`id:포인트[:변형][@슬롯]`) shared/src/skillTree.ts, 노드 바꾸기·계열별 장착·던전용 빌드(effectiveBuild) shared/src/skillLoadout.ts, 특수 판정(반복·후속·해제·연발, 반복 이동 step·seek·copies) shared/src/sim/skillExtras.ts, RoomSim 연결·투사체 끝 폭발·분열·검흔 터짐·연쇄 예약·가속장 shared/src/sim/echoes.ts, 왕복·관통 다단·폭발형·사방·엇갈림 투사체 sim/bolts.ts(volley), 연쇄 대상 sim/chain.ts, 검흔 sim/scar.ts, 잔상·교차점 폭발·반환 sim/phantom.ts, 검의 춤 actions.ts withCoefMul, 패시브 효과 shared/src/passives.ts(perksOf = 포인트별 값 → PlayerState.perks, withPerks = 스킬 정의 변경: 준비 시간·슈퍼아머·사거리·지속) + 판정 sim/strike.ts(먼 적·연소·중압 배율, 몬스터 burn·pressed)·playerHurt.ts(받는 피해)·player.ts(회피), 다단히트 판정 번호·끌어당김·체공 shared/src/sim/strike.ts·body.ts, 벽꿍·여러 줄 투사체 발사 shared/src/sim/room.ts, 슈퍼아머 shared/src/playerHurt.ts, 재입력 shared/src/player.ts, 저장 server/src/db/skillStore.ts(skill_nodes·skill_slots·weapon_mastery.branch). 변형 연출은 새 그림 없이 기존 이펙트 재사용 (fx/spellCast castEcho: 연쇄 = 화염 폭발, 균열 = 판정 줄 먼지·충격 링, 빙결 폭발 = 마법탄 적중 섬광)
+- 카드 (CD): 목록·티어·비용·한도 shared/src/cards/catalog.ts, 보유·3장 합치기·갈기·지정 구매·변형 검사 collection.ts, 팩 굴림·천장 pack.ts, 장착 검사(4칸·비용 한도·장착 숙련도) equip.ts, 계열 보너스 bonus.ts, 던전용 빌드·강화·변형 적용·저장 문자열(`id:단계[:변형][@칸]`, 단계 1 기본·2 강화) build.ts, 데이터 검사 shared/src/data/cardCheck.ts. 저장 server/src/db/cardStore.ts (CD-3). CD-3·CD-4 전 임시 연결 shared/src/cards/interim.ts + server/src/db/skillStore.ts(skill_nodes = 카드 단계·변형, skill_slots = 액티브 칸) + client 스킬 창(stage/islandSkills.ts)
+- 코드: 특수 판정(반복·후속·해제·연발, 반복 이동 step·seek·copies) shared/src/sim/skillExtras.ts, RoomSim 연결·투사체 끝 폭발·분열·검흔 터짐·연쇄 예약·가속장 shared/src/sim/echoes.ts, 왕복·관통 다단·폭발형·사방·엇갈림 투사체 sim/bolts.ts(volley), 연쇄 대상 sim/chain.ts, 검흔 sim/scar.ts, 잔상·교차점 폭발·반환 sim/phantom.ts, 검의 춤 actions.ts withCoefMul, 패시브 효과 shared/src/passives.ts(perksOf = 패시브 카드 [기본, 강화] 값 + 계열 보너스 → PlayerState.perks, withPerks = 스킬 정의 변경: 준비 시간·슈퍼아머·사거리·지속·계열 보너스의 쿨·범위·MP·감속) + 판정 sim/strike.ts(먼 적·연소·중압 배율, 몬스터 burn·pressed)·playerHurt.ts(받는 피해)·player.ts(회피), 다단히트 판정 번호·끌어당김·체공 shared/src/sim/strike.ts·body.ts, 벽꿍·여러 줄 투사체 발사 shared/src/sim/room.ts, 슈퍼아머 shared/src/playerHurt.ts, 재입력 shared/src/player.ts. 변형 연출은 새 그림 없이 기존 이펙트 재사용 (fx/spellCast castEcho: 연쇄 = 화염 폭발, 균열 = 판정 줄 먼지·충격 링, 빙결 폭발 = 마법탄 적중 섬광)
 - 테이블: docs/db.md
 - MVP 범위는 docs/roadmap.md
 

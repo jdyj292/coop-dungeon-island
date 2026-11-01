@@ -1,6 +1,6 @@
 // 스킬 창 (K) 그리기 (hud.md 8장, 승인 데모 docs/refs/demos/skill_window.html, 게임 화면 384×216 기준 좌표):
-// 제목 띠(별·무기 탭·Lv·SP) / 계열 버튼 A·B / 액티브·패시브 보기 탭 / 내용 카드(위 = 기본 스킬·공용 패시브, 아래 = 고른 계열, 열리는 레벨 순 + 진행 선) /
-// 장착 칸 A S D F G H·초기화 / 오른쪽 상세 (skillDetail.ts). 상태·입력은 stage/islandSkills.ts (SkillSource)
+// 제목 띠(별·무기 탭·Lv·패시브 비용) / 계열 보기 A·B / 액티브·패시브 보기 탭 / 내용 카드(위 = 기본 스킬·공용 패시브, 아래 = 보는 계열, 티어 순 + 진행 선) /
+// 장착 칸 A S D F·초기화 / 오른쪽 상세 (skillDetail.ts). 상태·입력은 stage/islandSkills.ts (SkillSource). CD-4 카드 창 전 임시
 import type Phaser from 'phaser';
 import type { Branch } from '@game/shared';
 import type { FontKey } from './fonts';
@@ -31,6 +31,8 @@ export interface NodeInfo {
   variants: { name: string; desc: string }[];
   desc: string;
   pointDesc?: string[];
+  /** 패시브 기본 비용 (강화 +1) */
+  cost: number;
   /** 장착한 칸 (-1 = 안 함) */
   slot: number;
   kind: string;
@@ -41,6 +43,7 @@ export interface SkillSource {
   tabs: string[];
   tab: number;
   level: number;
+  /** 패시브 비용 한도·쓴 비용 */
   sp: number;
   spent: number;
   branch: Branch;
@@ -60,7 +63,7 @@ export interface SkillSource {
   busy: boolean;
 }
 
-const W = 384, H = 216, KEYS = ['A', 'S', 'D', 'F', 'G', 'H'];
+const W = 384, H = 216, KEYS = ['A', 'S', 'D', 'F'];
 const labW = (t: string, font: FontKey = 'koSmall') => koWidth(t, font);
 const BRANCHES: Branch[] = ['A', 'B'];
 
@@ -148,15 +151,15 @@ export class SkillWindow {
     });
   }
 
-  /** 오른쪽: Lv 알약 + SP 보석 + 남은 SP / 받은 SP */
+  /** 오른쪽: Lv 알약 + 보석 + 남은 패시브 비용 / 한도 */
   private header(s: SkillSource): void {
     const p = this.p, g = p.g, left = s.sp - s.spent, total = `/${s.sp}`;
     let rx = 370 - labW(total);
     p.text(rx, 12, total, SK.key);
     rx -= labW(String(left), 'ko') + 1;
     p.text(rx, 10, String(left), left < 0 ? SK.danger : left > 0 ? SK.coin : SK.dim, 'ko');
-    rx -= labW('SP') + 3;
-    p.text(rx, 12, 'SP', SK.key);
+    rx -= labW('비용') + 3;
+    p.text(rx, 12, '비용', SK.key);
     rx -= 8;
     gem(g, rx, 12);
     const lv = `Lv ${s.level}`, lw = labW(lv) + 10;
@@ -166,7 +169,7 @@ export class SkillWindow {
     p.text(rx + 5, 12, lv, SK.txt);
   }
 
-  /** 계열 고르기 (하나만): 고른 계열 스킬만 아래에 보임 */
+  /** 계열 보기 (섞어 낄 수 있음): 보는 계열 카드가 아래에 보임 */
   private branchButtons(s: SkillSource): void {
     const p = this.p, g = p.g;
     BRANCHES.forEach((b, i) => {
@@ -195,11 +198,11 @@ export class SkillWindow {
       p.hit(vx, 51, tw, 13, { kind: 'view', v });
       vx += tw + 2;
     }
-    const hint = s.view === 'act' ? 'A~H에 장착' : 'SP로 배우면 켜짐';
+    const hint = s.view === 'act' ? 'A~F에 장착' : '+ 로 끼우면 켜짐';
     p.text(236 - labW(hint), 53, hint, SK.off);
   }
 
-  /** 내용 카드: 위 = 기본 스킬·공용 패시브, 아래 = 고른 계열 (열리는 레벨 순 + 진행 선) */
+  /** 내용 카드: 위 = 기본 스킬·공용 패시브, 아래 = 보는 계열 (티어 순 + 진행 선) */
   private content(s: SkillSource): void {
     const p = this.p, g = p.g;
     R(g, 13, 64, 224, 104, SK.shade);
@@ -223,12 +226,12 @@ export class SkillWindow {
     });
   }
 
-  /** 장착 칸 A S D F G H + 안내 + 초기화 */
+  /** 장착 칸 A S D F + 안내 + 초기화 */
   private tray(s: SkillSource): void {
     const p = this.p, g = p.g;
     card(g, 12, 170, 224, 38);
     p.text(17, 170, '장착', SK.key);
-    p.text(40, 170, '끌어다 놓거나 고른 채 A~H', SK.off);
+    p.text(40, 170, '끌어다 놓거나 고른 채 A~F', SK.off);
     s.slots.forEach((id, k) => {
       const x = 18 + k * 25, y = 182, tgt = s.drag?.target === k;
       R(g, x + 1, y + 1, 22, 22, SK.shade);

@@ -6,7 +6,6 @@ import fx from '../../data/fx.json';
 import { api } from '../net/api';
 import { IslandConnection } from '../net/islandNet';
 import { colorInt } from '../palette';
-import { spLeft } from '../stage/islandBadges';
 import { IslandStage } from '../stage/islandStage';
 import { SettingsPanel } from '../stage/settingsPanel';
 import { done } from '../ui/firstVisit';
@@ -257,12 +256,12 @@ export class Island extends Phaser.Scene {
     } else if (pos) this.follow(pos, width, height - HUD_HEIGHT);
   }
 
-  /** 아래 띠 버튼 마우스 올림 이름표: 이름 + 챙길 일(쓸 SP·입장 신청) (패널·설정·배치 모드 중에는 숨김) */
+  /** 아래 띠 버튼 마우스 올림 이름표: 이름 + 챙길 일(입장 신청, 카드 창 선물 팩·갈기 추천은 CD-3·4) (패널·설정·배치 모드 중에는 숨김) */
   private drawTip(width: number, bandTop: number): void {
     const s = this.stage, k = this.hover;
     if (!s || !k || s.panels.open || s.place.active || this.settings.open) return this.tip.show([], 0, 0, width);
-    const sp = spLeft(s.conn), req = s.panels.pendingRequests;
-    const why: Partial<Record<HudButton, string>> = { K: sp > 0 ? `쓸 SP ${sp}` : undefined, M: req > 0 ? `입장 신청 ${req}` : undefined };
+    const req = s.panels.pendingRequests;
+    const why: Partial<Record<HudButton, string>> = { M: req > 0 ? `입장 신청 ${req}` : undefined };
     const at = IslandHud.buttonTop(k, bandTop, width);
     this.tip.show([BUTTON_NAME[k], ...(why[k] ? [why[k]!] : [])], at.x, at.y, width);
   }

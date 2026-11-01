@@ -5,7 +5,7 @@ import { TICK } from '../constants';
 import type { Monster } from '../monster/state';
 import type { PlayerInput } from '../player';
 import { hurtPlayer } from '../playerHurt';
-import { resolveSkill } from '../skillTree';
+import { resolveSkill } from '../cards/build';
 import { RoomSim, type SimEvent } from './room';
 
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
@@ -18,7 +18,7 @@ const run = (sim: RoomSim, first: PlayerInput, sec: number): SimEvent[] => {
 };
 const tough = (m: Monster) => Object.assign(m, { hp: 5000, maxHp: 5000 });
 const hits = (ev: SimEvent[]) => ev.flatMap((e) => (e.type === 'hit' ? [e.damage] : []));
-const cast = (id: string, variant?: string): PlayerInput => ({ ...none, skill: resolveSkill(id, variant ? { points: 3, variant } : { points: 1 }) });
+const cast = (id: string, variant?: string): PlayerInput => ({ ...none, skill: resolveSkill(id, variant ? { level: 2, variant } : { level: 1 }) });
 
 describe('다단히트 (회전베기)', () => {
   it('active 동안 0.15초마다 한 번씩 6번', () => {

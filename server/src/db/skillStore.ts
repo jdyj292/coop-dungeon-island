@@ -1,100 +1,89 @@
-// 스킬 저장 (docs/skills.md 1장, db.md skill_nodes·skill_slots): 받은 SP = 숙련도 레벨 − 1 + weapon_mastery.sp(보너스), 쓴 SP = 노드 포인트에서 계산.
-// 무기마다 고른 계열(weapon_mastery.branch)과 계열마다 장착(skill_slots, 없으면 기본 배치)
-// 검사는 shared/skillLoadout.checkNode·checkEquip (클라이언트 신고값은 믿지 않는다), 던전 출발 때 effectiveBuild로 판정 빌드를 만든다
+// 카드 저장 임시 연결 (CD-3 전까지, shared cards/interim.ts): skill_nodes = 카드 단계(액티브 1·2, 패시브 0·1·2)·변형, skill_slots = 액티브 칸 A S D F.
+// 보유 검사 없이 그 무기 카드를 모두 가진 것으로 본다. 검사는 shared(클라이언트 신고값은 믿지 않는다), 던전 출발 때 interimBuild로 판정 빌드를 만든다.
+// CD-3에서 cards·card_slots·card_pity와 마이그레이션으로 바꾼다 (skill_nodes·skill_slots·sp·branch 지움)
 import {
-  applyNode, BRANCHES, SLOT_COUNT, checkEquip, checkNode, decodeBuild, effectiveBuild, encodeBuild, equipSlots, loadoutSlots, MVP_WEAPONS, spSpent, spTotal,
-  treeNodes, weaponDef, type Branch, type Loadout, type NodeFail, type SkillBuild, type SkillNode,
+  ACTIVE_SLOTS, checkInterimEquip, checkInterimNode, decodeBuild, defaultLoadout, encodeBuild, equipCard, interimBuild, interimPassiveUsed,
+  MVP_WEAPONS, passiveCap, weaponCards, type InterimFail, type InterimNodes,
 } from '@game/shared';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { Db } from './client';
 import { skillNodes, skillSlots, weaponMastery } from './schema';
 
-/** 그 사람의 모든 노드 (무기 구분 없이 스킬 id → 노드) */
-export function skillBuild(db: Db, userId: number): SkillBuild {
-  const out: SkillBuild = {};
+/** skill_slots.branch 자리 (계열 없음, CD-3에서 열이 사라짐) */
+const SLOT_BRANCH = 'A';
+
+/** 그 사람의 그 무기 노드 (데이터에서 사라진 카드·변형, 범위 밖 단계는 버림) */
+export function cardNodes(db: Db, userId: number, weapon: string): Record<string, { points: number; variant?: string }> {
+  const out: Record<string, { points: number; variant?: string }> = {}, mine = weaponCards(weapon);
   for (const r of db.select().from(skillNodes).where(eq(skillNodes.userId, userId)).all()) {
-    out[r.nodeId] = { points: r.points, ...(r.variant ? { variant: r.variant } : {}) };
+    if (!mine.includes(r.nodeId)) continue;
+    const n = decodeBuild(`${r.nodeId}:${r.points}${r.variant ? `:${r.variant}` : ''}`)[r.nodeId];
+    if (n) out[r.nodeId] = { points: n.level, ...(n.variant ? { variant: n.variant } : {}) };
   }
-  // 데이터에서 사라진 스킬·변형은 버린다
-  return decodeBuild(encodeBuild(out));
+  return out;
 }
 
-const masteryRow = (db: Db, userId: number, weapon: string) =>
-  db.select({ level: weaponMastery.level, sp: weaponMastery.sp, branch: weaponMastery.branch }).from(weaponMastery)
-    .where(and(eq(weaponMastery.userId, userId), eq(weaponMastery.weapon, weapon))).get();
+const levelOf = (db: Db, userId: number, weapon: string): number =>
+  db.select({ level: weaponMastery.level }).from(weaponMastery).where(and(eq(weaponMastery.userId, userId), eq(weaponMastery.weapon, weapon))).get()?.level ?? 1;
 
-const asBranch = (s: string | undefined): Branch => (BRANCHES as readonly string[]).includes(s ?? '') ? (s as Branch) : 'A';
-
-/** 받은 SP (무기별) */
-export function spOf(db: Db, userId: number, weapon: string): number {
-  const r = masteryRow(db, userId, weapon);
-  return spTotal(r?.level ?? 1, r?.sp ?? 0);
-}
-
-/** 무기 하나의 레벨·고른 계열·그 계열에 저장한 장착 */
-export function loadoutOf(db: Db, userId: number, weapon: string): Loadout {
-  const r = masteryRow(db, userId, weapon), branch = asBranch(r?.branch);
+/** 액티브 칸 (A S D F, 빈칸 null). 저장이 없으면 기본 배치 = A S 처음 카드 */
+export function activeSlots(db: Db, userId: number, weapon: string): (string | null)[] {
   const rows = db.select().from(skillSlots)
-    .where(and(eq(skillSlots.userId, userId), eq(skillSlots.weapon, weapon), eq(skillSlots.branch, branch))).all();
-  if (!rows.length) return { level: r?.level ?? 1, branch };
-  const slots: (string | null)[] = Array<string | null>(SLOT_COUNT).fill(null);
-  for (const s of rows) if (s.slot >= 0 && s.slot < slots.length) slots[s.slot] = s.nodeId;
-  return { level: r?.level ?? 1, branch, slots };
+    .where(and(eq(skillSlots.userId, userId), eq(skillSlots.weapon, weapon), eq(skillSlots.branch, SLOT_BRANCH))).all();
+  if (!rows.length) return [...defaultLoadout(weapon).active];
+  const out: (string | null)[] = Array<string | null>(ACTIVE_SLOTS).fill(null), mine = weaponCards(weapon, 'active');
+  for (const s of rows) if (s.slot >= 0 && s.slot < ACTIVE_SLOTS && mine.includes(s.nodeId)) out[s.slot] = s.nodeId;
+  return out;
 }
 
-/** 스킬 창(K)에 보낼 값: 무기마다 레벨·받은 SP·쓴 SP(고른 계열 기준)·노드 문자열·고른 계열·그 계열 장착(빈칸 '') */
-export function skillsView(db: Db, userId: number): { weapon: string; level: number; sp: number; spent: number; build: string; branch: Branch; slots: string[] }[] {
-  const b = skillBuild(db, userId);
+const nodesText = (nodes: InterimNodes): string =>
+  encodeBuild(Object.fromEntries(Object.entries(nodes).map(([id, n]) => [id, { level: n.points, ...(n.variant ? { variant: n.variant } : {}) }])));
+
+/** 스킬 창(K)에 보낼 값: 무기마다 레벨·패시브 한도·쓴 비용·노드 문자열·액티브 칸(빈칸 '') */
+export function skillsView(db: Db, userId: number): { weapon: string; level: number; cap: number; used: number; build: string; slots: string[] }[] {
   return MVP_WEAPONS.map((weapon) => {
-    const w = weaponDef(weapon), mine: SkillBuild = {}, lo = loadoutOf(db, userId, weapon);
-    for (const id of treeNodes(w)) if (b[id]) mine[id] = b[id];
+    const nodes = cardNodes(db, userId, weapon), level = levelOf(db, userId, weapon);
     return {
-      weapon, level: lo.level, sp: spOf(db, userId, weapon), spent: spSpent(w, mine, lo.branch), build: encodeBuild(mine), branch: lo.branch,
-      slots: loadoutSlots(w, lo).map((id) => id ?? ''),
+      weapon, level, cap: passiveCap(level), used: interimPassiveUsed(weapon, nodes), build: nodesText(nodes),
+      slots: activeSlots(db, userId, weapon).map((id) => id ?? ''),
     };
   });
 }
 
-/** 던전 출발 때 파티 정보에 실을 빌드 문자열 (고른 계열·열린 노드만, 장착한 칸이 slot) */
+/** 던전 출발 때 파티 정보에 실을 빌드 문자열 (장착 카드만, 액티브는 칸) */
 export function dungeonBuild(db: Db, userId: number, weapon: string): string {
-  return encodeBuild(effectiveBuild(weaponDef(weapon), skillBuild(db, userId), loadoutOf(db, userId, weapon)));
+  return encodeBuild(interimBuild(weapon, levelOf(db, userId, weapon), cardNodes(db, userId, weapon), activeSlots(db, userId, weapon)));
 }
 
-/** 노드 하나 바꾸기 (그 행만 고쳐 씀). 안 되면 사유 */
-export function setSkillNode(db: Db, userId: number, weapon: string, id: string, node: SkillNode): NodeFail | null {
-  const w = weaponDef(weapon), before = skillBuild(db, userId);
-  const fail = checkNode(w, before, id, node, spOf(db, userId, weapon), loadoutOf(db, userId, weapon));
+/** 카드 하나의 단계·변형 바꾸기 (그 행만 고쳐 씀, 액티브 1·변형 없음 / 패시브 0이면 행을 지움). 안 되면 사유 */
+export function setSkillNode(db: Db, userId: number, weapon: string, id: string, node: { points: number; variant?: string }): InterimFail | null {
+  const fail = checkInterimNode(weapon, levelOf(db, userId, weapon), cardNodes(db, userId, weapon), id, node);
   if (fail) return fail;
-  const n = applyNode(before, id, node)[id];
-  if (!n) db.delete(skillNodes).where(and(eq(skillNodes.userId, userId), eq(skillNodes.nodeId, id))).run();
+  const plain = node.points <= (weaponCards(weapon, 'active').includes(id) ? 1 : 0) && !node.variant;
+  if (plain) db.delete(skillNodes).where(and(eq(skillNodes.userId, userId), eq(skillNodes.nodeId, id))).run();
   else {
-    const row = { points: n.points, variant: n.variant ?? null };
+    const row = { points: node.points, variant: node.variant ?? null };
     db.insert(skillNodes).values({ userId, nodeId: id, ...row }).onConflictDoUpdate({ target: [skillNodes.userId, skillNodes.nodeId], set: row }).run();
   }
   return null;
 }
 
-/** 고른 계열의 슬롯(0~5 = A S D F G H)에 장착 (그 칸 스킬과 자리 바꿈, 그 계열 장착 6칸을 다시 적음). 안 되면 사유 */
-export function equipSkillSlot(db: Db, userId: number, weapon: string, id: string, slot: number): NodeFail | null {
-  const w = weaponDef(weapon), lo = loadoutOf(db, userId, weapon);
-  const fail = checkEquip(w, lo, id, slot);
+/** 액티브 칸(0~3 = A S D F)에 장착 (그 칸 카드와 자리 바꿈, 4칸을 다시 적음). 안 되면 사유 */
+export function equipSkillSlot(db: Db, userId: number, weapon: string, id: string, slot: number): InterimFail | null {
+  const nodes = cardNodes(db, userId, weapon), now = activeSlots(db, userId, weapon);
+  const fail = checkInterimEquip(weapon, levelOf(db, userId, weapon), nodes, now, id, slot);
   if (fail) return fail;
-  const slots = equipSlots(loadoutSlots(w, lo), id, slot);
+  const slots = equipCard({ active: now, passive: [] }, 'active', slot, id).active;
   db.transaction((tx) => {
-    tx.delete(skillSlots).where(and(eq(skillSlots.userId, userId), eq(skillSlots.weapon, weapon), eq(skillSlots.branch, lo.branch))).run();
+    tx.delete(skillSlots).where(and(eq(skillSlots.userId, userId), eq(skillSlots.weapon, weapon), eq(skillSlots.branch, SLOT_BRANCH))).run();
     slots.forEach((nodeId, i) => {
-      if (nodeId) tx.insert(skillSlots).values({ userId, weapon, branch: lo.branch, slot: i, nodeId }).run();
+      if (nodeId) tx.insert(skillSlots).values({ userId, weapon, branch: SLOT_BRANCH, slot: i, nodeId }).run();
     });
   });
   return null;
 }
 
-/** 계열 고르기 (섬에서 무료, 장착은 계열마다 따로 남음) */
-export function setBranch(db: Db, userId: number, weapon: string, branch: Branch): void {
-  db.insert(weaponMastery).values({ userId, weapon, branch }).onConflictDoUpdate({ target: [weaponMastery.userId, weaponMastery.weapon], set: { branch } }).run();
-}
-
-/** 무기 포인트·변형 초기화 (섬에서 무료, skills.md 1장). 계열·장착은 그대로 */
+/** 무기 카드 단계·변형·패시브 장착 초기화 (액티브 칸은 그대로) */
 export function resetSkills(db: Db, userId: number, weapon: string): void {
-  db.delete(skillNodes).where(and(eq(skillNodes.userId, userId), inArray(skillNodes.nodeId, treeNodes(weaponDef(weapon))))).run();
+  db.delete(skillNodes).where(and(eq(skillNodes.userId, userId), inArray(skillNodes.nodeId, weaponCards(weapon)))).run();
 }

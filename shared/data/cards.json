@@ -1,0 +1,70 @@
+{
+  "_note": "스킬 카드 (skills.md 1장, 형식 data.md 10장, 값 balance.md 7장 카드 경제). tiers = 티어별 장착 숙련도·갈면 조각·지정 구매 조각·테두리 색(palette.json global.ui.card). cards = 카드 id(skills.json 행동 id 또는 passives.json id, 공용 패시브는 <무기>.<id>) → 무기·종류·계열·티어(cost 없으면 패시브 비용 = 티어, 강화 +1). starter = 처음 카드. branchBonus = 같은 계열 카드 3장·5장일 때 [Ⅰ, Ⅱ] 효과 (Ⅱ가 Ⅰ을 대신)",
+  "tiers": {
+    "1": { "equipLevel": 1, "dust": 5, "craft": 40, "color": "tier1" },
+    "2": { "equipLevel": 6, "dust": 20, "craft": 100, "color": "tier2" },
+    "3": { "equipLevel": 11, "dust": 100, "craft": 400, "color": "tier3" }
+  },
+  "cards": {
+    "gs_launch": { "weapon": "greatsword", "kind": "active", "branch": "base", "tier": 1 },
+    "gs_earthsplit": { "weapon": "greatsword", "kind": "active", "branch": "base", "tier": 1 },
+    "gs_whirl": { "weapon": "greatsword", "kind": "active", "branch": "A", "tier": 1 },
+    "gs_shoulder": { "weapon": "greatsword", "kind": "active", "branch": "A", "tier": 1 },
+    "gs_quake": { "weapon": "greatsword", "kind": "active", "branch": "A", "tier": 2 },
+    "gs_throw": { "weapon": "greatsword", "kind": "active", "branch": "A", "tier": 2 },
+    "gs_crush": { "weapon": "greatsword", "kind": "active", "branch": "A", "tier": 3 },
+    "gs_collapse": { "weapon": "greatsword", "kind": "active", "branch": "A", "tier": 3 },
+    "gs_wave": { "weapon": "greatsword", "kind": "active", "branch": "B", "tier": 1 },
+    "gs_draw": { "weapon": "greatsword", "kind": "active", "branch": "B", "tier": 1 },
+    "gs_scar": { "weapon": "greatsword", "kind": "active", "branch": "B", "tier": 2 },
+    "gs_cyclone": { "weapon": "greatsword", "kind": "active", "branch": "B", "tier": 2 },
+    "gs_cross": { "weapon": "greatsword", "kind": "active", "branch": "B", "tier": 3 },
+    "gs_flash": { "weapon": "greatsword", "kind": "active", "branch": "B", "tier": 3 },
+    "greatsword.quickrise": { "weapon": "greatsword", "kind": "passive", "branch": "common", "tier": 1 },
+    "gs_heavyhand": { "weapon": "greatsword", "kind": "passive", "branch": "A", "tier": 1 },
+    "gs_steadfast": { "weapon": "greatsword", "kind": "passive", "branch": "A", "tier": 1 },
+    "gs_aftershock": { "weapon": "greatsword", "kind": "passive", "branch": "A", "tier": 2 },
+    "gs_stomp": { "weapon": "greatsword", "kind": "passive", "branch": "A", "tier": 2 },
+    "gs_giant": { "weapon": "greatsword", "kind": "passive", "branch": "A", "tier": 3 },
+    "gs_dominate": { "weapon": "greatsword", "kind": "passive", "branch": "A", "tier": 3 },
+    "gs_keenedge": { "weapon": "greatsword", "kind": "passive", "branch": "B", "tier": 1 },
+    "gs_honing": { "weapon": "greatsword", "kind": "passive", "branch": "B", "tier": 1 },
+    "gs_risingwave": { "weapon": "greatsword", "kind": "passive", "branch": "B", "tier": 2 },
+    "gs_cycle": { "weapon": "greatsword", "kind": "passive", "branch": "B", "tier": 2 },
+    "gs_phantom": { "weapon": "greatsword", "kind": "passive", "branch": "B", "tier": 3 },
+    "gs_dance": { "weapon": "greatsword", "kind": "passive", "branch": "B", "tier": 3 },
+    "st_fireburst": { "weapon": "staff", "kind": "active", "branch": "base", "tier": 1 },
+    "st_icefield": { "weapon": "staff", "kind": "active", "branch": "base", "tier": 1 },
+    "st_pillar": { "weapon": "staff", "kind": "active", "branch": "A", "tier": 1 },
+    "st_icelance": { "weapon": "staff", "kind": "active", "branch": "A", "tier": 1 },
+    "st_chain": { "weapon": "staff", "kind": "active", "branch": "A", "tier": 2 },
+    "st_fireball": { "weapon": "staff", "kind": "active", "branch": "A", "tier": 2 },
+    "st_orb": { "weapon": "staff", "kind": "active", "branch": "B", "tier": 1 },
+    "st_lift": { "weapon": "staff", "kind": "active", "branch": "B", "tier": 1 },
+    "st_well": { "weapon": "staff", "kind": "active", "branch": "B", "tier": 2 },
+    "st_gravfield": { "weapon": "staff", "kind": "active", "branch": "B", "tier": 2 },
+    "staff.quickrise": { "weapon": "staff", "kind": "passive", "branch": "common", "tier": 1 },
+    "st_affinity": { "weapon": "staff", "kind": "passive", "branch": "A", "tier": 1 },
+    "st_burn": { "weapon": "staff", "kind": "passive", "branch": "A", "tier": 1 },
+    "st_frost": { "weapon": "staff", "kind": "passive", "branch": "A", "tier": 2 },
+    "st_overheat": { "weapon": "staff", "kind": "passive", "branch": "A", "tier": 2 },
+    "st_weightless": { "weapon": "staff", "kind": "passive", "branch": "B", "tier": 1 },
+    "st_lightfoot": { "weapon": "staff", "kind": "passive", "branch": "B", "tier": 1 },
+    "st_orbplus": { "weapon": "staff", "kind": "passive", "branch": "B", "tier": 2 },
+    "st_aegis": { "weapon": "staff", "kind": "passive", "branch": "B", "tier": 2 }
+  },
+  "starter": {
+    "greatsword": ["gs_launch", "gs_earthsplit"],
+    "staff": ["st_fireburst", "st_icefield"]
+  },
+  "branchBonus": {
+    "greatsword": {
+      "A": [{ "chargeSpeedMul": 1.15 }, { "chargeSpeedMul": 1.25, "chargeBonusAdd": 0.1 }],
+      "B": [{ "projectileRangeMul": 1.15 }, { "projectileRangeMul": 1.25, "projectileCooldownMul": 0.9 }]
+    },
+    "staff": {
+      "A": [{ "areaMul": 1.1 }, { "areaMul": 1.15, "mpMul": 0.9 }],
+      "B": [{ "slowTimeMul": 1.2 }, { "slowTimeMul": 1.3, "slowAdd": 0.05 }]
+    }
+  }
+}

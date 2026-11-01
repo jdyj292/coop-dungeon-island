@@ -1,5 +1,6 @@
 // shared/data JSON 스키마 (형식 docs/data.md, 값의 의미 docs/combat.md). 로드 시 한 번 검사한다
 import { z } from 'zod';
+import { cards, packs } from './cardSchema';
 import { island, items } from './islandSchema';
 
 export const FLAGS = ['launch', 'knockback', 'down', 'downhit', 'pull', 'hold', 'grab', 'multi', 'projectile', 'inplace'] as const;
@@ -140,8 +141,6 @@ export const skill = playerActionObj.extend({
   /** 스킬 창(K) 설명 (hud.md 8장) */
   desc: z.string().min(1),
   branch: z.enum(['base', 'A', 'B']),
-  /** 열리는 숙련도 레벨 (계열 스킬, skills.md 1장). 없으면 1 (기본 스킬) */
-  unlockLevel: z.number().int().min(1).max(99).optional(),
   cooldown: pos,
   mp: z.number().int().nonnegative(),
   variants: z.record(z.object({ name: z.string(), desc: z.string() }).passthrough()).optional(),
@@ -177,19 +176,21 @@ export const skill = playerActionObj.extend({
   vanish: z.literal(true).optional(),
 }).strict().superRefine(oneShape);
 
-/** 숫자 하나 또는 포인트별 값 배열 (길이 = combat.json skillTree.maxPoints, crossCheck) */
+/** 카드 단계 수: 기본·강화 (skills.md 1장). 패시브 값 배열·pointDesc 길이 */
+export const CARD_LEVELS = 2;
+
+/** 숫자 하나 또는 [기본, 강화] 값 배열 (길이 = CARD_LEVELS, crossCheck) */
 const perPoint = <T extends z.ZodTypeAny>(t: T) => z.union([t, z.array(t).min(1)]);
 
 /** 패시브 (data.md 3장 passives.json): 계열 보조 + 공용 패시브(weapon '*'·branch common, 무기마다 펼쳐짐).
- * unlockLevel에 열리고 SP로 0~maxPoints 포인트 (skills.md 1장). 값이 배열이면 포인트별 */
+ * 카드로 장착 (티어는 cards.json, skills.md 1장). 값이 배열이면 [기본 카드, 강화 카드] */
 export const passive = z.object({
   id: z.string(),
   weapon: z.string(),
   branch: z.enum(['A', 'B', 'common']),
-  unlockLevel: z.number().int().min(1).max(99),
   name: z.string(),
   desc: z.string().min(1),
-  /** 스킬 창 포인트별 효과 줄 (길이 = maxPoints) */
+  /** 카드 창 [기본, 강화] 효과 줄 (길이 = CARD_LEVELS) */
   pointDesc: z.array(z.string().min(1)).min(1),
   effect: z.object({
     chargeSpeedMul: perPoint(pos).optional(),
@@ -234,6 +235,16 @@ export const passive = z.object({
     phantom: z.object({ delay: pos, mul: perPoint(pos) }).strict().optional(),
     /** 검의 춤: 스킬이 끝나고 window초 안에 시작한 다음 스킬 계수 × mul */
     dance: z.object({ window: pos, mul: perPoint(pos) }).strict().optional(),
+    // 계열 보너스 (cards.json branchBonus, skills.md 1장)에서 주로 쓰는 키
+    /** 투사체 스킬 기준 쿨 배율 */
+    projectileCooldownMul: perPoint(pos).optional(),
+    /** 판정 범위(area) 크기 배율: radius·width·depth */
+    areaMul: perPoint(pos).optional(),
+    /** 스킬 MP 배율 (반올림) */
+    mpMul: perPoint(pos).optional(),
+    /** status slow 시간 배율 · 감속량 더하기 */
+    slowTimeMul: perPoint(pos).optional(),
+    slowAdd: perPoint(z.number()).optional(),
   }).strict(),
 }).strict();
 
@@ -355,8 +366,15 @@ export const combat = z.object({
   wallStunSec: sec, pushRate: pos, turnWindow: sec, cooldownScale: pos, stunExitSec: sec,
   /** 행동 포즈 lead·follow가 준비·후딜레이 앞에서 차지하는 비율 (motion.md 2장) */
   poseSplit: z.number().positive().max(1),
-  /** 스킬 포인트 (skills.md 1장, balance.md 1장): 노드 최대 포인트(액티브·패시브), 액티브 포인트별 레벨 배율, 재입력 받는 시간 (스킬이 끝난 뒤) */
-  skillTree: z.object({ maxPoints: z.number().int().positive(), levelMul: z.array(pos).min(1), reinputWindow: pos }).strict(),
+  /** 스킬 카드 (skills.md 1장, balance.md 1·7장): 강화 액티브 계수 배율, 강화에 드는 같은 카드 수, 액티브 칸 수,
+   * 패시브 비용 한도 = base + floor((숙련도 − 1) / every), 계열 보너스 Ⅰ·Ⅱ 장수, 환영 선물 팩, 재입력 받는 시간 (스킬이 끝난 뒤) */
+  card: z.object({
+    enhancedMul: pos, mergeCount: z.number().int().min(2), activeSlots: z.number().int().positive(),
+    passiveCap: z.object({ base: z.number().int().nonnegative(), every: z.number().int().positive() }).strict(),
+    branchBonusAt: z.array(z.number().int().positive()).min(1),
+    welcomePacks: z.object({ pack: z.number().int().positive(), count: z.number().int().nonnegative() }).strict(),
+    reinputWindow: pos,
+  }).strict(),
   stun: z.object({ light: stun, medium: stun, heavy: stun }).strict(),
   weightMul: z.object({ light: sec, medium: sec, heavy: sec, fixed: sec, boss: sec }).strict(),
   grades: z.object(Object.fromEntries(GRADES.map((g) => [g, z.object({ hitstop: sec, shake: sec }).strict()])) as
@@ -421,6 +439,7 @@ export type MonsterDef = z.infer<typeof monster>;
 export type Combat = z.infer<typeof combat>;
 export type Rooms = z.infer<typeof rooms>;
 export type { DecorationDef, IslandDef, ItemsDef } from './islandSchema';
+export type { CardDef, CardsFile, PackDef, PacksFile, TierDef } from './cardSchema';
 
 /** 파일 → 스키마. notes = 바깥에 _note 등 '_' 키가 섞인 레코드 파일 (검사 전에 뺀다) */
 export const FILE_SCHEMAS = {
@@ -433,6 +452,8 @@ export const FILE_SCHEMAS = {
   'combat.json': { schema: combat, notes: false },
   'island.json': { schema: island, notes: true },
   'items.json': { schema: items, notes: true },
+  'cards.json': { schema: cards, notes: true },
+  'packs.json': { schema: packs, notes: true },
 } as const;
 
 /** '_'로 시작하는 키(_note 등)를 뺀 바깥 객체. 안쪽 객체는 원본 그대로 */

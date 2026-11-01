@@ -6,7 +6,7 @@ import { TICK } from './constants';
 import { perksOf } from './passives';
 import { chargeLevel, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from './player';
 import { hurtPlayer } from './playerHurt';
-import { buildSkill } from './skillLoadout';
+import { buildSkill } from './cards/build';
 
 const gs = weaponDef('greatsword'), st = weaponDef('staff');
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
@@ -14,7 +14,7 @@ const idle: PlayerInput = { x: 0, y: 0, attack: false, skill: null, backstep: fa
 const launch = skillDef('gs_launch');
 
 const player = (ids: string[] = [], weapon: WeaponDef = gs): PlayerState =>
-  ({ ...newPlayerState({ x: 500, y: 50 }), perks: perksOf(weapon, Object.fromEntries(ids.map((id) => [id, { points: 1 }]))) });
+  ({ ...newPlayerState({ x: 500, y: 50 }), perks: perksOf(weapon, Object.fromEntries(ids.map((id) => [id, { level: 1 }]))) });
 
 /** 스킬을 누르고 holdSec 동안 누르고 있다가 뗀다. 발동(active) 순간의 정의와 누른 뒤 걸린 시간 */
 function cast(p: PlayerState, skill: ActionDef, holdSec: number, weapon: WeaponDef = gs): { def: ActionDef; at: number } {
@@ -98,7 +98,7 @@ describe('대검 충전', () => {
   });
 
   it('재입력 변형의 다음 입력은 충전 없음', () => {
-    const build = { gs_launch: { points: 3, variant: 'double' } };
+    const build = { gs_launch: { level: 2, variant: 'double' } };
     const p = player(), d = buildSkill(gs, build, 'gs_launch')!;
     cast(p, d, 0);
     for (let i = 0; i < 40 && p.fighter.run; i++) stepPlayerState(p, gs, idle, TICK, bounds);

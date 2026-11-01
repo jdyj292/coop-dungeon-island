@@ -24,7 +24,7 @@ export class Script {
   needsReset = false;
   /** 한 바퀴 끝: 되돌린 뒤 restart */
   finished = false;
-  /** 스킬 노드 코드 (예: gs_earthsplit:3:fan) */
+  /** 스킬 노드 코드 (예: gs_earthsplit:2:fan) */
   build = '';
 
   constructor(public mode: ScriptMode) {

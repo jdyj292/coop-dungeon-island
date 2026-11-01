@@ -59,8 +59,8 @@ SP·레벨 열림·계열 선택 → 카드팩으로 카드를 모으고 3장이
 |---|---|---|
 | CD-1 | 문서 개편 (skills 1장·balance·island·data·db·network·hud·audio·roadmap) | 문서 검토·승인 |
 | CD-2 | 데이터·공용 로직: cards.json·packs.json·combat.json card, shared/src/cards/(팩 굴림·합치기·장착 검사·패시브 한도·계열 보너스·카드 빌드), passives 값 [기본, 강화], unlockLevel·SP 코드 뺌, 액티브 칸 4 | pnpm test·data-validate·balance-check |
-| CD-3 | DB·서버: users.dust·cards·card_slots·card_pity, skill_nodes·skill_slots·sp·branch 지우는 마이그레이션 + 처음 카드·환영 선물, card 메시지(열기·지정 구매·갈기·변형·장착), 던전 빌드를 카드로, ADMIN 조각 | pnpm test·net-smoke·run-sim |
-| CD-4 | 카드 창(K)·던전 HUD A S D F 4칸 | 새 승인 데모 HTML → 반영 |
-| CD-5 | 카드 상점 시설 그림·자리 + 카드 상점 화면·팩 열기·합치기 연출, 카드 테두리(티어·강화) | sprite-preview·데모 HTML 승인 → 반영 |
+| CD-3 | DB·서버: users.dust·cards·card_slots·card_pity, skill_nodes·skill_slots·sp·branch 지우는 마이그레이션 + 처음 카드·환영 선물, card 메시지(열기·지정 구매·갈기·변형·장착), 던전 빌드를 카드로, ADMIN 조각, 임시 연결(shared cards/interim.ts·server skillStore.ts·`skill` 메시지) 지움 | pnpm test·net-smoke·run-sim |
+| CD-4 | 카드 창(K, 임시 스킬 창 stage/islandSkills.ts 대신)·던전 HUD A S D F 4칸 | 새 승인 데모 HTML → 반영 |
+| CD-5 | 카드 상점 시설 그림·자리 + 카드 상점 화면·팩 열기·합치기 연출, 카드 테두리(티어·강화), palette.json global.ui.card 임시 색 확정 | sprite-preview·데모 HTML 승인 → 반영 |
 | CD-6 | 효과음(팩 흔들기·찢기·뒤집기·티어 2·3 빛·공개·합치기·갈기·지정 구매) + 카드 상점 BGM(층 3겹) | sfx-preview·bgm-preview 승인 → 반영 |
 | CD-7 | 가격·확률·한도·계열 보너스 조정 | run-sim·ttk-sim·실제 플레이 |

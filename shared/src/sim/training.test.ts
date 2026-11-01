@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { weaponDef } from '../actions';
 import { TICK } from '../constants';
 import type { PlayerInput } from '../player';
-import { resolveSkill } from '../skillTree';
+import { resolveSkill } from '../cards/build';
 import { RoomSim } from './room';
 
 const gs = weaponDef('greatsword');
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 160 };
 const none: PlayerInput = { x: 0, y: 0, attack: false, skill: null, backstep: false };
-const launch: PlayerInput = { ...none, skill: resolveSkill('gs_launch', { points: 1 }) };
+const launch: PlayerInput = { ...none, skill: resolveSkill('gs_launch', { level: 1 }) };
 const run = (sim: RoomSim, n: number, input = none) => { for (let i = 0; i < n; i++) sim.tick(TICK, input); };
 
 describe('허수아비 (monsters.json dummy)', () => {

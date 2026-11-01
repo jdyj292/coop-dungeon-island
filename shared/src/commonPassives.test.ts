@@ -6,8 +6,8 @@ import { PLAYER } from './data/load';
 import { perksOf } from './passives';
 import { canQuickRise, newPlayerState, stepPlayerState, type PlayerInput, type PlayerState } from './player';
 import { hurtPlayer, isInvulnerable } from './playerHurt';
-import { applyNode, checkNode } from './skillLoadout';
-import { decodeBuild, encodeBuild, maxPointsOf, spSpent, treeNodes, type SkillBuild } from './skillTree';
+import { decodeBuild, encodeBuild, type SkillBuild } from './cards/build';
+import { cardBranch, tierOf, weaponCards } from './cards/catalog';
 
 const gs = weaponDef('greatsword');
 const bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 100 };
@@ -32,29 +32,20 @@ function toRecovery(p: PlayerState) {
   ticks(p, Math.ceil((launch.phases.windup + launch.phases.active) / TICK) + 1);
 }
 
-describe('공용 노드', () => {
-  it('무기마다 따로, 최대 3, SP 계산·저장 문자열 (스킬 캔슬은 없앰)', () => {
-    expect(treeNodes(gs)).toContain('greatsword.quickrise');
-    expect(treeNodes(weaponDef('staff'))).toContain('staff.quickrise');
-    expect(treeNodes(gs)).not.toContain('staff.quickrise');
-    expect(treeNodes(gs)).not.toContain('greatsword.cancel');
-    expect(maxPointsOf('greatsword.quickrise')).toBe(3);
+describe('공용 패시브 카드', () => {
+  it('무기마다 따로 (티어 1, 계열 없음), 빌드 문자열 (스킬 캔슬은 없앰)', () => {
+    expect(weaponCards('greatsword', 'passive')).toContain('greatsword.quickrise');
+    expect(weaponCards('staff', 'passive')).toContain('staff.quickrise');
+    expect(weaponCards('greatsword')).not.toContain('staff.quickrise');
+    expect(weaponCards('greatsword')).not.toContain('greatsword.cancel');
+    expect([tierOf('greatsword.quickrise'), cardBranch('greatsword.quickrise')]).toEqual([1, 'common']);
     const b = decodeBuild('greatsword.quickrise:2');
-    expect(spSpent(gs, b)).toBe(2);
     expect(encodeBuild(b)).toBe('greatsword.quickrise:2');
-    expect(decodeBuild('greatsword.quickrise:4')).toEqual({});
+    expect(decodeBuild('greatsword.quickrise:3')).toEqual({});
     expect(decodeBuild('greatsword.cancel:1')).toEqual({});
   });
-  it('열리는 레벨(기상 회피 7)부터 어느 계열에서나, SP가 모자라면 안 됨', () => {
-    let b: SkillBuild = {};
-    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 9, { level: 6, branch: 'A' })).toBe('locked');
-    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 1 }, 1, { level: 7, branch: 'B' })).toBeNull();
-    b = applyNode(b, 'greatsword.quickrise', { points: 1 });
-    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 2 }, 2, { level: 7, branch: 'A' })).toBeNull();
-    expect(checkNode(gs, b, 'greatsword.quickrise', { points: 2 }, 1, { level: 7, branch: 'A' })).toBe('sp');
-  });
-  it('기상 회피 쿨은 포인트별', () => {
-    expect([1, 2, 3].map((n) => perksOf(gs, { 'greatsword.quickrise': { points: n } }).quickRiseCooldownAdd)).toEqual([0, -0.1, -0.2]);
+  it('기상 회피 쿨은 강화 카드만', () => {
+    expect([1, 2].map((n) => perksOf(gs, { 'greatsword.quickrise': { level: n } }).quickRiseCooldownAdd)).toEqual([0, -0.2]);
   });
 });
 
@@ -79,7 +70,7 @@ describe('기상 회피', () => {
     expect(p.hurt?.kind).toBe('down');
   });
   it('있으면 밀림이 끝난 뒤 회피 키로 바로 일어나 회피, 기상 무적은 없음', () => {
-    const p = downed({ 'greatsword.quickrise': { points: 1 } });
+    const p = downed({ 'greatsword.quickrise': { level: 1 } });
     expect(canQuickRise(p)).toBe(false);
     ticks(p, Math.ceil(PLAYER.hurt.pushSec / TICK) + 1);
     expect(canQuickRise(p)).toBe(true);
@@ -93,19 +84,19 @@ describe('기상 회피', () => {
   });
   it('2·3포인트면 기상 회피로 시작한 회피의 쿨이 0.1 / 0.2초 짧음 (보통 회피는 그대로)', () => {
     const cd = (points: number) => {
-      const p = downed({ 'greatsword.quickrise': { points } });
+      const p = downed({ 'greatsword.quickrise': { level: points } });
       ticks(p, Math.ceil(PLAYER.hurt.pushSec / TICK) + 1);
       ticks(p, 1, { backstep: true });
       return p.backstepCd;
     };
     expect(cd(1)).toBeCloseTo(PLAYER.backstep.cooldown);
     expect(cd(3)).toBeCloseTo(PLAYER.backstep.cooldown - 0.2);
-    const q = withBuild({ 'greatsword.quickrise': { points: 3 } });
+    const q = withBuild({ 'greatsword.quickrise': { level: 2 } });
     ticks(q, 1, { backstep: true });
     expect(q.backstepCd).toBeCloseTo(PLAYER.backstep.cooldown);
   });
   it('지구력이 모자라면 못 함', () => {
-    const p = downed({ 'greatsword.quickrise': { points: 1 } });
+    const p = downed({ 'greatsword.quickrise': { level: 1 } });
     ticks(p, Math.ceil(PLAYER.hurt.pushSec / TICK) + 1);
     p.stamina = PLAYER.stamina.dodge - 1;
     expect(canQuickRise(p)).toBe(false);
