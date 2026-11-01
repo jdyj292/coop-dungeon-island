@@ -89,10 +89,13 @@
     "gravfield": { "_note": "중력장: closeSec 동안 둘레가 반지름 × from에서 조여 들어와 자리 잡음, 그 뒤 ∨ 누름 표시 marks개가 drop px 위에서 떨어져 납작해짐, 남은 비율 fadeLast부터 바둑판으로 사라짐", "sec": 0.9, "closeSec": 0.16, "from": 1.5, "spin": 1.5, "marks": 7, "drop": 10, "fadeLast": 0.35 },
     "cyclone": { "_note": "회오리 검기: 판정 원 자리에서 솟는 회오리. 층 rings개(아래가 좁고 위가 넓음, 높이 height) 위를 초승달이 돌고(spin rad/초), 먼지·빛 점이 빨려 오름. sec 동안, 마지막 fadeLast 비율은 바둑판", "sec": 0.42, "rings": 4, "height": 26, "bottom": 0.35, "spin": 14, "flat": 0.35, "fadeLast": 0.35, "motes": 6 },
     "wave": {
-      "_note": "검기: 세로 초승달 (높이 = 반지름 × tall, 두께 thick px), 앞이 흰색, 뒤 잔상 trail개(뒤로 px). 뒤로 속도선 lines줄(높이 비율, 길이 = 반지름 × lineLen, 이동 거리로 깜빡임), 발밑 긁힌 자국 scratch px. launch = 놓는 순간 칼끝 자리(앞 at[0]·높이 at[1]) 세로 섬광(반 길이 r, sec 동안) + 앞으로 뻗는 바람 줄(wind px) + 먼지 dust개",
-      "tall": 1.8, "bulge": 4, "thick": 4, "trail": [3, 6, 9], "lift": 2,
-      "lines": [-0.6, -0.2, 0.25, 0.65], "lineLen": 1.6, "scratch": 10,
-      "launch": { "at": [14, -10], "sec": 0.16, "r": 9, "wind": 14, "dust": 4 }
+      "_note": "검기 (client/src/fx/waveFx.ts): 세로 초승달 (반 높이 = 반지름 × tall, 끝이 뒤로 bulge px 휨, 가운데 두께 thick px: 흰 심 → 금 → 어두운 금). 날아간 거리 grow px 동안 growMin → 1배로 커짐. 뒤로 꼬리(가운데 길이 tail px, 끝으로 갈수록 짧음·바둑판으로 사라짐), 앞 1px 금빛 번짐, 앞 가장자리 반짝임 sparkle개, 속도선 lines줄(높이 비율, 길이 = 반지름 × lineLen, 이동 거리로 깜빡임), 발밑 금빛 줄·긁힌 자국 scratch px, 지나간 자리 dustEvery px마다 흙먼지(dustSpan px 뒤까지 피어오르다 사라짐). 크기 값은 반지름 6 기준. end = 끝 (sec 동안): 갈라지지 않고 앞으로 drift px 미끄러지며 뒤부터 얇아져(꼬리·속도선도 줄어듦) 흰 호만 남고, 진행 breakAt부터 호가 금빛 가루 motes개로 흩어져 앞으로 moteDrift px 날다 사라짐 (별·불꽃 없음). launch = 놓는 순간 칼끝 자리(앞 at[0]·높이 at[1]) 세로 섬광(반 길이 r, sec 동안) + 앞으로 뻗는 바람 줄(wind px) + 먼지 dust개",
+      "tall": 2.6, "bulge": 7, "thick": 6, "lift": 1, "grow": 18, "growMin": 0.45,
+      "tail": 24, "sparkle": 3,
+      "lines": [-0.8, -0.45, -0.1, 0.3, 0.65], "lineLen": 5, "scratch": 26,
+      "dustEvery": 10, "dustSpan": 44,
+      "end": { "sec": 0.3, "drift": 12, "breakAt": 0.45, "motes": 7, "moteDrift": 10 },
+      "launch": { "at": [14, -10], "sec": 0.2, "r": 14, "wind": 24, "dust": 6 }
     },
     "lance": { "_note": "얼음 창: 길이 = 반지름 × length, 두께 = 반지름 × thick, 가장 두꺼운 자리 widest(앞에서 비율)", "length": 3, "thick": 0.45, "widest": 0.3, "motes": 3 },
     "pillar": { "_note": "불기둥 한 번 (반복 판정마다 하나, 겹쳐서 이어짐). 폭 = 반지름 × width, riseSec 동안 솟음", "sec": 0.42, "height": 30, "width": 0.55, "riseSec": 0.06, "fadeLast": 0.35, "flicker": 18, "embers": 3 },

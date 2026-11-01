@@ -194,7 +194,7 @@ export class CombatStage {
       }
     } else if (e.type === 'boltEnd') {
       const b = e.bolt, { sx, sy } = project(b.x, b.y, fx.spell.bolt.height);
-      shotEnd(this.fx.layer, b.def.id, sx, sy, b.hit.length > 0);
+      shotEnd(this.fx.layer, b.def.id, sx, sy, b.hit.length > 0, b.dir, b.def.projectile?.radius, b.x);
     } else if (e.type === 'echo') {
       castEcho(this.fx, e.echo.kind, e.echo.def, e.echo);
     } else if (e.type === 'backstep' && this.playerView.teleport) {
@@ -262,7 +262,7 @@ export class CombatStage {
     // 순간이동이 끝나는 순간: 나타나는 자리에 점
     if (this.wasBackstep && !p.backstep && this.playerView.teleport) this.teleportAt(p);
     this.wasBackstep = !!p.backstep;
-    this.bolts.draw(this.sim.bolts.map((b) => ({ x: b.x, y: b.y, dir: b.dir, id: b.def.id, r: b.def.projectile?.radius, ghost: b.ghost })));
+    this.bolts.draw(this.sim.bolts.map((b) => ({ x: b.x, y: b.y, dir: b.dir, id: b.def.id, r: b.def.projectile?.radius, trav: b.traveled, ghost: b.ghost })));
     this.drawDt = 0;
 
     this.sim.alive.forEach((m, i) => placeMonster(this.scene, this.view(m), data, m, this.clock, i));

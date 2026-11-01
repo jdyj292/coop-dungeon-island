@@ -52,13 +52,13 @@ export class RemoteShots {
     const bolts: ShotView[] = [];
     for (const [id, b] of this.bolts) {
       if (t < b.endAt) {
-        bolts.push({ x: x(b), y: b.y0 + b.dy * d(b), dir: b.dir, id: b.kind, r: b.r, ghost: b.ghost });
+        bolts.push({ x: x(b), y: b.y0 + b.dy * d(b), dir: b.dir, id: b.kind, r: b.r, trav: d(b), ghost: b.ghost });
         continue;
       }
       this.bolts.delete(id);
       if (!b.end) continue;
       const { sx, sy } = project(b.end.x, b.end.y, fx.spell.bolt.height);
-      shotEnd(layer, b.kind, sx, sy, b.end.reason === 'hit');
+      shotEnd(layer, b.kind, sx, sy, b.end.reason === 'hit', b.dir, b.r, b.end.x);
     }
     return { projectiles: [...this.monster.values()].map((p) => p.p), bolts };
   }
