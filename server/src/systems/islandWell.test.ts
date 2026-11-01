@@ -33,6 +33,15 @@ describe('우물 출발', () => {
     expect(g.state.well.members.length).toBe(0);
   });
 
+  it('먼저 합류한 사람이 고른 층으로 출발 (수련장)', () => {
+    const { g, enter, departed } = make();
+    enter('a');
+    g.onMessage('a', 'well', { op: 'join', floor: 'training' });
+    expect(g.state.well.floor).toBe('training');
+    g.onMessage('a', 'well', { op: 'depart' });
+    expect(departed).toEqual([[['a'], 'training']]);
+  });
+
   it('우물 앞이 아니면 합류 못함, 대기 시작자만 출발, 여럿이면 카운트다운 동안 합류 가능', () => {
     const { g, enter, departed, fails } = make();
     enter('a');

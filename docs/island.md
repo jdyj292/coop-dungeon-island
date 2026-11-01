@@ -161,7 +161,7 @@
 - 연출 구현: client/src/stage/wellHops.ts (주민별 뛰어들기·튀어나오기), 모양 client/src/fx/wellHop.ts, 값 fx.json wellHop (art.md 0장)
 
 - 던전 중인 주민은 섬 화면에서 "탐험 중 (2층)" 같은 상태 표시
-- 구현 (4-8): 우물 앞 E → 합류 + 우물 패널 (stage/islandPanels.ts). 카운트다운·최대 인원·층은 island.json well, 서버 server/src/systems/islandWell.ts. 대기 시작자가 빠지면 다음 사람이 이어받음
+- 구현 (4-8): 우물 앞 E → 우물 패널 (누가 대기 중이면 바로 합류, 아무도 없으면 탭에서 층을 고르고 합류·Enter) (stage/islandPanels.ts). 카운트다운·최대 인원·층은 island.json well, 서버 server/src/systems/islandWell.ts. 대기 시작자가 빠지면 다음 사람이 이어받음
 - 무기 (MVP 보충 ST-4): 각자 가방(I)의 장비 탭에서 고른다 (MVP 무기 대검·스태프는 모두 가지고 있음, 고르고 Enter·장착 버튼). 우물 패널에는 대기자마다 무기만 보임. users.weapon에 저장, 출발 때 파티 정보로 던전에 전달, 정산은 그 무기 숙련도(weapon_mastery)로. 섬 HUD LV = 고른 무기의 숙련도. 카운트다운 중인 대기자는 못 바꿈
 - 던전에 가져가는 물약: 가방에서 한도(player.json potions.*.carry)까지. 가방에서는 정산 때 쓴 만큼만 빠짐
 - 정산 결과는 게시판 기록으로 남음

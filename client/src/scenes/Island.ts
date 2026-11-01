@@ -180,7 +180,9 @@ export class Island extends Phaser.Scene {
       if (near === 'shop') s.panels.show('shop');
       else if (near === 'board') s.panels.show('board');
       else if (near === 'well') {
-        if (!s.conn.well.members.includes(s.conn.userId)) s.conn.send('well', { op: 'join' });
+        // 이미 대기 중이면 바로 합류 (층은 먼저 합류한 사람 것). 아무도 없으면 패널에서 층(탭)을 고르고 합류
+        const w = s.conn.well;
+        if (w.members.length && !w.members.includes(s.conn.userId)) s.conn.send('well', { op: 'join' });
         s.panels.show('well');
       }
     }
