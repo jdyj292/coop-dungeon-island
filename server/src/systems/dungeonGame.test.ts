@@ -80,7 +80,8 @@ describe('DungeonGame (서버 진행)', () => {
     expect(g.state.players.get('a')!.actionId).toBe('gs_b1');
     run(g, 30);
     const hit = sent.find((s) => s.type === 'hit')?.msg as S2C['hit'];
-    expect(hit).toMatchObject({ attacker: 'a', target: m.id, damage: 20 });
+    // by = 때린 행동 id (스킬이 끝난 뒤 남는 다단 판정도 그 스킬, 클라이언트 적중 연출용)
+    expect(hit).toMatchObject({ attacker: 'a', target: m.id, damage: 20, by: 'gs_b1' });
     expect(sent.some((s) => s.type === 'combo')).toBe(true);
     // 2인 방: 체력 ×1.5 (60 → 90), 20 피해 → 70
     expect(g.state.monsters.get(String(m.id))!.hpRatio).toBe(Math.ceil((255 * 70) / 90));

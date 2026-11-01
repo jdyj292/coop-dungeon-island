@@ -107,8 +107,8 @@ export function flashStab(sx: number, sy: number, seed: number, big: boolean): E
   return [cut, ...sparks(sx + ox, y + oy).slice(0, big ? S.sparks[1] : S.sparks[0])];
 }
 
-/** 일섬 검기 다단(가벼운 판정)인가: 몬스터 흰 번쩍임을 빼서 긁는 검기가 가려지지 않게 (첫 판정·이중 일섬·반환은 번쩍임) */
-export const quietFlashTick = (id: string | undefined, big: boolean): boolean => !big && !!id && lookOf(id) === 'flash';
+/** 일섬 검기·검의 장막 다단(가벼운 판정)인가: 몬스터 흰 번쩍임을 빼서 몸에 박히는 베기가 가려지지 않게 (첫 판정·이중 일섬·반환은 번쩍임) */
+export const quietFlashTick = (id: string | undefined, big: boolean): boolean => !big && !!id && (lookOf(id) === 'flash' || lookOf(id) === 'curtain');
 
 /** 일섬 적중(첫 판정·칼바람·이중 일섬·반환)이면 맞은 몬스터 몸에 검기 박힘. (sx, sy) = 몸 기준 화면 좌표, seed = 판정마다 다른 값 */
 export function flashHit(layer: Pick<FxLayer, 'add'>, id: string | undefined, sx: number, sy: number, seed: number, big: boolean): void {

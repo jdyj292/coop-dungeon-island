@@ -136,12 +136,15 @@
     "aura": { "every": 2, "alpha": 0.6, "motes": 4, "spin": 0.8 },
     "stages": { "radius": 7, "spin": 5 }
   },
-  "_tier3b": "SK-7 대검 B 계열 3단계 연출 (art.md 7장, client/src/fx/tier3bFx.ts·curtainFx.ts). curtain = 검의 장막(curtainFx.ts). meet = 교차점 폭발: X자 빛(반지름 = 판정 반지름) + 별(star px) + 고리 2겹 + 불꽃 sparks개, 높이 y. 일섬은 flash (flashFx.ts). cut = 반환: 맞은 적 자리 대각선 베기 반 길이 len. 잔상은 같은 그림을 바둑판 반쪽(1px 점의 x + y가 짝수인 자리)만, 시간 초",
+  "_tier3b": "SK-7 대검 B 계열 3단계 연출 (art.md 7장, client/src/fx/tier3bFx.ts·curtainFx.ts). curtain = 검의 장막(충전하면 커지는 범위·따라다니는 고리·X자 베기, curtainFx.ts). meet = 교차점 폭발: X자 빛(반지름 = 판정 반지름) + 별(star px) + 고리 2겹 + 불꽃 sparks개, 높이 y. 일섬은 flash (flashFx.ts). cut = 반환: 맞은 적 자리 대각선 베기 반 길이 len. 잔상은 같은 그림을 바둑판 반쪽(1px 점의 x + y가 짝수인 자리)만, 시간 초",
   "tier3b": {
     "curtain": {
-      "_note": "검의 장막: 준비 동안 떨어질 줄에 깊이 방향 점선 표적(every px마다, 아래로 흐름 flow px/초). active에 칼빛이 fallFrom px 위에서 fallSec 동안 떨어져 꽂히고(날 반폭 blade px, 길이 bladeLen) 장막이 spreadSec 동안 위아래로 펼쳐짐. 장막 = 방 깊이 끝까지 높이 height px 빛 벽(가운데 흰·양옆 금·끝 어두운 금, 위로 흐르는 밝은 띠 band px 간격, rise px/초), 반복 시간 동안 남았다 fadeLast 비율부터 바둑판. 꽂히는 자리 먼지 dust개 + 충격 고리, 판정마다 줄 위 빛 조각 glints개 (glintSec 동안)",
-      "every": 4, "flow": 24, "fallFrom": 80, "fallSec": 0.1, "blade": 2, "bladeLen": 34, "spreadSec": 0.12,
-      "height": 22, "band": 7, "rise": 40, "fadeLast": 0.2, "dust": 6, "glints": 3, "glintSec": 0.2
+      "_note": "검의 장막. charge = 준비·충전 동안 내 둘레 범위(chargeFx가 매 프레임, 바닥 층): 최대 충전 범위 옅은 점선(maxEvery점마다, 진하기 maxAlpha), 지금 범위 2겹 점선(ringEvery, 초당 spin rad 돎, 충전 중 흰색·다 차면 pulseSec마다 흰/금 깜빡), 몸 둘레 from px에서 지금 범위까지 waveSec마다 밀려나는 물결 waves개(waveEvery), 고리 위 바깥 화살표 arrows개(길이 arrowLen, 충전 중 bobSpeed로 들썩임). active에 꽂는 자리 별(starSec)·충격 고리·먼지 dust개, 고리가 spreadSec 동안 펼쳐져 반복 시간 동안 남음: 테두리 금 점선 + 안쪽 어두운 금 + 흰 반짝임 sparks개(sparkSec마다 차례로), 마지막 fadeLast 비율은 바둑판. 고리는 꽂은 자리에 남고 따라다니는 장막(repeat.follow)이면 캐릭터를 따라감. close = 조여드는 장막 끝 판정: 고리가 closeSec 동안 조여들고(흰 → 금) 큰 별(star px) + 사방 베기 줄 rays개(길이 rayLen, from px부터 바깥으로)가 burstSec 동안 퍼짐 + 충격 고리·먼지. hit = 맞은 몬스터 몸(높이 y)에 X자 베기: 2px 줄 두 개(반 길이 len, 펼칠 때 bigLen, 기울기 흔들림 tilt, 두 번째는 lag초 늦게)가 pass 비율 동안 그어지고 꼬리부터 사라짐(sec), 가운데 별 star[다단, 펼칠 때](flashSec), 불꽃 sparks[다단, 펼칠 때]개, 자리 흔들림 jitter px. 반복이 없으면(잔상) shortSec. 시간 초",
+      "spin": 0.6, "spreadSec": 0.15, "ringEvery": 3, "sparks": 5, "sparkSec": 0.08, "fadeLast": 0.15,
+      "starSec": 0.25, "dust": 6, "shortSec": 0.4,
+      "charge": { "maxEvery": 6, "maxAlpha": 0.6, "pulseSec": 0.12, "waves": 2, "waveSec": 0.6, "from": 8, "waveEvery": 4, "arrows": 4, "arrowLen": 4, "bobSpeed": 14 },
+      "close": { "closeSec": 0.18, "burstSec": 0.25, "star": 7, "rays": 8, "rayLen": 8, "from": 4 },
+      "hit": { "sec": 0.24, "y": -8, "len": 10, "bigLen": 15, "tilt": 0.5, "lag": 0.04, "pass": 0.45, "jitter": 4, "star": [3, 5], "flashSec": 0.12, "sparks": [3, 6] }
     },
     "meet": { "sec": 0.35, "y": -8, "star": 5, "sparks": 6 },
     "cut": { "sec": 0.3, "y": -9, "len": 7 }

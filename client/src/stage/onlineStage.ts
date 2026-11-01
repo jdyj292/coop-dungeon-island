@@ -2,7 +2,7 @@
 // 내 캐릭터는 예측 상태로 바로 그리고 서버 패치마다 보정 (network.md 7장, net/localPlayer.ts)
 import type Phaser from 'phaser';
 import {
-  buildFrom, buildSkill, chargeLevel, COMBAT, MONSTERS, NET, playerStateName, weaponDef,
+  buildFrom, buildSkill, chargeLevel, COMBAT, MONSTERS, NET, playerStateName, SKILLS, weaponDef,
   type Bounds, type Monster, type PlayerState, type S2C, type ZoneArea,
 } from '@game/shared';
 import fx from '../../data/fx.json';
@@ -12,8 +12,8 @@ import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
 import { chargeView } from '../fx/chargeFx';
+import { curtainHit } from '../fx/curtainFx';
 import { flashHit, quietFlashTick } from '../fx/flashFx';
-import { setCurtainField } from '../fx/curtainFx';
 import { StatusLayer, type StatusView } from '../fx/statusFx';
 import { HazardLayer } from '../fx/hazards';
 import { ATTACKS, RemoteShots } from '../net/remoteShots';
@@ -83,7 +83,6 @@ export class OnlineStage {
   constructor(private scene: Phaser.Scene, readonly conn: Connection, bounds: Bounds) {
     this.fx = { layer: new FxLayer(scene, FX_DEPTH), ground: new FxLayer(scene, FX_GROUND_DEPTH), stop: new HitStop(), shake: new Shake() };
     this.local = new LocalPlayer(conn, bounds);
-    setCurtainField(bounds);
     this.hazards = new HazardLayer(scene);
     this.boltLayer = new BoltLayer(scene);
     this.status = new StatusLayer(scene);
@@ -193,7 +192,8 @@ export class OnlineStage {
       const cues = mine
         ? this.cues.player(id, p, playerStateName(p, myMoved ?? 0), this.local.predictor!.runStamp)
         : this.cues.player(id, p, s.state, s.actionStart);
-      cues.forEach((q) => playerCue(this.fx, r!.view, p, q, mine, w));
+      const rec = r;
+      cues.forEach((q) => playerCue(this.fx, rec.view, p, q, mine, w, () => rec.last ?? p.pos));
       const moved = mine ? myMoved : r.last ? Math.hypot(p.pos.x - r.last.x, p.pos.y - r.last.y) : 0;
       r.last = { x: p.pos.x, y: p.pos.y };
       r.view.draw(p, moved, 0, this.clock);
@@ -249,12 +249,15 @@ export class OnlineStage {
     const { sx, sy } = project(h.x, h.y, h.z);
     const [ax, ay] = fx.star.at as [number, number];
     const facing = attacker?.last && attacker.last.x > h.x ? -1 : 1;
-    // 등급·적중 소리: 공격자가 지금 하는 행동의 데이터 (audio.md 3장)
+    // 등급·적중 소리: 때린 행동의 데이터 (audio.md 3장). 지금 하는 행동이 때린 행동이면 그것(변형·레벨 반영), 아니면 서버가 보낸 by의 스킬
+    // (검의 장막처럼 스킬이 끝난 뒤에도 남는 다단 판정은 지금 행동과 다름)
     // 다단 판정(repeat.coef, 서버가 light로 보냄)은 가볍게: 로컬 sim/skillExtras.ts와 같은 규칙
-    const def = this.cues.lastDef(`p:${h.attacker}`), tick = !!def && 'repeat' in def && def.repeat?.coef !== undefined && h.strength === 'light' && def.strength !== 'light';
+    const cur = this.cues.lastDef(`p:${h.attacker}`), def = cur?.id === h.by ? cur : (SKILLS[h.by] ?? cur), tick = !!def && 'repeat' in def && def.repeat?.coef !== undefined && h.strength === 'light' && def.strength !== 'light';
     if (e) e.view.hurt = e.m.body.armor ? 0 : fx.reaction.hurtSec;
     hitPackage(this.fx, tick ? 'light' : def?.fx?.grade ?? 'light', (!quietFlashTick(def?.id, !tick) && e?.view) || { flash: 0 }, { x: sx + ax * facing, y: sy + ay, numberX: sx, numberY: sy - fx.number.above }, h.damage);
-    flashHit(this.fx.layer, def?.id, sx, sy, h.target * 31 + Math.round(performance.now()), !tick);
+    const seed = h.target * 31 + Math.round(performance.now());
+    flashHit(this.fx.layer, def?.id, sx, sy, seed, !tick);
+    curtainHit(this.fx.layer, def?.id, sx, sy, seed, !tick);
     if (tick) sfx.play('hitLight');
     else if (def?.sfx?.hit) sfx.play(def.sfx.hit);
     // 히트스톱 동기화: 내 공격이면 예측 중인 내 행동도 서버와 같은 시간(근접 역경직 포함) 멈춤 (몬스터·다른 사람은 서버 데이터가 이미 멈춰 있다)

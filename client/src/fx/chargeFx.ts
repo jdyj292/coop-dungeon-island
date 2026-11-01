@@ -8,6 +8,7 @@ import fx from '../../data/fx.json';
 import { spriteData } from '../sprites/data';
 import { project } from '../view/layout';
 import { lookOf } from './branchFx';
+import { drawCurtainCharge } from './curtainFx';
 import { drawFlashFan, drawFlashGather } from './flashFx';
 import { FX_GROUND_DEPTH } from './layer';
 import { clamp01, col, hash, px, star4 } from './spellDraw';
@@ -29,6 +30,8 @@ export interface ChargeView {
   stages: number;
   /** 일섬 준비·충전 중: 지금 부채꼴 범위 (반지름 논리 px = 기본 × (1 + 충전 비율 × 최대 보너스), 각도 도), 기 모으는 손 = 준비 포즈 앞손 */
   fan?: { radius: number; angle: number; pose: string | null };
+  /** 검의 장막 준비·충전 중: 지금 둘레 범위·최대 충전 범위 (반지름 논리 px) */
+  ring?: { radius: number; max: number };
 }
 
 /** 플레이어 상태 → 그릴 것 (충전 중이 아니면 level 0). level = 충전 비율 (본인 chargeLevel, 다른 사람은 서버 chargeLv) */
@@ -38,7 +41,9 @@ export function chargeView(id: string, p: PlayerState, weapon: WeaponDef, level:
   const bonus = tr?.type === 'charge' ? tr.bonusMax + (p.perks?.chargeBonusAdd ?? 0) : 0;
   const fan = run && area?.shape === 'fan' && lookOf(run.def.id) === 'flash' && phaseAt(run.def, run.t) === 'windup'
     ? { radius: area.radius! * (1 + level * bonus), angle: area.angle!, pose: run.def.poses?.windup ?? null } : undefined;
-  return { id, x: p.pos.x, y: p.pos.y, facing: p.facing, level, weapon, pose: fighterPose(p.fighter), stages, fan };
+  const ring = run && area?.shape === 'circle' && lookOf(run.def.id) === 'curtain' && phaseAt(run.def, run.t) === 'windup'
+    ? { radius: area.radius! * (1 + level * bonus), max: area.radius! * (1 + bonus) } : undefined;
+  return { id, x: p.pos.x, y: p.pos.y, facing: p.facing, level, weapon, pose: fighterPose(p.fighter), stages, fan, ring };
 }
 
 interface Burst {
@@ -92,6 +97,10 @@ export class ChargeLayer {
         const { sx, sy } = project(v.x, v.y), h = handAt({ ...v, pose: v.fan.pose });
         drawFlashFan(this.ground, sx, sy, v.facing, v.fan.radius, v.fan.angle, v.level, now);
         drawFlashGather(g, sx, sy, h.x, h.y, v.facing, v.level, now);
+      }
+      if (v.ring) {
+        const { sx, sy } = project(v.x, v.y);
+        drawCurtainCharge(this.ground, sx, sy, v.ring.radius, v.ring.max, v.level, now);
       }
       const prev = this.last.get(v.id);
       if (v.level <= 0) {

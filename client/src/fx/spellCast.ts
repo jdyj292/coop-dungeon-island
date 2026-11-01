@@ -19,7 +19,7 @@ import { chainBolt, orbBurst, quakeRing, scarBurst, stickSlash } from './tier2Fx
 import { collapseField, collapsePulse, risePillars } from './tier3Fx';
 import { flashCut, ghosted, meetBurst } from './tier3bFx';
 import { flashSlash } from './flashFx';
-import { curtainActive, curtainStart, curtainTick } from './curtainFx';
+import { curtainClose } from './curtainFx';
 import { actionSmear } from './actionSmear';
 
 /** 시전자 (논리 좌표) */
@@ -58,7 +58,6 @@ function areaBurst(layer: Layers['layer'], def: ActionDef, c: Caster): void {
 
 /** 준비 시작: 준비 시간 동안 보석으로 빛 모으기, 지연 원형 마법이면 바닥 표적 (준비 시간 동안) */
 export function castStart(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Caster): void {
-  if (lookOf(def.id) === 'curtain') curtainStart(fxl.ground, def, c);
   const w = poseFx(weapon, def.poses?.windup, c);
   if (w?.type === 'spark') fxl.layer.add(spark(w.x, w.y, def.phases.windup));
   if (def.area?.shape === 'circle' && isSpell(weapon, def, c)) {
@@ -77,10 +76,8 @@ export function castActive(fxl: Layers, weapon: WeaponDef, def: ActionDef, c: Ca
     fxl.ground.add(stampImpact(a.x, a.y));
     dust(a.x, a.y, fx.spell.stamp.dust).forEach((e) => fxl.layer.add(e));
   }
-  if (lookOf(def.id) === 'curtain') {
-    curtainActive(fxl, def, c);
-    return;
-  }
+  // 검의 장막: 고리·칼날은 캐릭터를 따라가야 하므로 actionSmear → curtainField
+  if (lookOf(def.id) === 'curtain') return;
   // 대지붕괴: 판정 사각형에 반복 시간 동안 깨진 땅 (바닥 층)
   if (lookOf(def.id) === 'collapse' && def.area) {
     const at = areaCenter(c, def.area.at), { sx, sy } = project(at.x, at.y), rep = def.repeat;
@@ -110,10 +107,8 @@ export function castEcho(c: Pick<FxContext, 'layer' | 'shake'>, kind: 'repeat' |
     c.layer.add(boltHit(sx, sy));
     return;
   }
-  if (lookOf(def.id) === 'curtain') {
-    curtainTick(c.layer, def, at);
-    return;
-  }
+  // 검의 장막: 반복 판정 그림 없음 (맞은 몬스터 X자 베기는 적중 때 curtainHit)
+  if (lookOf(def.id) === 'curtain') return;
   if (lookOf(def.id) === 'collapse' && def.area) {
     const a = areaCenter(at, def.area.at), { sx, sy } = project(a.x, a.y);
     collapsePulse(sx, sy, def.area.width ?? 64, def.area.depth ?? 32, Math.round(at.x + at.y * 7 + performance.now())).forEach((e) => c.layer.add(e));
@@ -164,7 +159,11 @@ function tier2Echo(c: Pick<FxContext, 'layer' | 'shake'>, look: EchoLook, def: A
   else if (look === 'quake') {
     c.layer.add(quakeRing(sx, sy, r));
     dust(sx, sy, fx.tier2.quake.dust).forEach((e) => c.layer.add(e));
-  } else if (look === 'orbEnd') c.layer.add(orbBurst(sx, sy, r));
+  } else if (look === 'orbEnd') {
+    // 끝 판정: 검의 장막(조여드는 장막)이면 고리가 조여드는 그림, 아니면 구슬 확장
+    if (lookOf(def.id) === 'curtain') curtainClose(sx, sy, r).forEach((e) => c.layer.add(e));
+    else c.layer.add(orbBurst(sx, sy, r));
+  }
   else if (look === 'rise' && def.area) {
     const a = areaCenter(at, def.area.at), p = project(a.x, a.y);
     risePillars(p.sx, p.sy, def.area.width ?? 64, def.area.depth ?? 32).forEach((e) => c.layer.add(e));

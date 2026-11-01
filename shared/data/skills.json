@@ -927,21 +927,20 @@
       "active": 0.1,
       "recovery": 0.45
     },
-    "coef": 600,
+    "coef": 200,
     "area": {
-      "shape": "rect",
+      "shape": "circle",
       "at": [
-        64,
+        0,
         0
       ],
-      "width": 12,
-      "depth": 240,
+      "radius": 40,
       "z": "both"
     },
     "repeat": {
-      "count": 9,
+      "count": 13,
       "interval": 0.25,
-      "coef": 80
+      "coef": 85
     },
     "status": {
       "type": "slow",
@@ -949,7 +948,9 @@
       "amount": 0.4
     },
     "strength": "heavy",
-    "flags": [],
+    "flags": [
+      "inplace"
+    ],
     "poses": {
       "lead": "heave",
       "windup": "overhead",
@@ -968,42 +969,30 @@
     },
     "weapon": "greatsword",
     "name": "검의 장막",
-    "desc": "앞 4타일에 하늘에서 거대한 검기를 내리꽂아 방 위아래 끝까지 가른다 (600%, 공중 적도). 2초 동안 남은 장막을 지나는 적은 0.25초마다 베이며(80%) 느려진다 (40%)",
+    "desc": "칼을 땅에 꽂아 둘레 2.5타일에 칼날 장막을 3초 동안 세운다 (꽂은 자리에 남음). 펼칠 때 200%, 그 뒤 0.25초마다 장막 안의 적을 제자리에 묶어 베고(85%, 공중 적도) 느리게 한다 (40%)",
     "branch": "B",
     "unlockLevel": 11,
     "cooldown": 12,
     "mp": 24,
     "variants": {
-      "twin": {
-        "name": "두 줄",
-        "desc": "앞 2타일·5타일에 장막을 한 줄씩 내리꽂는다 (각 320%, 지날 때 각 40%)",
-        "coef": 320,
-        "area": {
-          "at": [
-            80,
-            0
-          ]
-        },
+      "close": {
+        "name": "조여드는 장막",
+        "desc": "끝날 때 장막이 안으로 조여들며 한 번 더 크게 벤다 (펼칠 때 160%, 0.25초마다 65%, 끝 300%)",
+        "coef": 160,
         "repeat": {
-          "copies": [
-            [
-              -48,
-              0
-            ]
-          ],
-          "coef": 40
+          "coef": 65
+        },
+        "repeatEnd": {
+          "coef": 300
         }
       },
-      "push": {
-        "name": "밀어내기",
-        "desc": "장막이 천천히 앞으로 나아가며 적을 밀어낸다 (500%, 0.25초마다 70%)",
-        "coef": 500,
-        "flags": [
-          "knockback"
-        ],
+      "follow": {
+        "name": "따라다니는 장막",
+        "desc": "장막이 꽂은 자리에 남지 않고 나를 따라다닌다 (펼칠 때 160%, 0.25초마다 70%)",
+        "coef": 160,
         "repeat": {
-          "step": 6,
-          "coef": 70
+          "coef": 70,
+          "follow": true
         }
       }
     }

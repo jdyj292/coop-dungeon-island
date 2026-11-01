@@ -72,10 +72,15 @@ export function echoesOf(pid: string, def: ActionDef, p: PlayerState, now: numbe
   return out;
 }
 
-/** 반복 판정 직전: 묶음 자리를 앞으로(step) 옮기고 가까운 몬스터 쪽으로(seek) 따라간 뒤, 판정 자리를 정한다 */
-export function placeEcho(e: Echo, monsters: Monster[]): void {
+/** 반복 판정 직전: 묶음 자리를 앞으로(step) 옮기고 가까운 몬스터 쪽으로(seek) 따라간 뒤, 판정 자리를 정한다. follow면 시전자 p의 지금 자리·방향 */
+export function placeEcho(e: Echo, monsters: Monster[], p: PlayerState): void {
   const r = e.rep, spot = e.spot;
   if (!spot || !r) return;
+  if (r.follow) {
+    spot.x = p.pos.x;
+    spot.y = p.pos.y;
+    e.facing = p.facing;
+  }
   if (r.step && e.k) spot.x += r.step * e.facing;
   if (r.seek && e.def.area) {
     const c = areaCenter({ ...spot, facing: e.facing }, e.def.area.at);

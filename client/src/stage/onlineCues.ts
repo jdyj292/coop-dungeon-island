@@ -17,8 +17,8 @@ function dustAt(c: FxContext, x: number, y: number, kind: typeof fx.dust.down): 
   dust(sx, sy, kind).forEach((d) => c.layer.add(d));
 }
 
-/** mine = 내 캐릭터 (달리기 소리·다운 흔들림은 나만), w = 그 사람 무기 */
-export function playerCue(c: FxContext, view: PlayerView, p: PlayerState, q: Cue, mine: boolean, w: WeaponDef): void {
+/** mine = 내 캐릭터 (달리기 소리·다운 흔들림은 나만), w = 그 사람 무기, live = 그 사람 지금 화면 위치 (p는 이번 프레임 복사본이라 따라가는 이펙트는 live를 읽음) */
+export function playerCue(c: FxContext, view: PlayerView, p: PlayerState, q: Cue, mine: boolean, w: WeaponDef, live: () => { x: number; y: number } = () => p.pos): void {
   // 플레이어 cue의 def는 항상 플레이어 행동
   const caster = { x: p.pos.x, y: p.pos.y, facing: p.facing };
   if (q.type === 'actionStart') {
@@ -27,7 +27,10 @@ export function playerCue(c: FxContext, view: PlayerView, p: PlayerState, q: Cue
   }
   if (q.type === 'actionActive') {
     if (q.def.sfx?.active) sfx.play(q.def.sfx.active);
-    actionSmear(c.layer, q.def as ActionDef, () => ({ ...project(p.pos.x, p.pos.y), facing: p.facing }));
+    actionSmear(c.layer, q.def as ActionDef, () => {
+      const at = live();
+      return { ...project(at.x, at.y), facing: p.facing };
+    }, c.ground);
     castActive(c, w, q.def as ActionDef, caster);
   }
   if (q.type !== 'enter') return;

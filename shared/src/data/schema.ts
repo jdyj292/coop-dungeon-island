@@ -111,11 +111,12 @@ export const playerAction = playerActionObj.superRefine(oneShape);
  * 반복 판정 (data.md 3장): 시전한 자리에 count번 (첫 판정 포함). step = 판정마다 바라보는 쪽으로 옮기는 거리(px),
  * seek = 판정마다 가장 가까운 맞을 수 있는 몬스터 쪽으로 옮기는 거리(px), copies = 같은 반복을 이 오프셋([앞, 깊이])에 하나씩 더,
  * coef = 묶음 첫 판정 뒤 판정들의 계수 (없으면 스킬 coef. 검의 장막·일섬 = 큰 첫 판정 + 작은 다단),
- * delay = active 순간에는 판정 없이 이 초 뒤부터 첫 판정 (일섬: 베고 칼을 거둔 뒤 검기)
+ * delay = active 순간에는 판정 없이 이 초 뒤부터 첫 판정 (일섬: 베고 칼을 거둔 뒤 검기),
+ * follow = 판정마다 자리를 시전자 지금 자리로 (검의 장막 변형 따라다니는 장막)
  */
 export const repeat = z.object({
   count: z.number().int().positive(), interval: pos, step: z.number().optional(), seek: pos.optional(), copies: z.array(point).optional(),
-  coef: z.number().nonnegative().optional(), delay: pos.optional(),
+  coef: z.number().nonnegative().optional(), delay: pos.optional(), follow: z.boolean().optional(),
 }).strict();
 /** 이 행동의 knockback으로 벽에 부딪힌 몬스터: 다운 + 추가 판정 coef (변형 벽꿍) */
 const onWall = z.object({ coef: z.number().nonnegative() }).strict();

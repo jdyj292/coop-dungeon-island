@@ -1,4 +1,4 @@
-// 대검 B 계열 3단계 (SK-7, skills.md 2장): 검의 장막(깊이 끝까지·다단 감속·두 줄·밀어내기)·일섬(다단·이중·반환)·잔상·검의 춤(스킬 끝 1초 안 다음 스킬) (Lv1 ATK 10)
+// 대검 B 계열 3단계 (SK-7, skills.md 2장): 검의 장막(꽂은 자리 둘레 영역·다단 감속·밀리지 않음·조여드는·따라다니는)·일섬(다단·이중·반환)·잔상·검의 춤(스킬 끝 1초 안 다음 스킬) (Lv1 ATK 10)
 import { describe, expect, it } from 'vitest';
 import { weaponDef } from '../actions';
 import { TICK } from '../constants';
@@ -26,45 +26,59 @@ const hitsOn = (ev: SimEvent[], m: Monster) => ev.flatMap((e) => (e.type === 'hi
 const tick = (sec: number) => Math.round(sec / TICK);
 
 describe('검의 장막', () => {
-  it('앞 4타일에 방 위아래 끝까지 (600%), 2초 동안 0.25초마다 80% + 감속', () => {
+  it('둘레 40px에 펼칠 때 200%, 3초 동안 0.25초마다 85% + 감속, 밖은 안 맞음', () => {
     const sim = room();
-    const [m, top, side] = spawn(sim, [164, 50], [164, 2], [200, 50]);
-    const ev = run(sim, 3, { 0: cast({}, 'gs_cross') });
-    // 맞을 때마다 조금씩 밀려 장막 밖으로 나가면 끝 (걸어 들어오면 다시 베임)
+    const [m, air, out] = spawn(sim, [130, 50], [100, 80], [160, 50]);
+    air!.body.state = 'air';
+    air!.body.z = 20;
+    const ev = run(sim, 4, { 0: cast({}, 'gs_cross') });
     const [big, ...ticks] = hitsOn(ev, m!);
-    expect(big).toBe(60);
-    expect(ticks.length).toBeGreaterThanOrEqual(3);
-    expect(new Set(ticks)).toEqual(new Set([8]));
-    expect(hitsOn(ev, top!)[0]).toBe(60);
-    expect(hitsOn(ev, side!)).toEqual([]);
+    expect(big).toBe(20);
+    expect(ticks).toEqual(Array(12).fill(9));
+    expect(hitsOn(ev, air!)[0]).toBe(20);
+    expect(hitsOn(ev, out!)).toEqual([]);
   });
 
-  it('지나가다 들어온 적도 베이고 느려진다', () => {
+  it('맞아도 밀리지 않는다 (장막 안에 묶임)', () => {
     const sim = room();
-    const [m] = spawn(sim, [200, 50]);
-    const first = run(sim, 0.8, { 0: cast({}, 'gs_cross') });
-    expect(hitsOn(first, m!)).toEqual([]);
-    m!.body.x = 164;
+    const [m] = spawn(sim, [130, 50]);
+    run(sim, 2, { 0: cast({}, 'gs_cross') });
+    expect(m!.body.x).toBeCloseTo(130, 0);
+  });
+
+  it('꽂은 자리에 남는다: 내가 떠나도 그 자리 적이 베인다', () => {
+    const sim = room();
+    const [m] = spawn(sim, [110, 50]);
+    run(sim, 1.2, { 0: cast({}, 'gs_cross') });
+    sim.player.pos.x = 400;
+    expect(hitsOn(run(sim, 0.3, {}), m!).length).toBe(1);
+  });
+
+  it('3초가 지나면 장막이 사라진다', () => {
+    const sim = room();
+    run(sim, 3.8, { 0: cast({}, 'gs_cross') });
+    const [m] = spawn(sim, [110, 50]);
+    expect(hitsOn(run(sim, 1, {}), m!)).toEqual([]);
+  });
+
+  it('조여드는 장막: 끝날 때 한 번 더 300%', () => {
+    const b = { gs_cross: { points: 1, variant: 'close' } };
+    const sim = room(b);
+    const [m] = spawn(sim, [110, 50]);
+    const hits = hitsOn(run(sim, 4, { 0: cast(b, 'gs_cross') }), m!);
+    expect(hits[0]).toBe(16);
+    expect(hits.at(-1)).toBe(30);
+  });
+
+  it('따라다니는 장막: 내가 다가간 적을 벤다', () => {
+    const b = { gs_cross: { points: 1, variant: 'follow' } };
+    const sim = room(b);
+    const [m] = spawn(sim, [220, 50]);
+    expect(hitsOn(run(sim, 1.2, { 0: cast(b, 'gs_cross') }), m!)).toEqual([]);
+    sim.player.pos.x = 200;
     const later = run(sim, 0.3, {});
-    expect(hitsOn(later, m!)).toEqual([8]);
+    expect(hitsOn(later, m!)).toEqual([7]);
     expect(m!.slow.left).toBeGreaterThan(0);
-  });
-
-  it('두 줄: 앞 2타일·5타일에 한 줄씩 (각 320%, 지날 때 40%)', () => {
-    const b = { gs_cross: { points: 1, variant: 'twin' } };
-    const sim = room(b);
-    const [near, far] = spawn(sim, [132, 50], [180, 50]);
-    const ev = run(sim, 3, { 0: cast(b, 'gs_cross') });
-    for (const m of [near!, far!]) expect(hitsOn(ev, m).slice(0, 3)).toEqual([32, 4, 4]);
-  });
-
-  it('밀어내기: 장막이 앞으로 나아가 처음 자리 밖 적도 맞힌다', () => {
-    const b = { gs_cross: { points: 1, variant: 'push' } };
-    const sim = room(b);
-    const [m] = spawn(sim, [200, 50]);
-    const ev = run(sim, 3, { 0: cast(b, 'gs_cross') });
-    expect(hitsOn(ev, m!).length).toBeGreaterThan(0);
-    expect(hitsOn(ev, m!)[0]).toBe(7);
   });
 });
 

@@ -169,7 +169,7 @@ export function stepEchoes(room: RoomSim, events: SimEvent[]): void {
       room.countCombo(sp, room.landHits(sp, e.def, hit, events, true), events);
       continue;
     }
-    placeEcho(e, room.alive);
+    placeEcho(e, room.alive, sp.state);
     events.push({ type: 'echo', echo: { ...e, kind: e.kind } });
     room.countCombo(sp, room.landHits(sp, e.def, strikeEcho(e, sp.state, room.alive), events, true), events);
     // 구슬 확장·솟구침: 반복 묶음의 마지막 판정 뒤 그 자리에서 한 번 더 (감속·다운 유지 없이, 솟구침은 다운된 적까지 띄움)

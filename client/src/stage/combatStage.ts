@@ -13,8 +13,8 @@ import { Afterimages } from '../fx/afterimage';
 import { damageNumber } from '../fx/damageNumber';
 import { BoltLayer } from '../fx/boltLayer';
 import { chargeView } from '../fx/chargeFx';
+import { curtainHit } from '../fx/curtainFx';
 import { flashHit, quietFlashTick } from '../fx/flashFx';
-import { setCurtainField } from '../fx/curtainFx';
 import { StatusLayer } from '../fx/statusFx';
 import { HazardLayer } from '../fx/hazards';
 import { hitPackage, type FxContext } from '../fx/hitPackage';
@@ -81,7 +81,6 @@ export class CombatStage {
   constructor(private scene: Phaser.Scene, readonly bounds: Bounds, player: Vec2, spawns: Spawn[], readonly opts: SimOptions = {}, readonly weapon: WeaponDef = weaponDef('greatsword')) {
     this.sim = new RoomSim(this.weapon, bounds, player, opts);
     this.sim.spawn(spawns);
-    setCurtainField(bounds);
     this.playerView = new PlayerView(scene, FX_DEPTH - 1);
     this.playerView.weaponVisual = this.weapon.visual;
     this.playerView.teleport = this.weapon.backstepStyle === 'teleport';
@@ -207,7 +206,9 @@ export class CombatStage {
       hitPackage(this.fx, e.def.fx?.grade ?? 'light', quietFlashTick(e.def.id, e.def.strength !== 'light') ? { flash: 0 } : v, {
         x: sx + ax * facing, y: sy + ay, numberX: sx, numberY: sy - fx.number.above,
       }, e.damage, e.def.fx?.shake);
-      flashHit(this.fx.layer, e.def.id, sx, sy, e.m.id * 31 + Math.round(performance.now()), e.def.strength !== 'light');
+      const seed = e.m.id * 31 + Math.round(performance.now()), big = e.def.strength !== 'light';
+      flashHit(this.fx.layer, e.def.id, sx, sy, seed, big);
+      curtainHit(this.fx.layer, e.def.id, sx, sy, seed, big);
     } else if (e.type === 'playerHit') {
       // 플레이어 피격: 번쩍임 + 위험색 숫자 (경직·다운은 playerHurt 이벤트)
       const p = this.player, { sx, sy } = project(p.pos.x, p.pos.y);
@@ -251,7 +252,7 @@ export class CombatStage {
 
   private smearFor(def: ActionDef): void {
     const p = this.player;
-    actionSmear(this.fx.layer, def, () => ({ ...project(p.pos.x + this.rhythm.px * p.facing, p.pos.y), facing: p.facing }));
+    actionSmear(this.fx.layer, def, () => ({ ...project(p.pos.x + this.rhythm.px * p.facing, p.pos.y), facing: p.facing }), this.fx.ground);
   }
 
   /** moved = 이번 프레임에 걸은 거리 (틱이 안 돌았으면 null: 걷기 박자 유지) */

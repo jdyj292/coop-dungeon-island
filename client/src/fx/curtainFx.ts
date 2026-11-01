@@ -1,115 +1,135 @@
-// 검의 장막 연출 (대검 B Lv11, art.md 7장, 값 fx.json tier3b.curtain): 준비 동안 떨어질 줄에 깊이 방향 점선 표적,
-// active에 하늘에서 칼빛이 떨어져 꽂히고 방 위아래 끝까지 빛의 장막이 반복 시간 동안 남는다 (밀어내기면 함께 나아감).
-// 반복 판정마다 줄 위 빛 조각. 방 깊이 끝은 무대가 setCurtainField로 알려 준다 (서버는 화면을 모름)
-import type { ActionDef, Bounds } from '@game/shared';
+// 검의 장막 연출 (대검 B Lv11, art.md 7장, 값 fx.json tier3b.curtain): 준비·충전 동안 내 둘레 범위 고리가 충전한 만큼 커짐
+// (최대 범위 옅은 점선 + 바깥으로 밀려나는 물결 + 고리 위 바깥 화살표, chargeFx가 매 프레임), active에 칼을 꽂은 자리에서
+// 둘레 고리가 펼쳐져 반복 시간 동안 꽂은 자리에 남음(따라다니는 장막 = repeat.follow면 캐릭터를 따라감). 맞은 몬스터 몸에 X자 베기 + 별 + 불꽃,
+// 조여드는 장막의 끝 판정은 고리가 안으로 조여든 뒤 큰 별·사방 베기·충격 고리
+import { DEPTH_RATIO, type ActionDef } from '@game/shared';
+import type Phaser from 'phaser';
 import fx from '../../data/fx.json';
 import { colorInt } from '../palette';
 import { project } from '../view/layout';
+import { lookOf } from './branchFx';
 import type { Effect, FxLayer } from './layer';
-import { dust } from './particles';
-import { clamp01, col, hash, life, px, star4 } from './spellDraw';
+import { dust, sparks } from './particles';
+import { clamp01, col, ellipseDots, hash, life, px, star4 } from './spellDraw';
 import { quakeRing } from './tier2Fx';
 
 const C = fx.tier3b.curtain;
-let field = { minY: 0, maxY: 224 };
 
-/** 지금 방의 깊이 끝 (장막이 그 끝까지) */
-export function setCurtainField(b: Pick<Bounds, 'minY' | 'maxY'>): void {
-  field = { minY: b.minY, maxY: b.maxY };
-}
+type Foot = () => { sx: number; sy: number; facing: number };
 
-interface Caster { x: number; y: number; facing: number }
+const radiusOf = (def: ActionDef) => def.area?.radius ?? 40;
+/** 장막이 남는 시간: 반복 묶음 전체 (잔상처럼 반복이 없으면 짧게) */
+const lastOf = (def: ActionDef) => (def.repeat ? def.repeat.count * def.repeat.interval : C.shortSec);
 
-/** 장막 줄 (논리 x): 판정 가운데 + copies 자리. step = 판정마다 나아가는 px (밀어내기), 끝까지 (count − 1)번 */
-interface Line { x: number; facing: number; step: number; interval: number; steps: number }
-
-function linesOf(def: ActionDef, c: Caster): Line[] {
-  const ax = def.area?.at[0] ?? 0, rep = def.repeat;
-  const offs = [0, ...(rep?.copies ?? []).map(([dx]) => dx)];
-  return offs.map((dx) => ({
-    x: c.x + (ax + dx) * c.facing, facing: c.facing, step: rep?.step ?? 0, interval: rep?.interval ?? 1, steps: (rep?.count ?? 1) - 1,
-  }));
-}
-
-/** 화면 위·아래 끝 (방 깊이 끝) */
-const span = (x: number) => ({ sx: project(x, 0).sx, top: project(x, field.minY).sy, bot: project(x, field.maxY).sy });
-
-/** 준비: 떨어질 줄에 아래로 흐르는 점선 (점점 진해짐) */
-function target(l: Line, sec: number): Effect {
-  const { sx, top, bot } = span(l.x), gold = colorInt('global.allyFx.gold');
-  return {
-    ...life(sec),
-    draw(g, k) {
-      const e = (1 - k) * sec, a = clamp01(0.3 + (1 - k) * 0.7), off = Math.floor(e * C.flow);
-      for (let y = top; y <= bot; y++) if ((y - top - off) % C.every === 0) px(g, sx, y, gold, a);
-    },
-  };
-}
-
-/** 칼빛: fallFrom px 위에서 fallSec 동안 떨어져 시전자 깊이 줄에 꽂힘, 그 뒤 바둑판으로 사라짐 */
-function fallingBlade(sx: number, sy: number): Effect {
-  const { white, gold } = col(), edge = colorInt('global.fx.smearEdge'), sec = C.fallSec + C.spreadSec * 2;
-  return {
-    ...life(sec),
-    draw(g, k) {
-      const e = (1 - k) * sec, t = clamp01(e / C.fallSec), tip = Math.round(sy - C.fallFrom * (1 - t));
-      const a = t < 1 ? 1 : clamp01(1 - (e - C.fallSec) / (C.spreadSec * 2));
-      for (let d = 0; d < C.bladeLen; d++) {
-        const y = tip - d, w = d < 3 ? Math.ceil((C.blade * d) / 3) : C.blade;
-        for (let o = -w; o <= w; o++) px(g, sx + o, y, o === 0 ? white : Math.abs(o) < w ? gold : edge, a * (1 - d / C.bladeLen / 2));
-      }
-      if (t >= 1) star4(g, sx, sy, Math.max(1, Math.round(5 * a)), white, gold, a);
-    },
-  };
-}
-
-/** 장막: 꽂힌 자리에서 위아래로 펼쳐져 방 끝까지, 높이 height 빛 벽 (가운데 흰·양옆 금·끝 어두운 금) + 위로 흐르는 밝은 띠 */
-function wall(l: Line, sy: number, sec: number): Effect {
-  const { white, gold } = col(), edge = colorInt('global.fx.smearEdge'), { top, bot } = span(l.x);
-  return {
-    ...life(sec),
-    draw(g, k) {
-      const e = (1 - k) * sec - C.fallSec;
-      if (e < 0) return;
-      const s = clamp01(e / C.spreadSec), y0 = Math.round(sy - (sy - top) * s), y1 = Math.round(sy + (bot - sy) * s);
-      const a = k < C.fadeLast ? k / C.fadeLast : 1, band = Math.floor(e * C.rise);
-      const sx = project(l.x + Math.min(l.steps, e / l.interval) * l.step * l.facing, 0).sx;
-      for (let y = y0 - C.height; y <= y1; y++) {
-        const up = y < y0 ? 1 - (y0 - y) / C.height : 1, lit = (y + band) % C.band === 0;
-        px(g, sx, y, white, a * up);
-        px(g, sx - 1, y, lit ? white : gold, a * up * 0.9);
-        px(g, sx + 1, y, lit ? white : gold, a * up * 0.9);
-        px(g, sx - 2, y, edge, a * up * 0.45);
-        px(g, sx + 2, y, edge, a * up * 0.45);
-      }
-      // 발밑 줄 끝: 방 위아래 끝에 금빛 매듭
-      for (const y of [y0, y1]) star4(g, sx, y, 2, white, gold, a);
-    },
-  };
-}
-
-/** 준비 시작: 떨어질 줄마다 표적 (바닥 층) */
-export function curtainStart(ground: FxLayer, def: ActionDef, c: Caster): void {
-  for (const l of linesOf(def, c)) ground.add(target(l, def.phases.windup));
-}
-
-/** active: 줄마다 칼빛 + 장막(반복 시간 동안, 바닥 층) + 꽂히는 자리 먼지·충격 고리 */
-export function curtainActive(fxl: { layer: FxLayer; ground: FxLayer }, def: ActionDef, c: Caster): void {
-  const rep = def.repeat, sec = C.fallSec + (rep ? rep.count * rep.interval : 0.6);
-  for (const l of linesOf(def, c)) {
-    const { sx, sy } = project(l.x, c.y);
-    fxl.layer.add(fallingBlade(sx, sy));
-    fxl.ground.add(wall(l, sy, sec));
-    fxl.layer.add(quakeRing(sx, sy, 14));
-    dust(sx, sy, C.dust).forEach((e) => fxl.layer.add(e));
+/**
+ * 준비·충전 중 범위 (바닥 층에 매 프레임, chargeFx): r = 지금 반지름, max = 최대 충전 반지름 (논리 px), level = 충전 비율.
+ * 최대 범위는 옅은 점선, 지금 범위는 도는 2겹 점선(충전 중 흰색), 안에서 바깥으로 밀려나는 물결, 고리 위 바깥쪽 화살표
+ */
+export function drawCurtainCharge(g: Phaser.GameObjects.Graphics, sx: number, sy: number, r: number, max: number, level: number, now: number): void {
+  const G = C.charge, { white, gold } = col(), edge = colorInt('global.fx.smearEdge');
+  const growing = level > 0 && level < 1, full = level >= 1, main = growing || (full && Math.floor(now / G.pulseSec) % 2 === 0) ? white : gold;
+  if (max > r + 1) ellipseDots(g, sx, sy, max, -now * C.spin, edge, G.maxAlpha, G.maxEvery);
+  ellipseDots(g, sx, sy, r, now * C.spin, main, 1, C.ringEvery);
+  ellipseDots(g, sx, sy, r - 1, now * C.spin, gold, 0.6, C.ringEvery);
+  // 물결: 몸 둘레에서 지금 범위까지 waveSec마다 밀려남 (바깥으로 갈수록 진함)
+  for (let i = 0; i < G.waves; i++) {
+    const t = ((now / G.waveSec) + i / G.waves) % 1, d = G.from + (r - G.from) * t;
+    ellipseDots(g, sx, sy, d, now, gold, clamp01(t * 1.2) * 0.7, G.waveEvery);
+  }
+  // 고리 위 바깥 화살표 arrows개: 충전 중이면 밖으로 들썩임
+  const bob = growing ? Math.round((Math.sin(now * G.bobSpeed) + 1) * 1) : 0;
+  for (let i = 0; i < G.arrows; i++) {
+    const q = (i / G.arrows) * Math.PI * 2 + Math.PI / G.arrows, cx = Math.cos(q), cy = Math.sin(q) * DEPTH_RATIO;
+    for (let d = 0; d < G.arrowLen; d++) {
+      const x = sx + cx * (r + 1 + bob + d), y = sy + cy * (r + 1 + bob + d);
+      px(g, x, y, d === G.arrowLen - 1 ? white : gold);
+    }
+    // 화살촉: 끝에서 양옆으로 1px
+    const tx = sx + cx * (r + bob + G.arrowLen - 1), ty = sy + cy * (r + bob + G.arrowLen - 1);
+    px(g, tx - cy * 2, ty + cx, white);
+    px(g, tx + cy * 2, ty - cx, white);
   }
 }
 
-/** 반복 판정 한 번: 그 줄 위 빛 조각 (자리는 판정마다 다름). (x, y) = 예약 판정 자리 */
-export function curtainTick(layer: FxLayer, def: ActionDef, at: Caster): void {
-  const { white, gold } = col(), x = at.x + (def.area?.at[0] ?? 0) * at.facing, { sx, top, bot } = span(x), seed = Math.round(performance.now());
-  for (let i = 0; i < C.glints; i++) {
-    const y = Math.round(top + (bot - top) * hash(seed + i * 7) - C.height * hash(seed + i * 13));
-    layer.add({ ...life(C.glintSec), draw: (g, k) => star4(g, sx, y, Math.max(1, Math.round(3 * k)), white, gold, k) });
-  }
+/** 장막 고리: spreadSec 동안 펼쳐져 반지름 r, 테두리 금 점선(천천히 돎) + 안쪽 어두운 금 점선 + 흰 반짝임, 마지막 fadeLast 비율은 바둑판으로 사라짐 */
+function ring(foot: Foot, r: number, sec: number): Effect {
+  const { white, gold } = col(), edge = colorInt('global.fx.smearEdge');
+  return {
+    ...life(sec),
+    draw(g, k) {
+      const { sx, sy } = foot(), e = (1 - k) * sec, s = clamp01(e / C.spreadSec), a = k < C.fadeLast ? k / C.fadeLast : 1;
+      const rr = Math.max(2, r * s);
+      ellipseDots(g, sx, sy, rr, e * C.spin, gold, a, C.ringEvery);
+      ellipseDots(g, sx, sy, rr - 1, -e * C.spin, edge, a * 0.5, C.ringEvery * 2);
+      for (let i = 0; i < C.sparks; i++) {
+        const t = hash(i * 11) * Math.PI * 2 + e * C.spin, on = (Math.floor(e / C.sparkSec) + i) % C.sparks === 0;
+        if (on || s < 1) px(g, sx + Math.cos(t) * rr, sy + Math.sin(t) * rr * DEPTH_RATIO, white, a);
+      }
+    },
+  };
+}
+
+/** active (actionSmear가 부름): 꽂는 자리 별·충격 고리·먼지 + 캐릭터를 따라가는 고리 (반복 시간 동안, 바닥 층. follow가 아니면 꽂은 자리에) */
+export function curtainField(layer: FxLayer, ground: FxLayer, def: ActionDef, foot: Foot): void {
+  const here = foot(), { sx, sy } = here, r = radiusOf(def), { white, gold } = col();
+  ground.add(ring(def.repeat?.follow ? foot : () => here, r, lastOf(def)));
+  layer.add(quakeRing(sx, sy, r));
+  layer.add({ ...life(C.starSec), draw: (g, k) => star4(g, sx, sy, Math.max(1, Math.round(5 * k)), white, gold, k) });
+  dust(sx, sy, C.dust).forEach((e) => layer.add(e));
+}
+
+/** 조여드는 장막 끝 판정: 고리가 closeSec 동안 반지름 r → 0으로 조여들고(흰 → 금) 다 조이면 큰 별 + 사방 베기 줄 rays개 + 충격 고리 + 먼지 */
+export function curtainClose(sx: number, sy: number, r: number): Effect[] {
+  const E = C.close, { white, gold } = col(), sec = E.closeSec + E.burstSec;
+  const shrink: Effect = {
+    ...life(sec),
+    draw(g, k) {
+      const e = (1 - k) * sec;
+      if (e < E.closeSec) {
+        const t = e / E.closeSec;
+        ellipseDots(g, sx, sy, Math.max(1, r * (1 - t * t)), e * 8, t < 0.5 ? white : gold, 1, 2);
+        return;
+      }
+      const b = clamp01((e - E.closeSec) / E.burstSec), a = 1 - b, y = sy + C.hit.y;
+      star4(g, sx, y, Math.max(1, Math.round(E.star * a)), white, gold, 1);
+      for (let i = 0; i < E.rays; i++) {
+        const q = (i / E.rays) * Math.PI * 2 + 0.4, d0 = E.from + (r - E.from) * b, d1 = Math.min(r, d0 + E.rayLen);
+        for (let d = d0; d <= d1; d++) px(g, sx + Math.cos(q) * d, y + Math.sin(q) * d * DEPTH_RATIO, d > d1 - 2 ? white : gold, a);
+      }
+    },
+  };
+  return [shrink, quakeRing(sx, sy, r), ...dust(sx, sy, C.dust)];
+}
+
+/**
+ * 맞은 몬스터 몸에 X자 베기 (2px 줄 두 개가 lag초 엇갈려 그어지고 꼬리부터 사라짐, 흰 머리 → 금 → 어두운 금) + 가운데 별 + 불꽃.
+ * big = 펼칠 때 판정 (더 길고 큰 별·불꽃 많이). (sx, sy) = 몸 기준 화면 좌표, seed = 판정마다 다른 값
+ */
+export function curtainHit(layer: Pick<FxLayer, 'add'>, id: string | undefined, sx: number, sy: number, seed: number, big: boolean): void {
+  if (!id || lookOf(id) !== 'curtain') return;
+  const H = C.hit, { white, gold } = col(), edge = colorInt('global.fx.smearEdge');
+  const n = big ? H.bigLen : H.len, y = sy + H.y, tilt = (hash(seed) - 0.5) * H.tilt;
+  const ox = Math.round((hash(seed * 2.3) - 0.5) * H.jitter), oy = Math.round((hash(seed * 3.1) - 0.5) * H.jitter);
+  const cut = (dir: number, lag: number): Effect => ({
+    ...life(H.sec),
+    draw(g, k) {
+      const t = clamp01(((1 - k) * H.sec - lag) / (H.sec - lag));
+      if (t <= 0) return;
+      const grow = Math.min(1, t / H.pass), from = -n + Math.round(2 * n * Math.max(0, t - H.pass) / (1 - H.pass)), to = -n + Math.round(2 * n * grow);
+      const dx = 1, dy = dir * (1 + tilt), a = clamp01((1 - t) * 2);
+      for (let j = from; j <= to; j++) {
+        const lead = to - j < 3 && grow < 1, x = sx + ox + dx * j, yy = y + oy + Math.round(dy * j * 0.8);
+        px(g, x, yy, lead || t < 0.4 ? white : Math.abs(j) < n * 0.7 ? gold : edge, a);
+        px(g, x, yy - 1, lead || t < 0.3 ? white : gold, a);
+      }
+    },
+  });
+  const flash: Effect = {
+    ...life(H.flashSec),
+    draw: (g, k) => star4(g, sx + ox, y + oy, Math.max(1, Math.round((big ? H.star[1]! : H.star[0]!) * k)), white, gold, 1),
+  };
+  layer.add(cut(1, 0));
+  layer.add(cut(-1, H.lag));
+  layer.add(flash);
+  sparks(sx + ox, y + oy).slice(0, big ? H.sparks[1] : H.sparks[0]).forEach((e) => layer.add(e));
 }
