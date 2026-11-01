@@ -64,17 +64,19 @@ export function applyHit(b: Body, hit: HitInfo): void {
   const stun = COMBAT.stun[hit.strength];
   // fixed(고정형): 경직만 받고 밀림·띄우기·넉백은 무시 (combat.md 3장 경직)
   if (b.armor) return;
+  // inplace: 제자리에서 맞음 (좌우 밀림 없음, 대검 3타 띄우기)
   const fixed = b.weight === 'fixed';
+  const still = fixed || flags.includes('inplace');
   b.hitDir = hit.dir;
-  b.push = fixed ? 0 : hit.dir * stun.push * mul;
-  b.knockback = !fixed && flags.includes('knockback');
+  b.push = still ? 0 : hit.dir * stun.push * mul * (b.state === 'air' ? COMBAT.airPushMul : 1);
+  b.knockback = !still && flags.includes('knockback');
   if (b.state === 'air') {
     // hold: 띄워 올리지 않고 그 자리에 붙잡음. 공중 콤보 보정(낙하 가속·강제 다운)도 쌓지 않는다
     if (flags.includes('hold')) {
       b.vz = 0;
       return;
     }
-    b.vz = Math.max(b.vz, 0) + COMBAT.airHitVz;
+    b.vz = Math.max(b.vz, COMBAT.airHitVz);
     b.airHits++;
     b.gravityMul *= COMBAT.airGravityMul;
     if (b.airHits > COMBAT.maxAirHits || flags.includes('down')) b.forceDown = true;
@@ -128,7 +130,7 @@ export function stepBody(b: Body, dt: number, minX: number, maxX: number): BodyE
         b.vz = 0;
         break;
       }
-      b.vz -= COMBAT.gravity * b.gravityMul * dt;
+      b.vz -= COMBAT.gravity * b.gravityMul * (b.vz < 0 ? COMBAT.fallGravityMul : 1) * dt;
       b.z += b.vz * dt;
       if (b.z <= 0 && b.vz < 0) {
         b.z = 0;

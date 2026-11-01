@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import { island, items } from './islandSchema';
 
-export const FLAGS = ['launch', 'knockback', 'down', 'downhit', 'pull', 'hold', 'grab', 'multi', 'projectile'] as const;
+export const FLAGS = ['launch', 'knockback', 'down', 'downhit', 'pull', 'hold', 'grab', 'multi', 'projectile', 'inplace'] as const;
 export const STRENGTHS = ['light', 'medium', 'heavy'] as const;
 export const GRADES = ['light', 'medium', 'heavy', 'ultimate'] as const;
 export const WEIGHTS = ['light', 'medium', 'heavy', 'fixed', 'boss'] as const;
@@ -337,7 +337,11 @@ export const player = z.object({
 const stun = z.object({ time: sec, push: sec }).strict();
 export const combat = z.object({
   _note: z.string().optional(),
-  baseAtk: pos, atkPerLevel: sec, gravity: pos, launchVz: pos, airHitVz: sec, airGravityMul: pos, maxAirHits: z.number().int().positive(),
+  baseAtk: pos, atkPerLevel: sec, gravity: pos, launchVz: pos,
+  /** 내려올 때(vz < 0) 중력 배율: 떠오를 땐 빠르게, 내려올 땐 천천히 */
+  fallGravityMul: pos,
+  /** 공중 피격: vz를 이 값 이상으로 받쳐 올림 · 밀림 배율 (공중 콤보가 이어지게) */
+  airHitVz: sec, airPushMul: pos, airGravityMul: pos, maxAirHits: z.number().int().positive(),
   bounceVz: sec, downSec: sec, downSlide: sec, getupSec: sec,
   /** 다운 상태 대상 피해 배율 (balance.md 1장 상황 보정, 보조 짓밟기가 올림) */
   downDamageMul: pos,

@@ -83,7 +83,7 @@
         "strength": "heavy",
         "flags": [
           "launch",
-          "knockback"
+          "inplace"
         ],
         "poses": {
           "windup": "heave",

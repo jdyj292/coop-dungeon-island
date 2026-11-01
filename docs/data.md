@@ -223,7 +223,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 |---|---|
 | baseAtk | 숙련도 1레벨 ATK (balance.md 1장). 데미지 = ATK × coef / 100 |
 | atkPerLevel | 숙련도 레벨당 ATK 증가율 0.05 (balance.md 1장, 코드 atkFor) |
-| gravity, launchVz, airHitVz, airGravityMul, maxAirHits, bounceVz | 높이(z)·공중 콤보 보정 |
+| gravity, fallGravityMul, launchVz, airHitVz, airPushMul, airGravityMul, maxAirHits, bounceVz | 높이(z)·공중 콤보 보정 |
 | downSec, downSlide, getupSec, wallStunSec | 다운 시간·다운 미끄러짐(px)·기상 무적·벽꿍 추가 경직 |
 | pushRate | 밀림이 남은 거리를 줄이는 속도 (초당 비율, 클수록 짧고 세게 밀림) |
 | turnWindow | 평타 recovery 진입 직후 방향 전환을 받는 시간 (무기 basicTurn false면 없음) |

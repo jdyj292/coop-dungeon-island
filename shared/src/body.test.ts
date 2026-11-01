@@ -35,14 +35,14 @@ describe('경직·밀림 (combat.md 3장)', () => {
 });
 
 describe('띄우기 → 바운드 → 다운 → 기상', () => {
-  it('launch vz 220: 약 0.7초 체공 뒤 바운드 1회, 약 0.3초 뒤 다운', () => {
+  it('launch vz 220: 내려올 땐 천천히, 약 0.9초 체공 뒤 바운드 1회, 약 0.37초 뒤 다운', () => {
     const b = newBody(100, 0, 'light');
     applyHit(b, { dir: 1, strength: 'medium', flags: ['launch'], launchVz: 220 });
     expect(b.state).toBe('air');
-    expect(simulate(b, 0.7)).toEqual([]);
+    expect(simulate(b, 0.88)).toEqual([]);
     expect(simulate(b, 0.06)).toEqual(['bounce']);
-    expect(simulate(b, 0.2)).toEqual([]);
-    expect(simulate(b, 0.1)).toEqual(['down']);
+    expect(simulate(b, 0.3)).toEqual([]);
+    expect(simulate(b, 0.08)).toEqual(['down']);
     expect(canBeHit(b)).toBe(false);
     expect(canBeHit(b, ['downhit'])).toBe(true);
     expect(simulate(b, 0.8)).toEqual(['getup']);
@@ -50,15 +50,24 @@ describe('띄우기 → 바운드 → 다운 → 기상', () => {
     simulate(b, 0.5);
     expect(b.state).toBe('idle');
   });
-  it('공중 피격: 재부양, 중력 ×1.1 누적, down 플래그는 바운드 생략', () => {
+  it('공중 피격: 재부양 vz 120, 밀림 ×0.35, 중력 ×1.05 누적, down 플래그는 바운드 생략', () => {
     const b = newBody(100, 0, 'light');
     applyHit(b, { dir: 1, strength: 'light', flags: ['launch'] });
     simulate(b, 0.5);
     applyHit(b, { dir: 1, strength: 'light' });
-    expect(b.vz).toBeGreaterThanOrEqual(60);
-    expect(b.gravityMul).toBeCloseTo(1.1);
+    expect(b.vz).toBe(120);
+    expect(b.push).toBeCloseTo(6 * 0.35);
+    expect(b.gravityMul).toBeCloseTo(1.05);
     applyHit(b, { dir: 1, strength: 'light', flags: ['down'] });
     expect(simulate(b, 2)).toEqual(['down', 'getup']);
+  });
+  it('inplace: 밀지 않고 제자리에서 위로만 띄움', () => {
+    const b = newBody(100, 0, 'light');
+    applyHit(b, { dir: 1, strength: 'heavy', flags: ['launch', 'inplace'] });
+    expect(b.state).toBe('air');
+    expect(b.push).toBe(0);
+    simulate(b, 0.5);
+    expect(b.x).toBe(100);
   });
   it('fixed 무게는 경직만 받고 밀림·띄우기 무시', () => {
     const b = newBody(100, 0, 'fixed');
