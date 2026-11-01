@@ -48,6 +48,22 @@ describe('회오리 검기', () => {
     tough(far!);
     expect(hits(run(still, cast('gs_cyclone', 'still'), 2.5))).toEqual([]);
   });
+
+  it('가운데로 조금씩 끌어당기고, 공중 적은 약하게만 띄운다 (pullMul·airVz)', () => {
+    const sim = room('greatsword');
+    const [m] = sim.spawn([{ kind: 'capknight', x: 140, y: 62 }]);
+    tough(m!);
+    run(sim, cast('gs_cyclone'), 0.35);
+    // 첫 판정에 거리(12px)의 30%만: 한 번에 끝까지 끌려오지 않음 (pullMul)
+    expect(Math.abs(m!.body.y - 50)).toBeGreaterThan(6);
+    expect(Math.abs(m!.body.y - 50)).toBeLessThan(11);
+    const air = room('greatsword');
+    const [a] = air.spawn([{ kind: 'capknight', x: 132, y: 50 }]);
+    tough(a!);
+    Object.assign(a!.body, { state: 'air', z: 40, vz: 0 });
+    run(air, cast('gs_cyclone'), 0.3);
+    expect(a!.body.vz).toBeLessThanOrEqual(40);
+  });
 });
 
 describe('중력 우물', () => {

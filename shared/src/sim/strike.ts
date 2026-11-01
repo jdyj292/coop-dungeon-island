@@ -29,7 +29,7 @@ export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: numb
   if (m.slow.left <= 0) m.pressed = 0;
   // 다운 상태 대상은 피해 감소 (balance.md 1장, 보조 짓밟기가 올림). 맞기 전 상태로
   const mul = takenMul(p, m) * (m.body.state === 'down' ? (p.perks?.downDamage ?? COMBAT.downDamageMul) : 1);
-  applyHit(m.body, { dir, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz });
+  applyHit(m.body, { dir, strength: def.strength ?? 'light', flags: def.flags, launchVz: def.launchVz, airVz: def.airVz });
   // 파쇄참: 슈퍼아머 대상도 잠깐 경직 (공격은 끊긴다, ai.ts). 다운 유지(대지붕괴): 땅의 적은 바로 다운
   if (def.armorBreak && m.body.armor && !m.body.ko && m.body.state === 'idle') Object.assign(m.body, { state: 'hitstun', timer: def.armorBreak });
   // 다운 유지는 밀어내지 않음 (장판 밖으로 미끄러지지 않게)
@@ -37,7 +37,7 @@ export function hitMonster(p: PlayerState, def: ActionDef, m: Monster, dir: numb
     Object.assign(m.body, { push: 0, pushY: 0 });
     knockDown(m.body);
   }
-  if (def.flags?.includes('pull') && from) pullToward(m, def.area ? areaCenter(from, def.area.at) : from);
+  if (def.flags?.includes('pull') && from) pullToward(m, def.area ? areaCenter(from, def.area.at) : from, def.pullMul ?? 1);
   // 잠든 몬스터는 맞으면 바로 깨어남 (그 몬스터만, dungeon.md 5장)
   m.sleep = 0;
   const damage = damageOf(def.coef * mul, p.atk);
@@ -72,11 +72,11 @@ function markMonster(p: PlayerState, def: ActionDef, m: Monster): void {
   if (press && def.status?.type === 'slow') m.pressed = press.takenMul;
 }
 
-/** 끌어당김: 몬스터를 기준점 쪽으로 (좌우는 밀림, 깊이는 pushY). 슈퍼아머·고정형은 안 끌려옴 */
-function pullToward(m: Monster, to: { x: number; y: number }): void {
+/** 끌어당김: 몬스터를 기준점 쪽으로 거리의 mul만큼 (좌우는 밀림, 깊이는 pushY). 슈퍼아머·고정형은 안 끌려옴 */
+function pullToward(m: Monster, to: { x: number; y: number }, mul: number): void {
   if (m.body.armor || m.body.weight === 'fixed') return;
-  m.body.push = to.x - m.body.x;
-  m.body.pushY = to.y - m.body.y;
+  m.body.push = (to.x - m.body.x) * mul;
+  m.body.pushY = (to.y - m.body.y) * mul;
   m.body.knockback = false;
 }
 

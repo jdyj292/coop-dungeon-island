@@ -78,6 +78,8 @@ export const actionFields = {
   strength: z.enum(STRENGTHS).optional(),
   flags: z.array(z.enum(FLAGS)).optional(),
   launchVz: pos.optional(),
+  airVz: pos.optional(),
+  pullMul: pos.optional(),
   hits: z.object({ count: z.number().int().positive(), interval: pos }).strict().optional(),
   move: move.optional(),
   status: z.object({ type: statusType, time: pos, amount: z.number().optional() }).strict().optional(),

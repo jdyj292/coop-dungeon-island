@@ -33,6 +33,8 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | strength | | light / medium / heavy → 경직·밀림(combat.md 3장). 몬스터 공격이 heavy면 플레이어 다운 |
 | flags | | combat.md 2장 속성 플래그 (launch, knockback, down, downhit, pull, hold, grab, multi, projectile) |
 | launchVz | | launch 세기. 생략 시 combat.md 기본값 |
+| airVz | | 공중 적이 맞을 때 띄우는 세기 (px/s). 생략 시 combat.json airHitVz (회오리 검기 40: 다단이 적을 높이 띄우지 않게) |
+| pullMul | | pull 세기: 맞을 때마다 기준점까지 거리의 몇 배만큼 끌어오나 (0~1). 생략 시 1 = 한 번에 끝까지 (회오리 검기 0.3: 조금씩 빨려듦) |
 | hits | | 다단히트 `{ "count": 6, "interval": 0.1 }` (multi 플래그와 함께). active 시작부터 interval마다 판정 한 번, active 길이 ≥ count × interval |
 | move | | 행동 중 이동 `{ "distance": 32, "during": "active", "instant"?: true }`(instant = 구간이 끝나는 순간 한 번에, 발도) 또는 `{ "speed": 160, "maxDistance": 96, "during": "active", "stopOnWall": true }` |
 | status | | 상태이상 `{ "type": "freeze", "time": 1.5 }` (freeze / slow / stun / hold = 공중 대상 체공 유지) |

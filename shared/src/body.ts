@@ -47,6 +47,8 @@ export interface HitInfo {
   strength: Strength;
   flags?: string[];
   launchVz?: number;
+  /** 공중 적이 맞을 때 띄우는 세기 (생략 시 combat.json airHitVz) */
+  airVz?: number;
 }
 
 export type BodyEvent = 'bounce' | 'down' | 'getup' | 'wall' | 'stunned' | 'exit';
@@ -76,7 +78,7 @@ export function applyHit(b: Body, hit: HitInfo): void {
       b.vz = 0;
       return;
     }
-    b.vz = Math.max(b.vz, COMBAT.airHitVz);
+    b.vz = Math.max(b.vz, hit.airVz ?? COMBAT.airHitVz);
     b.airHits++;
     b.gravityMul *= COMBAT.airGravityMul;
     if (b.airHits > COMBAT.maxAirHits || flags.includes('down')) b.forceDown = true;

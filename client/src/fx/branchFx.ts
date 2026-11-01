@@ -178,31 +178,3 @@ export function waveLaunch(sx: number, sy: number, facing: number): Effect {
     },
   };
 }
-
-/**
- * 회오리 검기: 판정 원 자리(x, y = 바닥)에서 솟는 회오리. 아래가 좁고 위가 넓은 층 rings개 위를 초승달이 돌고,
- * 둘레 빛 점이 나선을 그리며 빨려 오른다. 마지막 fadeLast 비율은 바둑판으로 사라짐
- */
-export function cyclone(x: number, y: number, radius: number, facing: number): Effect {
-  const C = B.cyclone, [white, gold, edge] = tones();
-  return {
-    ...life(C.sec),
-    draw(g, k) {
-      const e = (1 - k) * C.sec, a = clamp01(k / C.fadeLast), rise = clamp01(e / 0.08);
-      for (let i = 0; i < C.rings; i++) {
-        const f = i / (C.rings - 1), r = radius * (C.bottom + (1 - C.bottom) * f), cy = y - C.height * f * rise;
-        const head = e * C.spin * facing + i * 1.3, steps = Math.round(r * 2.2);
-        for (let j = 0; j <= steps; j++) {
-          const u = j / steps, q = head - u * 2.2 * facing;
-          const c = u < 0.2 ? white : u < 0.6 ? gold : edge;
-          px(g, x + Math.cos(q) * r, cy + Math.sin(q) * r * C.flat, c, a * (1.1 - u * 0.7));
-        }
-      }
-      for (let i = 0; i < C.motes; i++) {
-        const t = (e * 2.5 + hash(i)) % 1, q = e * C.spin * 0.7 * facing + (i / C.motes) * Math.PI * 2;
-        const r = radius * (1.2 - t * 0.6);
-        px(g, x + Math.cos(q) * r, y - C.height * t + Math.sin(q) * r * C.flat, t < 0.5 ? gold : white, a * (1 - t * 0.5));
-      }
-    },
-  };
-}
