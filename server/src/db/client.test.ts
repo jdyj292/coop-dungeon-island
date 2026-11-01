@@ -8,19 +8,19 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { eq, sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { openDb } from './client';
-import { inventory, islands, users } from './schema';
+import { cards, inventory, islands, users, weaponMastery } from './schema';
 
 const newUser = (nickname: string, islandId: number | null = null) => ({
   nickname, nicknameKey: nickname.toLowerCase(), passwordHash: 'h', recoveryHash: 'r', islandId, createdAt: 1,
 });
 
 describe('DB 마이그레이션', () => {
-  it('빈 DB에 db.md MVP 테이블 14개를 만든다', () => {
+  it('빈 DB에 db.md MVP 테이블 15개를 만든다', () => {
     const { db, close } = openDb(':memory:');
     // __drizzle_migrations(적용 기록)·sqlite_sequence는 빼고
     const names = db.all<{ name: string }>(sql`select name from sqlite_master where type = 'table'`)
       .map((r) => r.name).filter((n) => !n.startsWith('__') && !n.startsWith('sqlite')).sort();
-    expect(names).toEqual(['activity_log', 'auth_log', 'inventory', 'island_facilities', 'island_storage', 'islands', 'join_requests', 'memos', 'placements', 'sessions', 'skill_nodes', 'skill_slots', 'users', 'weapon_mastery']);
+    expect(names).toEqual(['activity_log', 'auth_log', 'card_pity', 'card_slots', 'cards', 'inventory', 'island_facilities', 'island_storage', 'islands', 'join_requests', 'memos', 'placements', 'sessions', 'users', 'weapon_mastery']);
     close();
   });
 
@@ -74,6 +74,34 @@ it('0006: 이미 있는 섬의 주인 = 가장 먼저 가입한 주민 (초대 �
     sqlite.close();
     const { db, close } = openDb(path);
     expect(db.select({ id: islands.id, ownerId: islands.ownerId }).from(islands).all()).toEqual([{ id: 1, ownerId: 2 }, { id: 2, ownerId: 1 }]);
+    close();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('0012~0014: 옛 스킬 기록을 지우고 모든 계정에 처음 카드 무기별 2장 + 환영 선물 팩 3개 (숙련도는 그대로)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'cdi-mig-'));
+  try {
+    // 0011까지만 적용한 옛 DB
+    const all = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
+    cpSync(all, dir, { recursive: true });
+    const journal = JSON.parse(readFileSync(join(all, 'meta/_journal.json'), 'utf8')) as { entries: { idx: number }[] };
+    writeFileSync(join(dir, 'meta/_journal.json'), JSON.stringify({ ...journal, entries: journal.entries.filter((e) => e.idx <= 11) }));
+    const path = join(dir, 'game.sqlite'), sqlite = new Database(path);
+    migrate(drizzle(sqlite), { migrationsFolder: dir });
+    sqlite.exec(`insert into users (id, nickname, nickname_key, password_hash, recovery_hash, created_at) values (1, 'a', 'a', 'h', 'r', 0), (2, 'b', 'b', 'h', 'r', 0);
+      insert into weapon_mastery (user_id, weapon, level, exp, sp, branch) values (1, 'greatsword', 7, 30, 4, 'B');
+      insert into skill_nodes (user_id, node_id, points) values (1, 'gs_whirl', 2);
+      insert into inventory (user_id, item_id, count) values (2, 'cardpack_gift_1', 1);`);
+    sqlite.close();
+    const { db, close } = openDb(path);
+    const mine = (id: number) => db.select({ cardId: cards.cardId, count: cards.count }).from(cards).where(eq(cards.userId, id)).all().map((r) => `${r.cardId}:${r.count}`).sort();
+    expect(mine(1)).toEqual(['gs_earthsplit:1', 'gs_launch:1', 'st_fireburst:1', 'st_icefield:1']);
+    expect(mine(2)).toHaveLength(4);
+    const gifts = db.select({ u: inventory.userId, c: inventory.count }).from(inventory).where(eq(inventory.itemId, 'cardpack_gift_1')).all();
+    expect(gifts.sort((x, y) => x.u - y.u)).toEqual([{ u: 1, c: 3 }, { u: 2, c: 4 }]);
+    expect(db.select().from(weaponMastery).all()).toEqual([{ userId: 1, weapon: 'greatsword', level: 7, exp: 30 }]);
     close();
   } finally {
     rmSync(dir, { recursive: true, force: true });

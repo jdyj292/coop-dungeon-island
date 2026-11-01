@@ -3,6 +3,7 @@
 import { ITEMS, nicknameKey, type AuthError, type LoginReq, type MeRes, type PasswordReq, type RecoverReq, type SignupReq } from '@game/shared';
 import { eq } from 'drizzle-orm';
 import type { Db } from '../db/client';
+import { grantStarter } from '../db/cardStore';
 import { authLog, inventory, islands, joinRequests, users } from '../db/schema';
 import { IslandJoin } from './islandJoin';
 import { Limiter, LOCKS } from './limiter';
@@ -55,6 +56,8 @@ export class Accounts {
       }).returning({ id: users.id }).get();
       // 가입 선물 (items.json starter)
       for (const [itemId, count] of Object.entries(ITEMS.starter)) tx.insert(inventory).values({ userId: u.id, itemId, count }).run();
+      // 처음 카드 + 환영 선물 팩 (skills.md 1장)
+      grantStarter(tx, u.id);
       return { ok: true, value: u.id };
     });
     if (!r.ok) return r;

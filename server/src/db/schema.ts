@@ -23,6 +23,8 @@ export const users = sqliteTable('users', {
   suspendedUntil: integer('suspended_until').notNull().default(0),
   islandId: integer('island_id').references(() => islands.id),
   wallet: integer('wallet').notNull().default(0),
+  /** 카드 조각 (무기 공용, skills.md 1장 갈기·지정 구매) */
+  dust: integer('dust').notNull().default(0),
   hairStyle: integer('hair_style').notNull().default(0),
   hairColor: integer('hair_color').notNull().default(0),
   /** 고른 무기 (shared MVP_WEAPONS, 섬 가방 장비 탭, MVP 보충 ST-4). 숙련도는 weapon_mastery에 무기마다 */
@@ -115,24 +117,30 @@ export const weaponMastery = sqliteTable('weapon_mastery', {
   weapon: text('weapon').notNull(),
   level: integer('level').notNull().default(1),
   exp: integer('exp').notNull().default(0),
-  sp: integer('sp').notNull().default(0),
-  /** 고른 계열 A·B (skills.md 1장): 그 계열 스킬·보조만 쓴다 */
-  branch: text('branch').notNull().default('A'),
 }, (t) => [primaryKey({ columns: [t.userId, t.weapon] })]);
 
-/** 스킬 노드 (skills.md 1장): 찍은 포인트·고른 변형. 행이 없으면 기본값(액티브 1포인트·패시브 0). 무기는 노드 id(스킬 id)로 정해진다 */
-export const skillNodes = sqliteTable('skill_nodes', {
+/** 보유 카드 (skills.md 1장): 보관 중인 기본 카드 장수, 강화 여부, 강화 액티브 변형. 같은 카드 3장이 되면 바로 count −3·enhanced 1 */
+export const cards = sqliteTable('cards', {
   userId: integer('user_id').notNull().references(() => users.id),
-  nodeId: text('node_id').notNull(),
-  points: integer('points').notNull(),
+  cardId: text('card_id').notNull(),
+  count: integer('count').notNull().default(0),
+  enhanced: integer('enhanced', { mode: 'boolean' }).notNull().default(false),
   variant: text('variant'),
-}, (t) => [primaryKey({ columns: [t.userId, t.nodeId] })]);
+}, (t) => [primaryKey({ columns: [t.userId, t.cardId] })]);
 
-/** 장착 (skills.md 1장): 무기·계열마다 A S D F G H(0~5) 칸의 스킬. 그 무기·계열에 행이 없으면 기본 배치 (skillLoadout.loadoutSlots), 빈칸은 행 없음 */
-export const skillSlots = sqliteTable('skill_slots', {
+/** 카드 장착 (skills.md 1장): 무기마다 액티브 0~3 = A S D F, 패시브 0~ 순서. 그 무기에 행이 없으면 기본 배치 (A S = 처음 카드) */
+export const cardSlots = sqliteTable('card_slots', {
   userId: integer('user_id').notNull().references(() => users.id),
   weapon: text('weapon').notNull(),
-  branch: text('branch').notNull(),
+  kind: text('kind').notNull(),
   slot: integer('slot').notNull(),
-  nodeId: text('node_id').notNull(),
-}, (t) => [primaryKey({ columns: [t.userId, t.weapon, t.branch, t.slot] })]);
+  cardId: text('card_id').notNull(),
+}, (t) => [primaryKey({ columns: [t.userId, t.weapon, t.kind, t.slot] })]);
+
+/** 카드팩 천장 (balance.md 7장): 마지막 높은 티어 뒤로 연 팩 수, 사람·무기·팩마다 */
+export const cardPity = sqliteTable('card_pity', {
+  userId: integer('user_id').notNull().references(() => users.id),
+  weapon: text('weapon').notNull(),
+  pack: integer('pack').notNull(),
+  opened: integer('opened').notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.userId, t.weapon, t.pack] })]);

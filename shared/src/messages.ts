@@ -1,7 +1,7 @@
 // 클라이언트 ↔ 서버 메시지 (docs/network.md 4·6장). 클라이언트 → 서버는 zod로 서버가 검사
 import { z } from 'zod';
 import { LOOK, MVP_WEAPONS, NET } from './constants';
-import type { InterimFail } from './cards/interim';
+import type { CardFail, OwnedCard } from './cards/collection';
 import type { EchoLook } from './sim/skillExtras';
 
 const seq = z.number().int().nonnegative();
@@ -17,6 +17,8 @@ const cell = z.number().int().min(0).max(63);
 const rot = z.number().int().min(0).max(3);
 
 /** 던전: 클라이언트 → 서버 */
+const CARD_ID = z.string().max(40);
+
 export const C2S = {
   input: z.object({ seq, t, mx: axis, my: axis, run: z.boolean() }).strict(),
   action: z.object({
@@ -47,11 +49,14 @@ export const C2S = {
   memo: z.object({ text: lineText(NET.memoMaxLen) }).strict(),
   /** 무기 고르기 (섬 가방 장비 탭, MVP 보충 ST-4) */
   weapon: z.object({ id: z.enum(MVP_WEAPONS) }).strict(),
-  /** 섬 (CD-3 card 메시지 전까지 임시, cards/interim.ts): 카드 단계·변형 바꾸기(points 액티브 1·2, 패시브 0·1·2), 액티브 칸 장착(slot 0~3 = A S D F), 초기화. 검사는 서버 */
-  skill: z.object({
-    weapon: z.enum(MVP_WEAPONS), op: z.enum(['set', 'equip', 'reset']), skillId: z.string().max(40).optional(),
-    points: z.number().int().min(0).max(9).optional(), variant: z.string().max(24).optional(), slot: z.number().int().min(0).max(9).optional(),
-  }).strict(),
+  /** 섬: 스킬 카드 (skills.md 1장, network.md 4장). 팩 사서 열기·지정 구매·갈기·강화 액티브 변형·장착(액티브 0~3 = A S D F, 패시브 순서, null = 빼기). 검사·굴림은 서버 */
+  card: z.discriminatedUnion('op', [
+    z.object({ op: z.literal('open'), weapon: z.enum(MVP_WEAPONS), pack: z.number().int().min(1).max(9), pay: z.enum(['coin', 'dust', 'gift']) }).strict(),
+    z.object({ op: z.literal('craft'), cardId: CARD_ID }).strict(),
+    z.object({ op: z.literal('grind'), cardId: CARD_ID, n: z.number().int().min(1).max(99) }).strict(),
+    z.object({ op: z.literal('variant'), cardId: CARD_ID, variant: z.string().max(24).nullable() }).strict(),
+    z.object({ op: z.literal('equip'), weapon: z.enum(MVP_WEAPONS), kind: z.enum(['active', 'passive']), slot: z.number().int().min(0).max(15), cardId: CARD_ID.nullable() }).strict(),
+  ]),
   /** 외형 바꾸기 (섬에서, 설정 외형 탭) */
   look: z.object({ hair: z.number().int().min(0).max(LOOK.hairStyles - 1), hairColor: z.number().int().min(0).max(LOOK.hairColors - 1) }).strict(),
 } as const;
@@ -64,6 +69,9 @@ export function parseC2S<K extends C2SType>(type: K, raw: unknown): C2SMessage<K
   const r = C2S[type].safeParse(raw);
   return r.success ? (r.data as C2SMessage<K>) : null;
 }
+
+/** card 요청 실패 사유: 카드 검사(CardFail) + 코인·선물 팩 모자람(coin·gift), 출발 카운트다운 중 장착(busy) */
+export type CardMsgFail = CardFail | 'coin' | 'gift' | 'busy';
 
 /** 던전: 서버 → 클라이언트 이벤트 (순간 사건만, 계속되는 것은 상태) */
 export interface S2C {
@@ -104,11 +112,15 @@ export interface S2C {
   teamMilestone: { count: number };
   /** 섬: 입장 때 본인에게 (지갑은 상태에 넣지 않음, network.md 5장) */
   me: { wallet: number; level: number };
-  /** 섬 (CD-3 cards 전까지 임시): 내 카드 (입장 때·바꿀 때 본인에게). 무기마다 숙련도 레벨·패시브 한도·쓴 패시브 비용·노드 문자열(id:단계[:변형])·액티브 칸(A S D F, 빈칸 ''). fail = 방금 요청이 안 된 사유 */
-  skills: {
-    weapons: { weapon: string; level: number; cap: number; used: number; build: string; slots: string[] }[];
-    fail?: InterimFail | 'busy';
+  /** 섬: 내 카드 (입장 때·바꿀 때 본인에게, network.md 4장 card). 조각·환영 선물 팩 수, 무기마다 숙련도·패시브 한도·보유·장착(액티브 4칸 빈칸 '', 패시브 순서). fail = 방금 요청이 안 된 사유 */
+  cards: {
+    dust: number;
+    gifts: number;
+    weapons: { weapon: string; level: number; cap: number; owned: Record<string, OwnedCard>; active: string[]; passive: string[] }[];
+    fail?: CardMsgFail;
   };
+  /** 섬: 연 카드팩 (본인에게, cards보다 먼저). isNew = 이 팩 전에 없던 카드, merged = 이번에 강화된 카드, pity = 천장 횟수 */
+  pack: { weapon: string; pack: number; cards: { id: string; tier: number; isNew: boolean }[]; merged: string[]; pity: number };
   /** 섬: 내 가방 (장식 id → 개수, 바뀔 때마다 본인에게) */
   inv: { items: Record<string, number> };
   /** 섬: 배치 요청 실패 (같은 칸에 먼저 온 요청 등) */

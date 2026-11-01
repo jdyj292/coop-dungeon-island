@@ -57,9 +57,12 @@ export class IslandConnection {
   me: S2C['me'] = { wallet: 0, level: 1 };
   /** 내 가방 (inv 메시지) */
   inventory: Record<string, number> = {};
-  /** 내 카드 (무기마다 패시브 한도·노드·액티브 칸, 스킬 창(K), CD-3 전 임시). skillsSeq = 받을 때마다 1씩 (실패 알림 구분) */
-  skills: S2C['skills'] = { weapons: [] };
-  skillsSeq = 0;
+  /** 내 카드 (조각·선물 팩, 무기마다 숙련도·패시브 한도·보유·장착, 스킬 창(K)). cardsSeq = 받을 때마다 1씩 (실패 알림 구분) */
+  cards: S2C['cards'] = { dust: 0, gifts: 0, weapons: [] };
+  cardsSeq = 0;
+  /** 마지막으로 연 카드팩 (packSeq = 받을 때마다 1씩) */
+  lastPack: S2C['pack'] | null = null;
+  packSeq = 0;
   /** 배치 실패 (화면 알림) */
   onPlaceFail: (m: S2C['placeFail']) => void = () => {};
   /** 구매 결과·게시판 내용·채팅 */
@@ -99,7 +102,8 @@ export class IslandConnection {
     room.onMessage('pong', (m: S2C['pong']) => this.clock.onPong(m.t, m.server));
     room.onMessage('me', (m: S2C['me']) => { this.me = m; });
     room.onMessage('inv', (m: S2C['inv']) => { this.inventory = m.items; });
-    room.onMessage('skills', (m: S2C['skills']) => { this.skills = m; this.skillsSeq++; });
+    room.onMessage('cards', (m: S2C['cards']) => { this.cards = m; this.cardsSeq++; });
+    room.onMessage('pack', (m: S2C['pack']) => { this.lastPack = m; this.packSeq++; });
     room.onMessage('placeFail', (m: S2C['placeFail']) => this.onPlaceFail(m));
     room.onMessage('buyResult', (m: S2C['buyResult']) => this.onBuy(m));
     room.onMessage('board', (m: S2C['board']) => { this.board = m; });

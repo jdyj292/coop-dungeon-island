@@ -14,13 +14,13 @@ const POTION_ITEM: Record<keyof Potions, string> = { hp: 'hpPotion', mp: 'mpPoti
 export const materialOf = (floor: number): string | undefined => Object.entries(ITEMS.materials).find(([, m]) => m.floor === floor)?.[0];
 
 /** 무기 숙련도 (없으면 Lv1). weapon 생략 = 그 사람이 고른 무기 (users.weapon) */
-export function mastery(db: Db, userId: number, weapon = weaponOf(db, userId)): { level: number; exp: number } {
+export function mastery(db: Pick<Db, 'select'>, userId: number, weapon = weaponOf(db, userId)): { level: number; exp: number } {
   const r = db.select().from(weaponMastery).where(and(eq(weaponMastery.userId, userId), eq(weaponMastery.weapon, weapon))).get();
   return { level: r?.level ?? 1, exp: r?.exp ?? 0 };
 }
 
 /** 고른 무기 (users.weapon) */
-export const weaponOf = (db: Db, userId: number): string =>
+export const weaponOf = (db: Pick<Db, 'select'>, userId: number): string =>
   db.select({ w: users.weapon }).from(users).where(eq(users.id, userId)).get()?.w ?? 'greatsword';
 
 /** 가방의 물약 중 던전에 가져갈 개수 (한도 player.json potions.*.carry) */

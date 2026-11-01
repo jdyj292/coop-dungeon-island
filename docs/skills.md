@@ -7,7 +7,7 @@
 
 ## 1. 시스템 — 스킬 카드
 
-스킬은 **카드**로 얻고 장착한다 (CD에서 구현 중: 카드 데이터·공용 로직은 됨. 보유·카드팩·카드 창 전까지 섬 스킬 창·서버 저장은 임시 연결 = 그 무기 카드를 모두 가진 것으로 보고 - + 로 기본·강화, 7장). 가격·확률·조각 값은 balance.md 7장 카드 경제, 카드 상점은 island.md 2·5장, 카드 창은 hud.md 8장.
+스킬은 **카드**로 얻고 장착한다 (CD에서 구현 중: 데이터·공용 로직·DB·서버는 됨. 카드 창·카드 상점 전까지는 옛 스킬 창이 실제 보유를 보여 주고 임시 팩 열기 버튼(O)으로 팩 1을 연다, hud.md 8장). 가격·확률·조각 값은 balance.md 7장 카드 경제, 카드 상점은 island.md 2·5장, 카드 창은 hud.md 8장.
 
 ### 카드
 - 스킬 하나 = 카드 하나. 액티브(기본 스킬·계열 액티브)도, 패시브(계열 보조·공용 패시브)도 카드. 카드는 무기마다 따로 (대검 카드는 대검에만)
@@ -59,8 +59,8 @@
 - 무기마다 Lv 1~20 (경험치 곡선 balance.md). 숙련도가 정하는 것: 최대 HP·ATK, 패시브 칸 한도, 열리는 카드팩, 장착할 수 있는 티어
 - SP 없음. 보스 첫 처치 보상은 MVP 이후 (카드팩 등)
 
-### 기록 초기화 (CD-3)
-- 이전 스킬 기록(skill_nodes·skill_slots·weapon_mastery.sp·branch)은 지움. 숙련도 레벨·경험치는 그대로
+### 기록 초기화
+- 이전 스킬 기록(skill_nodes·skill_slots·weapon_mastery.sp·branch)은 지움 (마이그레이션 0012~0014, db.md). 숙련도 레벨·경험치는 그대로
 - 모든 계정에 무기별 처음 카드 2장 + 환영 선물 팩 1 3개(무기 아무거나 열 수 있음, balance.md 7장 카드 경제)
 
 ### 개발
@@ -320,7 +320,7 @@ Lv 열이 "3단계"·"각성"인 줄은 아직 없는 카드 (3단계 = 티어 3
   → 템플릿을 코드로, 개별 스킬과 변형은 skills.json 파라미터로
 - 변형은 "기본 스킬 파라미터 덮어쓰기 + 플래그 추가"로 표현 (새 코드 최소화)
 - 서버는 DB에 저장된 보유 카드(강화·변형)·장착으로 만든 던전용 빌드 기준으로 판정 (클라이언트 신고값 신뢰 금지)
-- 카드 (CD): 목록·티어·비용·한도 shared/src/cards/catalog.ts, 보유·3장 합치기·갈기·지정 구매·변형 검사 collection.ts, 팩 굴림·천장 pack.ts, 장착 검사(4칸·비용 한도·장착 숙련도) equip.ts, 계열 보너스 bonus.ts, 던전용 빌드·강화·변형 적용·저장 문자열(`id:단계[:변형][@칸]`, 단계 1 기본·2 강화) build.ts, 데이터 검사 shared/src/data/cardCheck.ts. 저장 server/src/db/cardStore.ts (CD-3). CD-3·CD-4 전 임시 연결 shared/src/cards/interim.ts + server/src/db/skillStore.ts(skill_nodes = 카드 단계·변형, skill_slots = 액티브 칸) + client 스킬 창(stage/islandSkills.ts)
+- 카드 (CD): 목록·티어·비용·한도 shared/src/cards/catalog.ts, 보유·3장 합치기·갈기·지정 구매·변형 검사 collection.ts, 팩 굴림·천장 pack.ts, 장착 검사(4칸·비용 한도·장착 숙련도) equip.ts, 계열 보너스 bonus.ts, 던전용 빌드·강화·변형 적용·저장 문자열(`id:단계[:변형][@칸]`, 단계 1 기본·2 강화) build.ts, 데이터 검사 shared/src/data/cardCheck.ts. 저장 server/src/db/cardStore.ts(보유·장착·지정 구매·갈기·변형·던전 빌드·처음 카드)·cardPack.ts(팩 사서 열기·천장·게시판), 메시지 server/src/systems/islandCards.ts. CD-4 카드 창 전 client 옛 스킬 창(stage/islandSkills.ts)이 cards를 보여 줌
 - 코드: 특수 판정(반복·후속·해제·연발, 반복 이동 step·seek·copies) shared/src/sim/skillExtras.ts, RoomSim 연결·투사체 끝 폭발·분열·검흔 터짐·연쇄 예약·가속장 shared/src/sim/echoes.ts, 왕복·관통 다단·폭발형·사방·엇갈림 투사체 sim/bolts.ts(volley), 연쇄 대상 sim/chain.ts, 검흔 sim/scar.ts, 잔상·교차점 폭발·반환 sim/phantom.ts, 검의 춤 actions.ts withCoefMul, 패시브 효과 shared/src/passives.ts(perksOf = 패시브 카드 [기본, 강화] 값 + 계열 보너스 → PlayerState.perks, withPerks = 스킬 정의 변경: 준비 시간·슈퍼아머·사거리·지속·계열 보너스의 쿨·범위·MP·감속) + 판정 sim/strike.ts(먼 적·연소·중압 배율, 몬스터 burn·pressed)·playerHurt.ts(받는 피해)·player.ts(회피), 다단히트 판정 번호·끌어당김·체공 shared/src/sim/strike.ts·body.ts, 벽꿍·여러 줄 투사체 발사 shared/src/sim/room.ts, 슈퍼아머 shared/src/playerHurt.ts, 재입력 shared/src/player.ts. 변형 연출은 새 그림 없이 기존 이펙트 재사용 (fx/spellCast castEcho: 연쇄 = 화염 폭발, 균열 = 판정 줄 먼지·충격 링, 빙결 폭발 = 마법탄 적중 섬광)
 - 테이블: docs/db.md
 - MVP 범위는 docs/roadmap.md

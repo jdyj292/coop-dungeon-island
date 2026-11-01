@@ -1,9 +1,8 @@
 // 잡화점 구매·게시판 DB 처리 (docs/island.md 5·8장, network.md 11장 "구매는 즉시 트랜잭션")
 // 장식·물약 = 개인 지갑 → 가방, 공용 장식(source treasury) = 공동 금고 → 공용 창고
-import { ITEMS, type InterimFail } from '@game/shared';
+import { ITEMS } from '@game/shared';
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
 import type { Db } from './client';
-import { equipSkillSlot, resetSkills, setSkillNode, skillsView } from './skillStore';
 import { mastery } from './runStore';
 import { activityLog, inventory, islandStorage, islands, memos, users } from './schema';
 
@@ -29,23 +28,10 @@ export class ShopStore {
     this.db.update(users).set({ hairStyle: hair, hairColor }).where(eq(users.id, userId)).run();
   }
 
-  /** 스킬 창 값 (skillStore, CD-3 전 임시) */
-  skills(userId: number): ReturnType<typeof skillsView> {
-    return skillsView(this.db, userId);
+  /** DB (카드 처리가 같이 씀) */
+  get database(): Db {
+    return this.db;
   }
-
-  setSkill(userId: number, weapon: string, id: string, node: { points: number; variant?: string }): InterimFail | null {
-    return setSkillNode(this.db, userId, weapon, id, node);
-  }
-
-  equipSkill(userId: number, weapon: string, id: string, slot: number): InterimFail | null {
-    return equipSkillSlot(this.db, userId, weapon, id, slot);
-  }
-
-  resetSkills(userId: number, weapon: string): void {
-    resetSkills(this.db, userId, weapon);
-  }
-
 
   /** 숙련도 레벨 (섬 HUD LV, 고른 무기) */
   level(userId: number): number {

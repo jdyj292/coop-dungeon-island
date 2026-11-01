@@ -1,6 +1,6 @@
 // 스킬 창 (K) 그리기 (hud.md 8장, 승인 데모 docs/refs/demos/skill_window.html, 게임 화면 384×216 기준 좌표):
 // 제목 띠(별·무기 탭·Lv·패시브 비용) / 계열 보기 A·B / 액티브·패시브 보기 탭 / 내용 카드(위 = 기본 스킬·공용 패시브, 아래 = 보는 계열, 티어 순 + 진행 선) /
-// 장착 칸 A S D F·초기화 / 오른쪽 상세 (skillDetail.ts). 상태·입력은 stage/islandSkills.ts (SkillSource). CD-4 카드 창 전 임시
+// 장착 칸 A S D F·임시 팩 열기 / 오른쪽 상세 (skillDetail.ts). 상태·입력은 stage/islandSkills.ts (SkillSource). CD-4 카드 창 전 임시
 import type Phaser from 'phaser';
 import type { Branch } from '@game/shared';
 import type { FontKey } from './fonts';
@@ -17,7 +17,12 @@ export type SkillHit =
 export interface NodeInfo {
   id: string;
   name: string;
+  /** 가졌고 장착 숙련도도 됨 */
   open: boolean;
+  /** 가진 카드 (없으면 잠금 "없음") */
+  owned: boolean;
+  /** 보유 글자 (n/3장, 강화 +n장, 없음) */
+  have: string;
   lv: number;
   points: number;
   max: number;
@@ -56,7 +61,8 @@ export interface SkillSource {
   sel: string;
   hover: string | null;
   hoverBtn: string | null;
-  resetArm: boolean;
+  /** 임시 팩 열기 버튼 글자 (CD-5 카드 상점 전까지) */
+  packLabel: string;
   /** 끌고 있는 스킬 (움직였을 때만), 놓을 칸 */
   drag: { id: string; from: number; target: number } | null;
   note: { text: string; color: string } | null;
@@ -226,7 +232,7 @@ export class SkillWindow {
     });
   }
 
-  /** 장착 칸 A S D F + 안내 + 초기화 */
+  /** 장착 칸 A S D F + 안내 + 임시 팩 열기 버튼 */
   private tray(s: SkillSource): void {
     const p = this.p, g = p.g;
     card(g, 12, 170, 224, 38);
@@ -242,11 +248,10 @@ export class SkillWindow {
       keyTag(g, x - 2, y + 14, KEYS[k]!);
       p.hit(x, y, 22, 22, { kind: 'slot', k });
     });
-    const lab = s.resetArm ? '확인?' : '초기화', w = labW(lab) + 12, bx = 231 - w;
+    const lab = s.packLabel, w = labW(lab) + 12, bx = 231 - w;
     buttonBox(g, bx, 191, w, { hover: s.hoverBtn === 'reset' });
-    if (s.resetArm) R(g, bx, 191, 1, 12, SK.danger);
     p.center(bx, w, 191, lab, s.hoverBtn === 'reset' ? SK.coin : SK.txt);
-    if (!s.busy) p.hit(bx, 191, w, 12, { kind: 'btn', b: 'reset' });
+    p.hit(bx, 191, w, 12, { kind: 'btn', b: 'reset' });
   }
 
   /** 칸: 그림자·테두리·볼록, 그림, 잠금(자물쇠 + Lv), 고른 칸 꺾쇠, 변형 점, 장착 키, 포인트 점. big = 상세 머리(판정·꼬리표·점 없음) */
@@ -260,7 +265,7 @@ export class SkillWindow {
     if (!n.open) {
       this.art(n, x, y, size, true, 0.12);
       lockIcon(g, x + Math.floor(size / 2) - 2, y + Math.floor(size / 2) - 6, SK.key);
-      const t = `Lv${n.lv}`;
+      const t = n.owned ? `Lv${n.lv}` : '-';
       tiny(g, t, x + Math.floor((size - (t.length * 4 - 1)) / 2), y + size - 8, SK.key);
     } else this.art(n, x, y, size, n.passive && n.points === 0, 1);
     if (isSel) corners(g, x, y, size, size, SK.coin);

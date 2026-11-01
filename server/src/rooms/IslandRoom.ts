@@ -4,8 +4,8 @@ import { AUTH, FixedStep, LOOK, NET, TICK, type MeRes } from '@game/shared';
 import { CONFIG } from '../config';
 import { loadIsland } from '../db/islandQueries';
 import { IslandStore } from '../db/islandStore';
+import { buildOf } from '../db/cardStore';
 import { carryPotions, mastery } from '../db/runStore';
-import { dungeonBuild } from '../db/skillStore';
 import { keepTestAccount } from '../db/testAccount';
 import { ShopStore } from '../db/shopStore';
 import { SESSION_COOKIE } from '../http/routes';
@@ -59,7 +59,7 @@ export class IslandRoom extends Room<IslandState> {
     this.setSimulationInterval((ms) => {
       for (let n = this.ticks.advance(ms / 1000); n > 0; n--) this.game.tick();
     }, TICK * 1000);
-    for (const type of ['input', 'ping', 'place', 'move', 'moveFacility', 'remove', 'give', 'giveCoins', 'buy', 'board', 'memo', 'chat', 'look', 'weapon', 'skill', 'well']) {
+    for (const type of ['input', 'ping', 'place', 'move', 'moveFacility', 'remove', 'give', 'giveCoins', 'buy', 'board', 'memo', 'chat', 'look', 'weapon', 'card', 'well']) {
       this.onMessage(type, (client, raw) => {
         if (this.game.onMessage(this.userOf(client), type, raw) === 'kick') client.leave(KICK_CODE);
       });
@@ -108,7 +108,7 @@ export class IslandRoom extends Room<IslandState> {
     // 색은 파티 순서대로 (섬 주민은 10명이라 색이 겹칠 수 있어서, 던전 파티 4명 안에서는 겹치지 않게)
     const members: PartyMember[] = ids.map((id, slot) => {
       const r = this.game.state.residents.get(id), weapon = r?.weapon || 'greatsword', m = mastery(db, Number(id), weapon);
-      return { userId: id, name: r?.name ?? '?', color: slot % LOOK.playerColors, hair: r?.hair ?? 0, hairColor: r?.hairColor ?? 0, weapon, level: m.level, levelExp: m.exp, potions: carryPotions(db, Number(id)), skills: dungeonBuild(db, Number(id), weapon) };
+      return { userId: id, name: r?.name ?? '?', color: slot % LOOK.playerColors, hair: r?.hair ?? 0, hairColor: r?.hairColor ?? 0, weapon, level: m.level, levelExp: m.exp, potions: carryPotions(db, Number(id)), skills: buildOf(db, Number(id), weapon) };
     });
     islandBus.departed(this.islandId, ids, floor);
     try {

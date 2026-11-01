@@ -53,3 +53,7 @@ export const packDef = (pack: number): PackDef | undefined => PACKS[String(pack)
 export const PACK_NUMBERS: readonly number[] = Object.keys(PACKS).map(Number).sort((a, b) => a - b);
 /** 이 숙련도에 열린 팩인가 */
 export const packOpen = (pack: number, level: number): boolean => level >= (packDef(pack)?.unlockLevel ?? Infinity);
+/** 환영 선물 팩 inventory item (무기는 열 때 고름, db.md) */
+export const giftItemOf = (pack: number): string => `cardpack_gift_${pack}`;
+/** 환영 선물 (팩 번호·개수, combat.json card.welcomePacks) */
+export const WELCOME_PACKS = CARD.welcomePacks;

@@ -5,4 +5,3 @@ export * from './pack';
 export * from './equip';
 export * from './bonus';
 export * from './build';
-export * from './interim';

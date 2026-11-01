@@ -22,7 +22,10 @@ export function drawDetail(p: Painter<SkillHit>, s: SkillSource, id: string, cel
   p.text(X + 29, 44, n.kind, n.plain ? SK.key : n.color);
   // 상태 줄
   const RY = 65;
-  if (!n.open) {
+  if (!n.owned) {
+    lockIcon(g, X, RY + 2, SK.key);
+    p.text(X + 8, RY, '없는 카드 · 카드팩·지정 구매로', SK.key);
+  } else if (!n.open) {
     lockIcon(g, X, RY + 2, SK.danger);
     p.text(X + 8, RY, `Lv ${n.lv}에 장착 · 지금 Lv ${s.level}`, SK.danger);
   } else {
@@ -34,12 +37,12 @@ export function drawDetail(p: Painter<SkillHit>, s: SkillSource, id: string, cel
       R(g, px, RY + 4, 6, 2, c);
       R(g, px + 1, RY + 3, 4, 4, c);
     }
-    const count = `${pts}/${mx}`, tx = X + mx * 7 + 3;
+    const count = n.have, tx = X + mx * 7 + 3;
     p.text(tx, RY, count, SK.txt);
     p.text(tx + koWidth(count, 'koSmall') + 5, RY, n.passive ? (pts ? (pts > 1 ? '강화 낌' : '낌') : '안 낌') : pts > 1 ? `강화 ×${ENHANCED_MUL}` : '기본', pts ? SK.heal : SK.key);
     if (id === s.sel) {
-      button(p, s, 'minus', '-', 336, RY - 1, mine && pts > (n.passive ? 0 : 1));
-      button(p, s, 'plus', '+', 353, RY - 1, mine && pts < mx);
+      button(p, s, 'minus', '-', 336, RY - 1, mine && n.passive && pts > 0);
+      button(p, s, 'plus', '+', 353, RY - 1, mine && n.passive && pts === 0);
     }
   }
   // 설명

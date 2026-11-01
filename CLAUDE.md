@@ -118,6 +118,6 @@ deploy/                  서버 설치 파일: Nginx 틀·systemd·백업 cron·
 - [ ] M5 배포
 
 ## 현재 상태 (3줄, 작업마다 덧붙이지 말고 새로 쓴다. 완료 기록은 docs/changelog.md)
-- M0~M4 완료, M5 배포 준비(5-1~5-4) 완료. 스킬은 대검 A·B 3단계까지, 스태프 2단계까지. 지금 진행: 스킬 카드 개편 CD (CD-1 문서·CD-2 데이터·공용 로직 완료, 섬 스킬 창·서버 저장은 임시 연결 = 모든 카드 보유로 봄)
+- M0~M4 완료, M5 배포 준비(5-1~5-4) 완료. 스킬은 대검 A·B 3단계까지, 스태프 2단계까지. 지금 진행: 스킬 카드 개편 CD (CD-1 문서·CD-2 데이터·공용 로직·CD-3 DB·서버·card 메시지 완료, 카드 창·상점 전까지 옛 스킬 창이 실제 보유 + 임시 팩 열기 O 키)
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?floor=training, ?weapon=staff, ?skills=gs_launch:2:double, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
-- 다음: 스킬 카드 CD-3(DB·서버·card 메시지, 임시 연결 지움, roadmap CD 표) → CD-4~7. 실제 배포 (docs/deploy.md 5장 순서). 스태프 3단계는 카드 개편 뒤
+- 다음: 스킬 카드 CD-4(카드 창 K·던전 HUD 4칸, 새 승인 데모 먼저, roadmap CD 표) → CD-5~7. 실제 배포 (docs/deploy.md 5장 순서). 스태프 3단계는 카드 개편 뒤

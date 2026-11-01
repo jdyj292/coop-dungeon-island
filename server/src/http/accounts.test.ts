@@ -1,7 +1,7 @@
-import { ITEMS, recoverReq, signupReq } from '@game/shared';
+import { giftItemOf, ITEMS, MVP_WEAPONS, recoverReq, signupReq, starterCards, WELCOME_PACKS } from '@game/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';
-import { authLog, inventory, islands, sessions, users } from '../db/schema';
+import { authLog, cards, inventory, islands, sessions, users } from '../db/schema';
 import { Accounts } from './accounts';
 import { LOCKS } from './limiter';
 
@@ -34,7 +34,8 @@ describe('가입', () => {
     expect(row.passwordHash).not.toContain('password1');
     expect(row.recoveryHash).toMatch(/^\$argon2id\$/);
     // 가입 선물
-    expect(Object.fromEntries(db.select().from(inventory).all().map((r) => [r.itemId, r.count]))).toEqual(ITEMS.starter);
+    expect(Object.fromEntries(db.select().from(inventory).all().map((r) => [r.itemId, r.count]))).toEqual({ ...ITEMS.starter, [giftItemOf(WELCOME_PACKS.pack)]: WELCOME_PACKS.count });
+    expect(db.select().from(cards).all().map((r) => r.cardId).sort()).toEqual(MVP_WEAPONS.flatMap((w) => starterCards(w)).sort());
     // 토큰 원문은 DB에 없음
     expect(db.select().from(sessions).get()!.tokenHash).not.toBe(r.value.token);
   });

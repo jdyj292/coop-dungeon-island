@@ -10,7 +10,7 @@
 - 솔로: `http://localhost:5173/?online=1&party=1`
 - 2인: 탭(또는 기기) 2개에서 `http://localhost:5173/?online=1&party=2&lag=100&jitter=20` (지연 100ms·흔들림 ±20ms, M2 확인 기준)
 - 조작: 방향키 이동(좌우 두 번 = 달리기) · Z 평타(달리면 대시) · Space 회피(방향키 쪽, 없으면 뒤) · A S D F 스킬(기본 A 올려베기 · S 대지가르기, 스킬 창 K에서 장착. 카드 창은 CD-4) · 1/2 물약 · E 상호작용
-- 테스트 계정 `ADMIN` (개발 서버만, 닉네임 대소문자 무시·정확히 같을 때만): 섬에 들어올 때마다 대검·스태프 숙련도 Lv20·지갑 99,999·카드 조각 99,999(CD-3)로 다시 채움. 다른 닉네임은 환경 변수 TEST_ACCOUNT, 배포(production)에서는 꺼짐 (server/src/db/testAccount.ts, config.ts testAccount). 레벨·지갑을 보는 테스트(정산·레벨업)는 다른 계정으로
+- 테스트 계정 `ADMIN` (개발 서버만, 닉네임 대소문자 무시·정확히 같을 때만): 섬에 들어올 때마다 대검·스태프 숙련도 Lv20·지갑 99,999·카드 조각 99,999로 다시 채움. 다른 닉네임은 환경 변수 TEST_ACCOUNT, 배포(production)에서는 꺼짐 (server/src/db/testAccount.ts, config.ts testAccount). 레벨·지갑을 보는 테스트(정산·레벨업)는 다른 계정으로
 - 개발 패널 (\` 키): 지연 조정, 방 몬스터 모두 기절, 나 쓰러지기, 연결 끊기 — 테스트 기록에는 쓰지 않은 판만
 
 ## 2. 볼 것

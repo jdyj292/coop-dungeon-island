@@ -1,7 +1,7 @@
 // 섬 패널 (hud.md 8장 패널): 잡화점(물약·장식, 의상은 MVP 이후) / 가방(장비·장식·물약·재료) / 게시판(기록·메모·주민) / 우물. 스킬 창(K)은 전용 창 (islandSkills.ts)
 // 키: ↑↓ 고르기, ←→ 수량, Q·E·Tab 탭, Enter 사기·장착·메모 쓰기, Esc 닫기 (공동 금고 구매는 확인 한 번). 마우스: 탭·줄·버튼 클릭, 바깥 클릭 닫기
 import type Phaser from 'phaser';
-import { facilityName, ISLAND, ITEMS, MVP_WEAPONS, NET, ROOMS, WEAPONS } from '@game/shared';
+import { CARDS, facilityName, ISLAND, ITEMS, MVP_WEAPONS, NET, PASSIVES, ROOMS, SKILLS, WEAPONS } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
 import { ListPanel, PANEL, type PanelRow, type PanelView } from '../ui/listPanel';
 import { moneyLines } from './islandBadges';
@@ -26,6 +26,9 @@ const POTION_COLOR: Record<string, string> = { hpPotion: 'global.ui.hp', mpPotio
 const VERB: Record<string, string> = {
   found: '섬을 만듦', 'dungeon:clear': '1층 클리어', 'dungeon:return': '1층에서 귀환', 'dungeon:wipe': '1층 전멸', join: '섬에 들어옴', invite: '초대 코드를 바꿈', place: '놓음', move: '옮김', remove: '치움', buy: '삼', treasury: '금고로 삼',
 };
+/** 기록 한 줄 (card = 티어 3 이상 뽑음, island.md 5장) */
+const logText = (action: string, id: string | null): string => (action === 'card' && id
+  ? `${weaponName(CARDS[id]?.weapon)} 카드 '${SKILLS[id]?.name ?? PASSIVES[id]?.name ?? id}'을 뽑음` : `${id ? `${itemName(id)} ` : ''}${VERB[action] ?? action}`);
 const MAX_QTY = 99;
 /** 무기 이름 (우물 대기 줄·가방 장비 탭) */
 const weaponName = (id = 'greatsword') => WEAPONS[id]?.name ?? id;
@@ -174,7 +177,7 @@ export class IslandPanels {
     const b = c.board, now = Date.now();
     if (!b) return { ids: [], rows: [] };
     const rows = this.tab === 0
-      ? b.log.map((l) => ({ label: `${l.who} · ${l.itemId ? `${itemName(l.itemId)} ` : ''}${VERB[l.action] ?? l.action} · ${ago(l.at, now)}` }))
+      ? b.log.map((l) => ({ label: `${l.who} · ${logText(l.action, l.itemId)} · ${ago(l.at, now)}` }))
       : b.memos.map((m) => ({ label: `${m.who}: ${m.text}` }));
     return { ids: rows.map(() => ''), rows };
   }

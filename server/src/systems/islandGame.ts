@@ -1,9 +1,10 @@
 // 섬 진행 (Colyseus 없이 테스트 가능, docs/network.md 3·5장): 주민 접속·이동, 장식 배치·시설 옮기기(islandPlacement.ts). 상점·우물은 4-7~4-8
 // 60Hz로 각 주민의 마지막 입력을 적용하고 상태(정수 위치)에 반영. 상태는 20Hz로 전송 (IslandRoom)
-import { ISLAND, islandBounds, NET, newWalker, parseC2S, placementBlocks, spawnPos, stepWalker, TICK, type WalkInput, type Walker } from '@game/shared';
+import { ISLAND, islandBounds, NET, newWalker, parseC2S, placementBlocks, spawnPos, stepWalker, TICK, type Rng, type WalkInput, type Walker } from '@game/shared';
 import type { IslandStore } from '../db/islandStore';
 import type { ShopStore } from '../db/shopStore';
 import { IslandState, Resident } from '../schema/IslandState';
+import { IslandCards } from './islandCards';
 import { IslandPlacement } from './islandPlacement';
 import { dungeonStatus, islandBus } from './islandBus';
 import { IslandShop } from './islandShop';
@@ -35,7 +36,7 @@ const islandRules = (): Record<string, readonly [number, number]> => {
   const l = NET.limits;
   const island = [1000, l.island] as const;
   return {
-    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], look: island, weapon: island, skill: island,
+    input: [1000, l.input], ping: [1000, l.input], chat: [l.chatWindowMs, l.chatMax], look: island, weapon: island, card: island,
     place: island, move: island, moveFacility: island, remove: island, give: island, giveCoins: island, buy: island, board: island, memo: island, well: island,
   };
 };
@@ -48,11 +49,13 @@ export class IslandGame {
   readonly placement: IslandPlacement | null = null;
   /** 잡화점·게시판·채팅 (DB가 있을 때만) */
   readonly shop: IslandShop | null = null;
+  /** 스킬 카드 (DB가 있을 때만) */
+  readonly cards: IslandCards | null = null;
   readonly well: IslandWell;
   /** 방 생성부터의 서버 시각 ms */
   now = 0;
 
-  constructor(name: string, treasury: number, residents: ResidentInfo[], private out: IslandOut, opts: { store?: IslandStore; shopStore?: ShopStore; dev?: boolean; onDepart?: (userIds: string[], floor: string) => void } = {}) {
+  constructor(name: string, treasury: number, residents: ResidentInfo[], private out: IslandOut, opts: { store?: IslandStore; shopStore?: ShopStore; dev?: boolean; rng?: Rng; onDepart?: (userIds: string[], floor: string) => void } = {}) {
     this.state.name = name;
     this.state.treasury = treasury;
     for (const r of residents) this.addResident(r);
@@ -69,6 +72,8 @@ export class IslandGame {
       this.shop = new IslandShop(opts.shopStore, this.state, out, {
         inventoryChanged: (id) => placement?.sendInventory(id), storageChanged: () => placement?.syncStorage(),
       }, !!opts.dev);
+      const shop = this.shop;
+      this.cards = new IslandCards(opts.shopStore.database, opts.shopStore.islandId, this.state, out, { walletChanged: (id) => shop.sendMe(id) }, opts.rng);
     }
   }
 
@@ -95,7 +100,7 @@ export class IslandGame {
     Object.assign(r, { online: true, status: 'island', x: Math.round(pos.x), y: Math.round(pos.y), facing: 1, state: 'idle', lastInputSeq: 0, wellAt: back ? Math.max(1, this.now) : 0 });
     this.placement?.sendInventory(id);
     this.shop?.sendMe(id);
-    this.shop?.sendSkills(id);
+    this.cards?.send(id);
   }
 
   /** 섬을 나감 (끊김·던전 출발). 던전에 간 사람은 "탐험 중" 그대로 */
@@ -126,6 +131,7 @@ export class IslandGame {
       const m = parseC2S('ping', raw);
       if (m) this.out.send(id, 'pong', { t: m.t, server: this.now });
     } else if (type === 'well') this.well.onMessage(id, raw, this.now);
+    else if (type === 'card') this.cards?.onMessage(id, raw, Date.now());
     else if (this.shop?.onMessage(id, type, raw, Date.now())) {
       // 잡화점·게시판·채팅
     } else if (this.placement?.onMessage(id, type, raw, Date.now())) this.updateBounds();
