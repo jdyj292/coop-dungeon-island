@@ -53,6 +53,10 @@ export function checkEquip(weapon: string, level: number, c: Collection, lo: Car
   return null;
 }
 
+/** 강화하면 끼운 패시브 비용이 +1: 한도를 넘으면 'cap' (after = 강화한 보유) */
+export const checkEnhanceCap = (level: number, after: Collection, lo: CardLoadout): CardFail | null =>
+  (passiveUsed(after, lo.passive) > passiveCap(level) ? 'cap' : null);
+
 /** 지금 쓸 수 있는 장착: 없는 카드·다른 무기·숙련도가 모자란 카드는 빼고, 패시브는 한도를 넘는 뒤쪽부터 뺌 (던전 빌드, 숙련도가 내려가진 않지만 데이터가 바뀔 때) */
 export function usableLoadout(weapon: string, level: number, c: Collection, lo: CardLoadout): CardLoadout {
   const ok = (id: string, kind: CardKind) => CARDS[id]?.weapon === weapon && CARDS[id]!.kind === kind && owns(c, id) && level >= equipLevelOf(id);

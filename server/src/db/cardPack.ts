@@ -44,8 +44,7 @@ export function openPack(db: Db, userId: number, islandId: number, weapon: strin
       seen.add(id);
       return { id, tier: roll.tiers[i] ?? tierOf(id), isNew };
     });
-    const r = addCards(before, roll.cards);
-    writeCards(tx, userId, r.cards, roll.cards);
+    writeCards(tx, userId, addCards(before, roll.cards), roll.cards);
     if (p.pity) {
       tx.insert(cardPity).values({ userId, weapon, pack, opened: roll.opened })
         .onConflictDoUpdate({ target: [cardPity.userId, cardPity.weapon, cardPity.pack], set: { opened: roll.opened } }).run();
@@ -53,6 +52,6 @@ export function openPack(db: Db, userId: number, islandId: number, weapon: strin
     for (const c of cards) {
       if (c.tier >= BOAST_TIER) tx.insert(activityLog).values({ islandId, userId, action: 'card', itemId: c.id, createdAt: now }).run();
     }
-    return { pack: { weapon, pack, cards, merged: r.merged, pity: roll.opened } };
+    return { pack: { weapon, pack, cards, pity: roll.opened } };
   });
 }

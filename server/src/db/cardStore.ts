@@ -1,8 +1,8 @@
-// 스킬 카드 저장 (docs/skills.md 1장, db.md cards·card_slots): 보유·장착 읽기, 카드 창 값, 지정 구매·갈기·변형·장착, 던전 빌드, 처음 카드.
+// 스킬 카드 저장 (docs/skills.md 1장, db.md cards·card_slots): 보유·장착 읽기, 카드 창 값, 지정 구매·강화·갈기·변형·장착, 던전 빌드, 처음 카드.
 // 검사는 shared cards/ (클라이언트 신고값은 믿지 않는다), 돈·조각·카드 변경은 트랜잭션 한 번. 팩 열기는 cardPack.ts
 import {
-  ACTIVE_SLOTS, addCards, CARDS, checkCraft, checkEquip, checkGrind, checkVariant, craftPriceOf, defaultLoadout, dungeonBuild, encodeBuild, equipCard,
-  equippedIds, giftItemOf, grindCards, MVP_WEAPONS, passiveCap, starterCollection, WELCOME_PACKS,
+  ACTIVE_SLOTS, addCards, CARDS, checkCraft, checkEnhance, checkEnhanceCap, checkEquip, checkGrind, checkVariant, craftPriceOf, defaultLoadout, dungeonBuild,
+  encodeBuild, enhanceCard, equipCard, equippedIds, giftItemOf, grindCards, MVP_WEAPONS, passiveCap, starterCollection, WELCOME_PACKS,
   type CardFail, type CardKind, type CardLoadout, type Collection, type OwnedCard, type S2C,
 } from '@game/shared';
 import { and, eq, gte, sql } from 'drizzle-orm';
@@ -96,14 +96,27 @@ export function grantStarter(q: Q, userId: number): void {
     .onConflictDoUpdate({ target: [inventory.userId, inventory.itemId], set: { count: sql`${inventory.count} + ${WELCOME_PACKS.count}` } }).run();
 }
 
-/** 지정 구매: 조각으로 1장 (3장째면 저절로 강화). merged = 강화됐으면 그 카드 */
-export function craftCard(db: Db, userId: number, cardId: string): { fail: CardFail | null; merged: string[] } {
+/** 지정 구매: 조각으로 1장 (강화는 따로) */
+export function craftCard(db: Db, userId: number, cardId: string): CardFail | null {
   return db.transaction((tx) => {
     const fail = checkCraft(cardId, dustOfUser(tx, userId));
-    if (fail || !addDust(tx, userId, -craftPriceOf(cardId))) return { fail: fail ?? 'dust', merged: [] };
-    const r = addCards(collectionOf(tx, userId), [cardId]);
-    writeCards(tx, userId, r.cards, [cardId]);
-    return { fail: null, merged: r.merged };
+    if (fail || !addDust(tx, userId, -craftPriceOf(cardId))) return fail ?? 'dust';
+    writeCards(tx, userId, addCards(collectionOf(tx, userId), [cardId]), [cardId]);
+    return null;
+  });
+}
+
+/** 강화: 같은 카드 3장 → 강화 카드 (끼운 패시브면 비용 +1이 한도 안이어야) */
+export function enhance(db: Db, userId: number, cardId: string): CardFail | null {
+  return db.transaction((tx) => {
+    const c = collectionOf(tx, userId), weapon = CARDS[cardId]?.weapon ?? '';
+    const fail = checkEnhance(c, cardId);
+    if (fail) return fail;
+    const after = enhanceCard(c, cardId);
+    const capFail = checkEnhanceCap(mastery(tx, userId, weapon).level, after, loadoutOf(tx, userId, weapon));
+    if (capFail) return capFail;
+    writeCards(tx, userId, after, [cardId]);
+    return null;
   });
 }
 

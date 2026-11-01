@@ -1,14 +1,17 @@
-// 카드 창 그리기 부품 (hud.md 8장, 승인 데모 docs/refs/demos/card_window.html): 글자·판정 칸을 모아 두는 Painter, 카드 모양 24×29·판·버튼·꺾쇠·자물쇠·별·꼬리표·조각 보석·그림
+// 카드 창 그리기 부품 (hud.md 8장, 승인 데모 docs/refs/demos/card_window.html · card_redesign.html): 글자·판정 칸을 모아 두는 Painter, 카드 모양 24×29(계열 테두리 cardFrame.ts)·판·버튼·꺾쇠·자물쇠·별·꼬리표·조각 보석·그림
 import type Phaser from 'phaser';
+import { hexToInt } from '@game/shared';
 import icons from '../../data/sprites/hud_icons.json';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
+import { cardShell, type FrameStyle, type Paint } from './cardFrame';
 import { koText, koWidth, type KoText } from './koText';
 import type { FontKey } from './fonts';
 import { drawText } from './pixelFont';
 
 type G = Phaser.GameObjects.Graphics;
-export const C = (path: string) => colorInt(path);
+/** palette 경로 또는 #hex → 정수 색 (테두리 밝기·그늘은 섞은 hex) */
+export const C = (path: string) => (path.startsWith('#') ? hexToInt(path) : colorInt(path));
 
 /** 카드 창 색 (palette.json global.ui 등) */
 export const SK = {
@@ -61,6 +64,8 @@ export class Painter<H> {
 }
 
 export const R = (g: G, x: number, y: number, w: number, h: number, color: string, alpha = 1) => dot(g, x, y, C(color), w, h, alpha);
+/** Graphics 붓 (cardFrame.ts) */
+export const paintOf = (g: G): Paint => (x, y, w, h, c, a) => R(g, x, y, w, h, c, a ?? 1);
 
 /** 카드 id → 16×16 아이콘 이름 (hud_icons.json slots, 공용 패시브는 무기 이름을 뺀 id) */
 export const cardIconName = (id: string): string => (icons.slots as Record<string, string>)[id.replace(/^\w+\./, '')] ?? 'empty';
@@ -157,52 +162,38 @@ export const CW = 24, CH = 29;
 export interface FaceLook {
   id: string;
   tier: number;
-  /** 테두리 색 (palette 경로, cards.json tiers color) */
+  /** 티어 색 (테두리 아님: 카드 상점 뒷면 빛·티어 3 이름 띠, cards.json tiers color) */
   tierColor: string;
+  /** 계열 테두리 모양·색 (기본·공용은 keyLabel) */
+  frame: FrameStyle;
+  color: string;
   owned: boolean;
   enhanced: boolean;
-  /** 보관 장수 (강화 안 된 카드 = n/3 점) */
+  /** 같은 카드 3장 → 강화할 수 있음 (카드 아래 ▲, 상세 강화 버튼) */
+  ready: boolean;
+  /** 보관 장수 */
   count: number;
-  /** 강화 뒤 남는 장수 (갈기 추천) */
+  /** 강화 뒤 남는 장수 */
   spare: number;
-  /** 장착 숙련도 (모자라면 자물쇠 + Lv) */
+  /** 장착 숙련도 (모자라면 자물쇠) */
   equipLevel: number;
   locked: boolean;
-  /** 강화 액티브의 변형을 골랐음 */
-  variant: boolean;
   /** 장착 꼬리표 (A S D F 또는 P, 없으면 null) */
   tag: string | null;
 }
 
-/** 카드 24×29: 티어 테두리(강화 = 금테 + 흰 모서리)·별·아이콘·보유 점 n/3 또는 남는 장수 "+n"·자물쇠·변형 점·꼬리표. 없는 카드는 그림자만. big = 상세 머리(점·꼬리표 없음) */
-export function cardFace(g: G, f: FaceLook, x: number, y: number, o: { sel?: boolean; hov?: boolean; big?: boolean; merge: number }): void {
-  R(g, x + 1, y + 1, CW, CH, SK.shade);
-  if (!f.owned) {
-    R(g, x, y, CW, CH, SK.cardBd);
-    R(g, x + 1, y + 1, CW - 2, CH - 2, SK.title);
-    for (let i = 0; i < f.tier; i++) star(g, x + 2 + i * 4, y + 2, SK.cardBd);
-    cardIcon(g, f.id, x + 4, y + 7, { mono: SK.cardBd });
-  } else {
-    const tc = f.tierColor;
-    R(g, x, y, CW, CH, f.enhanced ? SK.coin : tc);
-    R(g, x + 1, y + 1, CW - 2, CH - 2, f.enhanced ? tc : SK.title);
-    R(g, x + 2, y + 2, CW - 4, CH - 4, SK.lit);
-    R(g, x + 2, y + 2, CW - 4, 1, SK.hi);
-    if (f.enhanced) for (const [dx, dy] of [[0, 0], [CW - 2, 0], [0, CH - 2], [CW - 2, CH - 2]] as const) R(g, x + dx, y + dy, 2, 2, SK.white);
-    for (let i = 0; i < f.tier; i++) star(g, x + 3 + i * 4, y + 3, f.enhanced ? SK.coin : tc);
+/** 카드 24×29: 계열 테두리 · 별(티어) · 아이콘 · 자물쇠(장착 숙련도 모자람) · 꼬리표. 없는 카드는 같은 모양의 그림자.
+ * 강화 반짝임·강화 가능 ▲은 움직여서 CardWindow가 따로 그림 (cardFrame.ts cardShine·readyMark). big = 상세 머리(꼬리표 없음). 몸통 시작 거리를 돌려줌 */
+export function cardFace(g: G, f: FaceLook, x: number, y: number, o: { sel?: boolean; hov?: boolean; big?: boolean } = {}): number {
+  const ins = cardShell(paintOf(g), f.frame, x, y, CH, f.color, f.owned);
+  for (let i = 0; i < f.tier; i++) star(g, x + ins + 1 + i * 4, y + ins + 1, f.owned ? SK.txt : SK.cardBd);
+  if (!f.owned) cardIcon(g, f.id, x + 4, y + 7, { mono: SK.cardBd });
+  else {
     cardIcon(g, f.id, x + 4, y + 7, { alpha: f.locked ? 0.25 : 1 });
-    if (f.locked) {
-      lockIcon(g, x + 9, y + 10, SK.key);
-      const t = `Lv${f.equipLevel}`;
-      tiny(g, t, x + Math.floor((CW - tinyW(t)) / 2), y + 18, SK.key);
-    }
-    if (!o.big) {
-      if (!f.enhanced) for (let i = 0; i < o.merge; i++) R(g, x + 7 + i * 4, y + 24, 3, 2, i < f.count ? SK.coin : SK.track);
-      else if (f.spare > 0) tiny(g, `+${f.spare}`, x + CW - 3 - tinyW(`+${f.spare}`), y + 22, SK.spare);
-    }
-    if (f.variant) { R(g, x + CW - 6, y + 1, 5, 5, SK.shade); R(g, x + CW - 5, y + 2, 3, 3, SK.coin); R(g, x + CW - 4, y + 3, 1, 1, SK.white); }
+    if (f.locked) lockIcon(g, x + 10, y + 12, SK.key);
   }
   if (!o.big && f.tag) keyTag(g, x - 2, y + CH - 8, f.tag);
   if (o.sel) corners(g, x, y, CW, CH, SK.coin);
   else if (o.hov) { R(g, x, y, CW, 1, SK.key); R(g, x, y + CH - 1, CW, 1, SK.key); R(g, x, y, 1, CH, SK.key); R(g, x + CW - 1, y, 1, CH, SK.key); }
+  return ins;
 }

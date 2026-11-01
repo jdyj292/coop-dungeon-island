@@ -4,12 +4,14 @@
 import { decodeGlyphFont, type GlyphFont } from './glyphFont';
 
 export const FONTS = {
-  /** 이름·알림·패널 글자 (고유 크기 12px: 위 11 + 아래 1) */
+  /** 큰 표시만 (티어 3 카드 이름 띠, 고유 크기 12px: 위 11 + 아래 1). DOM 입력창도 이 글꼴 */
   ko: { family: 'Galmuri9', bin: 'Galmuri9.bin', px: 12 },
-  /** 아주 작은 표시 (고유 크기 10px, 일부 한글 없음 → '?') */
+  /** 화면 글자 기본: 패널·알림·이름표·도움말·카드 창 (고유 크기 10px: 위 9 + 아래 1, 현대 한글 11,172자 모두, 옛 자모·일부 기호 없음 → '?') */
   koSmall: { family: 'Galmuri7', bin: 'Galmuri7.bin', px: 10 },
 } as const;
 export type FontKey = keyof typeof FONTS;
+/** 글꼴을 따로 고르지 않은 캔버스 글자 */
+export const DEFAULT_FONT: FontKey = 'koSmall';
 
 /** DOM용 woff2 (Galmuri9만) */
 const DOM_FONT = { family: FONTS.ko.family, file: 'Galmuri9.woff2' };

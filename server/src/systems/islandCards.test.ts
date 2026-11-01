@@ -1,4 +1,4 @@
-// 스킬 카드 (skills.md 1장, network.md 4장 card): 섬에서 팩 열기·지정 구매·갈기·변형·장착 (서버 검사·DB 트랜잭션), 던전 파티 빌드·입력 검사
+// 스킬 카드 (skills.md 1장, network.md 4장 card): 섬에서 팩 열기·지정 구매·강화·갈기·변형·장착 (서버 검사·DB 트랜잭션), 던전 파티 빌드·입력 검사
 import { craftPriceOf, decodeBuild, dustOf, giftItemOf, perksOf, resolveSkill, slotSkills, weaponDef, WELCOME_PACKS, type S2C } from '@game/shared';
 import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -64,11 +64,10 @@ describe('카드팩', () => {
     expect(p.cards.at(-1)!.tier).toBeGreaterThanOrEqual(2);
     expect(cardsOf(a).gifts).toBe(WELCOME_PACKS.count - 1);
     expect(cardsOf(a).fail).toBeUndefined();
-    // 난수 0 = 티어 1 첫 카드(올려베기)만 3장 → 처음 1장과 합쳐 강화 (남은 1장)
-    expect(p.merged).toEqual(['gs_launch']);
-    expect(gs(a).owned.gs_launch).toEqual({ count: 1, enhanced: true });
+    // 난수 0 = 티어 1 첫 카드(올려베기)만 3장 → 처음 1장과 4장, 저절로 강화하지 않음
+    expect(gs(a).owned.gs_launch).toEqual({ count: 4, enhanced: false });
     expect(p.cards.map((c) => c.isNew)).toEqual([false, false, false, true]);
-    const n = Object.values(gs(a).owned).reduce((s, o) => s + o.count + (o.enhanced ? 3 : 0), 0);
+    const n = Object.values(gs(a).owned).reduce((s, o) => s + o.count, 0);
     expect(n).toBe(2 + 4);
   });
 
@@ -110,15 +109,42 @@ describe('카드팩', () => {
   });
 });
 
-describe('지정 구매·갈기·변형', () => {
-  it('지정 구매 3장째 = 저절로 강화, 조각 모자라면 거절', () => {
+describe('지정 구매·강화·갈기·변형', () => {
+  it('지정 구매 3장 = 3장 보관 (저절로 강화 안 함), 조각 모자라면 거절', () => {
     const a = user(1, 0, craftPriceOf('gs_whirl') * 3), g = game();
     enter(g, a);
     for (let i = 0; i < 3; i++) card(g, a, { op: 'craft', cardId: 'gs_whirl' });
-    expect(gs(a).owned.gs_whirl).toEqual({ count: 0, enhanced: true });
+    expect(gs(a).owned.gs_whirl).toEqual({ count: 3, enhanced: false });
     expect(dust(a)).toBe(0);
     card(g, a, { op: 'craft', cardId: 'gs_whirl' });
     expect(cardsOf(a).fail).toBe('dust');
+  });
+
+  it('강화: 3장 소모 → 강화 카드, 모자라거나 이미 강화면 merge, 없는 카드는 owned', () => {
+    const a = user(), g = game();
+    enter(g, a);
+    card(g, a, { op: 'enhance', cardId: 'gs_launch' });
+    expect(cardsOf(a).fail).toBe('merge');
+    card(g, a, { op: 'enhance', cardId: 'gs_whirl' });
+    expect(cardsOf(a).fail).toBe('owned');
+    give(a, 'gs_launch', 4);
+    card(g, a, { op: 'enhance', cardId: 'gs_launch' });
+    expect(cardsOf(a).fail).toBeUndefined();
+    expect(gs(a).owned.gs_launch).toEqual({ count: 1, enhanced: true });
+    card(g, a, { op: 'enhance', cardId: 'gs_launch' });
+    expect(cardsOf(a).fail).toBe('merge');
+  });
+
+  it('끼운 패시브 강화는 비용 +1이 한도 안이어야 (cap)', () => {
+    const a = user(1), g = game();
+    enter(g, a);
+    give(a, 'gs_heavyhand', 3);
+    give(a, 'gs_steadfast', 1);
+    equip(g, a, 'passive', 0, 'gs_heavyhand');
+    equip(g, a, 'passive', 1, 'gs_steadfast');
+    card(g, a, { op: 'enhance', cardId: 'gs_heavyhand' });
+    expect(cardsOf(a).fail).toBe('cap');
+    expect(gs(a).owned.gs_heavyhand).toEqual({ count: 3, enhanced: false });
   });
 
   it('갈기: 조각 받음, 장착한 기본 카드의 마지막 장은 못 갊, 빼면 됨', () => {

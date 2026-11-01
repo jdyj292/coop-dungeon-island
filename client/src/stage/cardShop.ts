@@ -1,6 +1,6 @@
 // 카드 상점 화면 (섬 카드 상점 앞 E, island.md 5장, hud.md 8장, 승인 데모 docs/refs/demos/card_shop.html): 상태·입력·card 메시지.
 // 그리기는 ui/cardShopScreen.ts(배경·카드팩·지정 구매)·stage/cardShopOpen.ts(팩 열기 연출). 384×216 캔버스 텍스처 하나에 매 프레임 그림.
-// 키: 1 2 탭 · Q E 무기 · ↑↓ 팩 / ↑↓←→ 카드 · Tab 액티브/패시브 · Enter 열기(선물 → 코인 → 조각)·사기 · Esc 닫기. 팩을 여는 중: Enter·←→·A, 끝나면 Enter
+// 키: 1 2 탭 · Q E 무기 · ↑↓ 팩 / ↑↓←→ 카드 · Tab 액티브/패시브 · Enter 열기(선물 → 코인 → 조각)·사기 · Esc 닫기. 팩을 여는 중: Enter·←→·A, 끝나면 Enter. 강화는 카드 창(K)
 import Phaser from 'phaser';
 import {
   CARD, MVP_WEAPONS, PACK_NUMBERS, packDef, packOpen, tierDef, tierOf, weaponCards, WEAPONS, WELCOME_PACKS, type Collection,
@@ -36,15 +36,18 @@ export class CardShop {
   private hover: string | null = null;
   private opening: PackOpening | null = null;
   private bought: { id: string; t0: number; fired: boolean } | null = null;
-  private pending: { kind: 'open' | 'craft'; seq: number; packSeq: number; id?: string; wasEnh?: boolean } | null = null;
+  private pending: { kind: 'open' | 'craft'; seq: number; packSeq: number; id?: string } | null = null;
   private note: { text: string; color: string; until: number } | null = null;
   /** 무기|팩 → 천장 횟수 (마지막으로 연 팩에서) */
   private pity = new Map<string, number>();
   private ox = 0; private oy = 0;
   private last = 0;
+  /** 씬이 끝날 때는 img가 먼저 파괴돼 img.scene이 없다 → 텍스처 관리자를 따로 들고 있는다 */
+  private textures: Phaser.Textures.TextureManager;
 
   constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private myWeapon: () => string) {
     const key = `cardShop${serial++}`;
+    this.textures = scene.textures;
     this.tex = scene.textures.createCanvas(key, SW, SH)!;
     this.p = new Pix<ShopHit>(this.tex.context);
     this.cover = scene.add.rectangle(0, 0, 1, 1, colorInt(SC.cover), 0.5).setOrigin(0).setScrollFactor(0).setDepth(depth).setVisible(false);
@@ -77,10 +80,10 @@ export class CardShop {
   }
 
   destroy(): void {
-    const key = this.img.texture.key, textures = this.img.scene.textures;
+    const key = this.tex.key;
     this.img.destroy();
     this.cover.destroy();
-    textures.remove(key);
+    this.textures.remove(key);
   }
 
   /** 팩을 여는 중 (닫기·탭 바꾸기 막음) */
@@ -130,7 +133,7 @@ export class CardShop {
   private buy(): void {
     const f = this.info(this.sel), c = this.conn;
     if (!this.sel || c.cards.dust < f.craft || this.pending) return;
-    this.pending = { kind: 'craft', seq: c.cardsSeq, packSeq: c.packSeq, id: this.sel, wasEnh: f.enhanced };
+    this.pending = { kind: 'craft', seq: c.cardsSeq, packSeq: c.packSeq, id: this.sel };
     c.send('card', { op: 'craft', cardId: this.sel });
   }
 
@@ -139,13 +142,12 @@ export class CardShop {
     if (!q) return;
     if (q.kind === 'open' && c.packSeq > q.packSeq && c.lastPack) {
       this.pending = null;
-      this.opening?.setResult(c.lastPack.cards, c.lastPack.merged);
+      this.opening?.setResult(c.lastPack.cards);
       this.pity.set(`${c.lastPack.weapon}|${c.lastPack.pack}`, c.lastPack.pity);
     } else if (c.cardsSeq > q.seq && (q.kind === 'craft' || c.cards.fail)) {
       this.pending = null;
       if (c.cards.fail) { if (q.kind === 'open') this.opening = null; return this.say(FAIL_TEXT[c.cards.fail]); }
       this.bought = { id: q.id!, t0: now, fired: false };
-      if (!q.wasEnh && this.coll[q.id!]?.enhanced) this.opening = PackOpening.mergeOnly(q.id!, now);
     }
   }
 
@@ -161,7 +163,6 @@ export class CardShop {
     this.fx.step(dt);
     this.opening?.update(now, dt, this.fx, this.info);
     music.setLevel(this.opening?.music || 1);
-    if (this.opening?.finished) this.opening = null;
     const b = this.bought;
     if (b && !b.fired && now - b.t0 >= 0.3) {
       b.fired = true; sfx.play('card_buy');
@@ -181,12 +182,9 @@ export class CardShop {
     p.ctx.clearRect(0, 0, SW, SH);
     background(p);
     titleBand(p, v);
-    if (op && !op.fromBuy) op.draw(p, now, this.info, () => this.openSide(op));
-    else {
-      if (this.tab === 'pack') packMenu(p, v, now);
-      else buyMenu(p, v, now);
-      op?.draw(p, now, this.info, () => {});
-    }
+    if (op) op.draw(p, now, this.info, () => this.openSide(op));
+    else if (this.tab === 'pack') packMenu(p, v, now);
+    else buyMenu(p, v, now);
     if (op?.stage === 'done') this.doneButtons(op);
     this.fx.draw(p);
     const n = this.note;
@@ -202,7 +200,7 @@ export class CardShop {
     const p = this.p, L = SIDE, k = this.packs().find((o) => o.n === op.pack);
     weaponTabs(p, this.shopView(this.now), L.y + 4);
     packArt(p, L.x + 9, L.y + 26, 16, 24, op.pack, op.packColor);
-    p.text(`팩 ${op.pack}`, L.x + 30, L.y + 26, SC.txt, 'ko');
+    p.text(`팩 ${op.pack}`, L.x + 30, L.y + 26, SC.txt);
     p.text(op.pay === 'gift' ? '선물' : `${op.pay === 'coin' ? '코인' : '조각'} ${k?.price ?? ''}`, L.x + 30, L.y + 40, SC.key);
     const help = op.stage === 'backs' ? ['← → 고르기', 'Enter 뒤집기', 'A 모두 뒤집기', '', '마우스를 올리면', '뒷면이 티어 색으로', '빛나요']
       : op.stage === 'ready' ? ['클릭 · Enter', '팩 흔들어 찢기'] : op.stage === 'done' ? ['Enter 확인'] : [];
@@ -229,7 +227,7 @@ export class CardShop {
 
   onPointerMove(x: number, y: number): void {
     const l = this.local(x, y), h = this.p.at(l.x, l.y);
-    this.p.hoverBtn = h?.kind === 'btn' ? h.b : h?.kind === 'variant' ? `v:${h.v}` : null;
+    this.p.hoverBtn = h?.kind === 'btn' ? h.b : null;
     this.hover = h?.kind === 'card' ? h.id : null;
     if (this.opening) this.opening.hov = h?.kind === 'flip' ? h.i : -1;
   }
@@ -237,7 +235,6 @@ export class CardShop {
   private act(h: ShopHit | null): void {
     const op = this.opening, now = this.now;
     if (op) {
-      if (h?.kind === 'variant' || (h?.kind === 'btn' && h.b === 'later')) return this.pickVariant(h.kind === 'variant' ? h.v : null);
       if (h?.kind === 'btn' && h.b === 'ok') return void (this.opening = null);
       if (h?.kind === 'btn' && h.b === 'again') { this.opening = null; return this.openPack(op.pay); }
       return op.onHit(h, now);
@@ -252,21 +249,12 @@ export class CardShop {
     else if (h.kind === 'btn' && h.b === 'buy') this.buy();
   }
 
-  /** 변형 고르기 (null = 나중에, 기본 동작 그대로) */
-  private pickVariant(v: string | null): void {
-    const op = this.opening, id = op?.variantCard;
-    if (!op || !id) return;
-    if (v) this.conn.send('card', { op: 'variant', cardId: id, variant: v });
-    if (op.nextMerge(this.now)) this.opening = null;
-  }
-
   /** 키. false = 닫기 */
   onKey(code: string): boolean {
     const op = this.opening, now = this.now, enter = code === 'Enter' || code === 'Space';
     if (op) {
       if (op.stage === 'done' && (enter || code === 'Escape')) this.opening = null;
-      else if (op.stage === 'variant' && code === 'Escape') this.pickVariant(null);
-      else if (!op.fromBuy) op.onKey(code, now);
+      else op.onKey(code, now);
       return true;
     }
     if (code === 'Escape') return false;

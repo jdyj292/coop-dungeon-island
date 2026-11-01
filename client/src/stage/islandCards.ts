@@ -1,9 +1,9 @@
-// 카드 창 (K, hud.md 8장, skills.md 1장, 승인 데모 docs/refs/demos/card_window.html): 상태·입력. 그리기는 ui/cardWindow.ts·cardDetail.ts
-// 무기 탭, 액티브/패시브 카드 탭, 카드 고르기·마우스 올림 미리 보기, 끌어다 장착(위 칸으로 놓기, 위 칸에서 끌어 내리면 빼기), 변형(강화 액티브), 갈기(두 번 눌러 확인).
-// 키: ↑↓←→ 카드 · Tab 액티브/패시브 · Q E 무기 · A S D F 그 칸에 끼우기 · Enter 끼우기/빼기 · X 빼기 · 1 2 변형 · G 갈기. 검사는 서버, 미리 shared 카드 검사로 막음
+// 카드 창 (K, hud.md 8장, skills.md 1장, 승인 데모 docs/refs/demos/card_redesign.html): 상태·입력. 그리기는 ui/cardWindow.ts·cardDetail.ts
+// 무기 탭, 액티브/패시브 카드 탭, 카드 고르기·마우스 올림 미리 보기, 끌어다 장착(위 칸으로 놓기, 위 칸에서 끌어 내리면 빼기), 강화(같은 카드 3장, 직접), 변형(강화 액티브), 갈기(두 번 눌러 확인).
+// 키: ↑↓←→ 카드 · Tab 액티브/패시브 · Q E 무기 · A S D F 그 칸에 끼우기 · Enter 끼우기/빼기 · X 빼기 · U 강화 · 1 2 변형 · G 갈기. 검사는 서버, 미리 shared 카드 검사로 막음
 import type Phaser from 'phaser';
 import {
-  ACTIVE_SLOTS, CARD, checkEquip, checkGrind, checkVariant, dustOf, equipLevelOf, isActiveCard, MVP_WEAPONS, owns, passiveCap, passiveUsed,
+  ACTIVE_SLOTS, CARD, checkEnhance, checkEnhanceCap, checkEquip, checkGrind, checkVariant, dustOf, enhanceCard, equipLevelOf, isActiveCard, MVP_WEAPONS, owns, passiveCap, passiveUsed,
   SKILLS, weaponCards, WEAPONS, type Branch, type CardKind, type CardLoadout, type CardMsgFail, type Collection,
 } from '@game/shared';
 import { sfx } from '../audio/player';
@@ -18,7 +18,7 @@ import { cardBonus, cardInfo, cardRows } from './cardView';
 const NOTE_MS = 2000;
 const SLOT_KEYS = ['KeyA', 'KeyS', 'KeyD', 'KeyF'].slice(0, ACTIVE_SLOTS);
 /** 장착 줄 (끌어 내리면 빼기 판정) */
-const EQUIP_ROW = { x: 12, y: 26, w: 224, h: 46 };
+const EQUIP_ROW = { x: 12, y: 26, w: 224, h: 40 };
 type Weapon = (typeof MVP_WEAPONS)[number];
 
 export class CardPanel implements CardSource {
@@ -38,6 +38,9 @@ export class CardPanel implements CardSource {
   private seenSeq = 0;
   /** 갈기를 보낸 뒤 서버 답이 오면 보여 줄 알림 */
   private pending: string | null = null;
+  /** 강화를 보낸 카드 (서버 답이 오면 번쩍임) */
+  private enhancing: string | null = null;
+  private lastT = performance.now() / 1000;
   private pointer = { x: 0, y: 0 };
   private dragging: { id: string; from: string; sx: number; sy: number; moved: boolean } | null = null;
   private win: CardWindow;
@@ -58,10 +61,6 @@ export class CardPanel implements CardSource {
   get dust(): number { return this.conn.cards.dust; }
   get cap(): number { return this.mine?.cap ?? passiveCap(this.level); }
   get used(): number { return passiveUsed(this.coll, this.passive); }
-  get nextCapLevel(): number {
-    for (let l = this.level + 1; l <= 20; l++) if (passiveCap(l) > passiveCap(this.level)) return l;
-    return 0;
-  }
   get active(): (string | null)[] { return (this.mine?.active ?? Array<string>(ACTIVE_SLOTS).fill('')).map((id) => id || null); }
   get passive(): string[] { return this.mine?.passive ?? []; }
   get busy(): boolean { return this.locked(); }
@@ -91,9 +90,14 @@ export class CardPanel implements CardSource {
     if (this.conn.cardsSeq !== this.seenSeq) {
       this.seenSeq = this.conn.cardsSeq;
       const fail = this.conn.cards.fail;
+      const up = this.enhancing;
       if (fail) this.say(FAIL_TEXT[fail], SK.danger);
-      else if (this.pending) { this.say(this.pending, SK.coin); sfx.play('card_grind'); }
-      this.pending = null;
+      else if (up && this.coll[up]?.enhanced) {
+        this.say(`${this.card(up).name}+ 강화!`, SK.coin);
+        sfx.play('card_merge');
+        this.celebrate = up;
+      } else if (this.pending) { this.say(this.pending, SK.coin); sfx.play('card_grind'); }
+      this.pending = this.enhancing = null;
     }
     const now = Date.now();
     if (this.note && now > this.noteUntil) this.note = null;
@@ -102,8 +106,16 @@ export class CardPanel implements CardSource {
     const d = this.drag;
     this.win.render(this, JSON.stringify([this.mine, this.conn.cards.dust, this.conn.cards.gifts, this.tabIndex, this.view, this.sel, this.hover, this.hoverBtn, this.hoverBonus,
       this.grindArm, d, this.note, this.busy]), width, height);
+    const t = performance.now() / 1000;
+    // 다시 그린 뒤에 번쩍임 (카드 자리가 새 그림 기준)
+    if (this.celebrate) { this.win.celebrate(this.celebrate, t); this.celebrate = null; }
+    this.win.animate(t, Math.min(0.05, t - this.lastT));
+    this.lastT = t;
     this.win.drawGhost(d ? this : null, this.pointer.x, this.pointer.y);
   }
+
+  /** 강화가 막 끝난 카드 (다음 그리기에서 번쩍임) */
+  private celebrate: string | null = null;
 
   hide(): void {
     this.dragging = null;
@@ -128,6 +140,7 @@ export class CardPanel implements CardSource {
     if (code === 'KeyX' || code === 'Backspace' || code === 'Delete') return this.unequip(this.sel);
     if (code === 'Digit1' || code === 'Digit2') return this.variant(Number(code.slice(-1)) - 1);
     if (code === 'KeyG') return this.grind(this.sel);
+    if (code === 'KeyU') return this.enhance(this.sel);
     if (code === 'KeyQ' || code === 'KeyE') return this.setTab((this.tabIndex + (code === 'KeyQ' ? -1 : 1) + MVP_WEAPONS.length) % MVP_WEAPONS.length);
   }
 
@@ -176,6 +189,7 @@ export class CardPanel implements CardSource {
       if (id) { this.view = 'pas'; this.sel = id; drag(id, `p${h.i}`); }
     } else if (h.kind === 'btn') {
       if (h.b === 'grind') this.grind(this.sel);
+      else if (h.b === 'enhance') this.enhance(this.sel);
       else this.toggle(this.sel);
     } else if (h.kind === 'var') this.variant(h.i);
   }
@@ -258,6 +272,14 @@ export class CardPanel implements CardSource {
     this.grindArm = null;
     this.pending = `${this.card(id).name} ${n}장을 갈아 조각 +${dustOf(id) * n}`;
     this.conn.send('card', { op: 'grind', cardId: id, n });
+  }
+
+  /** 강화: 같은 카드 3장 소모 (끼운 패시브면 비용 +1이 한도 안이어야) */
+  private enhance(id: string): void {
+    if (this.blocked(this.busy ? 'busy' : checkEnhance(this.coll, id))) return;
+    if (this.blocked(checkEnhanceCap(this.level, enhanceCard(this.coll, id), this.loadout))) return;
+    this.enhancing = id;
+    this.conn.send('card', { op: 'enhance', cardId: id });
   }
 
   /** 변형 고르기 (같은 것을 다시 누르면 기본 동작) */

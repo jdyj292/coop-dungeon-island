@@ -1,5 +1,4 @@
-// 카드팩 열기 단계 (island.md 5장 팩 열기 연출): 떨어짐 → 열기 → 뒷면 → 모두 뒤집기 → 합치기 → 변형 → 끝, 결과가 늦게 오면 열기를 기다림, 곡 단계
-import { SKILLS } from '@game/shared';
+// 카드팩 열기 단계 (island.md 5장 팩 열기 연출): 떨어짐 → 열기 → 뒷면 → 모두 뒤집기 → 끝 (합치기 없음, 강화는 카드 창에서), 결과가 늦게 오면 열기를 기다림, 곡 단계
 import { describe, expect, it } from 'vitest';
 import type { CardInfo } from '../ui/cardTypes';
 import { ShopFx } from '../ui/shopFx';
@@ -12,25 +11,19 @@ function run(o: PackOpening, fx: ShopFx, from: number, sec: number): number {
   for (let i = 0; i < sec * 60; i++) { t += 1 / 60; o.update(t, 1 / 60, fx, info); }
   return t;
 }
-const withVariant = Object.keys(SKILLS).find((id) => Object.keys(SKILLS[id]?.variants ?? {}).length)!;
 
 describe('팩 열기 단계', () => {
-  it('떨어짐 → Enter → 뒷면 → 모두 뒤집기 → 합치기 → 변형 → 끝', () => {
-    const fx = new ShopFx(), o = new PackOpening(1, 'gift', 'global.ui.card.pack1', 0, {});
-    o.setResult([{ id: 'a', tier: 1, isNew: true }, { id: 'b', tier: 1, isNew: false }, { id: withVariant, tier: 2, isNew: false }, { id: 'c', tier: 3, isNew: true }], [withVariant]);
+  it('떨어짐 → Enter → 뒷면 → 모두 뒤집기 → 끝 (3장이 모여도 합치기 없음)', () => {
+    const fx = new ShopFx(), o = new PackOpening(1, 'gift', 'global.ui.card.pack1', 0, { a: { count: 2, enhanced: false } });
+    o.setResult([{ id: 'a', tier: 1, isNew: false }, { id: 'b', tier: 1, isNew: true }, { id: 'b', tier: 2, isNew: false }, { id: 'c', tier: 3, isNew: true }]);
     let t = run(o, fx, 0, 0.6);
     expect(o.stage).toBe('ready');
     o.onKey('Enter', t);
     t = run(o, fx, t, 1.7);
     expect(o.stage).toBe('backs');
     expect(o.onKey('KeyA', t)).toBe(true);
-    t = run(o, fx, t, 4);
+    run(o, fx, t, 4);
     expect(o.music).toBe(0);
-    expect(o.stage).toBe('merge');
-    t = run(o, fx, t, 2.1);
-    expect(o.stage).toBe('variant');
-    expect(o.variantCard).toBe(withVariant);
-    expect(o.nextMerge(t)).toBe(false);
     expect(o.stage).toBe('done');
   });
 
@@ -40,15 +33,8 @@ describe('팩 열기 단계', () => {
     o.onKey('Enter', t);
     t = run(o, fx, t, 0.5);
     expect(o.stage).toBe('ready');
-    o.setResult([1, 2, 3, 4].map((i) => ({ id: `x${i}`, tier: 1, isNew: false })), []);
+    o.setResult([1, 2, 3, 4].map((i) => ({ id: `x${i}`, tier: 1, isNew: false })));
     run(o, fx, t, 0.1);
     expect(o.stage).toBe('shake');
-  });
-
-  it('지정 구매 합치기: 변형 없는 카드는 합치기 뒤 끝남', () => {
-    const fx = new ShopFx(), o = PackOpening.mergeOnly('passiveX', 0);
-    expect(o.stage).toBe('merge');
-    run(o, fx, 0, 2.6);
-    expect(o.finished).toBe(true);
   });
 });

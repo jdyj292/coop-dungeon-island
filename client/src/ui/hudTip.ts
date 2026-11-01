@@ -4,7 +4,7 @@ import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { koText, koWidth, type KoText } from './koText';
 
-const LINE_H = 12, PAD = 4, MARGIN = 2;
+const LINE_H = 11, PAD = 4, MARGIN = 2;
 /** 안쪽 판 진하기 (데모 rgba(29,24,48,.92)) */
 const FILL_ALPHA = 0.92;
 

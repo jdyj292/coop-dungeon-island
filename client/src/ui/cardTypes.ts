@@ -1,9 +1,9 @@
-// 카드 창 그리기 값·판정 (hud.md 8장, 승인 데모 card_window.html). 그리기는 cardWindow.ts·cardDetail.ts, 값은 stage/islandCards.ts CardPanel
+// 카드 창 그리기 값·판정 (hud.md 8장, 승인 데모 card_window.html · card_redesign.html). 그리기는 cardWindow.ts·cardDetail.ts, 값은 stage/islandCards.ts CardPanel
 import type { Branch } from '@game/shared';
 import type { FaceLook } from './cardParts';
 
 export type CardView = 'act' | 'pas';
-export type CardBtn = 'grind' | 'equip';
+export type CardBtn = 'grind' | 'equip' | 'enhance';
 export type CardHit =
   | { kind: 'tab'; i: number } | { kind: 'view'; v: CardView } | { kind: 'card'; id: string } | { kind: 'aslot'; k: number } | { kind: 'pslot'; i: number }
   | { kind: 'passArea' } | { kind: 'bonus'; b: Branch } | { kind: 'btn'; b: CardBtn } | { kind: 'var'; i: number } | { kind: 'inside' };
@@ -28,13 +28,12 @@ export interface CardInfo extends FaceLook {
   active: boolean;
   /** 종류 글자 ("기본 스킬", "A 파쇄 · 액티브" 등) */
   kind: string;
-  /** 계열 색 (기본·공용은 keyLabel) */
-  color: string;
   branchName: string | null;
   equipped: boolean;
   variants: { name: string; desc: string }[];
   variantIndex: number;
   pointDesc?: string[];
+  /** 패시브 비용 (지금 단계: 강화면 +1) */
   cost: number;
   dust: number;
   craft: number;
@@ -49,8 +48,6 @@ export interface CardSource {
   dust: number;
   cap: number;
   used: number;
-  /** 다음 한도가 오르는 숙련도 (없으면 0) */
-  nextCapLevel: number;
   merge: number;
   enhancedMul: number;
   active: (string | null)[];
@@ -75,4 +72,4 @@ export interface CardSource {
 }
 
 /** 패시브 칸 (놓기 판정) */
-export const PASS_AREA = { x: 120, y: 26, w: 116, h: 46 } as const;
+export const PASS_AREA = { x: 120, y: 26, w: 116, h: 40 } as const;

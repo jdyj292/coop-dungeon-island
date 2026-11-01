@@ -300,7 +300,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 ### cards.json
 | 필드 | 설명 |
 |---|---|
-| tiers.<N> | 티어 N (숫자 키 "1"·"2"…, 빠진 번호 없이) `{ equipLevel, dust, craft, color }`: 장착 숙련도, 갈면 조각, 지정 구매 조각, 테두리 색 키(palette.json global.ui.card 아래 키) |
+| tiers.<N> | 티어 N (숫자 키 "1"·"2"…, 빠진 번호 없이) `{ equipLevel, dust, craft, color }`: 장착 숙련도, 갈면 조각, 지정 구매 조각, 티어 색 키(palette.json global.ui.card 아래 키: 카드 상점 뒷면 빛·티어 3 공개. 카드 테두리는 계열 색, hud.md 8장) |
 | cards.<id> | `{ weapon, kind: active\|passive, branch: base\|A\|B\|common, tier, cost? }`. id = skills.json 행동 id 또는 passives.json id (공용 패시브는 `<무기>.<id>`). cost = 패시브 비용 (없으면 티어, 강화 +1). 이름·아이콘·설명은 skills.json·passives.json·hud_icons.json에서 |
 | starter.<무기> | 처음 카드 id 목록 (기본 스킬 2장) |
 | branchBonus.<무기>.<A\|B> | `[Ⅰ, Ⅱ]` 각각 effect 묶음 숫자 값만 (passives.json effect 키: chargeSpeedMul·chargeBonusAdd·projectileRangeMul·projectileCooldownMul·areaMul·mpMul·slowTimeMul·slowAdd 등). 단계 수 = combat.json card.branchBonusAt 길이 |

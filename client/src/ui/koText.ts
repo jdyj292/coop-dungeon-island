@@ -2,7 +2,7 @@
 // 사용자 입력(이름·채팅·메모)도 이것으로 그린다 — 글자를 HTML로 해석하지 않음 (security.md 4장)
 import Phaser from 'phaser';
 import { colorInt } from '../palette';
-import { glyphFont, type FontKey } from './fonts';
+import { DEFAULT_FONT, glyphFont, type FontKey } from './fonts';
 import { measureText, paintText } from './glyphFont';
 import type { Outline } from './pixelFont';
 
@@ -46,7 +46,7 @@ export class KoText extends Phaser.GameObjects.Image {
   setText(text: string): this {
     if (text === this.text && this.width > 1) return this;
     this.text = text;
-    const f = glyphFont(this.st.font ?? 'ko'), s = this.st.size ?? 1;
+    const f = glyphFont(this.st.font ?? DEFAULT_FONT), s = this.st.size ?? 1;
     const offs = OUTLINE[this.st.outline ?? 'none'], pad = offs.length ? 1 : 0;
     const w = f ? measureText(f, text) : 0, h = f?.lineHeight ?? 1;
     this.tex.setSize(Math.max(1, (w + pad * 2) * s), (h + pad * 2) * s);
@@ -92,13 +92,13 @@ export function koText(scene: Phaser.Scene, x: number, y: number, text: string, 
 }
 
 /** 글자 폭 (배율 1, 글꼴을 아직 못 받았으면 0) */
-export function koWidth(text: string, font: FontKey = 'ko'): number {
+export function koWidth(text: string, font: FontKey = DEFAULT_FONT): number {
   const f = glyphFont(font);
   return f ? measureText(f, text) : 0;
 }
 
 /** maxW 안에 들어가게 줄 나누기 (띄어쓰기 우선, 안 되면 글자 단위). maxLines를 넘으면 마지막 줄 끝을 '…'로 */
-export function wrapKo(text: string, maxW: number, maxLines: number, font: FontKey = 'ko'): string[] {
+export function wrapKo(text: string, maxW: number, maxLines: number, font: FontKey = DEFAULT_FONT): string[] {
   const lines: string[] = [];
   let cur = '';
   const push = () => { lines.push(cur); cur = ''; };

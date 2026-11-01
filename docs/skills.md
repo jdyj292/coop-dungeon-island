@@ -12,7 +12,7 @@
 ### 카드
 - 스킬 하나 = 카드 하나. 액티브(기본 스킬·계열 액티브)도, 패시브(계열 보조·공용 패시브)도 카드. 카드는 무기마다 따로 (대검 카드는 대검에만)
 - 공용 패시브(기상 회피)는 무기마다 카드 하나씩 (`<무기>.quickrise`), 계열 없음
-- 카드마다 숫자 **티어** (1이 가장 낮음, 확장은 숫자만 늘림). 티어별 값(장착 숙련도·조각·지정 구매 가격·테두리 색)은 cards.json `tiers` 한 곳 (data.md 10장). 화면에는 테두리 색 + 별 개수
+- 카드마다 숫자 **티어** (1이 가장 낮음, 확장은 숫자만 늘림). 티어별 값(장착 숙련도·조각·지정 구매 가격·뒷면 빛 색)은 cards.json `tiers` 한 곳 (data.md 10장). 화면에는 별 개수 (카드 테두리는 계열마다 다른 모양·색, hud.md 8장)
 - 지금 티어:
 
 | 티어 | 장착 숙련도 | 카드 |
@@ -31,10 +31,11 @@
 - **조각으로**: 카드팩 사기, 또는 카드를 골라 1장 사기(지정 구매, 티어별 가격)
 
 ### 강화 (3장 → 강화 카드)
-- 같은 카드를 3장 모으면 저절로 합쳐져 **강화 카드**가 된다 (3장 소모, 팩 열기 끝에 합치기 연출). 단계는 기본·강화 둘뿐
+- 같은 카드를 3장 모으면 카드 창(K)에서 **직접 강화**한다 (강화 버튼·U 키, 3장 소모, 다른 비용 없음). 저절로 합쳐지지 않는다 (팩·지정 구매는 보관 장수만 늘림). 단계는 기본·강화 둘뿐
+- 끼운 패시브를 강화하면 비용이 +1: 한도를 넘으면 못 함 (cap). 우물 출발 카운트다운 중에는 못 함 (busy)
 - 강화 액티브: 위력 ×1.2 (combat.json card.enhancedMul, 계수에 곱함 = 후속·반복·해제 판정 포함) + **변형 택1** (스킬 표의 변형 ① / ②, 안 고르면 기본 동작). 변형은 섬에서 언제든 무료로 다시 고름
 - 강화 패시브: 효과가 강화 값으로 (passives.json 값 배열 = [기본, 강화])
-- 강화한 뒤 다시 나오는 같은 카드는 보관만 됨 (쓰임 없음 → 카드 창에 "갈기 추천")
+- 강화한 뒤 다시 나오는 같은 카드는 보관만 됨 (쓰임 없음 → 카드 창 상세에 "남는 n장", 갈기로 조각)
 
 ### 장착
 - 무기마다 따로 저장 (DB card_slots). 던전 출발 때 서버가 장착 카드만 담은 빌드를 만들어 판정 (클라이언트 신고값 신뢰 금지)
@@ -320,7 +321,7 @@ Lv 열이 "3단계"·"각성"인 줄은 아직 없는 카드 (3단계 = 티어 3
   → 템플릿을 코드로, 개별 스킬과 변형은 skills.json 파라미터로
 - 변형은 "기본 스킬 파라미터 덮어쓰기 + 플래그 추가"로 표현 (새 코드 최소화)
 - 서버는 DB에 저장된 보유 카드(강화·변형)·장착으로 만든 던전용 빌드 기준으로 판정 (클라이언트 신고값 신뢰 금지)
-- 카드 (CD): 목록·티어·비용·한도 shared/src/cards/catalog.ts, 보유·3장 합치기·갈기·지정 구매·변형 검사 collection.ts, 팩 굴림·천장 pack.ts, 장착 검사(4칸·비용 한도·장착 숙련도) equip.ts, 계열 보너스 bonus.ts, 던전용 빌드·강화·변형 적용·저장 문자열(`id:단계[:변형][@칸]`, 단계 1 기본·2 강화) build.ts, 데이터 검사 shared/src/data/cardCheck.ts. 저장 server/src/db/cardStore.ts(보유·장착·지정 구매·갈기·변형·던전 빌드·처음 카드)·cardPack.ts(팩 사서 열기·천장·게시판), 메시지 server/src/systems/islandCards.ts. 카드 창 client stage/islandCards.ts·ui/cardWindow.ts
+- 카드 (CD): 목록·티어·비용·한도 shared/src/cards/catalog.ts, 보유·강화(3장, checkEnhance·enhanceCard)·갈기·지정 구매·변형 검사 collection.ts, 끼운 패시브 강화 한도 equip.ts checkEnhanceCap, 팩 굴림·천장 pack.ts, 장착 검사(4칸·비용 한도·장착 숙련도) equip.ts, 계열 보너스 bonus.ts, 던전용 빌드·강화·변형 적용·저장 문자열(`id:단계[:변형][@칸]`, 단계 1 기본·2 강화) build.ts, 데이터 검사 shared/src/data/cardCheck.ts. 저장 server/src/db/cardStore.ts(보유·장착·지정 구매·갈기·변형·던전 빌드·처음 카드)·cardPack.ts(팩 사서 열기·천장·게시판), 메시지 server/src/systems/islandCards.ts. 카드 창 client stage/islandCards.ts·ui/cardWindow.ts
 - 코드: 특수 판정(반복·후속·해제·연발, 반복 이동 step·seek·copies) shared/src/sim/skillExtras.ts, RoomSim 연결·투사체 끝 폭발·분열·검흔 터짐·연쇄 예약·가속장 shared/src/sim/echoes.ts, 왕복·관통 다단·폭발형·사방·엇갈림 투사체 sim/bolts.ts(volley), 연쇄 대상 sim/chain.ts, 검흔 sim/scar.ts, 잔상·교차점 폭발·반환 sim/phantom.ts, 검의 춤 actions.ts withCoefMul, 패시브 효과 shared/src/passives.ts(perksOf = 패시브 카드 [기본, 강화] 값 + 계열 보너스 → PlayerState.perks, withPerks = 스킬 정의 변경: 준비 시간·슈퍼아머·사거리·지속·계열 보너스의 쿨·범위·MP·감속) + 판정 sim/strike.ts(먼 적·연소·중압 배율, 몬스터 burn·pressed)·playerHurt.ts(받는 피해)·player.ts(회피), 다단히트 판정 번호·끌어당김·체공 shared/src/sim/strike.ts·body.ts, 벽꿍·여러 줄 투사체 발사 shared/src/sim/room.ts, 슈퍼아머 shared/src/playerHurt.ts, 재입력 shared/src/player.ts. 변형 연출은 새 그림 없이 기존 이펙트 재사용 (fx/spellCast castEcho: 연쇄 = 화염 폭발, 균열 = 판정 줄 먼지·충격 링, 빙결 폭발 = 마법탄 적중 섬광)
 - 테이블: docs/db.md
 - MVP 범위는 docs/roadmap.md

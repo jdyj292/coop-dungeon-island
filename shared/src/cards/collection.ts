@@ -1,5 +1,5 @@
-// 보유 카드 (docs/skills.md 1장 얻기·강화, DB cards): 3장 합치기, 갈기, 지정 구매, 변형 고르기 검사 (클라이언트·서버 공용, 순수 함수)
-// 보유 = 강화했거나 보관 장수(count) ≥ 1. 강화 안 된 카드가 mergeCount장이 되면 바로 강화 (count − mergeCount)
+// 보유 카드 (docs/skills.md 1장 얻기·강화, DB cards): 강화(3장 합치기), 갈기, 지정 구매, 변형 고르기 검사 (클라이언트·서버 공용, 순수 함수)
+// 보유 = 강화했거나 보관 장수(count) ≥ 1. 강화는 저절로 되지 않고 플레이어가 직접 (mergeCount장 소모)
 import { SKILLS } from '../data/load';
 import { CARD, CARDS, craftPriceOf, dustOf, isActiveCard, starterCards } from './catalog';
 
@@ -13,33 +13,43 @@ export interface OwnedCard {
 export type Collection = Readonly<Record<string, OwnedCard>>;
 
 /** 카드 요청이 안 되는 사유 (network.md 4장 card fail) */
-export type CardFail = 'card' | 'owned' | 'locked' | 'cap' | 'slot' | 'variant' | 'dust' | 'equipped';
+export type CardFail = 'card' | 'owned' | 'locked' | 'cap' | 'slot' | 'variant' | 'dust' | 'equipped' | 'merge';
 
 export const owns = (c: Collection, id: string): boolean => !!c[id] && (c[id]!.enhanced || c[id]!.count > 0);
 export const isEnhanced = (c: Collection, id: string): boolean => !!c[id]?.enhanced;
 /** 강화한 뒤 남은 같은 카드 (쓰임 없음 → 카드 창 "갈기 추천") */
 export const spareCount = (c: Collection, id: string): number => (c[id]?.enhanced ? c[id]!.count : 0);
 
-/** 카드를 순서대로 더한다. merged = 이번에 강화된 카드 (팩 열기 끝 합치기 연출) */
-export function addCards(c: Collection, ids: readonly string[]): { cards: Record<string, OwnedCard>; merged: string[] } {
-  const out: Record<string, OwnedCard> = { ...c }, merged: string[] = [];
+/** 강화할 수 있나 (강화 안 된 카드를 mergeCount장 이상 보관) */
+export const canEnhance = (c: Collection, id: string): boolean => !!c[id] && !c[id]!.enhanced && c[id]!.count >= CARD.mergeCount;
+
+/** 카드를 더한다 (강화는 하지 않음) */
+export function addCards(c: Collection, ids: readonly string[]): Record<string, OwnedCard> {
+  const out: Record<string, OwnedCard> = { ...c };
   for (const id of ids) {
     if (!CARDS[id]) continue;
     const was = out[id] ?? { count: 0, enhanced: false };
-    const next: OwnedCard = { ...was, count: was.count + 1 };
-    if (!next.enhanced && next.count >= CARD.mergeCount) {
-      next.count -= CARD.mergeCount;
-      next.enhanced = true;
-      merged.push(id);
-    }
-    out[id] = next;
+    out[id] = { ...was, count: was.count + 1 };
   }
-  return { cards: out, merged };
+  return out;
+}
+
+/** 강화 검사 (패시브를 끼운 채 비용 한도를 넘는지는 equip.ts checkEnhanceCap) */
+export function checkEnhance(c: Collection, id: string): CardFail | null {
+  if (!CARDS[id]) return 'card';
+  if (!owns(c, id)) return 'owned';
+  return canEnhance(c, id) ? null : 'merge';
+}
+
+/** 강화: mergeCount장 소모 → 강화 카드 (검사는 checkEnhance) */
+export function enhanceCard(c: Collection, id: string): Record<string, OwnedCard> {
+  const was = c[id]!;
+  return { ...c, [id]: { ...was, count: was.count - CARD.mergeCount, enhanced: true } };
 }
 
 /** 새 계정·기록 초기화: 무기별 처음 카드 1장씩 */
 export const starterCollection = (weapons: readonly string[]): Record<string, OwnedCard> =>
-  addCards({}, weapons.flatMap((w) => starterCards(w))).cards;
+  addCards({}, weapons.flatMap((w) => starterCards(w)));
 
 /** 갈기 검사: n장 보관 중이어야 하고, 강화 안 된 장착 카드의 마지막 장은 못 갊 */
 export function checkGrind(c: Collection, id: string, n: number, equipped: boolean): CardFail | null {

@@ -1,7 +1,8 @@
 // 보유 카드: 3장 합치기·갈기·지정 구매·변형 (skills.md 1장, balance.md 7장 카드 경제)
 import { describe, expect, it } from 'vitest';
 import { craftPriceOf, dustOf, passiveCap, passiveCost } from './catalog';
-import { addCards, checkCraft, checkGrind, checkVariant, grindCards, owns, spareCount, starterCollection } from './collection';
+import { addCards, canEnhance, checkCraft, checkEnhance, checkGrind, checkVariant, enhanceCard, grindCards, owns, spareCount, starterCollection } from './collection';
+import { checkEnhanceCap } from './equip';
 
 describe('티어별 값', () => {
   it('조각·지정 구매·패시브 비용 (강화 +1)·패시브 한도', () => {
@@ -12,14 +13,26 @@ describe('티어별 값', () => {
   });
 });
 
-describe('합치기', () => {
-  it('같은 카드 3장이 되면 바로 강화 (3장 소모), 그 뒤 카드는 보관만', () => {
+describe('강화 (직접)', () => {
+  it('카드를 더해도 저절로 강화되지 않음, 강화하면 3장 소모 · 그 뒤 카드는 보관만', () => {
     const r = addCards({ gs_whirl: { count: 1, enhanced: false } }, ['gs_whirl', 'gs_wave', 'gs_whirl', 'gs_whirl']);
-    expect(r.merged).toEqual(['gs_whirl']);
-    expect(r.cards.gs_whirl).toEqual({ count: 1, enhanced: true });
-    expect(r.cards.gs_wave).toEqual({ count: 1, enhanced: false });
-    expect(spareCount(r.cards, 'gs_whirl')).toBe(1);
-    expect(addCards({}, ['nope']).cards).toEqual({});
+    expect(r.gs_whirl).toEqual({ count: 4, enhanced: false });
+    expect(r.gs_wave).toEqual({ count: 1, enhanced: false });
+    expect(canEnhance(r, 'gs_whirl')).toBe(true);
+    expect(checkEnhance(r, 'gs_wave')).toBe('merge');
+    expect(checkEnhance(r, 'gs_crush')).toBe('owned');
+    expect(checkEnhance(r, 'nope')).toBe('card');
+    const e = enhanceCard(r, 'gs_whirl');
+    expect(e.gs_whirl).toEqual({ count: 1, enhanced: true });
+    expect(spareCount(e, 'gs_whirl')).toBe(1);
+    expect(checkEnhance(e, 'gs_whirl')).toBe('merge');
+    expect(addCards({}, ['nope'])).toEqual({});
+  });
+
+  it('끼운 패시브를 강화하면 비용 +1, 한도를 넘으면 cap', () => {
+    const c = enhanceCard({ gs_heavyhand: { count: 3, enhanced: false }, gs_steadfast: { count: 1, enhanced: false } }, 'gs_heavyhand');
+    expect(checkEnhanceCap(1, c, { active: [], passive: ['gs_heavyhand', 'gs_steadfast'] })).toBe('cap');
+    expect(checkEnhanceCap(3, c, { active: [], passive: ['gs_heavyhand', 'gs_steadfast'] })).toBeNull();
   });
 
   it('처음 카드 = 무기별 기본 스킬 1장씩', () => {
