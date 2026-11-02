@@ -22,8 +22,10 @@
     "poses": {
       "windup": "slash",
       "active": "upslash",
-      "recovery": "upslash",
-      "charge": "charge"
+      "recovery": "upslash"
+    },
+    "chargeRule": {
+      "off": true
     },
     "fx": {
       "grade": "medium"
@@ -467,8 +469,10 @@
     "poses": {
       "windup": "charge",
       "active": "iai",
-      "recovery": "iai",
-      "charge": "charge"
+      "recovery": "iai"
+    },
+    "chargeRule": {
+      "off": true
     },
     "fx": {
       "grade": "medium"
@@ -787,8 +791,10 @@
     "poses": {
       "windup": "draw",
       "active": "cleave",
-      "recovery": "cleave",
-      "charge": "charge"
+      "recovery": "cleave"
+    },
+    "chargeRule": {
+      "off": true
     },
     "fx": {
       "grade": "medium"

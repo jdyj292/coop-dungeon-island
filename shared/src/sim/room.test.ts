@@ -30,7 +30,7 @@ describe('active 구간 판정', () => {
     let n = 0;
     for (let i = 0; i < 40; i++) n += hits(sim, { ...none, attack: i === 0 });
     expect(n).toBe(1);
-    expect(m!.hp).toBe(40);
+    expect(m!.hp).toBe(44);
     m!.hp = 10;
     for (let i = 0; i < 40; i++) hits(sim, { ...none, attack: i === 0 });
     expect(m!.body.ko).toBe(true);
@@ -48,12 +48,12 @@ describe('active 구간 판정', () => {
     }
     expect(state).toBe('air');
   });
-  it('데미지는 숙련도 ATK를 따름: 평타 계수 200 → Lv1 20, Lv20 39', () => {
+  it('데미지는 숙련도 ATK를 따름: 평타 계수 160 → Lv1 16, Lv20 31', () => {
     const sim = room();
     sim.player.atk = atkFor(20);
     const [m] = sim.spawn([{ kind: 'mushroom', x: 114, y: 50 }]);
     for (let i = 0; i < 40; i++) hits(sim, { ...none, attack: i === 0 });
-    expect(m!.hp).toBe(60 - 39);
+    expect(m!.hp).toBe(60 - 31);
   });
 });
 

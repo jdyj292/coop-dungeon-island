@@ -81,10 +81,10 @@ describe('DungeonGame (서버 진행)', () => {
     run(g, 30);
     const hit = sent.find((s) => s.type === 'hit')?.msg as S2C['hit'];
     // by = 때린 행동 id (스킬이 끝난 뒤 남는 다단 판정도 그 스킬, 클라이언트 적중 연출용)
-    expect(hit).toMatchObject({ attacker: 'a', target: m.id, damage: 20, by: 'gs_b1' });
+    expect(hit).toMatchObject({ attacker: 'a', target: m.id, damage: 16, by: 'gs_b1' });
     expect(sent.some((s) => s.type === 'combo')).toBe(true);
-    // 2인 방: 체력 ×1.5 (60 → 90), 20 피해 → 70
-    expect(g.state.monsters.get(String(m.id))!.hpRatio).toBe(Math.ceil((255 * 70) / 90));
+    // 2인 방: 체력 ×1.5 (60 → 90), 16 피해 → 74
+    expect(g.state.monsters.get(String(m.id))!.hpRatio).toBe(Math.ceil((255 * 74) / 90));
   });
   it('안 되는 행동은 본인에게 rejected (장착 안 한 스킬, 쿨타임)', () => {
     const { g, sent } = setup();

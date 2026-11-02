@@ -118,6 +118,6 @@ deploy/                  서버 설치 파일: Nginx 틀·systemd·백업 cron·
 - [ ] M5 배포
 
 ## 현재 상태 (3줄, 작업마다 덧붙이지 말고 새로 쓴다. 완료 기록은 docs/changelog.md)
-- M0~M4 완료, M5 배포 준비(5-1~5-4) 완료. 스킬은 대검 A·B 3단계까지, 스태프 2단계까지. 지금 진행: 스킬 카드 개편 CD (CD-1~CD-6 완료 + 카드 개편: 계열 테두리·간단한 카드 창·화면 글자 갈무리7, 승인 데모 card_redesign.html · 카드 24×34 티어 띠, 강화 = 띠 숫자 뒤 +, card_tall.html). 공용 카드 없음: 처음 스킬도 A·B 계열 티어 1. 강화 = 3장이 모이면 서버가 바로, 패시브 비용 = 티어(강화해도 그대로), 강화한 카드 중복은 저절로 조각(팩 확인 때 부서지는 연출, 승인 대기), 직접 갈기 없음, 상점·팩 카드엔 강화 표시 없음
+- M0~M4 완료, M5 배포 준비(5-1~5-4) 완료. 스킬은 대검 A·B 3단계까지, 스태프 2단계까지. 대검 충전은 A 파쇄 전부 + B 검기 날리기·검의 장막·회오리 검기·일섬 (올려베기·발도·검흔 베기는 충전 없음). 지금 진행: 스킬 카드 개편 CD (CD-1~CD-6 완료 + 카드 개편: 계열 테두리·간단한 카드 창·화면 글자 갈무리7, 승인 데모 card_redesign.html · 카드 24×34 티어 띠, 강화 = 띠 숫자 뒤 +, card_tall.html). 공용 카드 없음: 처음 스킬도 A·B 계열 티어 1. 강화 = 3장이 모이면 서버가 바로, 패시브 비용 = 티어(강화해도 그대로), 강화한 카드 중복은 저절로 조각(팩 확인 때 부서지는 연출, 승인 대기), 직접 갈기 없음, 상점·팩 카드엔 강화 표시 없음
 - 명령: `pnpm dev`(첫 화면 = 로그인, 개발 ?room=1~6, ?online=1&party=2&lag=100, ?floor=training, ?weapon=staff, ?skills=gs_launch:2:double, ?drafts=1, ` 키 패널) / `pnpm test` / `pnpm typecheck` / `pnpm run-sim` / `pnpm net-smoke` / `pnpm map-gen` / `pnpm palette-check` / `pnpm data-validate` / `pnpm balance-check` / `pnpm ttk-sim` / `pnpm sprite-preview` / `pnpm motion-preview` / `pnpm sfx-preview` / `pnpm font-gen` / `pnpm island-bot` / `pnpm --filter @game/server db:generate`
 - 다음: 스킬 카드 CD-7(가격·확률·한도·계열 보너스 조정, run-sim·ttk-sim·실제 플레이). 실제 배포 (docs/deploy.md 5장 순서). 스태프 3단계는 카드 개편 뒤

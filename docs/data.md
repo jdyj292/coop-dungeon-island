@@ -13,8 +13,8 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 ```json
 {
   "id": "gs_b3",
-  "phases": { "windup": 0.24, "active": 0.10, "recovery": 0.50 },
-  "coef": 350,
+  "phases": { "windup": 0.192, "active": 0.08, "recovery": 0.4 },
+  "coef": 280,
   "hitbox": { "forward": 2, "width": 20, "depth": 13, "z": "both" },
   "strength": "heavy",
   "flags": ["knockback"],
@@ -115,7 +115,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | chain | 연쇄 판정 `{range, jump, count, interval}` (번개 연쇄): 앞쪽 range px 안 가장 가까운 적부터, 지난 대상에서 jump px 안의 아직 안 맞은 가장 가까운 적으로 interval초마다 최대 count마리. 판정 모양 하나로 셈 (sim/chain.ts) |
 | mark | 검흔 `{time, coef, hop? {range, count}}` (검흔 베기): 맞은 적에 time초 표식, 표식을 건 사람의 투사체가 그 적을 맞히면 터지며 coef(표식은 사라짐), hop = 터질 때 range px 안 가장 가까운 다른 적에게 옮겨감(최대 count번) (sim/scar.ts) |
 | allyBuff | 아군 버프 `{cooldownMul, time}` (가속장): active 순간 나와 판정 범위 안 동료의 스킬 쿨이 time초 동안 cooldownMul배 빨리 돎 (겹치면 더 센 배율·긴 시간, 물약·회피 쿨은 그대로) |
-| chargeRule | 대검 충전 규칙 `{timeMul?, bonusMul?, off?, stages?}` (파쇄참, 일섬 timeMul 2): 충전 최대 시간 × timeMul, 최대 보너스 × bonusMul, stages = 충전 연출 단계 수(단계마다 손 둘레 금빛 점·소리 charge_stage, 파쇄참 3단 = 3), off = 키를 누르고 있어도 충전 없음 (charge.ts) |
+| chargeRule | 대검 충전 규칙 `{timeMul?, bonusMul?, off?, stages?}` (파쇄참, 일섬 timeMul 2, 올려베기·발도·검흔 베기 off): 충전 최대 시간 × timeMul, 최대 보너스 × bonusMul, stages = 충전 연출 단계 수(단계마다 손 둘레 금빛 점·소리 charge_stage, 파쇄참 3단 = 3), off = 키를 누르고 있어도 충전 없음 (charge.ts) |
 | armorBreak | 슈퍼아머 대상도 이 초만큼 경직 (파쇄참, sim/strike.ts) |
 | keepDown | true면 땅의 적을 밀지 않고 바로 다운 (다시 맞으면 다운 시간 처음부터, 대지붕괴) |
 | repeatEnd | 반복이 끝날 때 마지막 판정 자리에서 한 번 더 `{coef, launch?}` (launch = 땅·공중·다운 모두 띄움, 대지붕괴 솟구침. 보조 구슬 확장도 이 필드를 붙임) |

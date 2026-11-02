@@ -162,7 +162,7 @@ describe('회피로 공격 끊기', () => {
 describe('대검 평타 전진 (weapons.json basicAdvance)', () => {
   const swing = (x: number) => {
     const p = newPlayerState({ x: 500, y: 50 });
-    ticks(p, 30, { attack: true }, { x });
+    ticks(p, Math.floor(len / TICK), { attack: true }, { x });
     return p.pos.x - 500;
   };
   const adv = gs.basicAdvance!, b1 = gs.basic[0]!;

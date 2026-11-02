@@ -20,11 +20,11 @@
       {
         "id": "gs_b1",
         "phases": {
-          "windup": 0.12,
-          "active": 0.08,
-          "recovery": 0.38
+          "windup": 0.096,
+          "active": 0.064,
+          "recovery": 0.304
         },
-        "coef": 200,
+        "coef": 160,
         "hitbox": {
           "forward": 2,
           "width": 18,
@@ -45,11 +45,11 @@
       {
         "id": "gs_b2",
         "phases": {
-          "windup": 0.12,
-          "active": 0.08,
-          "recovery": 0.38
+          "windup": 0.096,
+          "active": 0.064,
+          "recovery": 0.304
         },
-        "coef": 200,
+        "coef": 160,
         "hitbox": {
           "forward": 2,
           "width": 18,
@@ -70,11 +70,11 @@
       {
         "id": "gs_b3",
         "phases": {
-          "windup": 0.24,
-          "active": 0.1,
-          "recovery": 0.5
+          "windup": 0.192,
+          "active": 0.08,
+          "recovery": 0.4
         },
-        "coef": 350,
+        "coef": 280,
         "hitbox": {
           "forward": 2,
           "width": 20,
