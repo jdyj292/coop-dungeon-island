@@ -39,7 +39,7 @@ export function cardInfo(weapon: string, level: number, c: Collection, lo: CardL
     id, tier, tierColor: `global.ui.card.${tierDef(tier)?.color ?? 'tier1'}`, frame: frameStyle(weapon, br), owned, enhanced, ready: canEnhance(c, id),
     count: o?.count ?? 0, spare: enhanced ? o!.count : 0, equipLevel: lv, locked: owned && level < lv, tag: k >= 0 ? KEYS[k]! : equipped ? 'P' : null,
     name: s?.name ?? pv?.name ?? id, desc: s?.desc ?? pv?.desc ?? '', active: !!s,
-    kind: br === 'base' ? '기본 스킬' : br === 'common' ? '공용 패시브' : `${br} ${branchName(weapon, br)} · ${s ? '액티브' : '패시브'}`,
+    kind: br === 'base' ? '기본 스킬' : br === 'common' ? '공용 패시브' : `${branchName(weapon, br)} ·${s ? '액티브' : '패시브'}`,
     color: plain ? SK.key : branchColor(weapon, br), branchName: plain ? null : branchName(weapon, br), equipped,
     variants: Object.values(vars).map((v) => ({ name: v.name, desc: v.desc })), variantIndex: o?.variant ? Object.keys(vars).indexOf(o.variant) : -1,
     ...(pv ? { pointDesc: pv.pointDesc } : {}), cost: passiveCost(id, enhanced), dust: dustOf(id), craft: craftPriceOf(id),

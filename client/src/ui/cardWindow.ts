@@ -264,8 +264,7 @@ export class CardWindow {
       if (row.branch === 'base') p.text(16, y + 10, row.name, SK.key);
       else {
         R(g, 14, y + 1, 2, CH - 2, row.color);
-        p.text(19, y + 4, row.branch, row.color);
-        p.text(18, y + 15, row.name, SK.dim);
+        p.text(18, y + 10, row.name, row.color);
       }
       row.ids.forEach((id, i) => {
         const x = 46 + i * 26 + Math.floor(i / 2) * 4, dragged = s.drag?.id === id && s.drag.from === 'list';

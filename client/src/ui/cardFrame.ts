@@ -68,22 +68,12 @@ export function cardShell(R: Paint, s: FrameStyle, x: number, y: number, h: numb
   return ins;
 }
 
-/** 강화 반짝임 (몸통 bx, by, bw, bh 안): 2.6초마다 빛줄기가 지나가고, 별 두 개가 깜빡임. t = 초, ph = 카드마다 어긋남 */
-export function cardShine(R: Paint, bx: number, by: number, bw: number, bh: number, t: number, ph: number): void {
-  const k = ((t + ph) % 2.6) / 0.7;
-  if (k < 1) {
-    const x0 = bx - bh / 2 - 3 + k * (bw + bh / 2 + 6);
-    for (let j = 0; j < bh; j++) {
-      const sx = Math.round(x0 + (bh - j) / 2);
-      for (let i = 0; i < 3; i++) if (sx + i >= bx && sx + i < bx + bw) R(sx + i, by + j, 1, 1, FLASH, i === 1 ? 0.7 : 0.35);
-    }
-  }
-  for (const [dx, dy, o] of [[bw - 4, 3, 0], [3, bh - 5, 1.3]] as const) {
-    const a = Math.sin((t + ph) * 3.1 + o * 2.4);
-    if (a <= 0.2) continue;
+/** 강화 표시 (몸통 bx, by, bw, bh 안): 움직임 없이 고정된 별 두 개. t·ph는 받기만 함 (호출부 모양 유지) */
+export function cardShine(R: Paint, bx: number, by: number, bw: number, bh: number, _t: number, _ph: number): void {
+  for (const [dx, dy] of [[bw - 4, 3], [3, bh - 5]] as const) {
     const cx = bx + dx, cy = by + dy;
     R(cx, cy, 1, 1, FLASH);
-    if (a > 0.6) { R(cx - 1, cy, 1, 1, COIN); R(cx + 1, cy, 1, 1, COIN); R(cx, cy - 1, 1, 1, COIN); R(cx, cy + 1, 1, 1, COIN); }
+    R(cx - 1, cy, 1, 1, COIN); R(cx + 1, cy, 1, 1, COIN); R(cx, cy - 1, 1, 1, COIN); R(cx, cy + 1, 1, 1, COIN);
   }
 }
 

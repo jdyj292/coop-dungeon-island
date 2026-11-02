@@ -105,8 +105,7 @@ function bonusDetail(p: Painter<CardHit>, s: CardSource): void {
   const g = p.g, b = s.bonus.find((x) => x.branch === s.hoverBonus)!;
   R(g, 241, 27, 130, 36, b.color, 0.2);
   R(g, 241, 63, 130, 1, SK.border);
-  p.text(X, 31, b.branch, b.color);
-  p.text(X + 10, 31, `${b.name} 계열 보너스`, SK.txt);
+  p.text(X, 31, `${b.name} 계열 보너스`, SK.txt);
   p.text(X, 45, `끼운 ${b.name} 카드 ${b.ids.length}장`, SK.key);
   b.steps.forEach((lines, i) => {
     const cy = 68 + i * 34, on = b.step === i + 1;
