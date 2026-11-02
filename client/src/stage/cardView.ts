@@ -1,6 +1,6 @@
 // 카드 창 그리기 값 (hud.md 8장): 카드 하나의 모양·상세, 보유 카드 줄(A / B, 티어 순), 계열 보너스. 순수 함수 (stage/islandCards.ts가 씀)
 import {
-  bonusStep, BRANCHES, canEnhance, cardBranch, craftPriceOf, dustOf, equipLevelOf, owns, passiveCost, PASSIVES, SKILLS, tierDef, tierOf, weaponCards, weaponDef,
+  bonusStep, BRANCHES, cardBranch, craftPriceOf, equipLevelOf, owns, passiveCost, PASSIVES, SKILLS, tierDef, tierOf, weaponCards, weaponDef,
   type Branch, type CardKind, type CardLoadout, type Collection,
 } from '@game/shared';
 import { frameStyle } from '../ui/cardFrame';
@@ -32,12 +32,12 @@ export function cardInfo(weapon: string, level: number, c: Collection, lo: CardL
   const owned = owns(c, id), enhanced = !!o?.enhanced, vars = s?.variants ?? {};
   const k = lo.active.indexOf(id), equipped = k >= 0 || lo.passive.includes(id);
   return {
-    id, tier, tierColor: `global.ui.card.${tierDef(tier)?.color ?? 'tier1'}`, frame: frameStyle(weapon, br), owned, enhanced, ready: canEnhance(c, id),
-    count: o?.count ?? 0, spare: enhanced ? o!.count : 0, equipLevel: lv, locked: owned && level < lv, tag: k >= 0 ? KEYS[k]! : equipped ? 'P' : null,
+    id, tier, tierColor: `global.ui.card.${tierDef(tier)?.color ?? 'tier1'}`, frame: frameStyle(weapon, br), owned, enhanced,
+    count: o?.count ?? 0, equipLevel: lv, locked: owned && level < lv, tag: k >= 0 ? KEYS[k]! : equipped ? 'P' : null,
     name: s?.name ?? pv?.name ?? id, desc: s?.desc ?? pv?.desc ?? '', active: !!s,
     kind: `${branchName(weapon, br)} ·${s ? '액티브' : '패시브'}`,
     color: branchColor(weapon, br), branchName: branchName(weapon, br), equipped,
     variants: Object.values(vars).map((v) => ({ name: v.name, desc: v.desc })), variantIndex: o?.variant ? Object.keys(vars).indexOf(o.variant) : -1,
-    ...(pv ? { pointDesc: pv.pointDesc } : {}), cost: passiveCost(id, enhanced), dust: dustOf(id), craft: craftPriceOf(id),
+    ...(pv ? { pointDesc: pv.pointDesc } : {}), cost: passiveCost(id), craft: craftPriceOf(id),
   };
 }

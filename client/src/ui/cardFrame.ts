@@ -70,11 +70,3 @@ export function cardShell(R: Paint, s: FrameStyle, x: number, y: number, h: numb
   if (s === 'gsB') { P(bx, by, dk); P(bx + 1, by, dk); P(bx, by + 1, dk); P(bx + bw - 1, by + bh - 1, dk); P(bx + bw - 2, by + bh - 1, dk); P(bx + bw - 1, by + bh - 2, dk); }
   return ins;
 }
-
-/** 강화 가능 (같은 카드 3장): 카드 아래 가운데 금색 ▲, 0.4초마다 깜빡 */
-export function readyMark(R: Paint, x: number, y: number, h: number, t: number): void {
-  if (Math.floor(t * 2.5) % 2) return;
-  const cx = x + W / 2;
-  R(cx - 3, y + h - 2, 7, 4, SHADE);
-  R(cx, y + h - 1, 1, 1, COIN); R(cx - 1, y + h, 3, 1, COIN); R(cx - 2, y + h + 1, 5, 1, COIN);
-}

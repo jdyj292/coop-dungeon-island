@@ -41,13 +41,13 @@ describe('패시브 (비용 합계 한도)', () => {
     expect(equipCard(p, 'passive', 0, null).passive).toEqual(['gs_honing']);
   });
 
-  it('한도를 넘으면 거절 (Lv1 한도 2, 강화 카드 비용 +1)', () => {
-    const one = equipCard(lo, 'passive', 0, 'gs_keenedge');
-    expect(checkEquip('greatsword', 1, owned, one, 'passive', 1, 'gs_honing')).toBeNull();
-    expect(checkEquip('greatsword', 1, owned, one, 'passive', 1, 'gs_heavyhand')).toBe('cap');
-    expect(checkEquip('greatsword', 1, owned, one, 'passive', 0, 'gs_heavyhand')).toBeNull();
-    expect(checkEquip('greatsword', 3, owned, one, 'passive', 1, 'gs_heavyhand')).toBeNull();
-    expect(passiveUsed(owned, ['gs_keenedge', 'gs_heavyhand'])).toBe(3);
+  it('한도를 넘으면 거절 (Lv1 한도 2, 강화해도 비용 그대로)', () => {
+    const one = equipCard(lo, 'passive', 0, 'gs_keenedge'), two = equipCard(one, 'passive', 1, 'gs_honing');
+    expect(checkEquip('greatsword', 1, owned, one, 'passive', 1, 'gs_heavyhand')).toBeNull();
+    expect(checkEquip('greatsword', 1, owned, two, 'passive', 2, 'gs_heavyhand')).toBe('cap');
+    expect(checkEquip('greatsword', 1, owned, two, 'passive', 0, 'gs_heavyhand')).toBeNull();
+    expect(checkEquip('greatsword', 3, owned, two, 'passive', 2, 'gs_heavyhand')).toBeNull();
+    expect(passiveUsed(['gs_keenedge', 'gs_heavyhand'])).toBe(2);
     expect(checkEquip('greatsword', 1, owned, one, 'passive', 2, 'gs_honing')).toBe('slot');
     expect(checkEquip('greatsword', 1, owned, one, 'passive', 1, null)).toBe('slot');
   });

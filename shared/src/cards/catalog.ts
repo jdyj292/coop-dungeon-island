@@ -29,8 +29,8 @@ export const equipLevelOf = (id: string): number => tierDef(tierOf(id))?.equipLe
 export const dustOf = (id: string): number => tierDef(tierOf(id))?.dust ?? 0;
 /** 지정 구매 가격 (조각) */
 export const craftPriceOf = (id: string): number => tierDef(tierOf(id))?.craft ?? 0;
-/** 패시브 비용: cost(없으면 티어), 강화 +1 */
-export const passiveCost = (id: string, enhanced: boolean): number => (CARDS[id]?.cost ?? tierOf(id)) + (enhanced ? 1 : 0);
+/** 패시브 비용: cost(없으면 티어). 강화해도 그대로 */
+export const passiveCost = (id: string): number => CARDS[id]?.cost ?? tierOf(id);
 /** 패시브 비용 한도: base + floor((숙련도 − 1) / every) */
 export const passiveCap = (level: number): number => CARD.passiveCap.base + Math.floor((Math.max(1, level) - 1) / CARD.passiveCap.every);
 /** 처음 카드 (티어 1 액티브 2장) */

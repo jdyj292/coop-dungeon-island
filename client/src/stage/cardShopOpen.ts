@@ -1,8 +1,9 @@
 // 카드팩 열기 연출 (island.md 5장 팩 열기 연출, 승인 데모 docs/refs/demos/card_shop.html): 떨어짐 → 클릭·Enter → 흔들림 → 찢김 → 뒷면 4장 펼침 →
 // 마우스·←→로 고르면 뒷면이 티어 색으로 빛남 → 한 장씩(클릭·Enter) 또는 모두(A) 뒤집기 (티어 1 먼지 · 2 섬광 · 3 멈춤·빛기둥·흔들림·이름 크게, NEW) →
-// 끝(한 팩 더·확인). 3장이 모여도 저절로 강화하지 않음 ("강화 가능" 표시, 강화는 카드 창에서 직접).
-// 결과(카드·NEW)는 서버 pack 메시지. music = 지금 곡 단계 (1 잔잔 · 2 티어 2 빛 · 3 티어 3 빛 · 0 바탕으로, cardShop이 BGM 층으로). 효과음 audio.md 3장
-import { CARD, type Collection } from '@game/shared';
+// 끝(한 팩 더·확인). 3장이 모이는 카드(서버 merged)는 뒤집힐 때 금빛 + card_merge + "강화!".
+// 이미 강화한 카드(서버 ground > 0)는 아래 "조각 +n"만 보이다가 확인·한 팩 더를 누르면 금이 가며 흔들리다 부서지고, 덩어리가 위 조각 숫자로 빨려 감 → closed.
+// 결과(카드·NEW·강화·갈림)는 서버 pack 메시지 (보관·조각은 서버가 이미 반영, 여기는 연출만). music = 지금 곡 단계 (1 잔잔 · 2 티어 2 빛 · 3 티어 3 빛 · 0 바탕으로, cardShop이 BGM 층으로). 효과음 audio.md 3장
+import { CARD, receiveCards, type Collection } from '@game/shared';
 import { sfx } from '../audio/player';
 import { MAT, type ShopHit } from '../ui/cardShopScreen';
 import type { CardInfo } from '../ui/cardTypes';
@@ -10,11 +11,20 @@ import { BH, BW, drawFlip, glow, packArt, packTop } from '../ui/shopCards';
 import type { ShopFx } from '../ui/shopFx';
 import { Pix, SC } from '../ui/shopPix';
 
-type Stage = 'drop' | 'ready' | 'shake' | 'tear' | 'fan' | 'backs' | 'done';
+/** grind = 확인 뒤 갈리는 연출, closed = 끝 (cardShop이 after대로 닫거나 한 팩 더) */
+type Stage = 'drop' | 'ready' | 'shake' | 'tear' | 'fan' | 'backs' | 'done' | 'grind' | 'closed';
 interface Flip { s: 'back' | 'pre' | 'flipping' | 'face'; t0: number; gA: number; queue: number }
 
-/** 연출 시간 (초): 티어 3 뒤집기 전 멈춤, 뒤집기 */
-const PRE3 = 0.7, FLIP = 0.22;
+/** 연출 시간 (초): 티어 3 뒤집기 전 멈춤, 뒤집기, 갈기 금 가는 시간(그 뒤 부서짐), 부서진 뒤 기다림 */
+const PRE3 = 0.7, FLIP = 0.22, CRACK = 0.3, AFTER_GRIND = 0.75;
+/** 갈린 조각이 빨려 가는 곳 (위 띠 조각 숫자 근처, cardShopScreen titleBand) */
+const DUST_TO = { x: 360, y: 13 };
+/** 금 (카드 왼쪽 위 기준 점들, 큰 카드 48×68): 위에서 아래로 갈라짐 + 옆 가지 */
+const CRACKS: readonly (readonly [number, number])[][] = [
+  [[25, 0], [22, 9], [27, 18], [21, 29], [26, 40], [22, 52], [25, 68]],
+  [[22, 9], [12, 14], [6, 22]],
+  [[26, 40], [36, 45], [43, 55]],
+];
 const M = MAT, CX = M.x + M.w / 2, SLOT_Y = M.y + 44;
 const slotX = (i: number) => M.x + Math.floor((M.w - (4 * BW + 3 * 12)) / 2) + i * (BW + 12);
 const ease = (x: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
@@ -22,11 +32,15 @@ const ease = (x: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
 export class PackOpening {
   stage: Stage;
   t0: number;
-  cards: { id: string; tier: number; isNew: boolean }[] = [];
+  cards: { id: string; tier: number; isNew: boolean; merged: boolean; ground: number }[] = [];
   /** 지금 곡 단계 (CD-6) */
   music = 1;
   hov = -1;
+  /** 확인·한 팩 더 중 누른 것 (closed가 되면 cardShop이 처리) */
+  after: 'ok' | 'again' | null = null;
   private flips: Flip[] = [];
+  /** 카드마다 이 장까지 받은 뒤 보관 장수 (보유 n/3) */
+  private have: number[] = [];
   private sel = 0;
   private keyed = false;
   private wantOpen = false;
@@ -44,9 +58,19 @@ export class PackOpening {
   setResult(cards: PackOpening['cards']): void {
     this.cards = cards;
     this.flips = cards.map(() => ({ s: 'back', t0: 0, gA: 0, queue: 0 }));
+    const ids = cards.map((c) => c.id);
+    this.have = ids.map((id, i) => receiveCards(this.before, ids.slice(0, i + 1)).cards[id]?.count ?? 0);
   }
 
   get ready(): boolean { return this.cards.length > 0; }
+
+  /** 확인·한 팩 더: 갈릴 카드가 있으면 갈리는 연출 뒤, 없으면 바로 closed */
+  confirm(next: 'ok' | 'again', now: number): void {
+    if (this.stage !== 'done') return;
+    this.after = next;
+    this.stage = this.cards.some((c) => c.ground) ? 'grind' : 'closed';
+    this.t0 = now;
+  }
 
   private open(now: number): void {
     if (!this.ready) return void (this.wantOpen = true);
@@ -82,6 +106,22 @@ export class PackOpening {
     } else if (this.stage === 'tear' && T > 0.3) { this.stage = 'fan'; this.t0 = now; }
     else if (this.stage === 'fan' && T > 0.7) { this.stage = 'backs'; this.t0 = now; }
     if (this.stage === 'backs') this.updateBacks(now, dt, fx, info);
+    else if (this.stage === 'grind') this.updateGrind(T, now, fx, info);
+  }
+
+  /** 확인 뒤: 금 가는 CRACK초 → 갈릴 카드가 한꺼번에 부서져 조각 숫자로 → closed */
+  private updateGrind(T: number, now: number, fx: ShopFx, info: (id: string) => CardInfo): void {
+    if (T > CRACK && !this.heard.has('grind')) {
+      this.heard.add('grind');
+      sfx.play('card_grind');
+      this.cards.forEach((c, i) => {
+        if (!c.ground) return;
+        const x = slotX(i), ci = info(c.id);
+        fx.shards(x, SLOT_Y, BW, BH, 26, [ci.color, ci.tierColor, SC.card, SC.sky], DUST_TO.x, DUST_TO.y);
+        fx.burst(x + BW / 2, SLOT_Y + BH / 2, 8, SC.dust, 0.7);
+      });
+    }
+    if (T > CRACK + AFTER_GRIND) { this.stage = 'closed'; this.t0 = now; }
   }
 
   private updateBacks(now: number, dt: number, fx: ShopFx, info: (id: string) => CardInfo): void {
@@ -103,6 +143,7 @@ export class PackOpening {
         if (c.tier <= 1) fx.burst(x + BW / 2, SLOT_Y + BH - 4, 6, SC.dust, 0.6);
         else if (c.tier === 2) fx.burst(x + BW / 2, SLOT_Y + BH / 2, 16, tc, 1.2);
         else { fx.burst(x + BW / 2, SLOT_Y + BH / 2, 34, tc, 1.8, 0.4); fx.shake = 0.35; this.banner = { id: c.id, t0: now }; this.music = 3; }
+        if (c.merged) { sfx.play('card_merge'); fx.burst(x + BW / 2, SLOT_Y + BH / 2, 22, SC.coin, 1.3, 0.3); }
       }
     });
     const bannerOn = !!this.banner && now - this.banner.t0 < 1.6;
@@ -143,7 +184,7 @@ export class PackOpening {
     ctx.rect(M.x + 2, M.y + 2, M.w - 4, M.h - 4);
     ctx.clip();
     if (this.stage === 'backs') { this.drawCards(p, now, info); this.drawBanner(p, now, info); }
-    else if (this.stage === 'done') this.drawCards(p, now, info);
+    else if (this.stage === 'done' || this.stage === 'grind' || this.stage === 'closed') this.drawCards(p, now, info);
     else this.drawPack(p, now);
     ctx.restore();
     if (this.stage === 'backs' && this.flips.some((f) => f.s === 'back')) p.button('all', '모두 뒤집기 (A)', CX - 50, M.y + M.h - 22, 100, { kind: 'btn', b: 'all' });
@@ -184,11 +225,9 @@ export class PackOpening {
   /** 펼친 4장 */
   private drawCards(p: Pix<ShopHit>, now: number, info: (id: string) => CardInfo): void {
     const dim = false;
-    const ctx = p.ctx, seen = new Map<string, number>();
+    const ctx = p.ctx, grind = this.stage === 'grind' || this.stage === 'closed';
     this.cards.forEach((c, i) => {
       const f = this.flips[i]!, x = slotX(i), cx = x + BW / 2, y = SLOT_Y, ci = info(c.id), tc = ci.tierColor;
-      const k = (seen.get(c.id) ?? 0) + 1;
-      seen.set(c.id, k);
       ctx.globalAlpha = dim ? 0.25 : 1;
       if (f.s === 'back' || f.s === 'pre') {
         const tr = f.s === 'pre' ? Math.round(Math.sin(now * 60) * ((now - f.t0) / PRE3) * 1.5) : 0;
@@ -197,6 +236,7 @@ export class PackOpening {
         ctx.globalAlpha = dim ? 0.25 : 1;
         drawFlip(p, cx + tr, y - (i === this.hov ? 2 : 0), 0, ci, this.packColor);
       } else if (f.s === 'flipping') drawFlip(p, cx, y, Math.min(1, (now - f.t0) / FLIP), ci, this.packColor);
+      else if (c.ground && grind) this.drawGround(p, this.stage === 'grind' ? now - this.t0 : 9, x, y, c.ground, ci);
       else {
         const e = now - f.t0;
         if (c.tier >= 3 && e < 0.9 && !dim) {
@@ -209,16 +249,40 @@ export class PackOpening {
         drawFlip(p, cx, y, 1, ci, this.packColor);
         if (c.tier >= 2 && e < 0.18 && !dim) p.R(x, y, BW, BH, SC.flash, 1 - e / 0.18);
         if (c.isNew) { p.R(x + BW - 19, y - 5, 20, 9, SC.outline); p.R(x + BW - 18, y - 4, 18, 7, SC.coin); p.tiny('NEW', x + BW - 17, y - 3, SC.title); }
-        // 3장이 모여도 저절로 강화하지 않음: "강화 가능" (강화는 카드 창에서)
-        const b = this.before[c.id], have = this.stage === 'backs' ? (b?.count ?? 0) + k : ci.count, enh = this.stage === 'backs' ? !!b?.enhanced : ci.enhanced;
-        const ready = !enh && have >= CARD.mergeCount;
-        const lab = enh ? '보관 +1' : ready ? '강화 가능' : `보유 ${have}/${CARD.mergeCount}`;
-        p.center(lab, x - 4, BW + 8, y + BH + 4, ready ? SC.coin : SC.key, 'koSmall', dim ? 0.25 : 1);
+        // 아래 글자: 이 장으로 강화 = 금색 "강화!", 갈릴 카드 = "조각 +n" (확인 때 갈림), 아니면 보유 n/3
+        const lab = c.merged ? '강화!' : c.ground ? `조각 +${c.ground}` : `보유 ${this.have[i] ?? 0}/${CARD.mergeCount}`;
+        p.center(lab, x - 4, BW + 8, y + BH + 4, c.merged ? SC.coin : c.ground ? SC.off : SC.key, 'koSmall', dim ? 0.25 : 1);
       }
       ctx.globalAlpha = 1;
       if (this.stage === 'backs' && f.s === 'back') p.hit(x, y, BW, BH, { kind: 'flip', i });
       if (this.stage === 'backs' && i === this.sel && this.keyed && f.s === 'back') p.corners(x, y, BW, BH, SC.coin);
     });
+  }
+
+  /** 갈리는 카드 (e = 확인을 누른 뒤 초): 금이 번지며 흔들림 → CRACK초에 부서진 뒤 빈 칸 테두리 + "조각 +n" (덩어리는 ShopFx.shards) */
+  private drawGround(p: Pix<ShopHit>, e: number, x: number, y: number, dust: number, ci: CardInfo): void {
+    if (e < CRACK) {
+      const k = e / CRACK, dx = Math.round(Math.sin(e * 80) * k * 1.5);
+      drawFlip(p, x + BW / 2 + dx, y, 1, ci, this.packColor);
+      for (const line of CRACKS) {
+        for (let j = 1; j < line.length; j++) {
+          const [ax, ay] = line[j - 1]!, [bx, by] = line[j]!, n = Math.max(Math.abs(bx - ax), Math.abs(by - ay));
+          for (let s = 0; s <= n; s++) {
+            const py = ay + ((by - ay) * s) / n;
+            if (py > k * BH) continue;
+            p.R(x + dx + Math.round(ax + ((bx - ax) * s) / n), y + Math.round(py), 1, 1, SC.outline);
+          }
+        }
+      }
+      p.R(x + dx, y, BW, BH, SC.flash, Math.max(0, k - 0.6) * 1.5);
+      return;
+    }
+    const a = Math.min(1, (e - CRACK) / 0.3);
+    p.R(x, y, BW, 1, SC.cardBd, a * 0.6); p.R(x, y + BH - 1, BW, 1, SC.cardBd, a * 0.6);
+    p.R(x, y, 1, BH, SC.cardBd, a * 0.6); p.R(x + BW - 1, y, 1, BH, SC.cardBd, a * 0.6);
+    const rise = Math.round(Math.min(1, (e - CRACK) / 0.5) * 8);
+    p.center(`+${dust}`, x, BW, y + BH / 2 - 4 - rise, SC.sky, 'koSmall', a);
+    p.center(`조각 +${dust}`, x - 4, BW + 8, y + BH + 4, SC.sky, 'koSmall', a);
   }
 
   private drawBanner(p: Pix<ShopHit>, now: number, info: (id: string) => CardInfo): void {

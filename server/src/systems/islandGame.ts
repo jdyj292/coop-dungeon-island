@@ -100,7 +100,7 @@ export class IslandGame {
     Object.assign(r, { online: true, status: 'island', x: Math.round(pos.x), y: Math.round(pos.y), facing: 1, state: 'idle', lastInputSeq: 0, wellAt: back ? Math.max(1, this.now) : 0 });
     this.placement?.sendInventory(id);
     this.shop?.sendMe(id);
-    this.cards?.send(id);
+    this.cards?.join(id);
   }
 
   /** 섬을 나감 (끊김·던전 출발). 던전에 간 사람은 "탐험 중" 그대로 */

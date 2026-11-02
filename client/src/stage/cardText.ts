@@ -21,6 +21,6 @@ export const bonusLines = (weapon: string, branch: Branch): string[][] =>
 export const FAIL_TEXT: Record<CardMsgFail, string> = {
   card: '이 칸에 낄 수 없는 카드입니다', owned: '가진 카드가 아닙니다', variant: '변형은 강화 카드만 고릅니다', cap: '패시브 비용 한도를 넘습니다',
   locked: '아직 숙련도가 모자랍니다', slot: '없는 칸입니다', dust: '조각이 모자랍니다', coin: '코인이 모자랍니다', gift: '선물 팩이 없습니다',
-  equipped: '장착한 카드의 마지막 장입니다', busy: '출발 카운트다운 중에는 못 바꿉니다', merge: '같은 카드 3장이 있어야 강화합니다',
+  busy: '출발 카운트다운 중에는 못 바꿉니다', done: '이미 강화한 카드입니다',
 };
 

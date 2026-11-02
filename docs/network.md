@@ -71,7 +71,7 @@
 | memo | `{ text }` 1줄 1~40자 (NET.memoMaxLen, 제어 문자·줄바꿈은 공백으로). 저장 후 `board` 다시 보냄 |
 | look | `{ hair: 0~2, hairColor: 0~3 }` (shared LOOK) 외형 바꾸기 → users.hair_style·hair_color 저장, 주민 상태 hair·hairColor |
 | weapon | `{ id }` (shared MVP_WEAPONS) 무기 고르기 → users.weapon 저장, 주민 상태 weapon, `me` 다시 보냄(그 무기 숙련도). 출발 카운트다운 중인 대기자는 무시 |
-| card | (skills.md 1장) `{ op, ... }`: `open { weapon, pack, pay: coin·dust·gift }` 카드팩 사서 열기 → `pack { weapon, pack, cards: [{ id, tier, isNew }], pity }` + `cards` / `craft { cardId }` 지정 구매 / `enhance { cardId }` 강화(같은 카드 3장 소모, 저절로 합쳐지지 않음) / `grind { cardId, n }` 갈기 / `variant { cardId, variant\|null }` 강화 액티브 변형 / `equip { weapon, kind, slot, cardId\|null }` 장착·빼기. 서버가 shared 카드 검사(보유·티어 장착 숙련도·패시브 한도·같은 카드 중복)로 확인 → DB 트랜잭션, 굴림·천장은 서버. 결과 `cards { dust, gifts, weapons[{ weapon, level, cap(패시브 한도), owned{ 카드 id: { count, enhanced, variant? } }, active[4칸, 빈칸 ''], passive[순서] }], fail? }` (fail: shared messages.ts CardMsgFail = CardFail(card·owned·locked·cap·slot·variant·dust·equipped(장착한 기본 카드의 마지막 장 갈기)·merge(강화할 3장이 없음·이미 강화), 끼운 패시브 강화로 한도를 넘으면 cap) + coin·gift(선물 팩 없음, 선물은 팩 1만)·busy, 숙련도가 모자란 팩도 locked). 팩은 `pack`을 먼저, 코인으로 샀으면 `me`도. 티어 3 이상이 나오면 활동 기록 `card`(itemId = 카드). 장착·강화는 출발 카운트다운 중이면 fail busy (사기·열기·갈기·변형은 됨). 처리 systems/islandCards.ts → db/cardStore.ts·cardPack.ts |
+| card | (skills.md 1장) `{ op, ... }`: `open { weapon, pack, pay: coin·dust·gift }` 카드팩 사서 열기 → `pack { weapon, pack, cards: [{ id, tier, isNew, merged, ground }], pity }` (merged = 이 장으로 3장이 모여 바로 강화됨, ground = 이미 강화한 카드라 갈려 받은 조각, 0 = 보관·강화) + `cards` / `craft { cardId }` 지정 구매 (3장째면 바로 강화, 강화 요청은 따로 없음) / `variant { cardId, variant\|null }` 강화 액티브 변형 / `equip { weapon, kind, slot, cardId\|null }` 장착·빼기. 서버가 shared 카드 검사(보유·티어 장착 숙련도·패시브 한도·같은 카드 중복)로 확인 → DB 트랜잭션, 굴림·천장은 서버. 결과 `cards { dust, gifts, weapons[{ weapon, level, cap(패시브 한도), owned{ 카드 id: { count, enhanced, variant? } }, active[4칸, 빈칸 ''], passive[순서] }], fail? }` (fail: shared messages.ts CardMsgFail = CardFail(card·owned·locked·cap·slot·variant·dust·done(이미 강화한 카드 지정 구매)) + coin·gift(선물 팩 없음, 선물은 팩 1만)·busy, 숙련도가 모자란 팩도 locked). 팩은 `pack`을 먼저, 코인으로 샀으면 `me`도. 티어 3 이상이 나오면 활동 기록 `card`(itemId = 카드). 장착은 출발 카운트다운 중이면 fail busy (사기·열기·변형은 됨). 직접 갈기 요청은 없음: 섬 입장 때 강화한 카드에 남은 보관 장수를 서버가 조각으로 바꾼 뒤 cards. 처리 systems/islandCards.ts → db/cardStore.ts·cardPack.ts |
 - chat은 섬에서도 같은 메시지: 섬에 있는 주민 모두에게 `chat { player, text, t }` (저장 안 함). 제한은 던전과 같음 (3초에 3회), 섬 메시지(buy·board·memo·place 등)는 초당 5회
 | loadout | 무기 교체·스킬 장착·의상 장착 (MVP 이후 의상) |
 
@@ -287,7 +287,7 @@ IslandState
 | 시점 | 저장 내용 |
 |---|---|
 | 섬 배치·구매 | 즉시 (트랜잭션) |
-| 카드 (팩 열기·지정 구매·강화·갈기·변형·장착) | 즉시 (트랜잭션: 코인·조각·선물 빼기 + 카드 넣기 + 천장, 강화 = 3장 빼기 + 강화 표시) |
+| 카드 (팩 열기·지정 구매·변형·장착) | 즉시 (트랜잭션: 코인·조각·선물 빼기 + 카드 넣기(3장째 강화 = 3장 빼기 + 강화 표시, 강화한 카드 = 조각) + 천장) |
 | 던전 정산 | 지갑, 금고, 인벤토리(재료·물약 차감), 숙련도 경험치, 첫 처치 보상, 활동 기록을 한 트랜잭션으로 |
 | 이탈·전멸 | 정산 규칙 적용 후 위와 동일 |
 

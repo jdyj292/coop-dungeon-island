@@ -1,6 +1,6 @@
 // 카드팩 사서 열기 (docs/skills.md 1장 얻기, balance.md 7장 카드 경제, island.md 5장 카드 상점)
-// 코인(개인 지갑)·조각·환영 선물 빼기 + 굴림 + 카드 넣기·합치기 + 천장을 한 트랜잭션으로. 굴림은 서버 (난수는 넣어 줄 수 있음: 테스트)
-import { addCards, giftItemOf, MVP_WEAPONS, owns, packDef, packOpen, rollPack, tierOf, WELCOME_PACKS, type Rng, type S2C } from '@game/shared';
+// 코인(개인 지갑)·조각·환영 선물 빼기 + 굴림 + 카드 넣기(3장이 모이면 바로 강화, 이미 강화한 카드는 바로 갈아 조각) + 천장을 한 트랜잭션으로. 굴림은 서버 (난수는 넣어 줄 수 있음: 테스트)
+import { giftItemOf, MVP_WEAPONS, owns, packDef, packOpen, receiveCards, rollPack, tierOf, WELCOME_PACKS, type Rng, type S2C } from '@game/shared';
 import { and, eq, gte, sql } from 'drizzle-orm';
 import type { Db } from './client';
 import { addDust, collectionOf, writeCards, type Q } from './cardStore';
@@ -38,13 +38,15 @@ export function openPack(db: Db, userId: number, islandId: number, weapon: strin
     const fail = pay(tx, userId, pack, how, p.price);
     if (fail) return { fail };
     const roll = rollPack(weapon, pack, pityOf(tx, userId, weapon, pack), rng);
-    const before = collectionOf(tx, userId), seen = new Set<string>();
+    const before = collectionOf(tx, userId), seen = new Set<string>(), got = receiveCards(before, roll.cards);
     const cards = roll.cards.map((id, i) => {
       const isNew = !owns(before, id) && !seen.has(id);
       seen.add(id);
-      return { id, tier: roll.tiers[i] ?? tierOf(id), isNew };
+      return { id, tier: roll.tiers[i] ?? tierOf(id), isNew, merged: !!got.merged[i], ground: got.ground[i] ?? 0 };
     });
-    writeCards(tx, userId, addCards(before, roll.cards), roll.cards);
+    writeCards(tx, userId, got.cards, roll.cards);
+    const dust = got.ground.reduce((s, n) => s + n, 0);
+    if (dust) addDust(tx, userId, dust);
     if (p.pity) {
       tx.insert(cardPity).values({ userId, weapon, pack, opened: roll.opened })
         .onConflictDoUpdate({ target: [cardPity.userId, cardPity.weapon, cardPity.pack], set: { opened: roll.opened } }).run();

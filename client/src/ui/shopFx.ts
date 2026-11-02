@@ -1,7 +1,13 @@
-// 카드 상점 입자·화면 흔들림 (hud.md 8장 카드 상점, 승인 데모 card_shop.html): 터지는 반짝이·먼지, 위로 오르는 빛 알갱이
+// 카드 상점 입자·화면 흔들림 (hud.md 8장 카드 상점, 승인 데모 card_shop.html): 터지는 반짝이·먼지, 위로 오르는 빛 알갱이, 갈린 카드 조각(조각 숫자로 빨려 감)
 import { Pix, SC } from './shopPix';
 
-interface Part { x: number; y: number; vx: number; vy: number; life: number; max: number; color: string; star: boolean; float: boolean }
+interface Part {
+  x: number; y: number; vx: number; vy: number; life: number; max: number; color: string; star: boolean; float: boolean;
+  /** 덩어리 크기 (px, 없으면 1) */
+  s?: number;
+  /** delay초 뒤 (tx, ty)로 빨려 감 (hx, hy = 빨려 가기 시작한 자리) */
+  home?: { tx: number; ty: number; delay: number; hx?: number; hy?: number };
+}
 
 export class ShopFx {
   private parts: Part[] = [];
@@ -21,10 +27,30 @@ export class ShopFx {
     this.parts.push({ x: x + Math.random() * w, y, vx: 0, vy: -0.4 - Math.random() * 0.6, life: 0, max: 0.8 + Math.random() * 0.6, color, star: Math.random() < 0.3, float: true });
   }
 
+  /** 갈린 카드: 카드 칸(w×h)에서 n개 덩어리가 튀었다가 (tx, ty) 조각 숫자로 빨려 감 */
+  shards(x: number, y: number, w: number, h: number, n: number, colors: readonly string[], tx: number, ty: number): void {
+    for (let i = 0; i < n; i++) {
+      const px = x + Math.random() * w, py = y + Math.random() * h, a = Math.atan2(py - (y + h / 2), px - (x + w / 2)), v = 0.6 + Math.random() * 0.9;
+      const delay = 0.18 + Math.random() * 0.14;
+      this.parts.push({
+        x: px, y: py, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.6, life: 0, max: delay + 0.45 + Math.random() * 0.1,
+        color: colors[i % colors.length]!, star: i % 7 === 0, float: false, s: i % 3 ? 2 : 1, home: { tx, ty, delay },
+      });
+    }
+  }
+
   step(dt: number): void {
     if (this.shake > 0) this.shake -= dt;
     for (const p of this.parts) {
       p.life += dt;
+      const h = p.home;
+      if (h && p.life > h.delay) {
+        h.hx ??= p.x; h.hy ??= p.y;
+        const k = Math.min(1, (p.life - h.delay) / (p.max - h.delay)), e = k * k;
+        p.x = h.hx + (h.tx - h.hx) * e;
+        p.y = h.hy + (h.ty - h.hy) * e;
+        continue;
+      }
       p.x += p.vx * dt * 60;
       p.y += p.vy * dt * 60;
       if (!p.float) p.vy += 0.04 * dt * 60;
@@ -39,9 +65,9 @@ export class ShopFx {
 
   draw(p: Pix<unknown>): void {
     for (const q of this.parts) {
-      const a = 1 - q.life / q.max;
+      const a = q.home ? 1 : 1 - q.life / q.max;
       if (q.star) p.star(q.x - 1, q.y - 1, q.color, a);
-      else p.R(q.x, q.y, 1, 1, q.color, a);
+      else p.R(q.x, q.y, q.s ?? 1, q.s ?? 1, q.color, a);
     }
   }
 

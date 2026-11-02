@@ -1,41 +1,27 @@
 // 카드 창 (K) 그리기 (hud.md 8장, 승인 데모 docs/refs/demos/card_redesign.html, 게임 화면 384×216 기준 좌표):
 // 제목 띠(카드 그림·무기 탭·무기 Lv·조각) / 위 장착 줄(액티브 A S D F · 패시브 "비용 사용/한도"·칸) / 계열 보너스 한 줄 /
 // 액티브·패시브 카드 탭 / 보유 카드(줄 = A / B, 티어 묶음) / 오른쪽 상세 (cardDetail.ts). 글자는 모두 갈무리7.
-// 움직이는 것(강화 가능 ▲·강화 번쩍임·조각)은 fx 층에 매 프레임 (나머지는 바뀔 때만). 상태·입력은 stage/islandCards.ts (CardSource)
+// 바뀔 때만 다시 그림 (강화는 3장이 모이면 서버가 바로, 연출은 카드 상점). 상태·입력은 stage/islandCards.ts (CardSource)
 import type Phaser from 'phaser';
 import { drawDetail, DETAIL_CARD } from './cardDetail';
-import { readyMark } from './cardFrame';
-import { box, CH, cardFace, cardIcon, CW, dustGem, keyTag, Painter, paintOf, R, roman, SK, titleCard } from './cardParts';
+import { box, CH, cardFace, cardIcon, CW, dustGem, keyTag, Painter, R, roman, SK, titleCard } from './cardParts';
 import type { FontKey } from './fonts';
 import { koWidth } from './koText';
 import { PASS_AREA, type CardHit, type CardInfo, type CardSource } from './cardTypes';
 
 const W = 384, H = 216, KEYS = ['A', 'S', 'D', 'F'];
 const labW = (t: string, font: FontKey = 'koSmall') => koWidth(t, font);
-/** 강화 번쩍임 (초), 조각 색 */
-const POP = 0.35, BURST = [SK.coin, SK.flash, SK.gold];
 /** 보유 카드 줄 간격 */
 const ROW = 40;
 
-/** 강화 가능 ▲ 자리 (창 좌표, 카드 왼쪽 위) */
-interface Spot { x: number; y: number }
-interface Bit { x: number; y: number; vx: number; vy: number; life: number; s: number; c: string }
-
 export class CardWindow {
   private p: Painter<CardHit>;
-  private fx: Phaser.GameObjects.Graphics;
   private ghost: Phaser.GameObjects.Graphics;
   private sig = '';
-  private spots: Spot[] = [];
-  /** 카드가 그려진 자리 (강화 조각이 튀는 곳) */
-  private where = new Map<string, { x: number; y: number }[]>();
-  private pop: { id: string; t0: number } | null = null;
-  private bits: Bit[] = [];
 
   constructor(scene: Phaser.Scene, depth: number) {
     const g = scene.add.graphics().setScrollFactor(0).setDepth(depth);
     this.p = new Painter<CardHit>(scene, g, depth);
-    this.fx = scene.add.graphics().setScrollFactor(0).setDepth(depth);
     this.ghost = scene.add.graphics().setScrollFactor(0).setDepth(depth + 2);
   }
 
@@ -46,13 +32,10 @@ export class CardWindow {
     this.sig = key;
     const p = this.p, g = p.g;
     p.clear();
-    this.spots = [];
-    this.where.clear();
     p.ox = ox;
     p.oy = oy;
     p.hit(7, 5, 370, 205, { kind: 'inside' });
     g.setPosition(ox, oy);
-    this.fx.setPosition(ox, oy);
     R(g, -ox, -oy, screenW, screenH, SK.cover, 0.5);
     R(g, 9, 8, 368, 204, SK.cover, 0.35);
     R(g, 7, 5, 370, 205, SK.shade);
@@ -69,36 +52,6 @@ export class CardWindow {
     this.list(s);
     drawDetail(p, s);
     if (!s.hoverBonus) this.face(s.card(s.hover ?? s.sel), DETAIL_CARD.x, DETAIL_CARD.y, true);
-  }
-
-  /** 매 프레임: 강화 가능 ▲ · 강화 번쩍임 · 조각 (t = 초) */
-  animate(t: number, dt: number): void {
-    const g = this.fx, P = paintOf(g);
-    g.clear();
-    if (!this.sig) return;
-    for (const sp of this.spots) readyMark(P, sp.x, sp.y, CH, t);
-    const pop = this.pop;
-    if (pop) {
-      const a = 1 - (t - pop.t0) / POP;
-      if (a <= 0) this.pop = null;
-      else for (const w of this.where.get(pop.id) ?? []) R(g, w.x, w.y, CW, CH, SK.flash, a);
-    }
-    this.bits = this.bits.filter((b) => (b.life -= dt) > 0);
-    for (const b of this.bits) {
-      b.x += b.vx * dt; b.y += b.vy * dt; b.vy += 120 * dt;
-      R(g, Math.round(b.x), Math.round(b.y), b.s, b.s, b.c, Math.min(1, b.life * 3));
-    }
-  }
-
-  /** 강화 성공: 카드가 번쩍이고 금색 조각이 튐 */
-  celebrate(id: string, t: number): void {
-    this.pop = { id, t0: t };
-    (this.where.get(id) ?? []).forEach((w, k) => {
-      for (let i = 0; i < (k ? 14 : 22); i++) {
-        const a = Math.random() * Math.PI * 2, v = 30 + Math.random() * 60;
-        this.bits.push({ x: w.x + CW / 2, y: w.y + CH / 2, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 20, life: 0.5 + Math.random() * 0.4, s: Math.random() < 0.3 ? 2 : 1, c: BURST[i % 3]! });
-      }
-    });
   }
 
   /** 끄는 카드 (마우스를 따라감, 전체를 다시 그리지 않음) */
@@ -123,28 +76,19 @@ export class CardWindow {
 
   hide(): void {
     this.p.clear();
-    this.fx.clear();
     this.ghost.clear();
     this.sig = '';
-    this.spots = [];
-    this.bits = [];
-    this.pop = null;
   }
 
   destroy(): void {
     this.hide();
     this.p.g.destroy();
-    this.fx.destroy();
     this.ghost.destroy();
   }
 
-  /** 카드 한 장 + 움직이는 그림 자리 기록 */
+  /** 카드 한 장 */
   private face(c: CardInfo, x: number, y: number, big: boolean, o: { sel?: boolean; hov?: boolean } = {}): void {
     cardFace(this.p.g, c, x, y, { ...o, big });
-    const list = this.where.get(c.id) ?? [];
-    list.push({ x, y });
-    this.where.set(c.id, list);
-    if (!big && c.ready) this.spots.push({ x, y });
   }
 
   /** 무기 탭 · 오른쪽 무기 Lv 알약 + 조각 */
@@ -217,16 +161,15 @@ export class CardWindow {
     if (tgt) R(g, PASS_AREA.x, PASS_AREA.y + 1, 1, PASS_AREA.h - 2, SK.coin);
   }
 
-  /** 계열 보너스 한 줄: 글자 · 이름 · 끼운 장수 점 5개(문턱 3·5 밑줄) · 켜진 단계 Ⅰ/Ⅱ. 효과는 마우스를 올리면 상세 */
+  /** 계열 보너스 한 줄: 이름 · 끼운 장수 점 5개(문턱 3·5 밑줄) · 켜진 단계 Ⅰ/Ⅱ. 효과는 마우스를 올리면 상세 */
   private bonusRow(s: CardSource): void {
     const p = this.p, g = p.g, last = s.bonusAt.at(-1) ?? 5;
     box(g, 12, 68, 224, 15);
     s.bonus.forEach((b, i) => {
       const x = 16 + i * 111, n = b.ids.length;
       if (s.hoverBonus === b.branch) R(g, x - 3, 69, 111, 13, SK.lit);
-      p.text(x, 70, b.branch, b.color);
-      p.text(x + 8, 70, b.name, b.step ? SK.txt : SK.dim);
-      const px = x + 12 + labW(b.name);
+      p.text(x, 70, b.name, b.step ? SK.txt : SK.dim);
+      const px = x + 4 + labW(b.name);
       for (let j = 0; j < last; j++) {
         const on = j < n;
         R(g, px + j * 5, 73, 4, 4, SK.shade);

@@ -20,7 +20,7 @@ export const SK = {
   pick: 'global.ui.skillPick', on: 'global.ui.skillOn', hi: 'global.ui.offline', border: 'global.ui.panelBorder', panel: 'global.ui.panel',
   coin: 'global.ui.coin', key: 'global.ui.keyLabel', dim: 'global.ui.textDim', txt: 'global.ui.steelLight', track: 'global.ui.barTrack', off: 'global.ui.offline',
   heal: 'global.ui.hp', danger: 'global.semantic.danger', gold: 'global.allyFx.gold', white: 'global.allyFx.white', steel: 'global.materials.steel', cover: 'global.ui.cover',
-  flash: 'global.fx.flash', spare: 'global.fx.fireDeep', sky: 'global.allyFx.sky', mp: 'global.ui.mp', mpDark: 'global.ui.mpDark',
+  flash: 'global.fx.flash', sky: 'global.allyFx.sky', mp: 'global.ui.mp', mpDark: 'global.ui.mpDark',
 } as const;
 
 /** 글자(koText)·마우스 판정 칸을 모아 두고 한 번에 지운다. (ox, oy) = 그리는 원점 */
@@ -170,12 +170,8 @@ export interface FaceLook {
   color: string;
   owned: boolean;
   enhanced: boolean;
-  /** 같은 카드 3장 → 강화할 수 있음 (카드 아래 ▲, 상세 강화 버튼) */
-  ready: boolean;
   /** 보관 장수 */
   count: number;
-  /** 강화 뒤 남는 장수 */
-  spare: number;
   /** 장착 숙련도 (모자라면 자물쇠) */
   equipLevel: number;
   locked: boolean;
@@ -184,7 +180,7 @@ export interface FaceLook {
 }
 
 /** 카드 24×34: 계열 테두리 · 위 아이콘 칸 · 아래 티어 띠(강화 = 숫자 뒤 +) · 자물쇠(장착 숙련도 모자람) · 꼬리표. 없는 카드는 같은 모양의 그림자.
- * 강화 가능 ▲은 깜빡여서 CardWindow가 따로 그림 (cardFrame.ts readyMark). big = 상세 머리(꼬리표 없음) */
+ * big = 상세 머리(꼬리표 없음) */
 export function cardFace(g: G, f: FaceLook, x: number, y: number, o: { sel?: boolean; hov?: boolean; big?: boolean } = {}): void {
   const P = paintOf(g);
   cardShell(P, f.frame, x, y, CH, f.color, f.owned, (bx, by, bw, bh) => tierBand(P, bx, by + bh - BAND, bw, BAND, f.tier, f.tierColor, f.owned, f.enhanced));

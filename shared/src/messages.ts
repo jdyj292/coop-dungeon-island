@@ -53,8 +53,6 @@ export const C2S = {
   card: z.discriminatedUnion('op', [
     z.object({ op: z.literal('open'), weapon: z.enum(MVP_WEAPONS), pack: z.number().int().min(1).max(9), pay: z.enum(['coin', 'dust', 'gift']) }).strict(),
     z.object({ op: z.literal('craft'), cardId: CARD_ID }).strict(),
-    z.object({ op: z.literal('enhance'), cardId: CARD_ID }).strict(),
-    z.object({ op: z.literal('grind'), cardId: CARD_ID, n: z.number().int().min(1).max(99) }).strict(),
     z.object({ op: z.literal('variant'), cardId: CARD_ID, variant: z.string().max(24).nullable() }).strict(),
     z.object({ op: z.literal('equip'), weapon: z.enum(MVP_WEAPONS), kind: z.enum(['active', 'passive']), slot: z.number().int().min(0).max(15), cardId: CARD_ID.nullable() }).strict(),
   ]),
@@ -120,8 +118,8 @@ export interface S2C {
     weapons: { weapon: string; level: number; cap: number; owned: Record<string, OwnedCard>; active: string[]; passive: string[] }[];
     fail?: CardMsgFail;
   };
-  /** 섬: 연 카드팩 (본인에게, cards보다 먼저). isNew = 이 팩 전에 없던 카드, pity = 천장 횟수 */
-  pack: { weapon: string; pack: number; cards: { id: string; tier: number; isNew: boolean }[]; pity: number };
+  /** 섬: 연 카드팩 (본인에게, cards보다 먼저). isNew = 이 팩 전에 없던 카드, merged = 이 장으로 3장이 모여 강화됨, ground = 이미 강화한 카드라 갈려 받은 조각 (0 = 보관·강화), pity = 천장 횟수 */
+  pack: { weapon: string; pack: number; cards: { id: string; tier: number; isNew: boolean; merged: boolean; ground: number }[]; pity: number };
   /** 섬: 내 가방 (장식 id → 개수, 바뀔 때마다 본인에게) */
   inv: { items: Record<string, number> };
   /** 섬: 배치 요청 실패 (같은 칸에 먼저 온 요청 등) */

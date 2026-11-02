@@ -51,7 +51,10 @@ export interface ShopView {
   sel: string;
   hover: string | null;
   merge: number;
+  /** 상점 카드 (강화 표시 없는 기본 카드) */
   info: (id: string) => CardInfo;
+  /** 이미 강화한 카드 (구매 버튼 꺼짐) */
+  done: (id: string) => boolean;
   /** 지정 구매 직후 뒤집기 (t = 지난 초) */
   bought: { id: string; t: number } | null;
 }
@@ -145,7 +148,7 @@ export function packMenu(p: Pix<ShopHit>, v: ShopView, now: number): void {
   p.button('dust', String(k.price), bx + 84, by, 78, { kind: 'btn', b: 'dust' }, { off: v.dust < k.price, ico: 'dust' });
 }
 
-/** 지정 구매 탭: 왼쪽 = 무기 · 액티브/패시브 · 고른 카드 크게 · 조각 버튼, 매트 = 카드 목록(줄 = 기본/A/B, 카드 아래 조각 가격, 강화를 마친 카드는 흐림) */
+/** 지정 구매 탭: 왼쪽 = 무기 · 액티브/패시브 · 고른 카드 크게 · 조각 버튼, 매트 = 카드 목록(줄 = 계열, 카드 아래 조각 가격). 카드는 강화 표시 없이, 이미 강화한 카드는 가격·구매 버튼만 꺼짐 */
 export function buyMenu(p: Pix<ShopHit>, v: ShopView, now: number): void {
   const L = SIDE, M = MAT;
   weaponTabs(p, v, L.y + 4);
@@ -165,24 +168,20 @@ export function buyMenu(p: Pix<ShopHit>, v: ShopView, now: number): void {
     p.ctx.drawImage(faceImage(f), bx, by);
     p.ctx.globalAlpha = 1;
   }
-  const nm = p.fit(f.name, L.w - 12), nw = p.width(nm) + (f.enhanced ? p.width('+') + 1 : 0), nx = L.x + Math.floor((L.w - nw) / 2);
-  p.text(nm, nx, by + BH + 3, SC.txt);
-  if (f.enhanced) p.text('+', nx + p.width(nm) + 1, by + BH + 3, SC.coin);
-  const st = f.enhanced ? (f.spare ? `강화 · 남는 ${f.spare}장` : '강화') : f.ready ? `${v.merge}장 모임` : `보유 ${f.count}/${v.merge}`;
-  p.center(`티어 ${f.tier} · ${st}`, L.x, L.w, by + BH + 15, f.enhanced || f.ready ? SC.coin : SC.key);
-  if (f.enhanced) { p.center('사도 쓰임 없음', L.x, L.w, by + BH + 26, SC.off); p.center('(갈아서 조각으로)', L.x, L.w, by + BH + 36, SC.off); }
-  else if (f.ready) p.center('강화는 카드 창(K)에서', L.x, L.w, by + BH + 26, SC.off);
-  p.button('buy', String(f.craft), L.x + 6, L.y + L.h - 18, L.w - 12, { kind: 'btn', b: 'buy' }, { off: v.dust < f.craft, ico: 'dust' });
+  const done = v.done(v.sel);
+  p.center(p.fit(f.name, L.w - 12), L.x, L.w, by + BH + 3, SC.txt);
+  p.center(`티어 ${f.tier}${done ? '' : ` · 보유 ${f.count}/${v.merge}`}`, L.x, L.w, by + BH + 15, SC.key);
+  p.button('buy', String(f.craft), L.x + 6, L.y + L.h - 18, L.w - 12, { kind: 'btn', b: 'buy' }, { off: done || v.dust < f.craft, ico: 'dust' });
   v.rows.forEach((r, i) => {
     const y = M.y + 6 + i * 57;
     if (r.color) p.R(M.x + 10, y + 3, 3, 5, r.color);
     p.text(r.name, M.x + (r.color ? 16 : 10), y, SC.key);
     r.ids.forEach((id, j) => {
       const cx = M.x + 12 + j * 36, cy = y + 11, c = v.info(id), price = String(c.craft);
-      smallCard(p, c, cx, cy, now, { sel: id === v.sel, hov: id === v.hover, dim: c.enhanced });
-      p.tiny(price, cx + CW - price.length * 4 + 1, cy + CH + 3, c.enhanced ? SC.off : SC.sky);
+      smallCard(p, c, cx, cy, { sel: id === v.sel, hov: id === v.hover });
+      p.tiny(price, cx + CW - price.length * 4 + 1, cy + CH + 3, v.done(id) ? SC.off : SC.sky);
       p.hit(cx, cy, CW, CH, { kind: 'card', id });
     });
   });
-  p.center('조각으로 1장 · 강화를 마친 카드는 흐림', M.x, M.w, M.y + M.h - 14, SC.off);
+  p.center('조각으로 1장', M.x, M.w, M.y + M.h - 14, SC.off);
 }

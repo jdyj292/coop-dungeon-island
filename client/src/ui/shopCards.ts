@@ -1,6 +1,6 @@
 // 카드 상점 카드·팩 그림 (hud.md 8장 카드 상점, 승인 데모 card_shop.html · card_redesign.html): 작은 카드 24×34(카드 창과 같은 계열 테두리·티어 띠), 큰 카드 앞면 48×68(같은 테두리 2배)·뒷면 (초안 docs/refs/demos/card_tall.html),
 // 강화 = 티어 띠 숫자 뒤 + · 큰 카드 이름 뒤 금색 +, 뒤집기(가로로 줄였다 폄), 뒷면 티어 빛, 카드팩(팩 번호 색, 위아래 톱니·카드 문장)·찢긴 윗부분
-import { cardShell, CH, CW, readyMark, scaled, type Paint } from './cardFrame';
+import { cardShell, CH, CW, scaled, type Paint } from './cardFrame';
 import { BAND, tierBand } from './cardTier';
 import type { CardInfo } from './cardTypes';
 import { mix, Pix, SC } from './shopPix';
@@ -13,13 +13,11 @@ const BIG_BAND = 13;
 /** 캔버스 붓 */
 const paint = (p: Pix<unknown>): Paint => (x, y, w, h, c, a) => p.R(x, y, w, h, c, a ?? 1);
 
-/** 작은 카드 (지정 구매 목록, 카드 창과 같은 모양): 계열 테두리·아이콘·티어 띠, 강화 = 띠 숫자 뒤 +, 3장 모임 = ▲, 없는 카드는 그림자. dim = 강화를 마침. t = 초 */
-export function smallCard(p: Pix<unknown>, f: CardInfo, x: number, y: number, t: number, o: { sel?: boolean; hov?: boolean; dim?: boolean } = {}): void {
+/** 작은 카드 (지정 구매 목록, 카드 창과 같은 모양): 계열 테두리·아이콘·티어 띠, 없는 카드는 그림자 */
+export function smallCard(p: Pix<unknown>, f: CardInfo, x: number, y: number, o: { sel?: boolean; hov?: boolean } = {}): void {
   const P = paint(p);
   cardShell(P, f.frame, x, y, CH, f.color, f.owned, (bx, by, bw, bh) => tierBand(P, bx, by + bh - BAND, bw, BAND, f.tier, f.tierColor, f.owned, f.enhanced));
   p.icon(f.id, x + 4, y + 5, f.owned ? {} : { mono: SC.cardBd });
-  if (f.ready) readyMark(P, x, y, CH, t);
-  if (o.dim) p.R(x, y, CW, CH, SC.shade, 0.55);
   if (o.sel) p.corners(x, y, CW, CH, SC.coin);
   else if (o.hov) { p.R(x, y, CW, 1, SC.key); p.R(x, y + CH - 1, CW, 1, SC.key); p.R(x, y, 1, CH, SC.key); p.R(x + CW - 1, y, 1, CH, SC.key); }
 }

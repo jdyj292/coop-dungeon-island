@@ -1,8 +1,8 @@
-// 스킬 카드 저장 (docs/skills.md 1장, db.md cards·card_slots): 보유·장착 읽기, 카드 창 값, 지정 구매·강화·갈기·변형·장착, 던전 빌드, 처음 카드.
+// 스킬 카드 저장 (docs/skills.md 1장, db.md cards·card_slots): 보유·장착 읽기, 카드 창 값, 지정 구매(3장째면 강화)·남은 장수 조각으로·변형·장착, 던전 빌드, 처음 카드.
 // 검사는 shared cards/ (클라이언트 신고값은 믿지 않는다), 돈·조각·카드 변경은 트랜잭션 한 번. 팩 열기는 cardPack.ts
 import {
-  ACTIVE_SLOTS, addCards, CARDS, checkCraft, checkEnhance, checkEnhanceCap, checkEquip, checkGrind, checkVariant, craftPriceOf, defaultLoadout, dungeonBuild,
-  encodeBuild, enhanceCard, equipCard, equippedIds, giftItemOf, grindCards, MVP_WEAPONS, passiveCap, starterCollection, WELCOME_PACKS,
+  ACTIVE_SLOTS, CARDS, checkCraft, checkEquip, checkVariant, craftPriceOf, defaultLoadout, dungeonBuild,
+  encodeBuild, equipCard, giftItemOf, grindSpares, MVP_WEAPONS, passiveCap, receiveCards, starterCollection, WELCOME_PACKS,
   type CardFail, type CardKind, type CardLoadout, type Collection, type OwnedCard, type S2C,
 } from '@game/shared';
 import { and, eq, gte, sql } from 'drizzle-orm';
@@ -96,40 +96,24 @@ export function grantStarter(q: Q, userId: number): void {
     .onConflictDoUpdate({ target: [inventory.userId, inventory.itemId], set: { count: sql`${inventory.count} + ${WELCOME_PACKS.count}` } }).run();
 }
 
-/** 지정 구매: 조각으로 1장 (강화는 따로) */
+/** 지정 구매: 조각으로 1장 (3장째면 바로 강화) */
 export function craftCard(db: Db, userId: number, cardId: string): CardFail | null {
   return db.transaction((tx) => {
-    const fail = checkCraft(cardId, dustOfUser(tx, userId));
+    const c = collectionOf(tx, userId), fail = checkCraft(c, cardId, dustOfUser(tx, userId));
     if (fail || !addDust(tx, userId, -craftPriceOf(cardId))) return fail ?? 'dust';
-    writeCards(tx, userId, addCards(collectionOf(tx, userId), [cardId]), [cardId]);
+    writeCards(tx, userId, receiveCards(c, [cardId]).cards, [cardId]);
     return null;
   });
 }
 
-/** 강화: 같은 카드 3장 → 강화 카드 (끼운 패시브면 비용 +1이 한도 안이어야) */
-export function enhance(db: Db, userId: number, cardId: string): CardFail | null {
+/** 강화한 카드에 남은 보관 장수(예전 규칙으로 쌓인 것)를 조각으로 (섬 입장 때, 직접 갈기는 없음). 받은 조각 */
+export function grindSparesOf(db: Db, userId: number): number {
   return db.transaction((tx) => {
-    const c = collectionOf(tx, userId), weapon = CARDS[cardId]?.weapon ?? '';
-    const fail = checkEnhance(c, cardId);
-    if (fail) return fail;
-    const after = enhanceCard(c, cardId);
-    const capFail = checkEnhanceCap(mastery(tx, userId, weapon).level, after, loadoutOf(tx, userId, weapon));
-    if (capFail) return capFail;
-    writeCards(tx, userId, after, [cardId]);
-    return null;
-  });
-}
-
-/** 갈기: n장 → 조각 (장착한 기본 카드의 마지막 장은 못 갊) */
-export function grindCard(db: Db, userId: number, cardId: string, n: number): CardFail | null {
-  return db.transaction((tx) => {
-    const c = collectionOf(tx, userId), weapon = CARDS[cardId]?.weapon ?? '';
-    const fail = checkGrind(c, cardId, n, equippedIds(loadoutOf(tx, userId, weapon)).includes(cardId));
-    if (fail) return fail;
-    const r = grindCards(c, cardId, n);
-    writeCards(tx, userId, r.cards, [cardId]);
+    const r = grindSpares(collectionOf(tx, userId));
+    if (!r.dust) return 0;
+    writeCards(tx, userId, r.cards, r.ids);
     addDust(tx, userId, r.dust);
-    return null;
+    return r.dust;
   });
 }
 

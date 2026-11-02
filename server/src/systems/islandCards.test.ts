@@ -64,11 +64,28 @@ describe('카드팩', () => {
     expect(p.cards.at(-1)!.tier).toBeGreaterThanOrEqual(2);
     expect(cardsOf(a).gifts).toBe(WELCOME_PACKS.count - 1);
     expect(cardsOf(a).fail).toBeUndefined();
-    // 난수 0 = 티어 1 첫 카드(올려베기)만 3장 → 처음 1장과 4장, 저절로 강화하지 않음
-    expect(gs(a).owned.gs_launch).toEqual({ count: 4, enhanced: false });
+    // 난수 0 = 티어 1 첫 카드(올려베기)만 3장 → 처음 1장 + 2장째에 3장이 모여 바로 강화, 3장째는 갈림
+    expect(gs(a).owned.gs_launch).toEqual({ count: 0, enhanced: true });
     expect(p.cards.map((c) => c.isNew)).toEqual([false, false, false, true]);
+    expect(p.cards.map((c) => c.merged)).toEqual([false, true, false, false]);
+    expect(p.cards.map((c) => c.ground)).toEqual([0, 0, 5, 0]);
+    expect(cardsOf(a).dust).toBe(5);
     const n = Object.values(gs(a).owned).reduce((s, o) => s + o.count, 0);
-    expect(n).toBe(2 + 4);
+    expect(n).toBe(1 + 1);
+  });
+
+  it('이미 강화한 카드는 보관하지 않고 바로 갈려 조각, 지정 구매도 못 함 (done)', () => {
+    const a = user(), g = game();
+    enter(g, a);
+    give(a, 'gs_launch', 0, true);
+    card(g, a, { op: 'open', weapon: 'greatsword', pack: 1, pay: 'gift' });
+    const p = last<S2C['pack']>(a, 'pack');
+    expect(p.cards.map((c) => c.ground)).toEqual([5, 5, 5, 0]);
+    expect(gs(a).owned.gs_launch).toEqual({ count: 0, enhanced: true });
+    expect(cardsOf(a).dust).toBe(15);
+    card(g, a, { op: 'craft', cardId: 'gs_launch' });
+    expect(cardsOf(a).fail).toBe('done');
+    expect(cardsOf(a).dust).toBe(15);
   });
 
   it('코인·조각 모자람, 숙련도 모자란 팩, 선물은 팩 1만', () => {
@@ -110,55 +127,51 @@ describe('카드팩', () => {
 });
 
 describe('지정 구매·강화·갈기·변형', () => {
-  it('지정 구매 3장 = 3장 보관 (저절로 강화 안 함), 조각 모자라면 거절', () => {
+  it('지정 구매 3장째에 바로 강화, 그 뒤는 못 삼 (done), 조각 모자라면 거절', () => {
     const a = user(1, 0, craftPriceOf('gs_whirl') * 3), g = game();
     enter(g, a);
-    for (let i = 0; i < 3; i++) card(g, a, { op: 'craft', cardId: 'gs_whirl' });
-    expect(gs(a).owned.gs_whirl).toEqual({ count: 3, enhanced: false });
+    card(g, a, { op: 'craft', cardId: 'gs_crush' });
+    expect(cardsOf(a).fail).toBe('dust');
+    for (let i = 0; i < 2; i++) card(g, a, { op: 'craft', cardId: 'gs_whirl' });
+    expect(gs(a).owned.gs_whirl).toEqual({ count: 2, enhanced: false });
+    card(g, a, { op: 'craft', cardId: 'gs_whirl' });
+    expect(gs(a).owned.gs_whirl).toEqual({ count: 0, enhanced: true });
     expect(dust(a)).toBe(0);
     card(g, a, { op: 'craft', cardId: 'gs_whirl' });
-    expect(cardsOf(a).fail).toBe('dust');
+    expect(cardsOf(a).fail).toBe('done');
   });
 
-  it('강화: 3장 소모 → 강화 카드, 모자라거나 이미 강화면 merge, 없는 카드는 owned', () => {
+  it('직접 강화 요청은 없음 (메시지 거절)', () => {
     const a = user(), g = game();
     enter(g, a);
-    card(g, a, { op: 'enhance', cardId: 'gs_launch' });
-    expect(cardsOf(a).fail).toBe('merge');
-    card(g, a, { op: 'enhance', cardId: 'gs_whirl' });
-    expect(cardsOf(a).fail).toBe('owned');
     give(a, 'gs_launch', 4);
-    card(g, a, { op: 'enhance', cardId: 'gs_launch' });
-    expect(cardsOf(a).fail).toBeUndefined();
-    expect(gs(a).owned.gs_launch).toEqual({ count: 1, enhanced: true });
-    card(g, a, { op: 'enhance', cardId: 'gs_launch' });
-    expect(cardsOf(a).fail).toBe('merge');
+    const before = sent.length;
+    card(g, a, { op: 'enhance', cardId: 'gs_launch' } as never);
+    expect(sent.length).toBe(before);
   });
 
-  it('끼운 패시브 강화는 비용 +1이 한도 안이어야 (cap)', () => {
-    const a = user(1), g = game();
+  it('끼운 패시브가 3장째로 강화돼도 비용 그대로 (한도가 꽉 차도 됨)', () => {
+    const a = user(1, 0, craftPriceOf('gs_heavyhand')), g = game();
     enter(g, a);
-    give(a, 'gs_heavyhand', 3);
+    give(a, 'gs_heavyhand', 2);
     give(a, 'gs_steadfast', 1);
     equip(g, a, 'passive', 0, 'gs_heavyhand');
     equip(g, a, 'passive', 1, 'gs_steadfast');
-    card(g, a, { op: 'enhance', cardId: 'gs_heavyhand' });
-    expect(cardsOf(a).fail).toBe('cap');
-    expect(gs(a).owned.gs_heavyhand).toEqual({ count: 3, enhanced: false });
+    card(g, a, { op: 'craft', cardId: 'gs_heavyhand' });
+    expect(cardsOf(a).fail).toBeUndefined();
+    expect(gs(a)).toMatchObject({ owned: { gs_heavyhand: { count: 0, enhanced: true } }, passive: ['gs_heavyhand', 'gs_steadfast'] });
   });
 
-  it('갈기: 조각 받음, 장착한 기본 카드의 마지막 장은 못 갊, 빼면 됨', () => {
+  it('직접 갈기는 없음, 섬에 들어오면 강화한 카드에 남은 장수만 조각으로', () => {
     const a = user(), g = game();
+    give(a, 'gs_quake', 2, true);
+    give(a, 'gs_whirl', 2);
     enter(g, a);
-    card(g, a, { op: 'grind', cardId: 'gs_launch', n: 1 });
-    expect(cardsOf(a).fail).toBe('equipped');
-    equip(g, a, 'active', 0, null);
-    card(g, a, { op: 'grind', cardId: 'gs_launch', n: 1 });
-    expect(cardsOf(a).fail).toBeUndefined();
-    expect(gs(a).owned.gs_launch).toBeUndefined();
-    expect(dust(a)).toBe(dustOf('gs_launch'));
-    card(g, a, { op: 'grind', cardId: 'gs_launch', n: 1 });
-    expect(cardsOf(a).fail).toBe('owned');
+    expect(dust(a)).toBe(dustOf('gs_quake') * 2);
+    expect(gs(a).owned).toMatchObject({ gs_quake: { count: 0, enhanced: true }, gs_whirl: { count: 2, enhanced: false } });
+    const before = sent.length;
+    card(g, a, { op: 'grind', cardId: 'gs_whirl', n: 1 } as never);
+    expect(sent.length).toBe(before);
   });
 
   it('변형은 강화한 액티브만, null = 기본 동작', () => {
@@ -193,19 +206,19 @@ describe('장착', () => {
     expect(cardsOf(a).fail).toBe('locked');
   });
 
-  it('패시브는 비용 한도 안에서 (강화 +1), 패시브를 끼워도 액티브 배치는 그대로', () => {
-    const a = user(5), g = game();
+  it('패시브는 비용 한도 안에서 (비용 = 티어, 강화해도 그대로), 패시브를 끼워도 액티브 배치는 그대로', () => {
+    const a = user(6), g = game();
     enter(g, a);
     give(a, 'gs_steadfast', 0, true);
-    give(a, 'gs_keenedge');
-    give(a, 'gs_honing', 0, true);
+    give(a, 'gs_aftershock');
+    give(a, 'gs_stomp', 0, true);
     equip(g, a, 'passive', 0, 'gs_steadfast');
-    equip(g, a, 'passive', 1, 'gs_keenedge');
-    expect(gs(a)).toMatchObject({ cap: 4, active: ['gs_launch', 'gs_earthsplit', '', ''], passive: ['gs_steadfast', 'gs_keenedge'] });
-    equip(g, a, 'passive', 2, 'gs_honing');
+    equip(g, a, 'passive', 1, 'gs_aftershock');
+    expect(gs(a)).toMatchObject({ cap: 4, active: ['gs_launch', 'gs_earthsplit', '', ''], passive: ['gs_steadfast', 'gs_aftershock'] });
+    equip(g, a, 'passive', 2, 'gs_stomp');
     expect(cardsOf(a).fail).toBe('cap');
     equip(g, a, 'passive', 0, null);
-    expect(gs(a).passive).toEqual(['gs_keenedge']);
+    expect(gs(a).passive).toEqual(['gs_aftershock']);
   });
 
   it('출발 카운트다운 중인 대기자는 장착만 못 바꿈 (열기는 됨)', () => {

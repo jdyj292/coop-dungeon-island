@@ -113,6 +113,13 @@
       "when": 1793622068895,
       "tag": "0015_drop_quickrise",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1793625069530,
+      "tag": "0016_auto_merge",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 // 카드 장착 (docs/skills.md 1장 장착, DB card_slots): 액티브 4칸(A S D F), 패시브 = 비용 합계 한도, 장착 숙련도 (클라이언트·서버 공용)
 // 무기마다 따로. 저장이 없으면 기본 배치 = A S에 처음 카드
 import { ACTIVE_SLOTS, CARDS, equipLevelOf, passiveCap, passiveCost, starterCards, type CardKind } from './catalog';
-import { isEnhanced, owns, type CardFail, type Collection } from './collection';
+import { owns, type CardFail, type Collection } from './collection';
 
 /** 무기 하나의 장착: 액티브 칸(길이 ACTIVE_SLOTS, 빈칸 null), 패시브(순서) */
 export interface CardLoadout {
@@ -15,8 +15,7 @@ const pad = (ids: readonly (string | null)[]): (string | null)[] =>
 export const defaultLoadout = (weapon: string): CardLoadout => ({ active: pad(starterCards(weapon)), passive: [] });
 
 /** 장착 패시브 비용 합 */
-export const passiveUsed = (c: Collection, passive: readonly string[]): number =>
-  passive.reduce((s, id) => s + passiveCost(id, isEnhanced(c, id)), 0);
+export const passiveUsed = (passive: readonly string[]): number => passive.reduce((s, id) => s + passiveCost(id), 0);
 
 /** 장착한 카드 (액티브 + 패시브) */
 export const equippedIds = (lo: CardLoadout): string[] => [...lo.active.filter((x): x is string => !!x), ...lo.passive];
@@ -49,13 +48,9 @@ export function checkEquip(weapon: string, level: number, c: Collection, lo: Car
   if (!card || card.weapon !== weapon || card.kind !== kind) return 'card';
   if (!owns(c, id)) return 'owned';
   if (level < equipLevelOf(id)) return 'locked';
-  if (kind === 'passive' && passiveUsed(c, equipCard(lo, kind, slot, id).passive) > passiveCap(level)) return 'cap';
+  if (kind === 'passive' && passiveUsed(equipCard(lo, kind, slot, id).passive) > passiveCap(level)) return 'cap';
   return null;
 }
-
-/** 강화하면 끼운 패시브 비용이 +1: 한도를 넘으면 'cap' (after = 강화한 보유) */
-export const checkEnhanceCap = (level: number, after: Collection, lo: CardLoadout): CardFail | null =>
-  (passiveUsed(after, lo.passive) > passiveCap(level) ? 'cap' : null);
 
 /** 지금 쓸 수 있는 장착: 없는 카드·다른 무기·숙련도가 모자란 카드는 빼고, 패시브는 한도를 넘는 뒤쪽부터 뺌 (던전 빌드, 숙련도가 내려가진 않지만 데이터가 바뀔 때) */
 export function usableLoadout(weapon: string, level: number, c: Collection, lo: CardLoadout): CardLoadout {
@@ -64,7 +59,7 @@ export function usableLoadout(weapon: string, level: number, c: Collection, lo: 
   const passive: string[] = [];
   for (const id of lo.passive) {
     if (!ok(id, 'passive') || passive.includes(id)) continue;
-    if (passiveUsed(c, [...passive, id]) <= passiveCap(level)) passive.push(id);
+    if (passiveUsed([...passive, id]) <= passiveCap(level)) passive.push(id);
   }
   return { active, passive };
 }

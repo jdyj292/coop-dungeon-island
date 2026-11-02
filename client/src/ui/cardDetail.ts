@@ -1,6 +1,6 @@
 // 카드 창 오른쪽 상세 (hud.md 8장, 승인 데모 card_redesign.html): 머리(계열 색·카드·이름(강화 = 금색 +)·종류·티어 글자·모자란 장착 Lv) /
-// 보유 줄(n/3 · 3장 모임 강화 가능 · 강화 · 남는 장수 · 없으면 지정 구매 가격) / 설명 3줄 / 액티브 = 강화면 변형 2장 고르기, 아니면 변형 이름만 ·
-// 패시브 = 기본/강화 효과·비용 / 아래 = 알림 또는 강화(3장 모이면)·갈기·끼우기 버튼. 계열 보너스 줄에 마우스를 올리면 보너스 상세. 머리 카드는 cardWindow가 그림
+// 보유 줄(n/3 · 강화 · 없으면 지정 구매 가격, 3장이 모이면 서버가 바로 강화, 갈기 없음) / 설명 3줄 / 액티브 = 강화면 변형 2장 고르기, 아니면 변형 이름만 ·
+// 패시브 = 기본/강화 효과·비용 / 아래 = 알림 또는 끼우기 버튼. 계열 보너스 줄에 마우스를 올리면 보너스 상세. 머리 카드는 cardWindow가 그림
 import { buttonBox, cardIcon, dustGem, fitKo, lockIcon, R, roman, SK, tiny, type Painter } from './cardParts';
 import type { CardBtn, CardHit, CardSource } from './cardTypes';
 import { koWidth, wrapKo } from './koText';
@@ -33,11 +33,9 @@ export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
     p.text(X + MW - w7(pt), RY, pt, SK.key);
   } else if (!c.enhanced) {
     for (let i = 0; i < s.merge; i++) { R(g, X + i * 7, RY + 2, 6, 6, SK.shade); R(g, X + i * 7, RY + 2, 6, 5, i < c.count ? SK.coin : SK.track); }
-    p.text(X + s.merge * 7 + 3, RY, c.ready ? `${s.merge}장 모임 · 강화할 수 있어요` : `보유 ${c.count}/${s.merge}장`, c.ready ? SK.coin : SK.txt);
-    if (c.count > s.merge) p.text(X + MW - w7(`+${c.count - s.merge}`), RY, `+${c.count - s.merge}`, SK.spare);
+    p.text(X + s.merge * 7 + 3, RY, `보유 ${c.count}/${s.merge}장`, SK.txt);
   } else {
     p.text(X, RY, c.active ? `강화 · 위력 ×${s.enhancedMul}` : '강화', SK.coin);
-    if (c.spare) p.text(X + MW - w7(`남는 ${c.spare}장`), RY, `남는 ${c.spare}장`, SK.spare);
   }
   wrapKo(c.desc.replace(/\n/g, ' '), MW, 3, 'koSmall').forEach((l, i) => p.text(X, 78 + i * 10, l, SK.dim));
   for (let i = 0; i < 126; i += 2) R(g, 243 + i, 109, 1, 1, SK.cardBd);
@@ -77,11 +75,6 @@ export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
     return;
   }
   const BY = 190;
-  if (c.ready) button(p, s, 'enhance', '강화 (U)', X - 1, BY, mine, SK.coin, 16);
-  else if (c.owned && c.count > 0) {
-    const n = c.spare > 1 ? c.spare : 1, arm = s.grindArm === id;
-    button(p, s, 'grind', arm ? `한 번 더 · +${c.dust * n}` : `갈기 +${c.dust * n}`, X - 1, BY, mine, arm ? SK.danger : undefined);
-  }
   if (c.owned && !c.locked) {
     const lab = c.equipped ? '빼기' : '끼우기', w = w7(lab) + 14;
     button(p, s, 'equip', lab, X + MW + 1 - w, BY, mine);
@@ -92,11 +85,11 @@ export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
   } else p.text(X, BY + 1, '카드 상점에서 사기', SK.off);
 }
 
-/** 버튼 (border = 금색 강화 · 빨강 갈기 확인) */
-function button(p: Painter<CardHit>, s: CardSource, b: CardBtn, label: string, x: number, y: number, can: boolean, border?: string, pad = 12): void {
-  const w = w7(label) + pad, hover = can && s.hoverBtn === b, gold = border === SK.coin;
-  buttonBox(p.g, x, y, w, { hover: hover || gold, ...(border ? { border } : {}) });
-  p.center(x, w, y + 1, label, hover || gold ? SK.coin : SK.txt, 'koSmall', can ? 1 : 0.35);
+/** 버튼 */
+function button(p: Painter<CardHit>, s: CardSource, b: CardBtn, label: string, x: number, y: number, can: boolean, pad = 12): void {
+  const w = w7(label) + pad, hover = can && s.hoverBtn === b;
+  buttonBox(p.g, x, y, w, { hover });
+  p.center(x, w, y + 1, label, hover ? SK.coin : SK.txt, 'koSmall', can ? 1 : 0.35);
   if (can) p.hit(x, y, w, 12, { kind: 'btn', b });
 }
 

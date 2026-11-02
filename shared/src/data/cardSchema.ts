@@ -24,7 +24,7 @@ export const card = z.object({
   kind: z.enum(['active', 'passive']),
   branch: z.enum(['A', 'B']),
   tier: tierNo,
-  /** 패시브 비용 (없으면 티어, 강화 +1) */
+  /** 패시브 비용 (없으면 티어, 강화해도 그대로) */
   cost: int.positive().optional(),
 }).strict();
 

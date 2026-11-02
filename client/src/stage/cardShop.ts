@@ -35,7 +35,8 @@ export class CardShop {
   private sel = '';
   private hover: string | null = null;
   private opening: PackOpening | null = null;
-  private bought: { id: string; t0: number; fired: boolean } | null = null;
+  /** 지정 구매 결과 (merged = 그 장으로 강화됨) */
+  private bought: { id: string; t0: number; fired: boolean; merged: boolean } | null = null;
   private pending: { kind: 'open' | 'craft'; seq: number; packSeq: number; id?: string } | null = null;
   private note: { text: string; color: string; until: number } | null = null;
   /** 무기|팩 → 천장 횟수 (마지막으로 연 팩에서) */
@@ -58,10 +59,13 @@ export class CardShop {
   private get mine() { return this.conn.cards.weapons.find((w) => w.weapon === this.weapon); }
   private get coll(): Collection { return this.mine?.owned ?? {}; }
   private get now(): number { return performance.now() / 1000; }
+  /** 상점 카드 = 팩·지정 구매로 받는 기본 카드: 강화 표시 없음 (강화했는지는 done) */
   private info = (id: string): CardInfo => {
     const m = this.mine;
-    return cardInfo(this.weapon, m?.level ?? 1, this.coll, { active: (m?.active ?? []).map((x) => x || null), passive: m?.passive ?? [] }, id);
+    return { ...cardInfo(this.weapon, m?.level ?? 1, this.coll, { active: (m?.active ?? []).map((x) => x || null), passive: m?.passive ?? [] }, id), enhanced: false };
   };
+  /** 이미 강화한 카드 (지정 구매 못 함) */
+  private done = (id: string): boolean => !!this.coll[id]?.enhanced;
 
   show(): void {
     this.visible = true;
@@ -115,7 +119,7 @@ export class CardShop {
     return {
       tab: this.tab, weapons: MVP_WEAPONS.map((id) => ({ id, name: WEAPONS[id]?.name ?? id })), weapon: this.weapon, opening: this.busy,
       coin: this.conn.me.wallet, dust: this.conn.cards.dust, gifts: this.conn.cards.gifts, giftPack: WELCOME_PACKS.pack, packs: this.packs(), selPack: this.selPack,
-      view: this.view, rows, sel: this.sel, hover: this.hover, merge: CARD.mergeCount, info: this.info,
+      view: this.view, rows, sel: this.sel, hover: this.hover, merge: CARD.mergeCount, info: this.info, done: this.done,
       bought: this.bought ? { id: this.bought.id, t: now - this.bought.t0 } : null,
     };
   }
@@ -132,7 +136,7 @@ export class CardShop {
 
   private buy(): void {
     const f = this.info(this.sel), c = this.conn;
-    if (!this.sel || c.cards.dust < f.craft || this.pending) return;
+    if (!this.sel || c.cards.dust < f.craft || this.done(this.sel) || this.pending) return;
     this.pending = { kind: 'craft', seq: c.cardsSeq, packSeq: c.packSeq, id: this.sel };
     c.send('card', { op: 'craft', cardId: this.sel });
   }
@@ -147,7 +151,7 @@ export class CardShop {
     } else if (c.cardsSeq > q.seq && (q.kind === 'craft' || c.cards.fail)) {
       this.pending = null;
       if (c.cards.fail) { if (q.kind === 'open') this.opening = null; return this.say(FAIL_TEXT[c.cards.fail]); }
-      this.bought = { id: q.id!, t0: now, fired: false };
+      this.bought = { id: q.id!, t0: now, fired: false, merged: this.done(q.id!) };
     }
   }
 
@@ -162,6 +166,12 @@ export class CardShop {
     this.netUpdate(now);
     this.fx.step(dt);
     this.opening?.update(now, dt, this.fx, this.info);
+    const op = this.opening;
+    // 확인·한 팩 더 (갈릴 카드가 있으면 갈리는 연출이 끝난 뒤)
+    if (op?.stage === 'closed') {
+      this.opening = null;
+      if (op.after === 'again') this.openPack(op.pay);
+    }
     music.setLevel(this.opening?.music || 1);
     const b = this.bought;
     if (b && !b.fired && now - b.t0 >= 0.3) {
@@ -169,6 +179,8 @@ export class CardShop {
       const t = tierOf(b.id), cx = SIDE.x + SIDE.w / 2, cy = SIDE.y + 38 + 32;
       this.fx.burst(cx, cy, t <= 1 ? 6 : t === 2 ? 14 : 26, t <= 1 ? SC.dust : `global.ui.card.${tierDef(t)?.color ?? 'tier1'}`, t >= 3 ? 1.6 : 1);
       if (t >= 3) this.fx.shake = 0.25;
+      // 3장째를 사서 바로 강화됨
+      if (b.merged) { sfx.play('card_merge'); this.fx.burst(cx, cy, 22, SC.coin, 1.3, 0.3); this.say(`${this.info(b.id).name} 3장 모임 · 강화!`, SC.coin); }
     }
     const o = this.fx.offset();
     this.img.setPosition(this.ox + o.x, this.oy + o.y);
@@ -235,8 +247,7 @@ export class CardShop {
   private act(h: ShopHit | null): void {
     const op = this.opening, now = this.now;
     if (op) {
-      if (h?.kind === 'btn' && h.b === 'ok') return void (this.opening = null);
-      if (h?.kind === 'btn' && h.b === 'again') { this.opening = null; return this.openPack(op.pay); }
+      if (h?.kind === 'btn' && (h.b === 'ok' || h.b === 'again')) return op.confirm(h.b, now);
       return op.onHit(h, now);
     }
     if (!h) return;
@@ -253,7 +264,7 @@ export class CardShop {
   onKey(code: string): boolean {
     const op = this.opening, now = this.now, enter = code === 'Enter' || code === 'Space';
     if (op) {
-      if (op.stage === 'done' && (enter || code === 'Escape')) this.opening = null;
+      if (op.stage === 'done' && (enter || code === 'Escape')) op.confirm('ok', now);
       else op.onKey(code, now);
       return true;
     }
