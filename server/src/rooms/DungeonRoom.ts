@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 import { Room, type Client } from 'colyseus';
-import { C2S, FixedStep, NET, TICK, type C2SType, type S2C } from '@game/shared';
+import { C2S, FixedStep, ISLAND, NET, TICK, type C2SType, type S2C } from '@game/shared';
 import { CONFIG } from '../config';
 import { saveRun } from '../db/runStore';
 import { SESSION_COOKIE } from '../http/routes';
@@ -19,7 +19,7 @@ const KICK_CODE = 4001;
  * party가 없으면 개발용 방 (?online=1, 로그인 없이, 저장 안 함)
  */
 export class DungeonRoom extends Room<DungeonState> {
-  maxClients = 4;
+  maxClients = ISLAND.well.maxParty;
   private game!: DungeonGame;
   private ticks = new FixedStep();
   private party: DungeonOptions['party'];

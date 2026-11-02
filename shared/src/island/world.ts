@@ -64,7 +64,7 @@ export type SpawnKind = 'login' | 'return';
 
 /** 입장 자리: 접속은 선착장, 던전 복귀는 우물 앞. 사람마다 옆으로 한 칸씩 */
 export function spawnPos(index: number, kind: SpawnKind = 'login'): Vec2 {
-  const s = ISLAND.spawn[kind], side = [0, -1, 1, -2][index % 4]!;
+  const s = ISLAND.spawn[kind], side = [0, -1, 1, -2, 2, -3][index % 6]!;
   return { x: (s.x + 0.5 + side) * TILE, y: (s.y + 0.5) * TILE };
 }
 

@@ -35,7 +35,7 @@ describe('장식 배치', () => {
     store.give(Number(a), 'fence', 2);
     store.give(Number(b), 'fence', 1);
     for (const id of [a, b]) {
-      g.addResident({ id, name: id, color: 0 });
+      g.addResident({ id, name: id });
       g.join(id);
     }
     g.onMessage(a, 'place', { itemId: 'fence', ...cell, rot: 0, from: 'mine' });
@@ -50,7 +50,7 @@ describe('장식 배치', () => {
   it('가방에 없으면 실패, 다른 사람이 치워도 놓은 사람 가방으로, 활동 기록', () => {
     const a = String(user('a')), b = String(user('b'));
     const { store, g } = game();
-    for (const id of [a, b]) { g.addResident({ id, name: id, color: 0 }); g.join(id); }
+    for (const id of [a, b]) { g.addResident({ id, name: id }); g.join(id); }
     g.onMessage(a, 'place', { itemId: 'lamp', ...cell, rot: 0, from: 'mine' });
     expect(fails(a)).toEqual(['none']);
     store.give(Number(a), 'lamp', 1);
@@ -68,7 +68,7 @@ describe('장식 배치', () => {
     const { store, g } = game();
     store.give(Number(a), 'bench', 1);
     store.give(Number(a), 'fence', 1);
-    g.addResident({ id: a, name: 'a', color: 0 });
+    g.addResident({ id: a, name: 'a' });
     g.join(a);
     g.onMessage(a, 'place', { itemId: 'bench', ...cell, rot: 0, from: 'mine' });
     g.onMessage(a, 'place', { itemId: 'fence', x: cell.x + 3, y: cell.y + 1, rot: 0, from: 'mine' });
@@ -85,7 +85,7 @@ describe('장식 배치', () => {
     const a = String(user('a'));
     db.insert(islandStorage).values({ islandId, itemId: 'fountain', count: 1 }).run();
     const { store, g } = game();
-    g.addResident({ id: a, name: 'a', color: 0 });
+    g.addResident({ id: a, name: 'a' });
     g.join(a);
     expect(g.state.storage.get('fountain')).toBe(1);
     g.onMessage(a, 'place', { itemId: 'fountain', ...cell, rot: 0, from: 'storage' });
@@ -101,7 +101,7 @@ describe('장식 배치', () => {
     const a = String(user('a'));
     const { store, g } = game();
     store.give(Number(a), 'fence', 3);
-    g.addResident({ id: a, name: 'a', color: 0 });
+    g.addResident({ id: a, name: 'a' });
     g.join(a);
     const w = g.walkerOf(a)!;
     w.pos = { x: (cell.x + 0.5) * TILE, y: (cell.y + 0.5) * TILE };
@@ -116,7 +116,7 @@ describe('장식 배치', () => {
   it('give는 개발 모드에서만, 가입 선물 목록은 장식', () => {
     const a = String(user('a'));
     const { store, g } = game(false);
-    g.addResident({ id: a, name: 'a', color: 0 });
+    g.addResident({ id: a, name: 'a' });
     g.join(a);
     g.onMessage(a, 'give', { itemId: 'tree', count: 3 });
     expect(store.inventory(Number(a))).toEqual({});
@@ -129,7 +129,7 @@ describe('시설 옮기기 (island.md 2장)', () => {
   it('주민 누구나 옮김, 우물은 고정, 다시 열어도 남음, 활동 기록', () => {
     const a = String(user('a'));
     const { g } = game();
-    g.addResident({ id: a, name: 'a', color: 0 });
+    g.addResident({ id: a, name: 'a' });
     g.join(a);
     g.onMessage(a, 'moveFacility', { facilityId: 'well', ...cell });
     expect(fails(a)).toEqual(['fixed']);
@@ -170,7 +170,7 @@ describe('시설 옮기기 (island.md 2장)', () => {
   it('옮긴 시설은 걷기 장애물', () => {
     const a = String(user('a'));
     const { g } = game();
-    g.addResident({ id: a, name: 'a', color: 0 });
+    g.addResident({ id: a, name: 'a' });
     g.join(a);
     g.onMessage(a, 'moveFacility', { facilityId: 'board', ...cell });
     const w = g.walkerOf(a)!;

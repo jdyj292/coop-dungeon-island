@@ -55,7 +55,7 @@ export class IslandStage {
     this.hops = new WellHops(scene, 4400);
     conn.onChat = (m) => {
       const r = conn.residents.latest?.items.get(m.player);
-      this.chat.push({ name: r?.name ?? '?', color: r?.color ?? 0, text: m.text }, this.clock);
+      this.chat.push({ name: r?.name ?? '?', text: m.text }, this.clock);
       this.bubbles.say(m.player, m.text, this.clock);
     };
     conn.onSnapshot = () => this.reconcile();
@@ -163,7 +163,7 @@ export class IslandStage {
     let s = this.shown.get(id);
     if (!s) {
       s = {
-        view: new PlayerView(this.scene, 0, r.color, false),
+        view: new PlayerView(this.scene, 0, false),
         name: koText(this.scene, 0, 0, r.name, { font: 'koSmall', color: 'global.fx.flash', outline: 'four', align: 'center' }).setDepth(4500),
         p: newPlayerState({ x: at.x, y: at.y }),
         last: { x: at.x, y: at.y },

@@ -42,8 +42,6 @@ const DISCONNECTED_ALPHA = 0.45;
 
 interface Remote {
   view: PlayerView;
-  /** 플레이어 색 번호 (입장 순서) */
-  colorIndex: number;
   ghosts: Afterimages;
   last: { x: number; y: number } | null;
 }
@@ -92,10 +90,10 @@ export class OnlineStage {
     conn.onSnapshot = () => this.local.reconcile();
   }
 
-  /** 플레이어 색 번호(입장 순서)·머리 (모르면 0·기본, 얼굴·대화 기록·정산 화면) */
-  lookOf(pid: string): { color: number; hair: Hair } {
+  /** 머리 (모르면 기본, 얼굴·정산 화면) */
+  lookOf(pid: string): { hair: Hair } {
     const r = this.players.get(pid);
-    return { color: r?.colorIndex ?? 0, hair: r?.view.hair ?? DEFAULT_HAIR };
+    return { hair: r?.view.hair ?? DEFAULT_HAIR };
   }
 
   /** 쓰러진 동료 (나 제외): 화면 위치와 부활 진행도 0~1 */
@@ -130,7 +128,7 @@ export class OnlineStage {
     for (const [id, r] of this.players) {
       const s = latest?.get(id);
       if (id === this.conn.myId || !s) continue;
-      out.push({ id, colorIndex: r.colorIndex, hair: r.view.hair, hp: s.maxHp ? s.hp / s.maxHp : 0, down: s.state === 'knocked', disconnected: s.state === 'disconnected' });
+      out.push({ id, hair: r.view.hair, hp: s.maxHp ? s.hp / s.maxHp : 0, down: s.state === 'knocked', disconnected: s.state === 'disconnected' });
     }
     return out;
   }
@@ -171,7 +169,7 @@ export class OnlineStage {
     const ps = c.players.sample(t);
     for (const [id, s] of ps) {
       let r = this.players.get(id);
-      if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1, s.color), colorIndex: s.color, ghosts: new Afterimages(this.scene), last: null }));
+      if (!r) this.players.set(id, (r = { view: new PlayerView(this.scene, FX_DEPTH - 1), ghosts: new Afterimages(this.scene), last: null }));
       r.view.hair = hairOfLook(s.look);
       const w = weaponDef(s.weapon);
       r.view.weaponVisual = w.visual;

@@ -13,7 +13,7 @@ function make() {
     onDepart: (ids, floor) => departed.push([ids, floor]),
   });
   const enter = (id: string, atWell = true) => {
-    g.addResident({ id, name: id, color: 0 });
+    g.addResident({ id, name: id });
     g.join(id);
     if (atWell) g.walkerOf(id)!.pos = { ...front };
   };
@@ -64,12 +64,12 @@ describe('우물 출발', () => {
 
   it('가득 차면 거절, 끊기면 빠지고 대기 시작자가 바뀜, 아무도 없으면 카운트다운 취소', () => {
     const { g, enter, fails } = make();
-    for (const id of ['a', 'b', 'c', 'd', 'e']) { enter(id); g.onMessage(id, 'well', { op: 'join' }); }
-    expect(fails('e')).toEqual(['full']);
+    for (const id of ['a', 'b', 'c', 'd', 'e', 'f', 'g']) { enter(id); g.onMessage(id, 'well', { op: 'join' }); }
+    expect(fails('g')).toEqual(['full']);
     g.onMessage('a', 'well', { op: 'depart' });
     g.leave('a');
     expect(g.state.well.members[0]).toBe('b');
-    for (const id of ['b', 'c', 'd']) g.onMessage(id, 'well', { op: 'leave' });
+    for (const id of ['b', 'c', 'd', 'e', 'f']) g.onMessage(id, 'well', { op: 'leave' });
     expect(g.state.well.departAt).toBe(0);
   });
 

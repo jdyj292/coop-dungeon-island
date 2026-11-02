@@ -8,8 +8,6 @@ import { ramp, shade, type Ramp, type Shaded } from './shade';
 export interface CharacterColors {
   /** palette 경로 (global.hairColors.N) */
   hairColor: string;
-  /** palette 경로 (global.playerColors.N) */
-  playerColor: string;
 }
 
 export interface RenderedSprite extends Shaded {
@@ -23,7 +21,7 @@ export function resolveMaterials(
   colors: CharacterColors | undefined,
   extra?: { shaded?: Record<string, string>; fixed?: Record<string, string> },
 ): { shaded: Record<string, Ramp>; fixed: Record<string, string> } {
-  const special: Record<string, string | undefined> = { $hairColor: colors?.hairColor, $playerColor: colors?.playerColor };
+  const special: Record<string, string | undefined> = { $hairColor: colors?.hairColor };
   const shaded: Record<string, Ramp> = {};
   const fixed: Record<string, string> = {};
   for (const [ch, ref] of Object.entries({ ...data.materials.shaded, ...extra?.shaded })) {

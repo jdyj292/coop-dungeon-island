@@ -40,8 +40,8 @@ export class ResultPanel {
   private names: KoText[] = [];
   private t = 0;
 
-  /** lookOf = pid → 플레이어 색 번호·머리, myId = 내 줄 (위쪽 줄은 내 정산) */
-  constructor(private scene: Phaser.Scene, depth: number, private r: Result, private myId: string, private lookOf: (pid: string) => { color: number; hair: Hair }) {
+  /** lookOf = pid → 머리, myId = 내 줄 (위쪽 줄은 내 정산) */
+  constructor(private scene: Phaser.Scene, depth: number, private r: Result, private myId: string, private lookOf: (pid: string) => { hair: Hair }) {
     this.g = scene.add.graphics().setScrollFactor(0).setDepth(depth);
     for (let i = 0; i < r.lines.length; i++) {
       this.faces.push(scene.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setScrollFactor(0).setDepth(depth + 1).setVisible(false));
@@ -106,9 +106,8 @@ export class ResultPanel {
       face.setVisible(show);
       name.setVisible(show);
       if (!show) return;
-      const { color, hair } = this.lookOf(l.pid);
-      dot(g, lx - 4, ly, C(`global.playerColors.${color}`), 2, 11);
-      setFace(this.scene, face, r.kind === 'wipe', color, lx, ly, hair);
+      const { hair } = this.lookOf(l.pid);
+      setFace(this.scene, face, r.kind === 'wipe', lx, ly, hair);
       name.moveTo(lx + 15, ly);
       coinIcon(g, lx + 15 + NAME_W + 3, ly + 3);
       drawText(g, String(l.wallet), lx + 15 + NAME_W + 11, ly + 3, { color: 'global.allyFx.gold', outline: 'none' });

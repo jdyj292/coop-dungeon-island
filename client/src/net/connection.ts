@@ -1,6 +1,6 @@
 // 서버 던전 방 접속 (docs/network.md 3~6장): 상태 패치 → 스냅샷 버퍼, 이벤트 → 콜백, 메시지 보내기
 import { Client, type Room } from 'colyseus.js';
-import { NET, type C2SMessage, type C2SType, type S2C } from '@game/shared';
+import { ISLAND, NET, type C2SMessage, type C2SType, type S2C } from '@game/shared';
 import { ServerClock } from './clock';
 import { DelayLine, type NetSim } from './delayLine';
 import { SnapshotBuffer, type Pos } from './interp';
@@ -27,9 +27,7 @@ export interface PlayerSnap extends Pos {
   lastInputSeq: number;
   /** 쓰러진 동안 동료 부활 진행도 0~255 */
   reviveProgress: number;
-  /** 플레이어 색 번호 (섬 주민 순서, 개발 방은 입장 순서) */
-  color: number;
-  /** 외형 키 "의상:머리:머리색:플레이어 색" (view/look.ts hairOfLook) */
+  /** 외형 키 "의상:머리:머리색" (view/look.ts hairOfLook) */
   look: string;
   /** 무기 id (weapons.json) */
   weapon: string;
@@ -209,7 +207,7 @@ export class Connection {
   /** 첫 상태까지 받은 뒤 돌려준다 (방 번호를 알아야 화면을 만든다) */
   /** 개발 방: ?room=1~6 (기본 1) ?party=1~4 (기본 2) ?floor=training ?weapon ?skills=gs_launch:3:double (스킬 노드, skillTree.encodeBuild) */
   static devRoom(p: URLSearchParams): { room: number; partySize: number; floor?: string; weapon?: string; skills?: string } {
-    const room = Number(p.get('room') ?? 1), partySize = Math.min(4, Math.max(1, Number(p.get('party') ?? 2)));
+    const room = Number(p.get('room') ?? 1), partySize = Math.min(ISLAND.well.maxParty, Math.max(1, Number(p.get('party') ?? 2)));
     return { room, partySize, ...(p.has('floor') ? { floor: p.get('floor')! } : {}), ...(p.has('weapon') ? { weapon: p.get('weapon')! } : {}), ...(p.has('skills') ? { skills: p.get('skills')! } : {}) };
   }
 
@@ -292,7 +290,7 @@ export class Connection {
     const players = new Map<string, PlayerSnap>();
     s.players.forEach((p, id) => players.set(id, {
       id, name: p.name, x: p.x, y: p.y, z: 0, facing: p.facing, dodgeDir: p.dodgeDir ?? 0, dodgeDy: p.dodgeDy ?? 0, dodgeStart: p.dodgeStart ?? 0, state: p.state, since: since(prevP?.get(id), p.state),
-      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, color: p.color ?? 0, look: p.look ?? '', weapon: p.weapon || 'greatsword', skills: p.skills ?? '',
+      actionId: p.actionId, actionStart: p.actionStart, hp: p.hp, maxHp: p.maxHp, ult: p.ultGauge, lastInputSeq: p.lastInputSeq, reviveProgress: p.reviveProgress ?? 0, look: p.look ?? '', weapon: p.weapon || 'greatsword', skills: p.skills ?? '',
       hasted: !!p.hasted, shielded: !!p.shielded, aura: p.aura ?? 0, chargeMs: p.chargeMs ?? 0, chargeLv: p.chargeLv ?? 0,
     }));
     const monsters = new Map<string, MonsterSnap>();

@@ -16,8 +16,6 @@ export interface Outbox {
 export interface PartyMember {
   userId: string;
   name: string;
-  /** 섬의 플레이어 색 번호 */
-  color: number;
   /** 머리 모양·머리색 번호 (없으면 0) */
   hair?: number;
   hairColor?: number;

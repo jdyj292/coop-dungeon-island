@@ -1,4 +1,4 @@
-// 게시판 주민 탭 (hud.md 8장, island.md 7장): 주민 목록 N/10, 섬 주인에게는 맨 위에 입장 신청 줄 + 거절·허용 버튼
+// 게시판 주민 탭 (hud.md 8장, island.md 7장): 주민 목록 N/6, 섬 주인에게는 맨 위에 입장 신청 줄 + 거절·허용 버튼
 // 주인·신청은 섬 방 상태에 없고 HTTP API로만 (GET /api/me, /api/island/requests, POST /api/island/decide). 탭을 열 때·신청 알림이 올 때마다 새로
 import { AUTH, type JoinRequestItem } from '@game/shared';
 import type { IslandConnection } from '../net/islandNet';
@@ -46,7 +46,7 @@ export class ResidentsTab {
     const now = Date.now();
     const reqs = this.requests.map((q) => ({ label: `입장 신청 · ${q.nickname} · ${ago(q.createdAt, now)}` }));
     const residents = [...(this.conn.live.residents?.entries() ?? [])].map(([id, r]) => ({
-      icon: { kind: 'face' as const, color: r.color ?? 0, hair: { style: r.hair ?? 0, color: r.hairColor ?? 0 } },
+      icon: { kind: 'face' as const, hair: { style: r.hair ?? 0, color: r.hairColor ?? 0 } },
       label: `${r.name}${String(this.ownerId) === id ? ' (주인)' : ''}`, dim: !r.online,
     }));
     return [...reqs, ...residents];

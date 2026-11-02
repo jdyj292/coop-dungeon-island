@@ -1,4 +1,4 @@
-// 섬 고르기 화면 (docs/island.md 7장, hud.md 9장): 섬이 없는 계정. 모든 섬 목록(이름·주인·주민 N/10)에서 입장 신청, 또는 새 섬 만들기
+// 섬 고르기 화면 (docs/island.md 7장, hud.md 9장): 섬이 없는 계정. 모든 섬 목록(이름·주인·주민 N/6)에서 입장 신청, 또는 새 섬 만들기
 // 신청하면 "허용 기다리는 중" 화면에서 POLL_MS마다 /api/me로 확인 → 허용되면 onDone. 거절되면 알리고 목록으로. 글자는 모두 textContent
 import { AUTH, type IslandListItem, type MeRes } from '@game/shared';
 import { API_ERROR_TEXT, api, type ApiResult } from '../../net/api';

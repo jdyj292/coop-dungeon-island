@@ -18,7 +18,7 @@ const game = (dev = true) => new IslandGame('섬', 0, [], {
   send: (id, type, msg) => sent.push([id, type, msg]), broadcast: (type, msg) => cast.push([type, msg]),
 }, { store: new IslandStore(db, islandId), shopStore: new ShopStore(db, islandId), dev });
 const last = <T>(id: string, type: string) => sent.filter(([to, t]) => to === id && t === type).at(-1)?.[2] as T | undefined;
-const enter = (g: IslandGame, id: string) => { g.addResident({ id, name: id, color: 0 }); g.join(id); };
+const enter = (g: IslandGame, id: string) => { g.addResident({ id, name: id }); g.join(id); };
 
 beforeEach(() => {
   db = openDb(':memory:').db;

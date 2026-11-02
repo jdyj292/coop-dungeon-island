@@ -9,7 +9,6 @@ const FADE_SEC = 6, FADED_ALPHA = 0.35, BUBBLE_SEC = 3, BUBBLE_W = 88, LINE = 11
 
 export interface ChatLine {
   name: string;
-  color: number;
   text: string;
 }
 
@@ -34,7 +33,7 @@ export class ChatLog {
       this.shown.forEach((t) => t.destroy());
       this.shown = this.lines.flatMap((l, i) => {
         const y = bottom - (this.lines.length - i) * LINE;
-        const name = koText(this.scene, 4, y, `${l.name}:`, { font: 'koSmall', color: colorInt(`global.playerColors.${l.color}`), outline: 'four' });
+        const name = koText(this.scene, 4, y, `${l.name}:`, { font: 'koSmall', color: 'global.allyFx.gold', outline: 'four' });
         const text = koText(this.scene, 4 + name.textWidth + 4, y, l.text, { font: 'koSmall', color: 'global.fx.flash', outline: 'four' });
         return [name, text].map((t) => t.setScrollFactor(0).setDepth(this.depth));
       });

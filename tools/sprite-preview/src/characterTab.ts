@@ -15,7 +15,7 @@ export function characterTab(): HTMLElement {
   const data = () => spriteData();
   const { items, sets } = data0.outfits;
   const s = {
-    hair: 'short', hairColor: 0, playerColor: 0, face: 'normal',
+    hair: 'short', hairColor: 0, face: 'normal',
     outfit: { hat: '-', top: 'top_tunic', bottom: 'bottom_shorts', cape: '-' } as Record<string, string>,
     weapon: 'greatsword_basic', pose: 'idle', frame: 'stand',
     walking: false, gallery: false, motion: '-', motionGallery: false, beatMs: 150, flip: false, scale: 8, bg: 'dungeon' as Background, shadow: true, foot: false,
@@ -46,7 +46,7 @@ export function characterTab(): HTMLElement {
       weapon: s.weapon === '-' ? undefined : s.weapon,
       pose: s.weapon === '-' ? undefined : pose,
     });
-    const colors = { hairColor: `global.hairColors.${s.hairColor}`, playerColor: `global.playerColors.${s.playerColor}` };
+    const colors = { hairColor: `global.hairColors.${s.hairColor}` };
     try {
       // 모아 보기: 무기의 모든 포즈를 한 칸(48px)씩
       // 모션 모아 보기: 서기 + 모든 모션 / 포즈 모아 보기: 무기의 모든 포즈
@@ -98,7 +98,6 @@ export function characterTab(): HTMLElement {
     el('h3', { text: '몸' }),
     select('머리 모양', opts(Object.keys(data0.base.hairStyles)), s.hair, (v) => { s.hair = v; redraw(); }).node,
     select('머리색', colorOpts(paletteJson.global.hairColors), '0', (v) => { s.hairColor = Number(v); redraw(); }).node,
-    select('플레이어 색', colorOpts(paletteJson.global.playerColors), '0', (v) => { s.playerColor = Number(v); redraw(); }).node,
     select('표정', opts(Object.keys(data0.base.faces)), s.face, (v) => { s.face = v; redraw(); }).node,
     el('h3', { text: '의상' }),
     buttons('세트', Object.keys(sets).map((name): [string, () => void] => [name, () => applySet(name)])),

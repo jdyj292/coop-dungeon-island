@@ -1,4 +1,4 @@
-// 섬 고르기·입장 신청 (island.md 7장): 새 섬, 목록, 신청·취소·거절·허용, 주인만, 주민 10명까지
+// 섬 고르기·입장 신청 (island.md 7장): 새 섬, 목록, 신청·취소·거절·허용, 주인만, 주민 6명까지
 import { AUTH, ISLAND, signupReq } from '@game/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openDb, type Db } from '../db/client';

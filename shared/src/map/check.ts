@@ -1,6 +1,7 @@
 // 맵 검사 (data-validate, docs/data.md 5장): 방 크기, 필수 오브젝트, 웨이브별 출현 지점 수, 장애물 겹침, 길 막힘
 import { TILE } from '../constants';
 import type { Issue } from '../data/crossCheck';
+import { ISLAND } from '../data/load';
 import type { MonsterDef, Rooms } from '../data/schema';
 import { playerHalf } from '../movement';
 import { hitsBlock, type Half } from './collision';
@@ -20,7 +21,7 @@ export function checkMaps(rooms: Rooms, monsters: Record<string, MonsterDef>, ma
       const [tw, td] = room.size as [number, number];
       if (m.width !== tw * TILE || m.depth !== td * TILE) err(`크기 ${m.width / TILE}×${m.depth / TILE} ≠ rooms.json ${floor} ${room.id} ${tw}×${td}`);
       const bounds = { minX: 0, maxX: m.width, minY: 0, maxY: m.depth, blocks: m.blocks };
-      if (m.starts.length < 4) err(`player_start ${m.starts.length}개 (4개 필요)`);
+      if (m.starts.length < ISLAND.well.maxParty) err(`player_start ${m.starts.length}개 (${ISLAND.well.maxParty}개 필요)`);
       if (!m.doorIn) err('door_in 없음');
       const last = i === f.rooms.length - 1;
       if (!last && !m.doorOut) err('door_out 없음 (보스 방 말고는 필요)');

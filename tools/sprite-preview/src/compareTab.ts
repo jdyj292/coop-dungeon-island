@@ -9,7 +9,7 @@ import { drawStage } from './draw';
 import { el, slider } from './ui';
 
 const CELL_W = 40, CELL_H = 40, FOOT_Y = 33;
-const COLORS = { hairColor: 'global.hairColors.0', playerColor: 'global.playerColors.0' };
+const COLORS = { hairColor: 'global.hairColors.0' };
 
 interface Strip { title: string; approved: string; rows: [label: string, look: CharacterLook][][] }
 

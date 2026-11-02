@@ -14,8 +14,8 @@ export const AUTH = {
   /** 복구 코드 글자: 헷갈리는 글자(0 O 1 I L) 뺀 대문자·숫자 */
   codeAlphabet: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789',
   sessionDays: 30,
-  /** 섬 하나당 주민 최대 (island.md 7장). 던전 파티는 따로 최대 4명 (island.json well.maxParty) */
-  islandResidents: 10,
+  /** 섬 하나당 주민 최대 (island.md 7장). 던전 파티도 최대 6명 (island.json well.maxParty) */
+  islandResidents: 6,
 } as const;
 
 /** 닉네임: NFC로 맞춘 뒤 한글(완성형)·영문·숫자 2~12자 */

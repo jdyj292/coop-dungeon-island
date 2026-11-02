@@ -1,4 +1,4 @@
-// palette.json 경로("floors.1.monster.boar", "global.playerColors.0") 해석
+// palette.json 경로("floors.1.monster.boar", "global.hairColors.0") 해석
 
 export function resolvePath(root: unknown, path: string): unknown {
   let node: unknown = root;

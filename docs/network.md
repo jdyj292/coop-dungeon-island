@@ -33,7 +33,7 @@
 
 1. 로그인 → 세션 쿠키 발급 (HTTP, docs/security.md)
 2. IslandRoom 입장 (토큰 + islandId). 섬 주민만 입장 가능
-3. 우물에서 출발 → IslandRoom이 파티 정보(파티원 userId·닉네임·플레이어 색·머리·무기·그 무기 숙련도·가져갈 물약)로 DungeonRoom을 만들고(비공개) 파티원마다 `depart { roomId, floor }` → 클라이언트는 섬 방을 나가 그 방에 joinById (DungeonRoom.onAuth가 세션 쿠키로 그 파티원인지 확인)
+3. 우물에서 출발 → IslandRoom이 파티 정보(파티원 userId·닉네임·머리·무기·그 무기 숙련도·가져갈 물약)로 DungeonRoom을 만들고(비공개) 파티원마다 `depart { roomId, floor }` → 클라이언트는 섬 방을 나가 그 방에 joinById (DungeonRoom.onAuth가 세션 쿠키로 그 파티원인지 확인)
 4. 던전 종료(정산·이탈) → 사람마다 정산을 DB에 저장(db/runStore.ts) → 섬 방에 "돌아옴" 알림 → 클라이언트는 정산 화면 뒤 아무 키로 섬 씬(IslandRoom 다시 입장, 우물 앞)
 - 던전 중에는 섬 연결을 끊는다. 대신 서버가 "탐험 중"을 들고 있다 (systems/islandBus.ts: 같은 서버 프로세스 안 섬 방 ↔ 던전 방 알림, 섬 방이 새로 만들어져도 이 표로 상태를 채움). 주민 목록은 검 아이콘 + 층
 - 개발용 `?online=1` 던전 방(joinOrCreate, 로그인 없이)은 그대로: 저장·알림 없음
@@ -99,7 +99,7 @@ DungeonState
   objects: Map<id, ObjectState>      문, 레버, 누름돌, 폭탄 버섯 등 기믹
 
 PlayerState
-  id, name, look            look = 외형 키 "의상:머리 번호:머리색 번호:플레이어 색" (예: beginner:1:2:0, 섬 출발 파티 정보에서)
+  id, name, look            look = 외형 키 "의상:머리 번호:머리색 번호" (예: beginner:1:2, 섬 출발 파티 정보에서)
   weapon, x, y, facing      x·y는 정수 px
   skills                    던전용 빌드 (출발 때 서버가 DB 보유·장착으로 장착 카드만 담음, "id:1|2[:변형][@슬롯],..." 1 = 기본·2 = 강화, 액티브 슬롯 0~3). 변형마다 행동 시간·판정이 달라 다른 사람 그리기·본인 예측이 이 값으로 스킬 정의를 찾는다
   dodgeDir, dodgeDy         회피 이동 방향 좌우 (1/−1/0)·깊이 (1 아래/−1 위/0). 회피 아니면 둘 다 0. 앞회피면 dodgeDir = facing
@@ -148,7 +148,7 @@ ZoneState
 ```
 IslandState
   serverTime, name, treasury
-  residents: Map<userId, Resident> id, name, color(가입 순서 0~3 = 플레이어 색), hair·hairColor(외형 번호), weapon(고른 무기), online, status("island" | "away" | "dungeon:<층>"),
+  residents: Map<userId, Resident> id, name, hair·hairColor(외형 번호), weapon(고른 무기), online, status("island" | "away" | "dungeon:<층>"),
                                    x, y, facing, state(idle/walk/run), lastInputSeq,
                                    wellAt(던전에서 돌아와 우물 앞으로 들어온 서버 시각 ms, 선착장 입장은 0 — 우물에서 튀어나오는 연출, island.md 6장)
   placements: Map<id, Placement>   id, itemId, x, y, rot, placedBy, communal (칸 좌표)
@@ -160,7 +160,7 @@ IslandState
 - 이동: 클라이언트는 던전과 같은 input 메시지, 서버 60Hz로 마지막 입력 적용(shared/src/island/walker.ts), 내 캐릭터는 같은 함수로 예측·보정(client/src/net/walkPredict.ts, 7장 보정 규칙), 다른 주민은 100ms 보간
 - 입장 때 본인에게 `me { wallet, level }`·`cards { ... }` (위 card 메시지 결과), 가방이 바뀔 때마다 `inv { items }` 메시지. 배치는 systems/islandPlacement.ts (규칙 검사 → DB 트랜잭션 db/islandStore.ts → 상태), 걸을 수 없는 장식은 서버·클라이언트 예측 모두 장애물. 끊기면 2초마다 다시 입장 (섬은 전체 상태를 새로 받으면 됨)
 - 개발: `pnpm island-bot --island <섬 번호>` 봇 주민이 가입·입장 신청 → 섬 주인이 게시판 주민 탭에서 허용하면 입장해 우물 앞을 걷는다 (브라우저 하나로 2인 확인). 섬 번호는 `GET /api/me`의 island.id
-- 섬 방 최대 접속 10명 (AUTH.islandResidents). 섬 주인에게만 `joinRequest { nickname }` (입장 신청 알림). 신청이 허용되면 접속 전에도 주민 목록에 넣음 (islandBus joined)
+- 섬 방 최대 접속 6명 (AUTH.islandResidents). 섬 주인에게만 `joinRequest { nickname }` (입장 신청 알림). 신청이 허용되면 접속 전에도 주민 목록에 넣음 (islandBus joined)
 - 개인 지갑·인벤토리는 본인 전용 메시지로 전송
 - 게시판 기록은 요청할 때 메시지로 가져온다 (상태에 넣지 않음)
 
@@ -226,7 +226,7 @@ IslandState
 - 적중 연출(hit 이벤트)은 그리는 시점이 이벤트의 t에 닿을 때 재생해 보간된 화면과 맞춘다. 투사체는 projSpawn 데이터로 직접 날리고 projEnd 시각에 지운다
 - 행동 시작·active 진입·백스텝·다운 등의 소리와 연출은 그리는 시점의 상태 변화로 낸다 (로컬의 SimEvent 대신)
 - 구현: client/src/net/ (connection = 접속·스냅샷, clock, interp, mirror = 스냅샷 → 그리기 객체, inputSender, transitions), client/src/stage/onlineStage.ts
-- 개발용 접속: `?online=1&room=1&party=2` → 같은 방 번호·인원 조건의 빈자리에 들어가고 없으면 새로 (서버 filterBy). 다른 플레이어는 플레이어 색 번호로 구분
+- 개발용 접속: `?online=1&room=1&party=2` → 같은 방 번호·인원 조건의 빈자리에 들어가고 없으면 새로 (서버 filterBy). 다른 플레이어는 이름표로 구분
 
 ---
 

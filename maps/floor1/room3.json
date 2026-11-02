@@ -10,7 +10,7 @@
   "tileheight": 16,
   "infinite": false,
   "nextlayerid": 4,
-  "nextobjectid": 22,
+  "nextobjectid": 24,
   "tilesets": [
     {
       "firstgid": 1,
@@ -1416,6 +1416,44 @@
           "rotation": 0,
           "visible": true,
           "point": true
+        },
+        {
+          "id": 22,
+          "name": "player_start",
+          "type": "",
+          "x": 80,
+          "y": 90,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "index",
+              "type": "int",
+              "value": 4
+            }
+          ]
+        },
+        {
+          "id": 23,
+          "name": "player_start",
+          "type": "",
+          "x": 80,
+          "y": 134,
+          "width": 0,
+          "height": 0,
+          "rotation": 0,
+          "visible": true,
+          "point": true,
+          "properties": [
+            {
+              "name": "index",
+              "type": "int",
+              "value": 5
+            }
+          ]
         }
       ],
       "width": 32,

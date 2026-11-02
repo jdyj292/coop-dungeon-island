@@ -31,8 +31,8 @@ const PREVIEW_SCALE = 2;
 
 /** 외형 탭이 읽고 쓰는 곳 (섬: 주민 상태 → look 메시지) */
 export interface LookControl {
-  /** 지금 머리 + 플레이어 색 번호 (미리보기 스카프) */
-  get: () => { hair: Hair; color: number };
+  /** 지금 머리 */
+  get: () => { hair: Hair };
   set: (hair: Hair) => void;
 }
 
@@ -136,9 +136,9 @@ export class SettingsPanel {
         footer: '←→ 10씩 조절', buttons: [{ id: 'minus', label: '-' }, { id: 'plus', label: '+' }],
       };
     }
-    const h = this.hair(), color = this.look!.get().color;
+    const h = this.hair();
     const rows: PanelRow[] = [
-      { icon: { kind: 'face', color, hair: h }, label: `머리 모양  ${HAIR_NAMES[h.style] ?? ''}`, right: `${h.style + 1}/${LOOK.hairStyles}` },
+      { icon: { kind: 'face', hair: h }, label: `머리 모양  ${HAIR_NAMES[h.style] ?? ''}`, right: `${h.style + 1}/${LOOK.hairStyles}` },
       { label: '머리색', right: `${h.color + 1}/${LOOK.hairColors}` },
     ];
     return { ...base, rows, footer: '←→ 바꾸기', buttons: [{ id: 'minus', label: '<' }, { id: 'plus', label: '>' }] };
@@ -153,7 +153,7 @@ export class SettingsPanel {
     // 미리보기: 패널 오른쪽 아래 (ListPanel.render와 같은 위치 계산), 전신 2배
     const h = this.hair(), data = spriteData();
     const tex = characterTexture(this.scene, { hair: hairName(h), face: 'normal', outfit: data.outfits.sets.beginner! },
-      { hairColor: hairColorPath(h), playerColor: `global.playerColors.${this.look!.get().color}` });
+      { hairColor: hairColorPath(h) });
     const x = Math.floor((width - PANEL.w) / 2), y = Math.max(2, Math.floor((fieldH - PANEL.h) / 2));
     this.preview.setTexture(tex.key).setPosition(x + PANEL.w - 36, y + 20 + PANEL.rows * PANEL.rowH - 4);
   }

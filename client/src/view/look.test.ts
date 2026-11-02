@@ -5,7 +5,7 @@ import { LOOK } from '@game/shared';
 
 describe('외형 번호', () => {
   it('던전 look 문자열 → 머리 (없거나 잘못되면 기본)', () => {
-    expect(hairOfLook('beginner:2:3:1')).toEqual({ style: 2, color: 3 });
+    expect(hairOfLook('beginner:2:3')).toEqual({ style: 2, color: 3 });
     expect(hairOfLook('')).toEqual({ style: 0, color: 0 });
     expect(hairOfLook(undefined)).toEqual({ style: 0, color: 0 });
   });

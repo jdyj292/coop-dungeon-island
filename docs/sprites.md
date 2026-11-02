@@ -10,7 +10,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 | 파일 | 내용 | 상태 |
 |---|---|---|
 | materials.json | 마스크 글자 → 색 연결 | 확정 |
-| character/base.json | 기본 몸(머리 피부, 스카프), 표정 3종, 머리 모양 3종, 어깨·손 기준점, 레이어 순서 | 확정 |
+| character/base.json | 기본 몸(머리 피부, 목), 표정 3종, 머리 모양 3종, 어깨·손 기준점, 레이어 순서 | 확정 |
 | character/outfits.json | 의상 아이템(슬롯별)과 세트 | 확정 |
 | weapons_visual.json | 무기 외형 프로필 | 확정 |
 | poses.json | 무기 종류별 포즈(손 위치, 무기 방향, 이펙트), 걷기 순환 | 확정 |
@@ -28,7 +28,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 - 마스크 = 문자열 배열. 한 글자 = 한 픽셀
 - `.` 빈칸(아래 층이 보임), `_` 지우기(아래 층을 빈칸으로 만듦, 예: 모자가 머리 삐침을 지움)
 - 그 외 글자는 materials.json에 정의된 재질
-  - shaded: 음영 대상 재질. 값은 palette.json 경로, 또는 특수값 `$hairColor`(선택한 머리색), `$playerColor`(플레이어 색)
+  - shaded: 음영 대상 재질. 값은 palette.json 경로, 또는 특수값 `$hairColor`(선택한 머리색)
   - fixed: 음영 없는 고정색 (눈 E, 볼터치 B, 입 M)
 - 같은 재질이라도 글자가 다르면 경계로 취급되어 음영이 갈린다 (예: 모자 H와 로브 R은 같은 색이지만 다른 글자)
 - 새 재질은 materials.json과 palette.json(global.materials)에 함께 추가
@@ -57,7 +57,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 - frames가 있는 파츠는 현재 걷기 프레임의 rows를 쓴다 (stand / walkA / walkB)
 
 ### 기본 몸 (base.json)
-- parts: 머리 피부(head), 스카프(neck)
+- parts: 머리 피부(head), 목 피부(neck)
 - faces: normal / hurt / smile — face 층
 - hairStyles: short / ponytail / spiky — hair 층 (여러 파츠 가능)
 - shoulders, defaultHands: 팔 그리기 기준점
@@ -69,7 +69,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 ```
 - slot: hat / top / bottom / cape (슬롯당 하나만 착용)
 - sleeve: 상의만. 팔 소매에 쓰는 재질 글자
-- 한 아이템이 여러 층에 걸칠 수 있다 (갑옷의 어깨 보호대는 스카프 위에 그려야 해서 shoulder 층)
+- 한 아이템이 여러 층에 걸칠 수 있다 (갑옷의 어깨 보호대는 목 위에 그려야 해서 shoulder 층)
 - sets: 미리 정의한 조합 (beginner, wizard, rogue, knight)
 
 ---
@@ -163,7 +163,7 @@ client/data/sprites/의 JSON 형식과 합성 절차의 기준 문서.
 2. 걷기 프레임이 있는 파츠는 현재 프레임 rows 선택
 3. layerOrder 순서로 격자에 찍기 (`.`은 건너뜀, `_`는 지움)
 4. 완성된 격자에 자동 음영·외곽선 1회 적용 (art.md 5장)
-5. 텍스처로 캐시. 키 = 머리 모양 + 머리색 + 플레이어 색 + 의상 4칸 + 무기 외형 + 포즈 + 걷기 프레임 + 몸 내림 + 표정
+5. 텍스처로 캐시. 키 = 머리 모양 + 머리색 + 의상 4칸 + 무기 외형 + 포즈 + 걷기 프레임 + 몸 내림 + 표정
 6. 왼쪽을 볼 때는 캐시된 텍스처를 좌우 반전해서 그림 (다시 생성하지 않음)
 
 - 장비를 바꿀 때 그 캐릭터의 텍스처만 다시 생성

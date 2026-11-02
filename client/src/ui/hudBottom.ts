@@ -36,8 +36,6 @@ export interface HudInput {
   level: number;
   coins: number;
   materials: number;
-  /** 내 플레이어 색 번호 (온라인은 입장 순서, 솔로 0) */
-  colorIndex?: number;
   /** 내 머리 (없으면 기본) */
   hair?: Hair;
 }
@@ -95,11 +93,11 @@ export class HudBottom {
     const bottom = Y(162);
     g.clear();
 
-    // 상태 묶음: 얼굴 (테두리 = 내 플레이어 색, 지금 표정) + 부활의 깃털 + LV 배지
+    // 상태 묶음: 얼굴 (테두리, 지금 표정) + 부활의 깃털 + LV 배지
     cluster(g, 2, Y(142), 82, bottom);
-    dot(g, 5, Y(144), C(`global.playerColors.${st.colorIndex ?? 0}`), 16, 16);
+    dot(g, 5, Y(144), C('global.ui.panelBorder'), 16, 16);
     dot(g, 6, Y(145), C('global.ui.faceBg'), 14, 14);
-    setFace(this.scene, this.face, !!(p.hurt || p.downed), st.colorIndex ?? 0, 7, Y(147), st.hair);
+    setFace(this.scene, this.face, !!(p.hurt || p.downed), 7, Y(147), st.hair);
     if (p.feathers > 0) icon(g, 'feather', 21, Y(144));
     dot(g, 15, Y(154), C('global.ui.panelBorder'), 9, 7);
     dot(g, 16, Y(155), C('global.ui.panel'), 7, 5);

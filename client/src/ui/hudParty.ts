@@ -9,7 +9,6 @@ import { bar } from './hudParts';
 
 export interface PartyMember {
   id: string;
-  colorIndex: number;
   hair?: Hair;
   /** HP 비율 0~1 */
   hp: number;
@@ -49,10 +48,9 @@ export class HudParty {
     this.faces.forEach((f, i) => f.setVisible(i < Math.min(MAX, members.length)));
     members.slice(0, MAX).forEach((m, i) => {
       const y = 3 + i * ROW, dim = m.down || m.disconnected;
-      dot(g, 3, y, colorInt(`global.playerColors.${m.colorIndex}`), 2, 11);
       dot(g, 5, y, colorInt('global.ui.panel'), 40, 11, PANEL_ALPHA);
       const face = this.faces[i]!;
-      setFace(this.scene, face, m.down, m.colorIndex, 6, y, m.hair);
+      setFace(this.scene, face, m.down, 6, y, m.hair);
       face.setAlpha(dim ? DIM : 1);
       bar(g, 20, y + 4, 22, 2, m.hp, 'global.ui.hp', 'global.ui.hpDark');
       if (m.down) X_MARK.forEach(([x, dy]) => dot(k, x, y + dy, colorInt('global.semantic.danger')));

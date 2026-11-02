@@ -186,7 +186,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
   - 스킬 mp = 기준 쿨 × 2 (반올림), 스킬의 weapon이 있는지, 변형을 적용한 결과도 스킬 형식인지
   - 몬스터 패턴이 참조하는 공격 id가 attacks에 있는지, sprite가 client/data/sprites/monsters.json에 있는지, 보스에 groggy가 있는지
   - rooms.json의 몬스터·보스 id가 있는지, 행동 id가 전체에서 고유한지
-  - 맵 (shared/src/map/check.ts, rooms.json `map` → maps/<map>.json): 방 크기가 rooms.json size와 같은지, player_start 4개·door_in·door_out(보스 방 제외)·onClear의 return_point·chest, 웨이브별 spawn 수 ≥ 몬스터 수, 출현·시작 지점이 장애물과 겹치지 않는지, 장애물이 세로줄 전체를 막지 않는지. 장애물 4칸 이상은 경고
+  - 맵 (shared/src/map/check.ts, rooms.json `map` → maps/<map>.json): 방 크기가 rooms.json size와 같은지, player_start 6개(island.json well.maxParty)·door_in·door_out(보스 방 제외)·onClear의 return_point·chest, 웨이브별 spawn 수 ≥ 몬스터 수, 출현·시작 지점이 장애물과 겹치지 않는지, 장애물이 세로줄 전체를 막지 않는지. 장애물 4칸 이상은 경고
 - 경고(오류 아님): baseSkills 중 skills.json에 아직 없는 스킬, 평타 초당 계수(계수 합 ÷ 구간 길이 합)가 balance.md 4장 목표와 ±15% 넘게 차이
 - 평타 목표값은 tools/data-validate/rules.json (balance.md 4장과 같은 값 유지)
 
@@ -237,7 +237,7 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | weightMul | 무게별 경직·밀림 배율 (light·medium·heavy·fixed·boss). fixed는 경직에만 쓰고 밀림·띄우기·넉백은 무시 |
 | grades.{light,medium,heavy,ultimate} | `{ hitstop, shake }` 히트스톱 초, 흔들림 px (0 = 없음) |
 | shakeAfterHitstop | 흔들림 길이 = 히트스톱 + 이 값 |
-| partyHpMul | 인원 1~4명 몬스터 체력 배율 (balance.md 5장) |
+| partyHpMul | 인원 1~6명 몬스터 체력 배율 (balance.md 5장) |
 | interactRange | E 상호작용 거리 px (보물상자) |
 | returnSec | 귀환 지점: 살아 있는 전원이 고리 안에 이만큼 서 있으면 성공 귀환 |
 | resultDelaySec | 전멸·보스 처치 뒤 결과 화면까지 |
@@ -245,8 +245,8 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | exit | `{ halfWidth, depth }` 출구 앞 구역: 문 앞 바닥에서 좌우 ±halfWidth, 깊이 depth px까지 (dungeon.md 2장 방 진행) |
 | arriveSec | rooms.json wellDrop 방에서 우물로 떨어지는 시간: 조작 불가·맞지 않음 (dungeon.md 2장). 화면의 떨어지는 높이·웅크림은 client fx.json wellHop |
 | combo | `{ windowSec, teamMilestones, soloMilestones, coinBonus }` 콤보가 이어지는 시간 (dungeon.md 3장), 팀·개인 콤보 단계와 단계별 코인 보너스 (balance.md 7장) |
-| tokens | 공격 토큰 수 (인원 1~4 순서, balance.md·dungeon.md 3장) |
-| tokenGap | 토큰 하나를 내준 뒤 다음 토큰까지 초 (인원 1~4 순서, 0 = 간격 없음) |
+| tokens | 공격 토큰 수 (인원 1~6 순서, balance.md·dungeon.md 3장) |
+| tokenGap | 토큰 하나를 내준 뒤 다음 토큰까지 초 (인원 1~6 순서, 0 = 간격 없음) |
 | ai | 몬스터 AI 공통: hopSec·hopMove(튀기 박자·이동 비율), orbitDistance·orbitDepth(토큰 없을 때 기다리는 타원의 좌우·깊이 반지름, combat.md 6장), chargerDistance(돌진형이 거리 두는 위치), separation(겹침 풀기 여유 px), aimDepth(대각선 조준 최대 깊이 px), spread { x, y, lane }(퍼지기: 자리 겹침 판정 좌우·깊이 px, 옆 줄 간격 px) (combat.md 6장) |
 
 - 행동 진행은 shared/src/actions.ts, 판정·데미지는 hit.ts, 피격 반응·높이는 body.ts (클라이언트·서버 공용)

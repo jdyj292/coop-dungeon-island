@@ -28,7 +28,7 @@ const game = () => new IslandGame('섬', 0, [], { send: (id, type, msg) => sent.
 const last = <T>(id: string, type: string) => sent.filter(([to, t]) => to === id && t === type).at(-1)?.[2] as T;
 const cardsOf = (id: string) => last<S2C['cards']>(id, 'cards');
 const gs = (id: string) => cardsOf(id).weapons.find((w) => w.weapon === 'greatsword')!;
-const enter = (g: IslandGame, id: string) => { g.addResident({ id, name: id, color: 0 }); g.join(id); };
+const enter = (g: IslandGame, id: string) => { g.addResident({ id, name: id }); g.join(id); };
 /** card 메시지 (섬 메시지 초당 5회 제한에 안 걸리게 시각을 넘김) */
 const card = (g: IslandGame, a: string, msg: Record<string, unknown>) => { g.now += 250; g.onMessage(a, 'card', msg); };
 const equip = (g: IslandGame, a: string, kind: 'active' | 'passive', slot: number, cardId: string | null) => card(g, a, { op: 'equip', weapon: 'greatsword', kind, slot, cardId });

@@ -258,7 +258,7 @@
 - 방 깊이 11~14타일 (화면에 깊이 전체가 들어옴), 가로는 화면(24타일)보다 넓어도 되고, 좁으면 가운데 정렬(양옆은 어둠)
 - 레이어
   - ground: 바닥 (편집 화면용, 게임은 읽지 않음) / walls: 장애물 칸 (타일 속성 `kind`: rock·stump …, 그림 종류) / deco: 충돌 없는 장식 (아직 없음)
-  - objects (오브젝트 레이어, 점): player_start(속성 index 0~3, 0 = 혼자일 때 자리), door_in, door_out(보스 방 제외, 문은 뒤쪽 벽 아치라 오브젝트는 문 바로 앞 바닥 깊이 4px — art.md 6장), spawn, return_point, chest, env_<종류>
+  - objects (오브젝트 레이어, 점): player_start(속성 index 0~5, 0 = 혼자일 때 자리, 0~3은 x 3칸 깊이 50·30·70·15%, 4·5는 x 5칸 깊이 40·60%), door_in, door_out(보스 방 제외, 문은 뒤쪽 벽 아치라 오브젝트는 문 바로 앞 바닥 깊이 4px — art.md 6장), spawn, return_point, chest, env_<종류>
 - spawn 속성: `wave`(1, 2…), `role`(front / back / boss). 고정형(포자꽃 등)은 back, 보스는 boss, 나머지는 front 지점에 우선 배치 (shared/src/sim/roomSetup.ts mapSpawns)
 - **몬스터 종류·수·웨이브는 맵이 아니라 shared/data/rooms.json**에서 정한다. 맵은 위치만
 - rooms.json 층 키: name (우물 탭 이름, 없으면 "N층"), returnAfterRoom (귀환 지점 방), chest (보물상자 보상, balance.md 7장), bgm { room, boss } (층 곡, audio.md 5장), rooms[] (id·name·size·map·waves·onClear, 층 첫 방은 wellDrop·wakeSec — 2장 우물 입장, 수련장은 training — 11장)
@@ -269,7 +269,7 @@
 
 ## 11. 수련장
 
-스킬을 마음껏 시험해 보는 방. 우물 패널의 "수련장" 탭으로 혼자 또는 파티(최대 4명)로 들어간다 (island.md 6장).
+스킬을 마음껏 시험해 보는 방. 우물 패널의 "수련장" 탭으로 혼자 또는 파티(최대 6명)로 들어간다 (island.md 6장).
 
 - rooms.json 층 `training` (이름 수련장), 방 하나 `tr_r1` (`training: true`, 26×11, 우물에서 떨어져 들어옴), 맵 maps/training/room1.json (map-gen이 만듦: 나가는 문 없음, 허수아비는 가로 60%·깊이 가운데, 귀환 고리는 시작 지점 앞)
 - 허수아비 (monsters.json `dummy`): `immortal` = 맞아도 체력이 그대로라 기절하지 않음 (피해 숫자·피격 반응·띄우기는 그대로), `ai.type: dummy` = 공격·추격 없이 플레이어 쪽만 보고, 밀려나면 처음 자리로 미끄러져 돌아감 (move 속도), 공격 없음 (`attacks: []`, `pattern: none`)

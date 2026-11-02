@@ -13,14 +13,14 @@ export interface MapObject {
 /** 문 앞 바닥 깊이 (px) */
 const DOOR_Y = 4;
 
-/** 입장 순서별 깊이 비율 (1명이면 가운데) */
-const START_Y = [0.5, 0.3, 0.7, 0.15];
+/** 입장 순서별 [x 타일, 깊이 비율] (1명이면 가운데, 5·6번째는 두 칸 앞) */
+const STARTS: [number, number][] = [[3, 0.5], [3, 0.3], [3, 0.7], [3, 0.15], [5, 0.4], [5, 0.6]];
 
 export function roomObjects(room: RoomDef, isBoss: boolean, monsters: Record<string, MonsterDef>): MapObject[] {
   const [tw, td] = room.size as [number, number];
   const W = tw * TILE, D = td * TILE, out: MapObject[] = [];
   const r = Math.round;
-  START_Y.forEach((k, i) => out.push({ name: 'player_start', x: 3 * TILE, y: r(D * k), props: { index: i } }));
+  STARTS.forEach(([tx, k], i) => out.push({ name: 'player_start', x: tx * TILE, y: r(D * k), props: { index: i } }));
   // 문은 뒤쪽 벽에 붙은 아치 (art.md 6장). 오브젝트는 문 바로 앞 바닥 (깊이 4px)
   out.push({ name: 'door_in', x: 2 * TILE, y: DOOR_Y });
   // 수련장: 나가는 문 없이 허수아비는 가운데보다 조금 오른쪽, 귀환 고리는 시작 지점 앞 (dungeon.md 11장)

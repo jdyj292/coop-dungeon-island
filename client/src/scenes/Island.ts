@@ -77,7 +77,7 @@ export class Island extends Phaser.Scene {
     this.settings = new SettingsPanel(this, 6600, {
       get: () => {
         const r = this.stage?.conn.residents.latest?.items.get(String(this.me.id));
-        return { hair: { style: r?.hair ?? 0, color: r?.hairColor ?? 0 }, color: r?.color ?? 0 };
+        return { hair: { style: r?.hair ?? 0, color: r?.hairColor ?? 0 } };
       },
       set: (h) => this.stage?.conn.send('look', { hair: h.style, hairColor: h.color }),
     }, 'island');

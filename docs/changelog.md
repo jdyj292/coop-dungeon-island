@@ -210,3 +210,5 @@
 - 카드 정리: 패시브 강화해도 비용 그대로(checkEnhanceCap 삭제), 3장이 모이면 서버가 바로 강화(receiveCards, 강화 요청·U 키·강화 버튼·▲ 삭제, 마이그레이션 0016으로 모아 둔 기록 강화), 강화한 카드 중복은 팩에서 갈려 조각(pack merged·ground, 확인·한 팩 더를 누르면 부서져 조각 숫자로 빨려 가는 연출), 강화한 카드 지정 구매 막음(done), 직접 갈기 삭제(grind 요청·G 키·갈기 버튼·남는 n장, 섬 입장 때 강화한 카드의 남은 장수를 조각으로 grindSpares), 카드 창 계열 보너스 줄 A·B 글자 삭제, 상점·팩 카드는 강화 표시 없이 기본 카드로
 - 대검 충전 스킬 제한: 올려베기·발도·검흔 베기 chargeRule.off(누르고 있어도 바로, poses.charge 삭제). 충전 = A 파쇄 전부 + B 검기 날리기·검의 장막·회오리 검기·일섬. charge.test 예시 스킬을 대지가르기·검기 날리기·어깨 들이받기로, off 스킬 테스트 추가
 - 대검 평타 공속 +25%·피해 −20%: 3타 phases ×0.8(콤보 2.0 → 1.6초), 계수 200/200/350 → 160/160/280, 평타 초당 계수 375% 그대로 (balance.md 4장 콤보 시간 1.6초). 관련 테스트 값 갱신
+- 섬 주민·파티 최대 6명: AUTH.islandResidents 6, island.json well.maxParty 6, combat.json tokens·tokenGap·partyHpMul 6명까지(토큰 6·7, 체력 ×3.0·×3.5), 맵 7개 player_start 6곳(5·6번째 x 5칸 깊이 40·60%, map-gen 같음), 맵 검사·run-sim 상한 = maxParty
+- 플레이어 색 삭제: palette global.playerColors·materials k·$playerColor·LOOK.playerColors·상태 color 필드·외형 키 4번째 칸 삭제, 스카프 → 피부 목 4px(base.json neck), 도적 복면 = 후드 색, 파티 프레임·정산 색 막대 삭제, 내 얼굴 테두리 global.ui.panelBorder, 채팅 이름 금색. compose 스냅숏 갱신

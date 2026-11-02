@@ -383,7 +383,7 @@ export const combat = z.object({
     windowSec: pos, teamMilestones: z.array(z.number().int().positive()), soloMilestones: z.array(z.number().int().positive()),
     coinBonus: z.array(pos),
   }).strict(),
-  partyHpMul: z.array(pos).length(4),
+  partyHpMul: z.array(pos).length(6),
   exit: z.object({ halfWidth: pos, depth: pos }).strict(),
   /** 우물에서 떨어지는 시간: 그동안 조작 불가·맞지 않음 (rooms.json wellDrop, combat.md 4장) */
   arriveSec: pos,

@@ -14,7 +14,6 @@ import { RateLimit } from './rateLimit';
 export interface ResidentInfo {
   id: string;
   name: string;
-  color: number;
   hair?: number;
   hairColor?: number;
   weapon?: string;
@@ -87,7 +86,7 @@ export class IslandGame {
     if (this.state.residents.has(info.id)) return;
     const r = new Resident();
     const floor = islandBus.floorOf(info.id);
-    Object.assign(r, { id: info.id, name: info.name, color: info.color, hair: info.hair ?? 0, hairColor: info.hairColor ?? 0, weapon: info.weapon ?? 'greatsword', status: floor ? dungeonStatus(floor) : 'away' });
+    Object.assign(r, { id: info.id, name: info.name, hair: info.hair ?? 0, hairColor: info.hairColor ?? 0, weapon: info.weapon ?? 'greatsword', status: floor ? dungeonStatus(floor) : 'away' });
     this.state.residents.set(info.id, r);
   }
 

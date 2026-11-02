@@ -11,7 +11,7 @@ export class AttackTokens {
   /** 다음 토큰을 내줄 수 있을 때까지 남은 초 */
   private gapLeft = 0;
 
-  /** partySize = 던전 인원 (1~4) */
+  /** partySize = 던전 인원 (1~6) */
   constructor(partySize = 1) {
     this.count = byParty(COMBAT.tokens, partySize);
     this.gap = byParty(COMBAT.tokenGap, partySize);

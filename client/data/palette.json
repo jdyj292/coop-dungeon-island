@@ -13,12 +13,6 @@
       "pants": "#6B5444",
       "metal": "#D9DDE3"
     },
-    "playerColors": [
-      "#6FC3E8",
-      "#F2C94C",
-      "#8FD16A",
-      "#F28DB2"
-    ],
     "semantic": {
       "danger": "#FF5A3C",
       "heal": "#7CE38B",

@@ -49,8 +49,8 @@ export class PlayerView {
   private arriving = false;
   private landLeft = 0;
 
-  /** colorIndex = 플레이어 색 번호 (palette global.playerColors, 여럿일 때 구분), armed = 무기를 든 모습 (섬에서는 빈손) */
-  constructor(private scene: Phaser.Scene, depth: number, private colorIndex = 0, private armed = true) {
+  /** armed = 무기를 든 모습 (섬에서는 빈손) */
+  constructor(private scene: Phaser.Scene, depth: number, private armed = true) {
     this.actor = newActorView(scene);
     this.stars = scene.add.graphics().setDepth(depth);
   }
@@ -118,7 +118,7 @@ export class PlayerView {
       weapon: lying || !this.armed ? undefined : this.weaponVisual, pose: lying || !this.armed ? undefined : fighterPose(p.fighter) ?? 'idle',
       frame: step.frame, bob: step.bob, motion: known ? motion : undefined,
     };
-    const tex = characterTexture(this.scene, look, { hairColor: hairColorPath(this.hair), playerColor: `global.playerColors.${this.colorIndex}` });
+    const tex = characterTexture(this.scene, look, { hairColor: hairColorPath(this.hair) });
     // 백스텝: 뛰어 물러나는 높이는 위치 오프셋으로만 (판정은 지상, motion.md 6장)
     const bk = p.backstep ? p.backstep.t / PLAYER.backstep.sec : 0, tp = fx.spell.teleport;
     const hop = p.backstep && !this.teleport ? Math.round(Math.sin(bk * Math.PI) * fx.backstepHop) : 0;

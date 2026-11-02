@@ -89,7 +89,7 @@ export class RoomSim {
     this.opts.partySize = n;
     this.tokens = new AttackTokens(n);
     for (const m of this.monsters) m.hasToken = false;
-    const mul = COMBAT.partyHpMul[Math.min(4, Math.max(1, n)) - 1]!;
+    const mul = COMBAT.partyHpMul[Math.min(COMBAT.partyHpMul.length, Math.max(1, n)) - 1]!;
     for (const m of this.alive) {
       const ratio = m.hp / m.maxHp;
       m.maxHp = Math.round(m.def.hp * mul);
@@ -117,7 +117,7 @@ export class RoomSim {
   }
 
   spawn(list: Spawn[]): Monster[] {
-    const mul = COMBAT.partyHpMul[Math.min(4, Math.max(1, this.opts.partySize ?? 1)) - 1]!;
+    const mul = COMBAT.partyHpMul[Math.min(COMBAT.partyHpMul.length, Math.max(1, this.opts.partySize ?? 1)) - 1]!;
     const made = list.map((s) => newMonster(this.ids++, s.kind, s.x, s.y, mul));
     this.monsters.push(...made);
     return made;

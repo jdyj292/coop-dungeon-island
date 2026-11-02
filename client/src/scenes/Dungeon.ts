@@ -267,11 +267,11 @@ export class Dungeon extends Phaser.Scene {
       backstep: Phaser.Input.Keyboard.JustDown(k.backstep),
       potion: Phaser.Input.Keyboard.JustDown(k.potionHp) ? 'hp' : Phaser.Input.Keyboard.JustDown(k.potionMp) ? 'mp' : null,
     };
-    let view: { player: PlayerState | null; combo: number; shake: Shake; look: { color: number; hair?: import('../view/look').Hair }; coins: number; materials: number };
+    let view: { player: PlayerState | null; combo: number; shake: Shake; look: { hair?: import('../view/look').Hair }; coins: number; materials: number };
     if (this.stage) {
       this.checkWave(this.stage);
       this.stage.update(dt, this.settings.open ? NO_KEYS : input);
-      view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake, look: { color: 0 }, coins: 0, materials: 0 };
+      view = { player: this.stage.player, combo: this.stage.sim.combo.count, shake: this.stage.fx.shake, look: {}, coins: 0, materials: 0 };
     } else if (this.online) {
       const live = this.online.conn.progress;
       // 다음 방 (출구에 전원 모임): 같은 접속으로 방 화면을 다시 만든다
@@ -304,7 +304,7 @@ export class Dungeon extends Phaser.Scene {
     if (view.player) {
       this.hud.draw({
         player: view.player, skills: SLOT_KEYS.map((_, i) => sk[i] ?? null),
-        level: 1, coins: view.coins, materials: view.materials, colorIndex: view.look.color, hair: view.look.hair,
+        level: 1, coins: view.coins, materials: view.materials, hair: view.look.hair,
       }, dt, width, height - HUD_HEIGHT);
     }
     this.overlay.draw(view.combo, dt, width);

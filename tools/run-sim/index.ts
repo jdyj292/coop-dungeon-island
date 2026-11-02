@@ -2,12 +2,13 @@
 // 봇은 사람보다 단순해서 시간은 참고값. 규칙이 끝까지 막힘없이 도는지(진행 불가·보스 클리어)는 확실히 확인한다
 // --invincible: 봇 HP를 매 틱 채움 (봇 실력과 상관없이 끝까지 돌려 시간·받은 피해를 본다)
 import { parseArgs } from 'node:util';
+import { ISLAND } from '../../shared/src';
 import { runOnce, type RunLog } from './run';
 
 const { values } = parseArgs({
   options: { party: { type: 'string', default: '1' }, runs: { type: 'string', default: '5' }, invincible: { type: 'boolean', default: false } },
 });
-const party = Math.min(4, Math.max(1, Number(values.party))), runs = Math.max(1, Number(values.runs));
+const party = Math.min(ISLAND.well.maxParty, Math.max(1, Number(values.party))), runs = Math.max(1, Number(values.runs));
 const m = (sec: number) => `${Math.floor(sec / 60)}분 ${String(Math.round(sec % 60)).padStart(2, '0')}초`;
 
 const logs: RunLog[] = [];

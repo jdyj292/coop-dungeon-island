@@ -16,7 +16,7 @@ export const PANEL = { w: 208, h: 124, rowH: 13, rows: 6, pad: 6 } as const;
 /** 패널 아래 설명 상자 (스킬 창): 위 틈, 줄 수, 높이 */
 const DETAIL = { gap: 2, lines: 2, h: 32 } as const;
 
-export type RowIcon = { kind: 'deco'; itemId: string } | { kind: 'potion'; color: string } | { kind: 'material' } | { kind: 'face'; color: number; hair?: Hair } | { kind: 'weapon'; weapon: string } | null;
+export type RowIcon = { kind: 'deco'; itemId: string } | { kind: 'potion'; color: string } | { kind: 'material' } | { kind: 'face'; hair?: Hair } | { kind: 'weapon'; weapon: string } | null;
 
 export interface PanelRow {
   icon?: RowIcon;
@@ -189,7 +189,7 @@ export class ListPanel {
     else if (ic.kind === 'face') {
       // 주민 얼굴 12×11 (hudFace)
       const img = this.scene.add.image(0, 0, '__DEFAULT').setOrigin(0, 0).setScrollFactor(0).setDepth(this.depth + 1);
-      setFace(this.scene, img, false, ic.color, x, y + 1, ic.hair);
+      setFace(this.scene, img, false, x, y + 1, ic.hair);
       this.icons.push(img);
     }
     else {

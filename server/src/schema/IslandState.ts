@@ -5,8 +5,6 @@ export class Resident extends Schema {
   /** users.id (문자열) */
   @type('string') id = '';
   @type('string') name = '';
-  /** 플레이어 색 번호 (섬 주민 가입 순서 0~3, palette global.playerColors) */
-  @type('uint8') color = 0;
   /** 머리 모양·머리색 번호 (users.hair_style·hair_color, 설정 외형 탭) */
   @type('uint8') hair = 0;
   @type('uint8') hairColor = 0;

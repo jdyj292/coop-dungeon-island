@@ -28,6 +28,6 @@ export function exitCount(sim: RoomSim, room: RoomDef): { at: number; need: numb
 /** 새 방 시뮬레이션. prev = 이전 방 (플레이어를 데려옴), order = pid → 입장 순서 (시작 지점 번호) */
 export function buildRoom(room: RoomDef, weapon: RoomSim['weapon'], opts: SimOptions, prev: RoomSim | null, order: (pid: string) => number): RoomSim {
   const sim = new RoomSim(weapon, roomBounds(room).bounds, null, opts);
-  if (prev) for (const sp of prev.players.values()) sim.adoptPlayer(sp, entryPos(room, order(sp.pid) % 4));
+  if (prev) for (const sp of prev.players.values()) sim.adoptPlayer(sp, entryPos(room, order(sp.pid)));
   return sim;
 }

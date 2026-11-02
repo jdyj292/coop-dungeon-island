@@ -31,10 +31,8 @@ export class PlayerPrivate extends Schema {
 export class PlayerState extends Schema {
   @type('string') id = '';
   @type('string') name = '';
-  /** 외형 키 (머리·머리색·의상·플레이어 색 번호) */
+  /** 외형 키 (의상·머리·머리색 번호) */
   @type('string') look = '';
-  /** 플레이어 색 번호 (섬 주민 순서, 개발 방은 입장 순서) */
-  @type('uint8') color = 0;
   @type('string') weapon = '';
   /** 스킬 노드 (skillTree.encodeBuild): 변형에 따라 행동 시간·판정이 달라 그리기·예측에 필요 */
   @type('string') skills = '';

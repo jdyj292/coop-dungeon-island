@@ -5,7 +5,6 @@ describe('palette', () => {
   it('경로로 색을 읽음', () => {
     expect(color('global.outline')).toMatch(/^#[0-9a-fA-F]{6}$/);
     expect(colorInt('global.outline')).toBe(parseInt(color('global.outline').slice(1), 16));
-    expect(color('global.playerColors.0')).toMatch(/^#/);
   });
   it('숫자 값', () => {
     expect(paletteNumber('global.blobShadow.opacity')).toBeGreaterThan(0);

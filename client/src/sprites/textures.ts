@@ -15,7 +15,7 @@ export function characterKey(look: CharacterLook, colors: CharacterColors): stri
   const { items } = spriteData().outfits;
   const slots = SLOTS.map((slot) => look.outfit.find((id) => items[id]?.slot === slot) ?? '-');
   return [
-    'chr', look.hair, colors.hairColor, colors.playerColor, ...slots,
+    'chr', look.hair, colors.hairColor, ...slots,
     look.weapon ?? '-', look.pose ?? '-', look.frame ?? 'stand', look.bob ?? 0, look.face, look.motion ?? '-',
   ].join('|');
 }

@@ -3,7 +3,6 @@
   "shaded": {
     "s": "global.player.skin",
     "h": "$hairColor",
-    "k": "$playerColor",
     "t": "global.materials.tunic",
     "g": "global.materials.leather",
     "p": "global.materials.shorts",
