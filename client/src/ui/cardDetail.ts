@@ -7,8 +7,8 @@ import { koWidth, wrapKo } from './koText';
 
 const X = 246, MW = 122;
 const w7 = (t: string) => koWidth(t, 'koSmall');
-/** 머리 카드 자리 (cardWindow가 반짝임과 함께 그림) */
-export const DETAIL_CARD = { x: X - 1, y: 31 } as const;
+/** 머리 카드 자리 (cardWindow가 그림, 머리 띠 27~63 안) */
+export const DETAIL_CARD = { x: X - 1, y: 29 } as const;
 
 export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
   const g = p.g;

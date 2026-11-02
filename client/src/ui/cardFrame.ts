@@ -1,7 +1,7 @@
-// 카드 테두리 (hud.md 8장, 승인 데모 docs/refs/demos/card_redesign.html): 계열마다 모양·색이 다르다. 티어는 카드 아래 판(cardTier.ts) (테두리 색 아님)
+// 카드 테두리 (hud.md 8장, 승인 데모 docs/refs/demos/card_redesign.html · docs/refs/demos/card_tall.html): 계열마다 모양·색이 다르다. 티어는 몸통 아래 띠(cardTier.ts) (테두리 색 아님)
 // 모양 없는 무기 = 얇은 강철 / 대검 A 파쇄 = 두꺼운 돌(깎인 모서리·금·아래 묵직) / B 검기 = 왼쪽 위·오른쪽 아래 사선 + 칼끝 /
 // 스태프 A 원소 = 위 불꽃 혀·아래 불씨 / B 중력 = 이중 테두리 + 모서리 밖 별. 없는 카드는 같은 모양의 그림자.
-// 강화 = 몸통 위로 지나가는 빛줄기 + 반짝이는 별 (금테 없음). 붓(Paint)만 받아 카드 창(Graphics)·카드 상점(캔버스)이 같이 쓴다
+// 강화 = 티어 띠 숫자 뒤 "+" (금테·반짝임 없음). 붓(Paint)만 받아 카드 창(Graphics)·카드 상점(캔버스)이 같이 쓴다
 import { mix } from './shopPix';
 
 export type FrameStyle = 'base' | 'gsA' | 'gsB' | 'stA' | 'stB';
@@ -12,8 +12,9 @@ export type Paint = (x: number, y: number, w: number, h: number, color: string, 
 const STYLES: Record<string, Partial<Record<string, FrameStyle>>> = { greatsword: { A: 'gsA', B: 'gsB' }, staff: { A: 'stA', B: 'stB' } };
 export const frameStyle = (weapon: string, branch: string): FrameStyle => STYLES[weapon]?.[branch] ?? 'base';
 
-/** 카드 폭 (논리 px, 큰 카드는 배율로) */
-const W = 24;
+/** 카드 크기 (논리 px, 큰 카드는 2배) */
+export const CW = 24, CH = 34;
+const W = CW;
 const SHADE = 'global.ui.skillShade', NONE = 'global.ui.skillCardBorder', DARK = 'global.ui.skillTitle';
 const EMBER = 'global.allyFx.gold', FLASH = 'global.fx.flash', COIN = 'global.ui.coin', OUT = 'global.outline';
 
@@ -33,8 +34,9 @@ const chunk = (R: Paint, x: number, y: number, w: number, h: number, c: string) 
   R(x + 2, y, w - 4, h, c); R(x, y + 2, w, h - 4, c); R(x + 1, y + 1, w - 2, h - 2, c);
 };
 
-/** 카드 껍데기 (그림자 + 계열 테두리 + 몸통) 24×h. col = 계열 색, own = 가진 카드 (아니면 그림자 색). 몸통 시작 거리를 돌려줌 */
-export function cardShell(R: Paint, s: FrameStyle, x: number, y: number, h: number, col: string, own: boolean): number {
+/** 카드 껍데기 (그림자 + 계열 테두리 + 몸통) 24×h. col = 계열 색, own = 가진 카드 (아니면 그림자 색).
+ * inner = 몸통 안 그림 (티어 띠, 대검 B 깎인 모서리보다 먼저). 몸통 시작 거리를 돌려줌 */
+export function cardShell(R: Paint, s: FrameStyle, x: number, y: number, h: number, col: string, own: boolean, inner?: (bx: number, by: number, bw: number, bh: number) => void): number {
   const c = own ? col : NONE, dk = own ? mix(col, OUT, 0.45) : DARK, lt = own ? mix(col, FLASH, 0.45) : NONE, P = (px: number, py: number, pc: string) => R(px, py, 1, 1, pc);
   if (s === 'gsA') chunk(R, x + 1, y + 1, W, h, SHADE);
   else if (s === 'gsB') slash(R, x + 1, y + 1, W, h, 3, SHADE);
@@ -64,17 +66,9 @@ export function cardShell(R: Paint, s: FrameStyle, x: number, y: number, h: numb
   const ins = frameInset(s), bx = x + ins, by = y + ins, bw = W - ins * 2, bh = h - ins * 2;
   R(bx, by, bw, bh, own ? 'global.ui.skillLit' : DARK);
   if (own) R(bx, by, bw, 1, 'global.ui.offline');
+  inner?.(bx, by, bw, bh);
   if (s === 'gsB') { P(bx, by, dk); P(bx + 1, by, dk); P(bx, by + 1, dk); P(bx + bw - 1, by + bh - 1, dk); P(bx + bw - 2, by + bh - 1, dk); P(bx + bw - 1, by + bh - 2, dk); }
   return ins;
-}
-
-/** 강화 표시 (몸통 bx, by, bw, bh 안): 움직임 없이 고정된 별 두 개. t·ph는 받기만 함 (호출부 모양 유지) */
-export function cardShine(R: Paint, bx: number, by: number, bw: number, bh: number, _t: number, _ph: number): void {
-  for (const [dx, dy] of [[bw - 4, 3], [3, bh - 5]] as const) {
-    const cx = bx + dx, cy = by + dy;
-    R(cx, cy, 1, 1, FLASH);
-    R(cx - 1, cy, 1, 1, COIN); R(cx + 1, cy, 1, 1, COIN); R(cx, cy - 1, 1, 1, COIN); R(cx, cy + 1, 1, 1, COIN);
-  }
 }
 
 /** 강화 가능 (같은 카드 3장): 카드 아래 가운데 금색 ▲, 0.4초마다 깜빡 */
@@ -84,6 +78,3 @@ export function readyMark(R: Paint, x: number, y: number, h: number, t: number):
   R(cx - 3, y + h - 2, 7, 4, SHADE);
   R(cx, y + h - 1, 1, 1, COIN); R(cx - 1, y + h, 3, 1, COIN); R(cx - 2, y + h + 1, 5, 1, COIN);
 }
-
-/** 카드마다 반짝임 어긋남 (같은 카드는 늘 같게) */
-export const shinePhase = (id: string): number => ([...id].reduce((s, ch) => s + ch.charCodeAt(0), 0) % 10) * 0.26;

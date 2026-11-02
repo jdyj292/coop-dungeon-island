@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>카드 24×34</title>
+<style>
+  body{margin:0;padding:20px;background:#15112a;color:#d8d4ee;font:14px/1.5 system-ui,sans-serif}
+  h1{font-size:18px;margin:0 0 4px} h2{font-size:15px;margin:26px 0 6px;color:#f5c542}
+  p{margin:2px 0 8px;color:#9a94b8;max-width:760px}
+  canvas{image-rendering:pixelated;display:block;background:#221d38;border:1px solid #332d4d;margin:6px 0;max-width:100%}
+  label{margin-right:14px;cursor:pointer}
+</style></head><body>
+<h1>카드 24×34 (승인)</h1>
+<p>카드 24×29 → 24×34. 몸통 = 위 아이콘 창 + 아래 9줄 티어 띠 (띠 색 = 티어 색, 가운데 3×5 도트 숫자). 강화 = 숫자 뒤 "+" 하나 (별·금빛·금 모서리 없음). 없는 카드는 띠가 그림자, 숫자 없음.</p>
+<label><input type="checkbox" id="gray"> 흑백으로 보기</label>
+<label><input type="checkbox" id="old"> 지금 카드(24×29, 숫자판)와 번갈아 보기</label>
+
+<h2>계열 테두리 5종</h2>
+<p>줄마다: 티어 1 / 티어 1 강화 / 티어 2 / 티어 3 강화 / 없는 카드. 4배.</p>
+<canvas id="frames"></canvas>
+
+<h2>티어 1~10 띠 색</h2>
+<p>윗줄 일반, 아랫줄 강화. 3배. (지금 데이터는 티어 3까지)</p>
+<canvas id="tiers"></canvas>
+
+<h2>카드 창 목록 배치</h2>
+<p>줄 간격 35 → 40. 장착 꼬리표(A S D), 고른 카드 꺾쇠, 강화 가능 ▲(깜빡임), 자물쇠(숙련도 모자람). 3배.</p>
+<canvas id="list"></canvas>
+
+<h2>큰 카드 48×68 (카드 상점 고른 카드 · 팩 열기)</h2>
+<p>48×64 → 48×68 (작은 카드 테두리 24×34를 2배). 아이콘 칸 34×34(아이콘 2배) → 이름 → 아래 13줄 티어 띠(숫자 2배). 반짝임 없음, 강화 = 띠 숫자 뒤 "+" (이름 뒤 금색 + 그대로). 이름 글자는 데모라 브라우저 글꼴 (게임은 갈무리7). 3배.</p>
+<canvas id="big"></canvas>
+
+<h2>장착 칸 22×22 (카드 창 위 줄)</h2>
+<p>강화 = 별 대신 오른쪽 아래 작은 "+" 판. 왼쪽 아래는 키 꼬리표. 왼쪽부터 일반 / 강화 / 강화 / 일반. 4배.</p>
+<canvas id="slots"></canvas>
+
+<script>
+const ICONS={"gs_launch":["................","................","................","................",".......sl.......","......ysly......",".....y.sl.y.....",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......","......g..g......","................","................"],"gs_earthsplit":["................","................","......gslg......",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......",".......sl.......","................",".....r....r.....","....r.r..r.r....","...r........r...","................","................"],"gs_whirl":["................","................",".....yyyyy......","...ye.....eyw...","..ye.......ww...","..y....s..wyw...",".......sl.......","......sl........",".....sl.........","..g.sl.......y..","...g.........y..","..p.g.......ey..","...wy.....ye....","....eyyyyye.....","................","................"],"gs_shoulder":["................","................","..........ww....","...........wy...",".eeyyww.....wy..","............wy..","..eyyyww.....wy.",".............wy.","...eeyyww....wy.","............wy..",".eyyww......wy..","...........wy...","..........ww....","................","................","................"],"gs_quake":["................","................",".......aa.......","......aqqq......","..aa..qqq...aa..",".aqqq..rr..aqqq.",".qqq...rr..qqq..","..r..........r..","..r...y..y...r..","......y..y......","....y..ww..y....","aaaaaaawwaaaaaaa","qqqpqqqwwqqqpqqq","qqpqqqqqqqqqqpqq","................","................"],"gs_throw":["................","...eee......wl..","..e........wls..",".e........wls...",".e.......wls....","........wls.....",".......wls......","......wls.......","..gg.wls........","...ggls.........","....pgg.........","...pp.gg.....e..","..pp.........e..",".pp.........e...","..........ee....","................"],"gs_crush":["................",".......pp.......",".......pp.......",".....gggggg.....","..y....ls....y..",".......ls.......","...y...ls...y...",".......ls.......",".......ls.......","....w..ls..w....",".......ls.......",".a....wlsw....a.","aaqqaawwwwaaqqaa","qq.qqqqwwqqqq.qq","...q..q..q..q...","................"],"gs_collapse":["................","....a......a....","...aq..a..aq....","......aq........","..a.........a...","..q..a...a..q...","................","aaaa..aaaa..aaaa","aqqa.aqqqqa.aqqa","qqq..qqqqqq..qqq",".aaaa..aa..aaaa.",".qqqq.aqqa.qqqq.","aaa...qqqq...aaa","qqqa.......aqqq.","..qq.y...y.qq...","................"],"gs_wave":["................","................","........w.......",".....e..yw......","....e...ewy.....","...e.....ywy....","..e..e...eywy...","..e..e....ywy...","..e..e....ywy...","..e..e...eywy...","...e.....ywy....","....e...ewy.....",".....e..yw......","........w.......","................","................"],"gs_draw":["................","................","................","...........e....","..........e.....","................","......e.........",".gpg.wwwwwwwwww.",".g.gyyyyyyyyye..","......e.........","................",".........e......","..........e.....","................","................","................"],"gs_scar":["................",".ww..........ww.",".wyy........yyw.","..yyy......yyy..","...yey....yey...","....yey..yey....",".....yewwey.....","......ywwy......",".....yewwey.....","....yey..yey....","...yey....yey...","..yyy......yyy..",".eyy........yye.",".ee..........ee.","................","................"],"gs_cyclone":["................","................","...wwkkkkkkkdd..","....kd.....dk...","r...wwkkkkkdd...",".....kd...dk....","rr...wwkkkdd....","......kd.dk.....","r.....wwkdd.....",".......kdk......","........wd......","........kd......",".....r..wk..r...","....rr..dd..rr..","................","................"],"gs_cross":["................",".......ww.......","......ywwy......","..e...ywwy......",".e....ywwy......","e.e...ywwy......","e.e.yyywwyyyyy..","e.e.wwwwwwwwwwww","e.e.yyywwyyyyy..","e.e...ywwy......",".e....ywwy......","..e...ywwy......","......ywwy......",".......ww.......","................","................"],"gs_flash":["................","................","..............w.","..y.....y....wyw","...y.....y....w.","................","eeyyyyyyyyyyyyy.","wwwwwwwwwwwwwwww","eeyyyyyyyyyyyyy.","................","....y.....y.....",".....y.....y....","................",".gpg............",".g.g............","................"],"st_fireburst":["................","................",".......y........","...y...y...y....","....y..y..y.....",".....yywyy......","......www.......","..yyyywwwyyyy...","......www.......",".....yywyy......","....y..y..y.....","...y...y...y....",".......y........","..gggggggggg....","................","................"],"st_orb":["................","................","......dddd......",".....dkkkkd.....","....dkwwkkkd....",".kk.dkwkkkkd.kk.",".k..dkkkkkkd..k.",".kk.dkkkkkkd.kk.","...kkdkkkkdkk...","......dddd......","................","........d.......","................","....d...d...d...","...dddddddddd...","................"]};
+const IP={"s":"#D9DDE3","l":"#f2f5f8","g":"#F5C542","p":"#5a3a2a","y":"#FFE08A","r":"#E9DFC6","w":"#FFF8E7","t":"#3a3550","k":"#9EE3FF","e":"#C9A24A","d":"#5BAEE6","o":"#F2A246","a":"#D6CBB3","q":"#A59781","v":"#B58AD0","u":"#8E5BA8","x":"#FF5A3C","n":"#8C93A6","b":"#8a5a36"};
+const TIER=['#8a8fa0','#5fbf6a','#4aa3e0','#a56fd8','#e8c04a','#ff8a3c','#e8505a','#ff7ac8','#7fe8e0','#fff2c0'];
+const BR={base:'#8C93A6',gsA:'#FF9A3C',gsB:'#6FC3E8',stA:'#FF9A3C',stB:'#B58AD0'};
+const NAME={base:'강철',gsA:'대검 A 파쇄',gsB:'대검 B 검기',stA:'스태프 A 원소',stB:'스태프 B 중력'};
+const SHADE='#100c1e',NONE='#332d4d',DARK='#15112a',LIT='#2f2948',HI='#5a5470',OUT='#2A2540',FLASH='#FFFFFF',COIN='#F5C542',EMBER='#FFE08A',KEY="#b9b0dc",BG='#221d38',HEAL="#7CE38B";
+const W=24;
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mix=(a,b,t)=>'#'+hex(a).map((v,i)=>Math.round(v+(hex(b)[i]-v)*t).toString(16).padStart(2,'0')).join('');
+const $=id=>document.getElementById(id);
+const fix=c=>{if(!$('gray').checked)return c;const[r,g,b]=hex(c),l=Math.round(.3*r+.59*g+.11*b).toString(16).padStart(2,'0');return'#'+l+l+l};
+function canvas(id,w,h,k){const c=$(id);c.width=w*k;c.height=h*k;const g=c.getContext('2d');g.fillStyle=BG;g.fillRect(0,0,c.width,c.height);
+  return(x,y,pw,ph,col,a=1)=>{g.globalAlpha=a;g.fillStyle=fix(col);g.fillRect(x*k,y*k,pw*k,ph*k);g.globalAlpha=1}}
+const DIG={'0':'111101101101111','1':'010110010010111','2':'111001111100111','3':'111001111001111','4':'101101111001001','5':'111100111001111','6':'111100111101111','7':'111001001010010','8':'111101111101111','9':'111101111001111','+':'000010111010000','A':'010101111101101','S':'111100111001111','D':'110101101101110','F':'111100111100100'};
+function text(R,s,x,y,c){[...s].forEach((ch,i)=>{const b=DIG[ch];for(let k=0;k<15;k++)if(b[k]==='1')R(x+i*4+k%3,y+Math.floor(k/3),1,1,c)})}
+
+const slash=(R,x,y,w,h,cut,c)=>{for(let j=0;j<h;j++){const l=Math.max(0,cut-j),r=Math.max(0,j-(h-1-cut));R(x+l,y+j,w-l-r,1,c)}};
+const chunk=(R,x,y,w,h,c)=>{R(x+2,y,w-4,h,c);R(x,y+2,w,h-4,c);R(x+1,y+1,w-2,h-2,c)};
+const inset=s=>(s==='gsA'||s==='stB')?3:2;
+/** cardFrame.ts cardShell 그대로 */
+function shell(R,s,x,y,h,col,own){
+  const c=own?col:NONE,dk=own?mix(col,OUT,.45):DARK,lt=own?mix(col,FLASH,.45):NONE,P=(px,py,pc)=>R(px,py,1,1,pc);
+  if(s==='gsA')chunk(R,x+1,y+1,W,h,SHADE);else if(s==='gsB')slash(R,x+1,y+1,W,h,3,SHADE);else R(x+1,y+1,W,h,SHADE);
+  if(s==='gsA'){chunk(R,x,y,W,h,c);R(x+2,y+2,W-4,h-4,dk);R(x+2,y+h-3,W-4,1,c);for(const i of[2,3,9,17,18])P(x+i,y,lt);
+    P(x,y+10,dk);P(x+1,y+11,dk);P(x,y+12,dk);P(x+W-1,y+h-12,dk);P(x+W-2,y+h-11,dk);P(x+W-1,y+h-10,dk);R(x+14,y,2,1,dk);P(x+15,y+1,dk);}
+  else if(s==='gsB'){slash(R,x,y,W,h,3,c);slash(R,x+1,y+1,W-2,h-2,3,dk);for(let i=0;i<4;i++){P(x+3-i,y+i,lt);P(x+W-4+i,y+h-1-i,lt)}
+    P(x+W,y-1,lt);P(x+W+1,y-2,c);P(x-1,y+h,lt);P(x-2,y+h+1,c);}
+  else if(s==='stA'){R(x,y,W,h,c);R(x+1,y+1,W-2,h-2,dk);const fl=own?EMBER:NONE;
+    for(const[i,th]of[[3,1],[7,2],[11,1],[15,2],[19,1]]){R(x+i,y-th,1,th,th>1?fl:c);if(th>1)P(x+i+1,y-1,c)}
+    P(x+2,y+h-3,fl);P(x+W-3,y+h-3,fl);P(x+W-5,y+h-2,c);}
+  else if(s==='stB'){R(x,y,W,h,c);R(x+1,y+1,W-2,h-2,SHADE);R(x+2,y+2,W-4,h-4,c);
+    P(x-1,y-1,own?mix(col,FLASH,.6):NONE);P(x+W,y+h,own?mix(col,FLASH,.6):NONE);P(x+W,y-1,dk);P(x-1,y+h,dk);P(x+W/2,y,lt);P(x+W/2,y+h-1,lt);}
+  else{R(x,y,W,h,c);R(x+1,y+1,W-2,h-2,dk);}
+  const ins=inset(s),bx=x+ins,by=y+ins,bw=W-ins*2,bh=h-ins*2;
+  R(bx,by,bw,bh,own?LIT:DARK);if(own)R(bx,by,bw,1,HI);
+  return{ins,bx,by,bw,bh,cut:()=>{if(s==='gsB'){P(bx,by,dk);P(bx+1,by,dk);P(bx,by+1,dk);P(bx+bw-1,by+bh-1,dk);P(bx+bw-2,by+bh-1,dk);P(bx+bw-1,by+bh-2,dk)}}};
+}
+function icon(R,id,x,y,mono,alpha=1){(ICONS[id]||[]).forEach((row,j)=>[...row].forEach((ch,i)=>{if(ch!=='.')R(x+i,y+j,1,1,mono||IP[ch],alpha)}))}
+
+/** 새 카드 24×34: 아이콘 창 + 아래 9줄 티어 띠 */
+const H=34,BAND=9;
+function cardNew(R,f,x,y){
+  const b=shell(R,f.s,x,y,H,BR[f.s],f.own),ty=b.by+b.bh-BAND,col=TIER[f.tier-1];
+  if(!f.own){R(b.bx,ty,b.bw,1,SHADE);icon(R,f.id,x+4,y+5,NONE);b.cut();return}
+  R(b.bx,ty,b.bw,BAND,mix(col,OUT,.55));R(b.bx,ty+1,b.bw,BAND-2,col);R(b.bx,ty+1,b.bw,1,mix(col,FLASH,.5));
+  const s=f.tier+(f.enh?'+':''),tw=s.length*4-1;text(R,s,b.bx+Math.round((b.bw-tw)/2),ty+2,OUT);
+  b.cut();
+  icon(R,f.id,x+4,y+5,null,f.lock?.25:1);
+  if(f.lock)lock(R,x+10,y+10);
+}
+/** 지금 카드 24×29 (비교용): 숫자판 + 고정 별 */
+function cardOld(R,f,x,y){
+  const h=29,b=shell(R,f.s,x,y,h,BR[f.s],f.own);b.cut();
+  const s=String(f.tier),tw=s.length*4-1,pw=Math.max(11,tw+4),ph=8,px=x+Math.round((24-pw)/2),py=y+h-ph-3,col=TIER[f.tier-1];
+  if(!f.own)R(px,py,pw,ph,DARK);else{R(px-1,py-1,pw+2,ph+2,OUT);R(px,py,pw,ph,mix(col,OUT,.55));R(px+1,py+1,pw-2,ph-2,col);R(px+1,py+1,pw-2,1,mix(col,FLASH,.5));text(R,s,px+Math.round((pw-tw)/2),py+2,OUT)}
+  icon(R,f.id,x+4,y+7,f.own?null:NONE,f.lock?.25:1);if(f.lock)lock(R,x+10,y+12);
+  if(f.own&&f.enh)for(const[dx,dy]of[[b.bw-4,3],[3,b.bh-5]]){const cx=b.bx+dx,cy=b.by+dy;R(cx,cy,1,1,FLASH);R(cx-1,cy,1,1,COIN);R(cx+1,cy,1,1,COIN);R(cx,cy-1,1,1,COIN);R(cx,cy+1,1,1,COIN)}
+}
+const old=()=>$('old').checked,card=(R,f,x,y)=>(old()?cardOld:cardNew)(R,f,x,y),CH=()=>old()?29:H;
+function lock(R,x,y){R(x+1,y,3,1,KEY);R(x,y+1,1,2,KEY);R(x+4,y+1,1,2,KEY);R(x,y+3,5,4,KEY);R(x+2,y+4,1,2,SHADE)}
+function keyTag(R,x,y,k){R(x,y,7,9,SHADE);R(x,y,6,8,"#4b4268");R(x+1,y+1,4,6,DARK);
+  if(k!=='P')return text(R,k,x+1,y+2,FLASH);R(x+1,y+4,1,1,HEAL);R(x+2,y+5,1,1,HEAL);R(x+3,y+3,1,2,HEAL);R(x+4,y+2,1,1,HEAL)}
+function corners(R,x,y,w,h,c){for(const[cx,cy,sx,sy]of[[x-2,y-2,1,1],[x+w+1,y-2,-1,1],[x-2,y+h+1,1,-1],[x+w+1,y+h+1,-1,-1]]){R(sx>0?cx:cx-2,cy,3,1,c);R(cx,sy>0?cy:cy-2,1,3,c)}}
+function ready(R,x,y,h,t){if(Math.floor(t*2.5)%2)return;const cx=x+W/2;R(cx-3,y+h-2,7,4,SHADE);R(cx,y+h-1,1,1,COIN);R(cx-1,y+h,3,1,COIN);R(cx-2,y+h+1,5,1,COIN)}
+
+const ROWS={base:'gs_launch',gsA:'gs_earthsplit',gsB:'gs_wave',stA:'st_fireburst',stB:'st_orb'};
+function draw(t){
+  const K=4,Rf=canvas('frames',10+5*32+80,5*46+6,K),COLS=[[1,0,1],[1,1,1],[2,0,1],[3,1,1],[2,0,0]];
+  Object.keys(ROWS).forEach((s,r)=>{COLS.forEach(([tier,enh,own],i)=>card(Rf,{s,id:ROWS[s],tier,enh,own},10+i*32,8+r*46))});
+  const Rt=canvas('tiers',10+10*30,2*(H+12)+6,3);
+  for(let i=0;i<10;i++)for(let e=0;e<2;e++)card(Rt,{s:'base',id:'gs_launch',tier:i+1,enh:!!e,own:1},8+i*30,6+e*(H+12));
+  const ch=CH(),step=old()?35:40,Rl=canvas('list',230,2*step+12,3);
+  const rows=[['gsA',['gs_earthsplit','gs_whirl','gs_shoulder','gs_quake','gs_throw','gs_crush','gs_collapse']],['gsB',['gs_wave','gs_draw','gs_launch','gs_scar','gs_cyclone','gs_cross','gs_flash']]];
+  const TI={gs_earthsplit:1,gs_whirl:1,gs_shoulder:1,gs_quake:2,gs_throw:2,gs_crush:3,gs_collapse:3,gs_wave:1,gs_draw:1,gs_launch:1,gs_scar:2,gs_cyclone:2,gs_cross:3,gs_flash:3};
+  const TAG={gs_earthsplit:'A',gs_wave:'S',gs_scar:'D'},ENH={gs_whirl:1,gs_wave:1,gs_scar:1},READY={gs_quake:1},LOCK={gs_crush:1},NOT={gs_collapse:1,gs_flash:1,gs_cyclone:1};
+  rows.forEach(([s,ids],r)=>{const y=8+r*step;if(r)for(let i=0;i<218;i+=2)Rl(4+i,y-4,1,1,NONE);Rl(3,y+1,2,ch-2,BR[s]);let gap=0;
+    ids.forEach((id,i)=>{if(i&&TI[id]!==TI[ids[i-1]])gap+=4;const x=12+i*26+gap,f={s,id,tier:TI[id],enh:ENH[id],own:!NOT[id],lock:LOCK[id]};
+      card(Rl,f,x,y);if(TAG[id])keyTag(Rl,x-2,y+ch-8,TAG[id]);if(READY[id])ready(Rl,x,y,ch,t);if(id==='gs_draw')corners(Rl,x,y,W,ch,COIN)})});
+}
+const NAMES={gs_launch:'올려 베기',gs_earthsplit:'대지 가르기',gs_wave:'검기 날리기',st_fireburst:'불꽃 폭발',st_orb:'중력 구슬'};
+/** 큰 카드 48×68: 테두리 2배 + 아이콘 칸 + 이름 + 13줄 띠 (숫자 2배) */
+function bigCard(id,k,f,x,y){
+  const R=canvas.cache[id],g=canvas.ctx[id],R2=(px,py,pw,ph,c,a)=>R(x+(px-x)*2,y+(py-y)*2,pw*2,ph*2,c,a);
+  const b=shell(R2,f.s,x,y,34,BR[f.s],true),ins=b.ins*2,bx=x+ins,bw=48-ins*2,bh=68-ins*2,ty=y+ins+bh-13,col=TIER[f.tier-1];
+  R(x+7,y+7,34,34,DARK);(ICONS[f.id]||[]).forEach((row,j)=>[...row].forEach((ch,i)=>{if(ch!=='.')R(x+8+i*2,y+8+j*2,2,2,IP[ch])}));
+  R(bx,ty,bw,13,mix(col,OUT,.55));R(bx,ty+1,bw,11,col);R(bx,ty+1,bw,1,mix(col,FLASH,.5));
+  const s=f.tier+(f.enh?'+':''),tw=s.length*8-2;
+  [...s].forEach((ch,i)=>{const bits=DIG[ch];for(let q=0;q<15;q++)if(bits[q]==='1')R(bx+Math.round((bw-tw)/2)+i*8+(q%3)*2,ty+2+Math.floor(q/3)*2,2,2,OUT)});
+  if(f.s==='gsB')b.cut();
+  g.font=`${8*k}px sans-serif`;g.textBaseline='top';const nm=NAMES[f.id],nw=g.measureText(nm).width/k+(f.enh?6:0),nx=x+Math.floor((48-nw)/2);
+  g.fillStyle=fix('#f2f5f8');g.fillText(nm,nx*k,(y+41)*k);if(f.enh){g.fillStyle=fix(COIN);g.fillText('+',(nx+nw-5)*k,(y+41)*k)}
+}
+function slot(R,f,x,y,key){const n=22;R(x+1,y+1,n,n,SHADE);R(x,y,n,n,BR[f.s]);R(x+1,y+1,n-2,n-2,DARK);
+  icon(R,f.id,x+3,y+3);keyTag(R,x-2,y+14,key);
+  if(f.enh){R(x+n-7,y+n-7,6,6,SHADE);R(x+n-6,y+n-6,5,5,'#4b4268');R(x+n-5,y+n-4,3,1,FLASH);R(x+n-4,y+n-5,1,3,FLASH)}}
+const _canvas=canvas;canvas=function(id,w,h,k){const R=_canvas(id,w,h,k);canvas.cache[id]=R;canvas.ctx[id]=$(id).getContext('2d');return R};canvas.cache={};canvas.ctx={};
+const _draw=draw;draw=function(t){_draw(t);
+  if(old())return;
+  canvas('big',10+5*60,2*80+6,3);
+  Object.keys(ROWS).forEach((s,i)=>{bigCard('big',3,{s,id:ROWS[s],tier:1,enh:0},10+i*60,8);bigCard('big',3,{s,id:ROWS[s],tier:3,enh:1},10+i*60,88)});
+  const Rs=canvas('slots',4*25+14,34,4);
+  [['gsA','gs_earthsplit',0,'A'],['gsB','gs_wave',1,'S'],['stA','st_fireburst',1,'D'],['stB','st_orb',0,'F']].forEach(([s,id,enh,key],k)=>slot(Rs,{s,id,enh},8+k*25,6,key));
+};
+let t0=performance.now();(function loop(now){draw((now-t0)/1000);requestAnimationFrame(loop)})(t0);
+</script>
+</body></html>

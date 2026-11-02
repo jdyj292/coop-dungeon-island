@@ -4,7 +4,7 @@
 import { color } from '../palette';
 import { ramp } from '../sprites/shade';
 import type { CardInfo } from './cardTypes';
-import { BH, BW, bigShine, CH, CW, drawFlip, faceImage, glow, packArt, smallCard } from './shopCards';
+import { BH, BW, CH, CW, drawFlip, faceImage, glow, packArt, smallCard } from './shopCards';
 import { Pix, SC } from './shopPix';
 
 export const SW = 384, SH = 216;
@@ -158,13 +158,12 @@ export function buyMenu(p: Pix<ShopHit>, v: ShopView, now: number): void {
     x += 42;
   }
   const f = v.info(v.sel), bx = L.x + (L.w - BW) / 2, by = L.y + 38;
-  if (v.bought?.id === v.sel && v.bought.t < 0.3) drawFlip(p, bx + BW / 2, by, v.bought.t / 0.3, f, 'global.ui.card.pack1', now);
+  if (v.bought?.id === v.sel && v.bought.t < 0.3) drawFlip(p, bx + BW / 2, by, v.bought.t / 0.3, f, 'global.ui.card.pack1');
   else {
     if (f.owned && f.tier >= 2) glow(p, bx, by, BW, BH, f.tier, f.tierColor, 0.3, now);
     p.ctx.globalAlpha = f.owned ? 1 : 0.35;
     p.ctx.drawImage(faceImage(f), bx, by);
     p.ctx.globalAlpha = 1;
-    if (f.owned) bigShine(p, f, bx, by, now);
   }
   const nm = p.fit(f.name, L.w - 12), nw = p.width(nm) + (f.enhanced ? p.width('+') + 1 : 0), nx = L.x + Math.floor((L.w - nw) / 2);
   p.text(nm, nx, by + BH + 3, SC.txt);
@@ -175,7 +174,7 @@ export function buyMenu(p: Pix<ShopHit>, v: ShopView, now: number): void {
   else if (f.ready) p.center('강화는 카드 창(K)에서', L.x, L.w, by + BH + 26, SC.off);
   p.button('buy', String(f.craft), L.x + 6, L.y + L.h - 18, L.w - 12, { kind: 'btn', b: 'buy' }, { off: v.dust < f.craft, ico: 'dust' });
   v.rows.forEach((r, i) => {
-    const y = M.y + 6 + i * 52;
+    const y = M.y + 6 + i * 57;
     if (r.color) p.R(M.x + 10, y + 3, 3, 5, r.color);
     p.text(r.name, M.x + (r.color ? 16 : 10), y, SC.key);
     r.ids.forEach((id, j) => {

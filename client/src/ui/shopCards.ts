@@ -1,44 +1,41 @@
-// 카드 상점 카드·팩 그림 (hud.md 8장 카드 상점, 승인 데모 card_shop.html · card_redesign.html): 작은 카드 24×29(카드 창과 같은 계열 테두리), 큰 카드 앞면 48×64(같은 테두리 2배)·뒷면,
-// 강화 = 반짝임 + 이름 뒤 금색 +, 뒤집기(가로로 줄였다 폄), 뒷면 티어 빛, 카드팩(팩 번호 색, 위아래 톱니·카드 문장)·찢긴 윗부분
-import { cardShell, cardShine, frameInset, readyMark, scaled, shinePhase, type Paint } from './cardFrame';
-import { tierPlate } from './cardTier';
+// 카드 상점 카드·팩 그림 (hud.md 8장 카드 상점, 승인 데모 card_shop.html · card_redesign.html): 작은 카드 24×34(카드 창과 같은 계열 테두리·티어 띠), 큰 카드 앞면 48×68(같은 테두리 2배)·뒷면 (초안 docs/refs/demos/card_tall.html),
+// 강화 = 티어 띠 숫자 뒤 + · 큰 카드 이름 뒤 금색 +, 뒤집기(가로로 줄였다 폄), 뒷면 티어 빛, 카드팩(팩 번호 색, 위아래 톱니·카드 문장)·찢긴 윗부분
+import { cardShell, CH, CW, readyMark, scaled, type Paint } from './cardFrame';
+import { BAND, tierBand } from './cardTier';
 import type { CardInfo } from './cardTypes';
 import { mix, Pix, SC } from './shopPix';
 
-export const CW = 24, CH = 29, BW = 48, BH = 64;
+export { CH, CW };
+export const BW = CW * 2, BH = CH * 2;
+/** 큰 카드 티어 띠 두께 (숫자 2배) */
+const BIG_BAND = 13;
 
 /** 캔버스 붓 */
 const paint = (p: Pix<unknown>): Paint => (x, y, w, h, c, a) => p.R(x, y, w, h, c, a ?? 1);
 
-/** 작은 카드 (지정 구매 목록, 카드 창과 같은 모양): 계열 테두리·별·아이콘, 강화 = 반짝임, 3장 모임 = ▲, 없는 카드는 그림자. dim = 강화를 마침. t = 초 */
+/** 작은 카드 (지정 구매 목록, 카드 창과 같은 모양): 계열 테두리·아이콘·티어 띠, 강화 = 띠 숫자 뒤 +, 3장 모임 = ▲, 없는 카드는 그림자. dim = 강화를 마침. t = 초 */
 export function smallCard(p: Pix<unknown>, f: CardInfo, x: number, y: number, t: number, o: { sel?: boolean; hov?: boolean; dim?: boolean } = {}): void {
-  const P = paint(p), ins = cardShell(P, f.frame, x, y, CH, f.color, f.owned);
-  tierPlate(P, x, y, CH, f.tier, f.tierColor, f.owned);
-  p.icon(f.id, x + 4, y + 7, f.owned ? {} : { mono: SC.cardBd });
-  if (f.owned && f.enhanced) cardShine(P, x + ins, y + ins, CW - ins * 2, CH - ins * 2, t, shinePhase(f.id));
+  const P = paint(p);
+  cardShell(P, f.frame, x, y, CH, f.color, f.owned, (bx, by, bw, bh) => tierBand(P, bx, by + bh - BAND, bw, BAND, f.tier, f.tierColor, f.owned, f.enhanced));
+  p.icon(f.id, x + 4, y + 5, f.owned ? {} : { mono: SC.cardBd });
   if (f.ready) readyMark(P, x, y, CH, t);
   if (o.dim) p.R(x, y, CW, CH, SC.shade, 0.55);
   if (o.sel) p.corners(x, y, CW, CH, SC.coin);
   else if (o.hov) { p.R(x, y, CW, 1, SC.key); p.R(x, y + CH - 1, CW, 1, SC.key); p.R(x, y, 1, CH, SC.key); p.R(x + CW - 1, y, 1, CH, SC.key); }
 }
 
-/** 큰 카드 앞면 48×64: 작은 카드와 같은 계열 테두리 2배(24×32) + 별 + 아이콘 2배 + 이름(강화 = 금색 +). 패시브는 오른쪽 위 P. 반짝임은 bigShine */
+/** 큰 카드 앞면 48×68: 작은 카드와 같은 계열 테두리 2배 + 아이콘 칸(아이콘 2배) + 이름(강화 = 금색 +) + 아래 13줄 티어 띠(숫자 2배). 패시브는 오른쪽 위 P */
 export function bigFace(p: Pix<unknown>, f: CardInfo, x: number, y: number): void {
-  const ins = cardShell(scaled(paint(p), x, y, 2), f.frame, x, y, BH / 2, f.color, true) * 2;
-  tierPlate(scaled(paint(p), x, y, 2), x, y, BH / 2, f.tier, f.tierColor, true);
+  const ins = cardShell(scaled(paint(p), x, y, 2), f.frame, x, y, CH, f.color, true, (bx, by, bw, bh) => {
+    const bottom = y + (by + bh - y) * 2;
+    tierBand(paint(p), x + (bx - x) * 2, bottom - BIG_BAND, bw * 2, BIG_BAND, f.tier, f.tierColor, true, f.enhanced, 2);
+  }) * 2;
+  p.R(x + 7, y + 7, 34, 34, SC.title);
+  p.icon(f.id, x + 8, y + 8, { sc: 2 });
   if (!f.active) { p.R(x + BW - ins - 8, y + ins + 2, 6, 5, SC.title); p.tiny('P', x + BW - ins - 7, y + ins + 2, SC.heal); }
-  p.R(x + 7, y + 10, 34, 34, SC.title);
-  p.icon(f.id, x + 8, y + 11, { sc: 2 });
   const name = p.fit(f.name, BW - (f.enhanced ? 16 : 10)), nw = p.width(name) + (f.enhanced ? p.width('+') + 1 : 0), nx = x + Math.floor((BW - nw) / 2);
-  p.text(name, nx, y + 45, SC.txt);
-  if (f.enhanced) p.text('+', nx + p.width(name) + 1, y + 45, SC.coin);
-}
-
-/** 큰 카드 강화 반짝임 (앞면 위에 매 프레임) */
-export function bigShine(p: Pix<unknown>, f: CardInfo, x: number, y: number, t: number): void {
-  if (!f.enhanced) return;
-  const ins = frameInset(f.frame) * 2;
-  cardShine(paint(p), x + ins, y + ins, BW - ins * 2, BH - ins * 2, t, shinePhase(f.id));
+  p.text(name, nx, y + 41, SC.txt);
+  if (f.enhanced) p.text('+', nx + p.width(name) + 1, y + 41, SC.coin);
 }
 
 /** 카드 뒷면 48×64: 어두운 격자 + 팩 색 마름모 */
@@ -70,13 +67,11 @@ function offscreen(key: string, draw: (p: Pix<unknown>) => void): HTMLCanvasElem
 export const faceImage = (f: CardInfo) => offscreen(`f|${f.id}|${f.enhanced ? 1 : 0}`, (p) => bigFace(p, f, 0, 0));
 export const backImage = (packColor: string) => offscreen(`b|${packColor}`, (p) => bigBack(p, 0, 0, packColor));
 
-/** 뒤집기 단계 s (0 = 뒷면, 1 = 앞면, f 없으면 뒷면만): 가운데 cx 기준 가로 축소. 다 뒤집힌 강화 카드는 반짝임 (t = 초) */
-export function drawFlip(p: Pix<unknown>, cx: number, y: number, s: number, f: CardInfo | null, packColor: string, t: number): void {
+/** 뒤집기 단계 s (0 = 뒷면, 1 = 앞면, f 없으면 뒷면만): 가운데 cx 기준 가로 축소 */
+export function drawFlip(p: Pix<unknown>, cx: number, y: number, s: number, f: CardInfo | null, packColor: string): void {
   const w = Math.max(1, Math.round(BW * Math.abs(Math.cos(s * Math.PI))));
   p.R(cx - w / 2 + 1, y + 2, w, BH, SC.shade);
-  p.ctx.drawImage(s < 0.5 || !f ? backImage(packColor) : faceImage(f), Math.round(cx - w / 2), Math.round(y), w, BH);
-  if (f && s >= 1) bigShine(p, f, Math.round(cx - BW / 2), y, t);
-}
+  p.ctx.drawImage(s < 0.5 || !f ? backImage(packColor) : faceImage(f), Math.round(cx - w / 2), Math.round(y), w, BH);}
 
 /** 뒷면 빛 (a = 세기 0~1): 티어 1 = 테두리 한 줄, 2 = 번짐 + 반짝이 2개, 3 = 크게 맥박 + 반짝이 4개 */
 export function glow(p: Pix<unknown>, x: number, y: number, w: number, h: number, tier: number, tc: string, a: number, t: number): void {

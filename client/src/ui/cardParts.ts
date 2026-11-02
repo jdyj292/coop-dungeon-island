@@ -1,11 +1,11 @@
-// 카드 창 그리기 부품 (hud.md 8장, 승인 데모 docs/refs/demos/card_window.html · card_redesign.html): 글자·판정 칸을 모아 두는 Painter, 카드 모양 24×29(계열 테두리 cardFrame.ts)·판·버튼·꺾쇠·자물쇠·별·꼬리표·조각 보석·그림
+// 카드 창 그리기 부품 (hud.md 8장, 승인 데모 docs/refs/demos/card_window.html · card_redesign.html): 글자·판정 칸을 모아 두는 Painter, 카드 모양 24×34(계열 테두리 cardFrame.ts · 티어 띠 cardTier.ts, 초안 docs/refs/demos/card_tall.html)·판·버튼·꺾쇠·자물쇠·별·꼬리표·조각 보석·그림
 import type Phaser from 'phaser';
 import { hexToInt } from '@game/shared';
 import icons from '../../data/sprites/hud_icons.json';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
-import { cardShell, type FrameStyle, type Paint } from './cardFrame';
-import { tierPlate } from './cardTier';
+import { cardShell, CH, CW, type FrameStyle, type Paint } from './cardFrame';
+import { BAND, tierBand } from './cardTier';
 import { koText, koWidth, type KoText } from './koText';
 import type { FontKey } from './fonts';
 import { drawText } from './pixelFont';
@@ -156,8 +156,8 @@ export function titleCard(g: G, x: number, y: number): void {
   R(g, x + 4, y + 5, 2, 2, SK.sky);
 }
 
-/** 카드 모양 크기 */
-export const CW = 24, CH = 29;
+/** 카드 모양 크기 (cardFrame.ts) */
+export { CH, CW };
 
 /** 카드 모양 하나 (그리기용) */
 export interface FaceLook {
@@ -183,18 +183,17 @@ export interface FaceLook {
   tag: string | null;
 }
 
-/** 카드 24×29: 계열 테두리 · 티어 판 · 아이콘 · 자물쇠(장착 숙련도 모자람) · 꼬리표. 없는 카드는 같은 모양의 그림자.
- * 강화 반짝임·강화 가능 ▲은 움직여서 CardWindow가 따로 그림 (cardFrame.ts cardShine·readyMark). big = 상세 머리(꼬리표 없음). 몸통 시작 거리를 돌려줌 */
-export function cardFace(g: G, f: FaceLook, x: number, y: number, o: { sel?: boolean; hov?: boolean; big?: boolean } = {}): number {
-  const ins = cardShell(paintOf(g), f.frame, x, y, CH, f.color, f.owned);
-  tierPlate(paintOf(g), x, y, CH, f.tier, f.tierColor, f.owned);
-  if (!f.owned) cardIcon(g, f.id, x + 4, y + 7, { mono: SK.cardBd });
+/** 카드 24×34: 계열 테두리 · 위 아이콘 칸 · 아래 티어 띠(강화 = 숫자 뒤 +) · 자물쇠(장착 숙련도 모자람) · 꼬리표. 없는 카드는 같은 모양의 그림자.
+ * 강화 가능 ▲은 깜빡여서 CardWindow가 따로 그림 (cardFrame.ts readyMark). big = 상세 머리(꼬리표 없음) */
+export function cardFace(g: G, f: FaceLook, x: number, y: number, o: { sel?: boolean; hov?: boolean; big?: boolean } = {}): void {
+  const P = paintOf(g);
+  cardShell(P, f.frame, x, y, CH, f.color, f.owned, (bx, by, bw, bh) => tierBand(P, bx, by + bh - BAND, bw, BAND, f.tier, f.tierColor, f.owned, f.enhanced));
+  if (!f.owned) cardIcon(g, f.id, x + 4, y + 5, { mono: SK.cardBd });
   else {
-    cardIcon(g, f.id, x + 4, y + 7, { alpha: f.locked ? 0.25 : 1 });
-    if (f.locked) lockIcon(g, x + 10, y + 12, SK.key);
+    cardIcon(g, f.id, x + 4, y + 5, { alpha: f.locked ? 0.25 : 1 });
+    if (f.locked) lockIcon(g, x + 10, y + 10, SK.key);
   }
   if (!o.big && f.tag) keyTag(g, x - 2, y + CH - 8, f.tag);
   if (o.sel) corners(g, x, y, CW, CH, SK.coin);
   else if (o.hov) { R(g, x, y, CW, 1, SK.key); R(g, x, y + CH - 1, CW, 1, SK.key); R(g, x, y, 1, CH, SK.key); R(g, x + CW - 1, y, 1, CH, SK.key); }
-  return ins;
 }

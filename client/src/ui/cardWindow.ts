@@ -1,10 +1,10 @@
 // 카드 창 (K) 그리기 (hud.md 8장, 승인 데모 docs/refs/demos/card_redesign.html, 게임 화면 384×216 기준 좌표):
 // 제목 띠(카드 그림·무기 탭·무기 Lv·조각) / 위 장착 줄(액티브 A S D F · 패시브 "비용 사용/한도"·칸) / 계열 보너스 한 줄 /
 // 액티브·패시브 카드 탭 / 보유 카드(줄 = A / B, 티어 묶음) / 오른쪽 상세 (cardDetail.ts). 글자는 모두 갈무리7.
-// 움직이는 것(강화 반짝임·강화 가능 ▲·강화 번쩍임·조각)은 fx 층에 매 프레임 (나머지는 바뀔 때만). 상태·입력은 stage/islandCards.ts (CardSource)
+// 움직이는 것(강화 가능 ▲·강화 번쩍임·조각)은 fx 층에 매 프레임 (나머지는 바뀔 때만). 상태·입력은 stage/islandCards.ts (CardSource)
 import type Phaser from 'phaser';
 import { drawDetail, DETAIL_CARD } from './cardDetail';
-import { cardShine, readyMark, shinePhase } from './cardFrame';
+import { readyMark } from './cardFrame';
 import { box, CH, cardFace, cardIcon, CW, dustGem, keyTag, Painter, paintOf, R, roman, SK, titleCard } from './cardParts';
 import type { FontKey } from './fonts';
 import { koWidth } from './koText';
@@ -14,9 +14,11 @@ const W = 384, H = 216, KEYS = ['A', 'S', 'D', 'F'];
 const labW = (t: string, font: FontKey = 'koSmall') => koWidth(t, font);
 /** 강화 번쩍임 (초), 조각 색 */
 const POP = 0.35, BURST = [SK.coin, SK.flash, SK.gold];
+/** 보유 카드 줄 간격 */
+const ROW = 40;
 
-/** 움직이는 그림 자리 (창 좌표): shine = 강화 몸통, ready = 강화 가능 카드 */
-interface Spot { id: string; x: number; y: number; w: number; h: number; kind: 'shine' | 'ready' }
+/** 강화 가능 ▲ 자리 (창 좌표, 카드 왼쪽 위) */
+interface Spot { x: number; y: number }
 interface Bit { x: number; y: number; vx: number; vy: number; life: number; s: number; c: string }
 
 export class CardWindow {
@@ -69,15 +71,12 @@ export class CardWindow {
     if (!s.hoverBonus) this.face(s.card(s.hover ?? s.sel), DETAIL_CARD.x, DETAIL_CARD.y, true);
   }
 
-  /** 매 프레임: 강화 반짝임 · 강화 가능 ▲ · 강화 번쩍임 · 조각 (t = 초) */
+  /** 매 프레임: 강화 가능 ▲ · 강화 번쩍임 · 조각 (t = 초) */
   animate(t: number, dt: number): void {
     const g = this.fx, P = paintOf(g);
     g.clear();
     if (!this.sig) return;
-    for (const sp of this.spots) {
-      if (sp.kind === 'shine') cardShine(P, sp.x, sp.y, sp.w, sp.h, t, shinePhase(sp.id));
-      else readyMark(P, sp.x, sp.y, sp.h, t);
-    }
+    for (const sp of this.spots) readyMark(P, sp.x, sp.y, CH, t);
     const pop = this.pop;
     if (pop) {
       const a = 1 - (t - pop.t0) / POP;
@@ -108,7 +107,7 @@ export class CardWindow {
     g.clear();
     if (!s?.drag) return;
     g.setAlpha(0.85);
-    cardFace(g, s.card(s.drag.id), x - 12, y - 14, { big: true });
+    cardFace(g, s.card(s.drag.id), x - CW / 2, y - CH / 2, { big: true });
   }
 
   /** 화면 좌표 → 무엇을 눌렀나 (패널 밖이면 null) */
@@ -141,12 +140,11 @@ export class CardWindow {
 
   /** 카드 한 장 + 움직이는 그림 자리 기록 */
   private face(c: CardInfo, x: number, y: number, big: boolean, o: { sel?: boolean; hov?: boolean } = {}): void {
-    const ins = cardFace(this.p.g, c, x, y, { ...o, big });
+    cardFace(this.p.g, c, x, y, { ...o, big });
     const list = this.where.get(c.id) ?? [];
     list.push({ x, y });
     this.where.set(c.id, list);
-    if (c.owned && c.enhanced) this.spots.push({ id: c.id, x: x + ins, y: y + ins, w: CW - ins * 2, h: CH - ins * 2, kind: 'shine' });
-    if (!big && c.ready) this.spots.push({ id: c.id, x, y, w: CW, h: CH, kind: 'ready' });
+    if (!big && c.ready) this.spots.push({ x, y });
   }
 
   /** 무기 탭 · 오른쪽 무기 Lv 알약 + 조각 */
@@ -173,7 +171,7 @@ export class CardWindow {
     p.text(rx + 5, 12, lv, SK.txt);
   }
 
-  /** 장착 칸 하나 (n = 22 액티브 · 16 패시브): 계열 색 테두리, 강화면 반짝임 */
+  /** 장착 칸 하나 (n = 22 액티브 · 16 패시브): 계열 색 테두리, 강화면 오른쪽 아래 작은 + 판 */
   private slot(s: CardSource, id: string, x: number, y: number, n: number, gold: boolean): void {
     const g = this.p.g, c = s.card(id);
     R(g, x + 1, y + 1, n, n, SK.shade);
@@ -181,7 +179,7 @@ export class CardWindow {
     R(g, x + 1, y + 1, n - 2, n - 2, SK.title);
     if (n === 22) cardIcon(g, id, x + 3, y + 3);
     else cardIcon(g, id, x + 1, y + 1, { inset: 1 });
-    if (c.enhanced) this.spots.push({ id, x: x + 1, y: y + 1, w: n - 2, h: n - 2, kind: 'shine' });
+    if (c.enhanced) { R(g, x + n - 7, y + n - 7, 6, 6, SK.shade); R(g, x + n - 6, y + n - 6, 5, 5, SK.border); R(g, x + n - 5, y + n - 4, 3, 1, SK.flash); R(g, x + n - 4, y + n - 5, 1, 3, SK.flash); }
   }
 
   /** 위 장착 줄: 액티브 A S D F 22×22 / 패시브 "비용 사용/한도" + 16×16 칸 + 빈 자리 + */
@@ -258,9 +256,9 @@ export class CardWindow {
     R(g, 13, 100, 224, 108, SK.shade);
     R(g, 12, 99, 224, 108, SK.border);
     R(g, 13, 100, 222, 106, SK.card);
-    const y0 = 100 + Math.ceil((106 - (s.rows.length - 1) * 35 - CH) / 2);
+    const y0 = 100 + Math.ceil((106 - (s.rows.length - 1) * ROW - CH) / 2);
     s.rows.forEach((row, r) => {
-      const y = y0 + r * 35;
+      const y = y0 + r * ROW;
       if (r) for (let i = 0; i < 218; i += 2) R(g, 15 + i, y - 4, 1, 1, SK.cardBd);
       R(g, 14, y + 1, 2, CH - 2, row.color);
       p.text(18, y + 10, row.name, row.color);

@@ -176,7 +176,7 @@ export class PackOpening {
       packArt(p, CX - pw / 2, M.y + 20 + T * 60, pw, ph, n, pc, { torn: true, alpha: Math.max(0, 1 - T * 2.5) });
       this.cards.forEach((_c, i) => {
         const k = ease((T - i * 0.08) / 0.45);
-        drawFlip(p, CX + (slotX(i) + BW / 2 - CX) * k, M.y + 30 + (SLOT_Y - M.y - 30) * k, 0, null, pc, now);
+        drawFlip(p, CX + (slotX(i) + BW / 2 - CX) * k, M.y + 30 + (SLOT_Y - M.y - 30) * k, 0, null, pc);
       });
     }
   }
@@ -195,8 +195,8 @@ export class PackOpening {
         if (!dim) glow(p, x + tr, y, BW, BH, c.tier, tc, Math.min(1, f.gA), now);
         if (f.s === 'pre') { p.R(M.x + 2, M.y + 2, M.w - 4, M.h - 4, SC.shade, 0.35 * (now - f.t0) / PRE3); glow(p, x, y, BW, BH, 3, tc, 1.2, now); }
         ctx.globalAlpha = dim ? 0.25 : 1;
-        drawFlip(p, cx + tr, y - (i === this.hov ? 2 : 0), 0, ci, this.packColor, now);
-      } else if (f.s === 'flipping') drawFlip(p, cx, y, Math.min(1, (now - f.t0) / FLIP), ci, this.packColor, now);
+        drawFlip(p, cx + tr, y - (i === this.hov ? 2 : 0), 0, ci, this.packColor);
+      } else if (f.s === 'flipping') drawFlip(p, cx, y, Math.min(1, (now - f.t0) / FLIP), ci, this.packColor);
       else {
         const e = now - f.t0;
         if (c.tier >= 3 && e < 0.9 && !dim) {
@@ -206,7 +206,7 @@ export class PackOpening {
         }
         if (c.tier >= 2 && !dim) glow(p, x, y, BW, BH, c.tier, tc, 0.35, now);
         ctx.globalAlpha = dim ? 0.25 : 1;
-        drawFlip(p, cx, y, 1, ci, this.packColor, now);
+        drawFlip(p, cx, y, 1, ci, this.packColor);
         if (c.tier >= 2 && e < 0.18 && !dim) p.R(x, y, BW, BH, SC.flash, 1 - e / 0.18);
         if (c.isNew) { p.R(x + BW - 19, y - 5, 20, 9, SC.outline); p.R(x + BW - 18, y - 4, 18, 7, SC.coin); p.tiny('NEW', x + BW - 17, y - 3, SC.title); }
         // 3장이 모여도 저절로 강화하지 않음: "강화 가능" (강화는 카드 창에서)
