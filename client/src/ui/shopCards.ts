@@ -1,6 +1,6 @@
 // 카드 상점 카드·팩 그림 (hud.md 8장 카드 상점, 승인 데모 card_shop.html · card_redesign.html): 작은 카드 24×29(카드 창과 같은 계열 테두리), 큰 카드 앞면 48×64(같은 테두리 2배)·뒷면,
-// 강화 = 금색 윗줄·십자(움직이지 않음) + 이름 뒤 금색 +, 뒤집기(가로로 줄였다 폄), 뒷면 티어 빛, 카드팩(팩 번호 색, 위아래 톱니·카드 문장)·찢긴 윗부분
-import { cardShell, enhancedMark, frameInset, readyMark, scaled, type Paint } from './cardFrame';
+// 강화 = 반짝임 + 이름 뒤 금색 +, 뒤집기(가로로 줄였다 폄), 뒷면 티어 빛, 카드팩(팩 번호 색, 위아래 톱니·카드 문장)·찢긴 윗부분
+import { cardShell, cardShine, frameInset, readyMark, scaled, shinePhase, type Paint } from './cardFrame';
 import type { CardInfo } from './cardTypes';
 import { mix, Pix, SC } from './shopPix';
 
@@ -9,13 +9,13 @@ export const CW = 24, CH = 29, BW = 48, BH = 64;
 /** 캔버스 붓 */
 const paint = (p: Pix<unknown>): Paint => (x, y, w, h, c, a) => p.R(x, y, w, h, c, a ?? 1);
 
-/** 작은 카드 (지정 구매 목록, 카드 창과 같은 모양): 계열 테두리·별·아이콘, 강화 = 금색 표시, 3장 모임 = ▲, 없는 카드는 그림자. dim = 강화를 마침 */
-export function smallCard(p: Pix<unknown>, f: CardInfo, x: number, y: number, o: { sel?: boolean; hov?: boolean; dim?: boolean } = {}): void {
+/** 작은 카드 (지정 구매 목록, 카드 창과 같은 모양): 계열 테두리·별·아이콘, 강화 = 반짝임, 3장 모임 = ▲, 없는 카드는 그림자. dim = 강화를 마침. t = 초 */
+export function smallCard(p: Pix<unknown>, f: CardInfo, x: number, y: number, t: number, o: { sel?: boolean; hov?: boolean; dim?: boolean } = {}): void {
   const P = paint(p), ins = cardShell(P, f.frame, x, y, CH, f.color, f.owned);
   for (let i = 0; i < f.tier; i++) p.star(x + ins + 1 + i * 4, y + ins + 1, f.owned ? SC.txt : SC.cardBd);
   p.icon(f.id, x + 4, y + 7, f.owned ? {} : { mono: SC.cardBd });
-  if (f.owned && f.enhanced) enhancedMark(P, x + ins, y + ins, CW - ins * 2);
-  if (f.ready) readyMark(P, x, y, CH);
+  if (f.owned && f.enhanced) cardShine(P, x + ins, y + ins, CW - ins * 2, CH - ins * 2, t, shinePhase(f.id));
+  if (f.ready) readyMark(P, x, y, CH, t);
   if (o.dim) p.R(x, y, CW, CH, SC.shade, 0.55);
   if (o.sel) p.corners(x, y, CW, CH, SC.coin);
   else if (o.hov) { p.R(x, y, CW, 1, SC.key); p.R(x, y + CH - 1, CW, 1, SC.key); p.R(x, y, 1, CH, SC.key); p.R(x + CW - 1, y, 1, CH, SC.key); }
@@ -33,11 +33,11 @@ export function bigFace(p: Pix<unknown>, f: CardInfo, x: number, y: number): voi
   if (f.enhanced) p.text('+', nx + p.width(name) + 1, y + 45, SC.coin);
 }
 
-/** 큰 카드 강화 표시 (앞면 위, 작은 카드와 같은 모양 2배) */
-export function bigShine(p: Pix<unknown>, f: CardInfo, x: number, y: number): void {
+/** 큰 카드 강화 반짝임 (앞면 위에 매 프레임) */
+export function bigShine(p: Pix<unknown>, f: CardInfo, x: number, y: number, t: number): void {
   if (!f.enhanced) return;
-  const ins = frameInset(f.frame);
-  enhancedMark(scaled(paint(p), x, y, 2), x + ins, y + ins, BW / 2 - ins * 2);
+  const ins = frameInset(f.frame) * 2;
+  cardShine(paint(p), x + ins, y + ins, BW - ins * 2, BH - ins * 2, t, shinePhase(f.id));
 }
 
 /** 카드 뒷면 48×64: 어두운 격자 + 팩 색 마름모 */
@@ -74,7 +74,7 @@ export function drawFlip(p: Pix<unknown>, cx: number, y: number, s: number, f: C
   const w = Math.max(1, Math.round(BW * Math.abs(Math.cos(s * Math.PI))));
   p.R(cx - w / 2 + 1, y + 2, w, BH, SC.shade);
   p.ctx.drawImage(s < 0.5 || !f ? backImage(packColor) : faceImage(f), Math.round(cx - w / 2), Math.round(y), w, BH);
-  if (f && s >= 1) bigShine(p, f, Math.round(cx - BW / 2), y);
+  if (f && s >= 1) bigShine(p, f, Math.round(cx - BW / 2), y, t);
 }
 
 /** 뒷면 빛 (a = 세기 0~1): 티어 1 = 테두리 한 줄, 2 = 번짐 + 반짝이 2개, 3 = 크게 맥박 + 반짝이 4개 */

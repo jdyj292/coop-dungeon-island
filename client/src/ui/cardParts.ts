@@ -4,8 +4,9 @@ import { hexToInt } from '@game/shared';
 import icons from '../../data/sprites/hud_icons.json';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
-import { cardShell, enhancedMark, readyMark, type FrameStyle, type Paint } from './cardFrame';
-import { HiTextLayer, hiWidth, type HiSize } from './hiText';
+import { cardShell, type FrameStyle, type Paint } from './cardFrame';
+import { koText, koWidth, type KoText } from './koText';
+import type { FontKey } from './fonts';
 import { drawText } from './pixelFont';
 
 type G = Phaser.GameObjects.Graphics;
@@ -21,26 +22,23 @@ export const SK = {
   flash: 'global.fx.flash', spare: 'global.fx.fireDeep', sky: 'global.allyFx.sky', mp: 'global.ui.mp', mpDark: 'global.ui.mpDark',
 } as const;
 
-/** 고해상도 글자(hiText.ts)·마우스 판정 칸을 모아 두고 한 번에 지운다. (ox, oy) = 그리는 원점 */
+/** 글자(koText)·마우스 판정 칸을 모아 두고 한 번에 지운다. (ox, oy) = 그리는 원점 */
 export class Painter<H> {
   ox = 0;
   oy = 0;
-  private layer: HiTextLayer;
+  private texts: KoText[] = [];
   private hits: { x: number; y: number; w: number; h: number; hit: H }[] = [];
 
-  constructor(scene: Phaser.Scene, readonly g: G) {
-    this.layer = new HiTextLayer(scene);
-  }
+  constructor(private scene: Phaser.Scene, readonly g: G, private depth: number) {}
 
-  /** 글자 한 줄 (y = 높이 10 줄 상자 위). 폭을 돌려줌 */
-  text(x: number, y: number, s: string, color: string, size: HiSize = 'body', alpha = 1): number {
-    this.layer.text(this.ox + x, this.oy + y, s, color, size, alpha);
-    return hiWidth(s, size);
+  text(x: number, y: number, s: string, color: string, font: FontKey = 'koSmall', alpha = 1): number {
+    this.texts.push(koText(this.scene, this.ox + x, this.oy + y, s, { color, font }).setScrollFactor(0).setDepth(this.depth + 1).setAlpha(alpha));
+    return koWidth(s, font);
   }
 
   /** 가운데 맞춘 글자 (폭 w 안) */
-  center(x: number, w: number, y: number, s: string, color: string, size: HiSize = 'body', alpha = 1): void {
-    this.text(x + Math.floor((w - hiWidth(s, size)) / 2), y, s, color, size, alpha);
+  center(x: number, w: number, y: number, s: string, color: string, font: FontKey = 'koSmall', alpha = 1): void {
+    this.text(x + Math.floor((w - koWidth(s, font)) / 2), y, s, color, font, alpha);
   }
 
   hit(x: number, y: number, w: number, h: number, hit: H): void {
@@ -57,18 +55,11 @@ export class Painter<H> {
     return null;
   }
 
-  /** 지우기. begin = 글자 층을 지금 화면 크기에 다시 맞춤 (새로 그리기 전) */
-  clear(begin = false): void {
+  clear(): void {
     this.g.clear();
-    if (begin) this.layer.begin();
-    else this.layer.clear();
+    this.texts.forEach((t) => t.destroy());
+    this.texts = [];
     this.hits = [];
-  }
-
-  destroy(): void {
-    this.clear();
-    this.g.destroy();
-    this.layer.destroy();
   }
 }
 
@@ -86,6 +77,13 @@ export function cardIcon(g: G, id: string, x: number, y: number, o: { mono?: str
   rows?.forEach((row, j) => [...row].forEach((ch, i) => {
     if (ch !== '.' && i >= ins && j >= ins && i < end && j < end) dot(g, x + i - ins, y + j - ins, C(o.mono ?? pal[ch]!), 1, 1, o.alpha ?? 1);
   }));
+}
+
+/** maxW 안에 안 들어가면 끝을 '…'로 */
+export function fitKo(s: string, maxW: number, font: FontKey = 'koSmall'): string {
+  if (koWidth(s, font) <= maxW) return s;
+  while (s.length > 1 && koWidth(`${s}…`, font) > maxW) s = s.slice(0, -1);
+  return `${s}…`;
 }
 
 export function lockIcon(g: G, x: number, y: number, color: string): void {
@@ -185,7 +183,7 @@ export interface FaceLook {
 }
 
 /** 카드 24×29: 계열 테두리 · 별(티어) · 아이콘 · 자물쇠(장착 숙련도 모자람) · 꼬리표. 없는 카드는 같은 모양의 그림자.
- * 강화 = 금색 윗줄·십자, 강화 가능 = 아래 ▲ (cardFrame.ts, 움직이지 않음). big = 상세 머리(꼬리표·▲ 없음). 몸통 시작 거리를 돌려줌 */
+ * 강화 반짝임·강화 가능 ▲은 움직여서 CardWindow가 따로 그림 (cardFrame.ts cardShine·readyMark). big = 상세 머리(꼬리표 없음). 몸통 시작 거리를 돌려줌 */
 export function cardFace(g: G, f: FaceLook, x: number, y: number, o: { sel?: boolean; hov?: boolean; big?: boolean } = {}): number {
   const ins = cardShell(paintOf(g), f.frame, x, y, CH, f.color, f.owned);
   for (let i = 0; i < f.tier; i++) star(g, x + ins + 1 + i * 4, y + ins + 1, f.owned ? SK.txt : SK.cardBd);
@@ -194,8 +192,6 @@ export function cardFace(g: G, f: FaceLook, x: number, y: number, o: { sel?: boo
     cardIcon(g, f.id, x + 4, y + 7, { alpha: f.locked ? 0.25 : 1 });
     if (f.locked) lockIcon(g, x + 10, y + 12, SK.key);
   }
-  if (f.owned && f.enhanced) enhancedMark(paintOf(g), x + ins, y + ins, CW - ins * 2);
-  if (!o.big && f.ready) readyMark(paintOf(g), x, y, CH);
   if (!o.big && f.tag) keyTag(g, x - 2, y + CH - 8, f.tag);
   if (o.sel) corners(g, x, y, CW, CH, SK.coin);
   else if (o.hov) { R(g, x, y, CW, 1, SK.key); R(g, x, y + CH - 1, CW, 1, SK.key); R(g, x, y, 1, CH, SK.key); R(g, x + CW - 1, y, 1, CH, SK.key); }

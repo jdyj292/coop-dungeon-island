@@ -164,7 +164,7 @@ export function buyMenu(p: Pix<ShopHit>, v: ShopView, now: number): void {
     p.ctx.globalAlpha = f.owned ? 1 : 0.35;
     p.ctx.drawImage(faceImage(f), bx, by);
     p.ctx.globalAlpha = 1;
-    if (f.owned) bigShine(p, f, bx, by);
+    if (f.owned) bigShine(p, f, bx, by, now);
   }
   const nm = p.fit(f.name, L.w - 12), nw = p.width(nm) + (f.enhanced ? p.width('+') + 1 : 0), nx = L.x + Math.floor((L.w - nw) / 2);
   p.text(nm, nx, by + BH + 3, SC.txt);
@@ -180,7 +180,7 @@ export function buyMenu(p: Pix<ShopHit>, v: ShopView, now: number): void {
     p.text(r.name, M.x + (r.color ? 16 : 10), y, SC.key);
     r.ids.forEach((id, j) => {
       const cx = M.x + 12 + j * 36, cy = y + 11, c = v.info(id), price = String(c.craft);
-      smallCard(p, c, cx, cy, { sel: id === v.sel, hov: id === v.hover, dim: c.enhanced });
+      smallCard(p, c, cx, cy, now, { sel: id === v.sel, hov: id === v.hover, dim: c.enhanced });
       p.tiny(price, cx + CW - price.length * 4 + 1, cy + CH + 3, c.enhanced ? SC.off : SC.sky);
       p.hit(cx, cy, CW, CH, { kind: 'card', id });
     });

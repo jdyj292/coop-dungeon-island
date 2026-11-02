@@ -1,53 +1,62 @@
-// 카드 창 (K, hud.md 8장, skills.md 1장): 상태·입력. 그리기는 ui/cardWindow.ts(장착 화면)·cardPicker.ts(고르기 창)·cardDetail.ts(상세), 서버 요청은 cardOps.ts
-// 장착 화면: 액티브 A S D F 칸 · 패시브 칸을 누르면 그 종류의 고르기 창이 열림 (액티브는 누른 칸에 끼움, 패시브는 끝에 더함).
-// 고르기 창: 거르기 탭(전체 · 기본(공용) · 계열들) · 카드 격자(휠·↑↓ 넘기기) · 고른 카드를 다시 누르거나 Z = 끼우기/빼기.
-// 키: 방향키 이동 · Z 선택 · X(Esc) 취소. 강화·변형·갈기는 상세 버튼
+// 카드 창 (K, hud.md 8장, skills.md 1장, 승인 데모 docs/refs/demos/card_redesign.html): 상태·입력. 그리기는 ui/cardWindow.ts·cardDetail.ts
+// 무기 탭, 액티브/패시브 카드 탭, 카드 고르기·마우스 올림 미리 보기, 끌어다 장착(위 칸으로 놓기, 위 칸에서 끌어 내리면 빼기), 강화(같은 카드 3장, 직접), 변형(강화 액티브), 갈기(두 번 눌러 확인).
+// 키: ↑↓←→ 카드 · Tab 액티브/패시브 · Q E 무기 · A S D F 그 칸에 끼우기 · Enter 끼우기/빼기 · X 빼기 · U 강화 · 1 2 변형 · G 갈기. 검사는 서버, 미리 shared 카드 검사로 막음
 import type Phaser from 'phaser';
-import { ACTIVE_SLOTS, CARD, isActiveCard, MVP_WEAPONS, owns, passiveCap, passiveUsed, weaponCards, WEAPONS, type Branch, type CardLoadout, type Collection } from '@game/shared';
+import {
+  ACTIVE_SLOTS, CARD, checkEnhance, checkEnhanceCap, checkEquip, checkGrind, checkVariant, dustOf, enhanceCard, equipLevelOf, isActiveCard, MVP_WEAPONS, owns, passiveCap, passiveUsed,
+  SKILLS, weaponCards, WEAPONS, type Branch, type CardKind, type CardLoadout, type CardMsgFail, type Collection,
+} from '@game/shared';
+import { sfx } from '../audio/player';
 import type { IslandConnection } from '../net/islandNet';
 import { SK } from '../ui/cardParts';
-import { PICK_COLS, PICK_ROWS, type BonusInfo, type CardHit, type CardInfo, type CardSource, type Picker, TAB_ROW } from '../ui/cardTypes';
+import { PASS_AREA, type BonusInfo, type CardHit, type CardInfo, type CardSource, type CardView } from '../ui/cardTypes';
 import { CardWindow } from '../ui/cardWindow';
-import { CardOps, type CardOpsHost } from './cardOps';
-import { cardBonus, cardInfo, pickFilters } from './cardView';
+import { FAIL_TEXT } from './cardText';
+import { cardBonus, cardInfo, cardRows } from './cardView';
 
 /** 알림 시간 */
 const NOTE_MS = 2000;
+const SLOT_KEYS = ['KeyA', 'KeyS', 'KeyD', 'KeyF'].slice(0, ACTIVE_SLOTS);
+/** 장착 줄 (끌어 내리면 빼기 판정) */
+const EQUIP_ROW = { x: 12, y: 26, w: 224, h: 40 };
 type Weapon = (typeof MVP_WEAPONS)[number];
 
-export class CardPanel implements CardSource, CardOpsHost {
+export class CardPanel implements CardSource {
+  view: CardView = 'act';
   sel = '';
   hover: string | null = null;
   hoverBtn: string | null = null;
   hoverBonus: Branch | null = null;
+  grindArm: string | null = null;
   note: { text: string; color: string } | null = null;
-  focus = 0;
-  picker: Picker | null = null;
-  filter = 0;
-  scroll = 0;
-  pickRow = false;
   readonly merge = CARD.mergeCount;
   readonly enhancedMul = CARD.enhancedMul;
   readonly bonusAt = CARD.branchBonusAt;
   private tabIndex = 0;
   private noteUntil = 0;
+  private grindUntil = 0;
+  private seenSeq = 0;
+  /** 갈기를 보낸 뒤 서버 답이 오면 보여 줄 알림 */
+  private pending: string | null = null;
+  /** 강화를 보낸 카드 (서버 답이 오면 번쩍임) */
+  private enhancing: string | null = null;
   private lastT = performance.now() / 1000;
+  private pointer = { x: 0, y: 0 };
+  private dragging: { id: string; from: string; sx: number; sy: number; moved: boolean } | null = null;
   private win: CardWindow;
-  private ops: CardOps;
 
   constructor(scene: Phaser.Scene, private conn: IslandConnection, depth: number, private locked: () => boolean, private myWeapon: () => string) {
     this.win = new CardWindow(scene, depth);
-    this.ops = new CardOps(this, conn);
   }
 
-  // ---- CardSource · CardOpsHost ----
+  // ---- CardSource ----
   get tabs(): string[] { return MVP_WEAPONS.map((id) => WEAPONS[id]?.name ?? id); }
   get tab(): number { return this.tabIndex; }
-  get weapon(): Weapon { return MVP_WEAPONS[this.tabIndex] ?? 'greatsword'; }
+  private get weapon(): Weapon { return MVP_WEAPONS[this.tabIndex] ?? 'greatsword'; }
   get weaponName(): string { return WEAPONS[this.weapon]?.name ?? this.weapon; }
   private get mine() { return this.conn.cards.weapons.find((w) => w.weapon === this.weapon); }
-  get coll(): Collection { return this.mine?.owned ?? {}; }
-  get loadout(): CardLoadout { return { active: this.active, passive: this.passive }; }
+  private get coll(): Collection { return this.mine?.owned ?? {}; }
+  private get loadout(): CardLoadout { return { active: this.active, passive: this.passive }; }
   get level(): number { return this.mine?.level ?? 1; }
   get dust(): number { return this.conn.cards.dust; }
   get cap(): number { return this.mine?.cap ?? passiveCap(this.level); }
@@ -55,43 +64,61 @@ export class CardPanel implements CardSource, CardOpsHost {
   get active(): (string | null)[] { return (this.mine?.active ?? Array<string>(ACTIVE_SLOTS).fill('')).map((id) => id || null); }
   get passive(): string[] { return this.mine?.passive ?? []; }
   get busy(): boolean { return this.locked(); }
-  get grindArm(): string | null { return this.ops.grindArm; }
-  private get groups() { return pickFilters(this.weapon, this.picker?.kind === 'passive' ? 'pas' : 'act'); }
-  get filters(): string[] { return this.groups.map((f) => f.name); }
-  get pick(): string[] { return this.groups[this.filter]?.ids ?? []; }
-  private get kindCards(): string[] { return this.picker ? weaponCards(this.weapon, this.picker.kind) : weaponCards(this.weapon); }
-  get owned(): number { return this.kindCards.filter((id) => owns(this.coll, id)).length; }
-  get total(): number { return this.kindCards.length; }
+  get drag(): CardSource['drag'] {
+    const d = this.dragging;
+    if (!d?.moved) return null;
+    const h = this.win.hit(this.pointer.x, this.pointer.y), act = isActiveCard(d.id);
+    return { id: d.id, from: d.from, aslot: act && h?.kind === 'aslot' ? h.k : -1, pass: !act && this.win.inside(this.pointer.x, this.pointer.y, PASS_AREA) };
+  }
+  get rows(): CardSource['rows'] { return cardRows(this.weapon, this.view); }
+  get owned(): number { return weaponCards(this.weapon).filter((id) => owns(this.coll, id)).length; }
+  get total(): number { return weaponCards(this.weapon).length; }
   get bonus(): BonusInfo[] { return cardBonus(this.weapon, this.loadout); }
   card(id: string): CardInfo { return cardInfo(this.weapon, this.level, this.coll, this.loadout, id); }
-
-  say(text: string, color: string): void {
-    this.note = { text, color };
-    this.noteUntil = Date.now() + NOTE_MS;
-  }
 
   // ---- 열기·그리기 ----
   show(): void {
     this.tabIndex = Math.max(0, (MVP_WEAPONS as readonly string[]).indexOf(this.myWeapon()));
-    this.reset();
+    this.view = 'act';
+    this.sel = this.grid()[0]![0]!;
+    this.hover = this.hoverBtn = this.hoverBonus = this.grindArm = null;
+    this.dragging = null;
   }
 
   update(width: number, height: number): void {
-    const done = this.ops.tick();
-    if (this.note && Date.now() > this.noteUntil) this.note = null;
-    if (!weaponCards(this.weapon).includes(this.sel)) this.sel = this.firstSel();
-    this.focus = Math.min(this.focus, this.slotCount() - 1);
-    this.win.render(this, JSON.stringify([this.mine, this.conn.cards.dust, this.tabIndex, this.sel, this.hover, this.hoverBtn, this.hoverBonus,
-      this.grindArm, this.note, this.busy, this.focus, this.picker, this.filter, this.scroll, this.pickRow]), width, height);
+    // 서버 답: 거절 사유, 갈기 결과, 팩 결과
+    if (this.conn.cardsSeq !== this.seenSeq) {
+      this.seenSeq = this.conn.cardsSeq;
+      const fail = this.conn.cards.fail;
+      const up = this.enhancing;
+      if (fail) this.say(FAIL_TEXT[fail], SK.danger);
+      else if (up && this.coll[up]?.enhanced) {
+        this.say(`${this.card(up).name}+ 강화!`, SK.coin);
+        sfx.play('card_merge');
+        this.celebrate = up;
+      } else if (this.pending) { this.say(this.pending, SK.coin); sfx.play('card_grind'); }
+      this.pending = this.enhancing = null;
+    }
+    const now = Date.now();
+    if (this.note && now > this.noteUntil) this.note = null;
+    if (this.grindArm && now > this.grindUntil) this.grindArm = null;
+    if (!this.grid().some((r) => r.includes(this.sel))) this.sel = this.grid()[0]![0]!;
+    const d = this.drag;
+    this.win.render(this, JSON.stringify([this.mine, this.conn.cards.dust, this.conn.cards.gifts, this.tabIndex, this.view, this.sel, this.hover, this.hoverBtn, this.hoverBonus,
+      this.grindArm, d, this.note, this.busy]), width, height);
     const t = performance.now() / 1000;
     // 다시 그린 뒤에 번쩍임 (카드 자리가 새 그림 기준)
-    if (done) this.win.celebrate(done, t);
+    if (this.celebrate) { this.win.celebrate(this.celebrate, t); this.celebrate = null; }
     this.win.animate(t, Math.min(0.05, t - this.lastT));
     this.lastT = t;
+    this.win.drawGhost(d ? this : null, this.pointer.x, this.pointer.y);
   }
 
+  /** 강화가 막 끝난 카드 (다음 그리기에서 번쩍임) */
+  private celebrate: string | null = null;
+
   hide(): void {
-    this.picker = null;
+    this.dragging = null;
     this.win.hide();
   }
 
@@ -100,192 +127,172 @@ export class CardPanel implements CardSource, CardOpsHost {
   }
 
   // ---- 입력 ----
-  /** Esc: 고르기 창이 열려 있으면 닫고 true (아니면 IslandPanels가 카드 창을 닫음) */
-  back(): boolean {
-    if (!this.picker) return false;
-    this.closePicker();
-    return true;
-  }
-
-  /** 키: 방향키 이동 · Z 선택 (X·Esc 취소는 IslandPanels가 back → 닫기). 강화·갈기·변형은 상세 버튼(마우스) */
+  /** 키 (Esc는 IslandPanels가 닫음) */
   onKey(code: string): void {
     const mv = ({ ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] } as Record<string, [number, number]>)[code];
-    if (mv) return this.picker ? this.movePick(mv[0], mv[1]) : this.moveFocus(mv[0], mv[1]);
-    if (code !== 'KeyZ') return;
-    if (this.picker) {
-      if (this.pickRow) this.pickRow = false;
-      else this.choose(this.sel);
-    } else if (this.focus >= ACTIVE_SLOTS) this.openPicker('passive', 0, this.focusCard());
-    else if (this.focus >= 0) this.openPicker('active', this.focus);
+    if (mv) return this.move(mv[0], mv[1]);
+    if (code === 'Tab') return this.setView(this.view === 'act' ? 'pas' : 'act');
+    if (SLOT_KEYS.includes(code)) {
+      if (!isActiveCard(this.sel)) return this.say('A S D F는 액티브 카드 칸입니다 · 패시브는 Enter', SK.danger);
+      return this.equipActive(this.sel, SLOT_KEYS.indexOf(code));
+    }
+    if (code === 'Enter' || code === 'NumpadEnter') return this.toggle(this.sel);
+    if (code === 'KeyX' || code === 'Backspace' || code === 'Delete') return this.unequip(this.sel);
+    if (code === 'Digit1' || code === 'Digit2') return this.variant(Number(code.slice(-1)) - 1);
+    if (code === 'KeyG') return this.grind(this.sel);
+    if (code === 'KeyU') return this.enhance(this.sel);
+    if (code === 'KeyQ' || code === 'KeyE') return this.setTab((this.tabIndex + (code === 'KeyQ' ? -1 : 1) + MVP_WEAPONS.length) % MVP_WEAPONS.length);
   }
 
   /** 누름. 패널 밖이면 false (닫기) */
   onPointerDown(x: number, y: number): boolean {
+    this.pointer = { x, y };
     const h = this.win.hit(x, y);
     if (!h) return false;
-    this.click(h);
+    this.click(h, x, y);
     return true;
   }
 
   onPointerMove(x: number, y: number): void {
-    const h = this.win.hit(x, y);
+    this.pointer = { x, y };
+    const h = this.win.hit(x, y), d = this.dragging;
     this.hover = h?.kind === 'card' ? h.id : h?.kind === 'aslot' ? this.active[h.k] ?? null : h?.kind === 'pslot' ? this.passive[h.i] ?? null : null;
-    this.hoverBtn = !h ? null : h.kind === 'btn' ? h.b : h.kind === 'filter' ? `f${h.i}` : h.kind === 'pclose' ? 'pclose' : h.kind === 'var' ? `var${h.i}` : null;
+    this.hoverBtn = !h ? null : h.kind === 'btn' ? h.b : h.kind === 'view' ? `v${h.v}` : h.kind === 'var' ? `var${h.i}` : null;
     this.hoverBonus = h?.kind === 'bonus' ? h.b : null;
+    if (d && !d.moved && Math.abs(x - d.sx) + Math.abs(y - d.sy) > 3) d.moved = true;
+    if (d?.moved) this.hover = null;
   }
 
-  /** 휠: 고르기 창 넘기기 (dy > 0 = 아래로) */
-  onWheel(dy: number): void {
-    if (!this.picker || !dy) return;
-    this.scroll = Math.max(0, Math.min(this.maxScroll(), this.scroll + Math.sign(dy)));
+  onPointerUp(x: number, y: number): void {
+    const d = this.dragging;
+    this.dragging = null;
+    if (!d?.moved) return;
+    const h = this.win.hit(x, y), fromList = d.from === 'list';
+    if (isActiveCard(d.id)) {
+      if (h?.kind === 'aslot') this.equipActive(d.id, h.k);
+      else if (!fromList && !this.win.inside(x, y, EQUIP_ROW)) this.unequip(d.id);
+    } else if (this.win.inside(x, y, PASS_AREA)) {
+      if (fromList) this.equipPassive(d.id);
+    } else if (!fromList) this.unequip(d.id);
   }
 
-  private click(h: CardHit): void {
+  private click(h: CardHit, x: number, y: number): void {
+    const drag = (id: string, from: string) => { this.dragging = { id, from, sx: x, sy: y, moved: false }; };
     if (h.kind === 'tab') this.setTab(h.i);
+    else if (h.kind === 'view') this.setView(h.v);
+    else if (h.kind === 'card') { this.sel = h.id; drag(h.id, 'list'); }
     else if (h.kind === 'aslot') {
-      // 고르기 창의 장착 중 줄: 거르기·넘김은 그대로 두고 끼울 칸만 바꿈
-      if (this.picker?.kind === 'active') { this.picker = { kind: 'active', slot: h.k }; this.focus = h.k; }
-      else this.openPicker('active', h.k);
+      const id = this.active[h.k];
+      if (id) { this.view = 'act'; this.sel = id; drag(id, `a${h.k}`); }
     } else if (h.kind === 'pslot') {
-      const id = this.passive[h.i]!;
-      this.focus = ACTIVE_SLOTS + h.i;
-      if (!this.picker) return this.openPicker('passive', 0, id);
-      if (!this.pick.includes(id)) this.setFilter(0);
-      this.sel = id;
-      this.pickRow = false;
-      this.keepVisible();
-    }
-    else if (h.kind === 'padd') { this.focus = ACTIVE_SLOTS + this.passive.length; this.openPicker('passive', 0); }
-    else if (h.kind === 'card') {
-      if (this.sel === h.id) this.choose(h.id);
-      else this.sel = h.id;
-    } else if (h.kind === 'filter') this.setFilter(h.i);
-    else if (h.kind === 'pclose') this.closePicker();
-    else if (h.kind === 'btn') {
-      if (h.b === 'grind') this.ops.grind(this.sel);
-      else if (h.b === 'enhance') this.ops.enhance(this.sel);
-      else this.choose(this.sel);
-    } else if (h.kind === 'var') this.ops.variant(h.i);
+      const id = this.passive[h.i];
+      if (id) { this.view = 'pas'; this.sel = id; drag(id, `p${h.i}`); }
+    } else if (h.kind === 'btn') {
+      if (h.b === 'grind') this.grind(this.sel);
+      else if (h.b === 'enhance') this.enhance(this.sel);
+      else this.toggle(this.sel);
+    } else if (h.kind === 'var') this.variant(h.i);
   }
 
-  private reset(): void {
-    this.picker = null;
-    this.focus = 0;
-    this.sel = this.firstSel();
-    this.hover = this.hoverBtn = this.hoverBonus = null;
+  /** 키보드 격자: 줄 = 기본·공용 / A / B */
+  private grid(): string[][] {
+    return this.rows.map((r) => r.ids).filter((r) => r.length);
   }
 
-  /** 처음 고른 카드: 첫 장착 카드, 없으면 무기의 첫 카드 */
-  private firstSel(): string {
-    return this.active.find((id) => id) ?? this.passive[0] ?? weaponCards(this.weapon)[0] ?? '';
+  private move(dx: number, dy: number): void {
+    const G = this.grid();
+    let ry = Math.max(0, G.findIndex((r) => r.includes(this.sel)));
+    const rx = Math.max(0, G[ry]!.indexOf(this.sel)) + dx;
+    ry = Math.max(0, Math.min(G.length - 1, ry + dy));
+    this.sel = G[ry]![Math.max(0, Math.min(G[ry]!.length - 1, rx))]!;
+    this.hover = null;
   }
 
   private setTab(i: number): void {
     this.tabIndex = i;
-    this.reset();
+    this.view = 'act';
+    this.sel = this.grid()[0]![0]!;
   }
 
-  /** 무기 탭 줄에서 ←→ = 무기 바꾸기 (탭 줄에 그대로) */
-  private stepTab(d: number): void {
-    this.setTab((this.tabIndex + d + MVP_WEAPONS.length) % MVP_WEAPONS.length);
-    this.focus = TAB_ROW;
+  private setView(v: CardView): void {
+    if (this.view === v) return;
+    this.view = v;
+    this.sel = this.grid()[0]![0]!;
   }
 
-  // ---- 장착 화면 칸 (TAB_ROW = 무기 탭 줄, 액티브 0~3, 패시브 4~, 끝 = 패시브 + 칸) ----
-  private slotCount(): number {
-    return ACTIVE_SLOTS + this.passive.length + (this.used < this.cap ? 1 : 0);
+  /** 막혔으면 사유를 보여 주고 true */
+  private blocked(fail: CardMsgFail | null): boolean {
+    if (!fail) return false;
+    this.say(fail === 'locked' ? `장착 Lv${equipLevelOf(this.sel)}부터 낄 수 있습니다` : FAIL_TEXT[fail], SK.danger);
+    return true;
   }
 
-  private focusCard(): string | null {
-    if (this.focus === TAB_ROW) return null;
-    return this.focus < ACTIVE_SLOTS ? this.active[this.focus] ?? null : this.passive[this.focus - ACTIVE_SLOTS] ?? null;
+  private send(kind: CardKind, slot: number, cardId: string | null): void {
+    this.conn.send('card', { op: 'equip', weapon: this.weapon, kind, slot, cardId });
   }
 
-  private moveFocus(dx: number, dy: number): void {
-    const pn = this.slotCount() - ACTIVE_SLOTS;
-    if (this.focus === TAB_ROW) {
-      if (dx) return this.stepTab(dx);
-      if (dy > 0) this.focus = 0;
-    } else if (dy < 0 && this.focus < ACTIVE_SLOTS) this.focus = TAB_ROW;
-    else if (dy < 0 && this.focus >= ACTIVE_SLOTS) this.focus = Math.min(ACTIVE_SLOTS - 1, this.focus - ACTIVE_SLOTS);
-    else if (dy > 0 && this.focus < ACTIVE_SLOTS && pn > 0) this.focus = ACTIVE_SLOTS + Math.min(pn - 1, this.focus);
-    else if (dx) {
-      const [lo, hi] = this.focus < ACTIVE_SLOTS ? [0, ACTIVE_SLOTS - 1] : [ACTIVE_SLOTS, ACTIVE_SLOTS + pn - 1];
-      this.focus = Math.max(lo, Math.min(hi, this.focus + dx));
-    }
-    this.sel = this.focusCard() ?? this.sel;
-    this.hover = null;
+  private equipActive(id: string, slot: number): void {
+    if (this.blocked(this.busy ? 'busy' : checkEquip(this.weapon, this.level, this.coll, this.loadout, 'active', slot, id))) return;
+    if (this.active[slot] !== id) this.send('active', slot, id);
   }
 
-  // ---- 고르기 창 ----
-  /** 고르기 창 열기 (액티브 = 끼울 칸, 패시브 = 끝에). at = 처음 고를 카드 */
-  private openPicker(kind: Picker['kind'], slot: number, at?: string | null): void {
-    this.picker = { kind, slot };
-    this.pickRow = false;
-    if (kind === 'active') this.focus = slot;
-    this.filter = 0;
-    this.scroll = 0;
-    const first = at ?? (kind === 'active' ? this.active[slot] : null);
-    this.sel = first && this.pick.includes(first) ? first : this.pick[0] ?? this.sel;
-    this.hover = null;
-    this.keepVisible();
+  /** 패시브 끼우기 (끝에) */
+  private equipPassive(id: string): void {
+    if (this.passive.includes(id)) return;
+    const slot = this.passive.length;
+    if (this.blocked(this.busy ? 'busy' : checkEquip(this.weapon, this.level, this.coll, this.loadout, 'passive', slot, id))) return;
+    this.send('passive', slot, id);
   }
 
-  private closePicker(): void {
-    this.picker = null;
-    this.sel = this.focusCard() ?? this.sel;
-    this.hover = null;
+  private unequip(id: string): void {
+    const k = this.active.indexOf(id), j = this.passive.indexOf(id);
+    if ((k < 0 && j < 0) || this.blocked(this.busy ? 'busy' : null)) return;
+    if (k >= 0) this.send('active', k, null);
+    else this.send('passive', j, null);
   }
 
-  private setFilter(i: number): void {
-    this.filter = i;
-    this.scroll = 0;
-    if (!this.pick.includes(this.sel)) this.sel = this.pick[0] ?? this.sel;
-    this.keepVisible();
-  }
-
-  private maxScroll(): number {
-    return Math.max(0, Math.ceil(this.pick.length / PICK_COLS) - PICK_ROWS);
-  }
-
-  /** 고른 카드가 보이게 넘김 */
-  private keepVisible(): void {
-    const i = this.pick.indexOf(this.sel);
-    if (i < 0) return;
-    const row = Math.floor(i / PICK_COLS);
-    if (row < this.scroll) this.scroll = row;
-    else if (row >= this.scroll + PICK_ROWS) this.scroll = row - PICK_ROWS + 1;
-    this.scroll = Math.min(this.scroll, this.maxScroll());
-  }
-
-  /** 고르기 창 방향키: 격자 맨 윗줄에서 ↑ = 거르기 탭 줄 (←→ 거르기 바꾸기, ↓ 격자로) */
-  private movePick(dx: number, dy: number): void {
-    const L = this.pick;
-    if (this.pickRow) {
-      if (dx) this.setFilter((this.filter + dx + this.filters.length) % this.filters.length);
-      else if (dy > 0 && L.length) this.pickRow = false;
-      return;
-    }
-    if (!L.length || (dy < 0 && L.indexOf(this.sel) < PICK_COLS)) return void (this.pickRow = true);
-    const j = Math.max(0, L.indexOf(this.sel)) + dx + dy * PICK_COLS;
-    this.sel = L[Math.max(0, Math.min(L.length - 1, j))]!;
-    this.hover = null;
-    this.keepVisible();
-  }
-
-  /** 카드 정하기 (고른 카드 다시 누름·Z·끼우기 버튼). 고르기 창: 액티브 = 그 칸에 끼우고 닫음(이미 그 칸이면 빼기), 패시브 = 끼우기/빼기.
-   * 장착 화면: 끼운 카드는 빼기, 안 끼운 카드는 빈 칸·끝에 */
-  private choose(id: string): void {
-    const pk = this.picker, on = this.active.includes(id) || this.passive.includes(id);
-    if (pk?.kind === 'active') {
-      if (this.active[pk.slot] === id) return this.ops.unequip(id);
-      if (this.ops.equipActive(id, pk.slot)) { this.closePicker(); this.sel = id; }
-      return;
-    }
-    if (on) return this.ops.unequip(id);
-    if (!isActiveCard(id)) return this.ops.equipPassive(id);
+  /** Enter·끼우기 버튼: 끼운 카드면 빼기, 액티브는 빈 칸에, 패시브는 끝에 */
+  private toggle(id: string): void {
+    if (this.active.includes(id) || this.passive.includes(id)) return this.unequip(id);
+    if (!isActiveCard(id)) return this.equipPassive(id);
     const k = this.active.indexOf(null);
-    if (k < 0) return this.say('빈 칸이 없습니다 · 칸을 눌러 바꿔 끼우기', SK.danger);
-    this.ops.equipActive(id, k);
+    if (k < 0) return this.say('빈 칸이 없습니다 · A S D F로 바꿔 끼우기', SK.danger);
+    this.equipActive(id, k);
+  }
+
+  /** 갈기: 남는 장수가 2장 이상이면 모두, 아니면 1장. 두 번 눌러 확인 */
+  private grind(id: string): void {
+    const o = this.coll[id], n = o?.enhanced && o.count > 1 ? o.count : 1, equipped = this.active.includes(id) || this.passive.includes(id);
+    if (this.blocked(this.busy ? 'busy' : checkGrind(this.coll, id, n, equipped))) return;
+    if (this.grindArm !== id) {
+      this.grindArm = id;
+      this.grindUntil = Date.now() + NOTE_MS;
+      return;
+    }
+    this.grindArm = null;
+    this.pending = `${this.card(id).name} ${n}장을 갈아 조각 +${dustOf(id) * n}`;
+    this.conn.send('card', { op: 'grind', cardId: id, n });
+  }
+
+  /** 강화: 같은 카드 3장 소모 (끼운 패시브면 비용 +1이 한도 안이어야) */
+  private enhance(id: string): void {
+    if (this.blocked(this.busy ? 'busy' : checkEnhance(this.coll, id))) return;
+    if (this.blocked(checkEnhanceCap(this.level, enhanceCard(this.coll, id), this.loadout))) return;
+    this.enhancing = id;
+    this.conn.send('card', { op: 'enhance', cardId: id });
+  }
+
+  /** 변형 고르기 (같은 것을 다시 누르면 기본 동작) */
+  private variant(i: number): void {
+    const id = this.sel, key = Object.keys(SKILLS[id]?.variants ?? {})[i];
+    if (!key || this.blocked(this.busy ? 'busy' : null)) return;
+    const variant = this.coll[id]?.variant === key ? null : key;
+    if (this.blocked(checkVariant(this.coll, id, variant))) return;
+    this.conn.send('card', { op: 'variant', cardId: id, variant });
+  }
+
+  private say(text: string, color: string): void {
+    this.note = { text, color };
+    this.noteUntil = Date.now() + NOTE_MS;
   }
 }

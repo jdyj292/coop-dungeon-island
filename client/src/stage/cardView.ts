@@ -5,29 +5,20 @@ import {
 } from '@game/shared';
 import { frameStyle } from '../ui/cardFrame';
 import { SK } from '../ui/cardParts';
-import type { BonusInfo, CardInfo } from '../ui/cardTypes';
+import type { BonusInfo, CardInfo, CardSource, CardView } from '../ui/cardTypes';
 import { bonusLines } from './cardText';
 
 const KEYS = ['A', 'S', 'D', 'F'];
 const branchName = (weapon: string, b: Branch): string => weaponDef(weapon).branches?.[b].name ?? b;
 const branchColor = (weapon: string, b: Branch): string => `global.ui.skillBranch.${weapon}.${b}`;
 
-export type CardView = 'act' | 'pas';
-export interface CardRow { branch: Branch | 'base'; name: string; color: string; ids: string[] }
-
-/** 카드 줄: 기본(공용) / 계열들, 줄 안은 티어 순 (카드 상점 지정 구매·고르기 창 거르기 탭) */
-export function cardRows(weapon: string, view: CardView): CardRow[] {
+/** 보유 카드 줄: 기본(공용) / A / B, 줄 안은 티어 순 */
+export function cardRows(weapon: string, view: CardView): CardSource['rows'] {
   const kind: CardKind = view === 'act' ? 'active' : 'passive', ids = weaponCards(weapon, kind).sort((a, b) => tierOf(a) - tierOf(b));
   return [
     { branch: 'base' as const, name: view === 'act' ? '기본' : '공용', color: SK.key, ids: ids.filter((id) => ['base', 'common'].includes(cardBranch(id))) },
     ...BRANCHES.map((b) => ({ branch: b, name: branchName(weapon, b), color: branchColor(weapon, b), ids: ids.filter((id) => cardBranch(id) === b) })),
   ];
-}
-
-/** 고르기 창 거르기 탭: 전체 + 카드가 있는 줄 (계열이 늘면 탭도 늘어남) */
-export function pickFilters(weapon: string, view: CardView): { name: string; ids: string[] }[] {
-  const rows = cardRows(weapon, view).filter((r) => r.ids.length);
-  return [{ name: '전체', ids: rows.flatMap((r) => r.ids) }, ...rows.map((r) => ({ name: r.name, ids: r.ids }))];
 }
 
 /** 계열 보너스: 끼운 같은 계열 카드 (기본·공용 빼고) → 단계·효과 글자 */
@@ -48,7 +39,7 @@ export function cardInfo(weapon: string, level: number, c: Collection, lo: CardL
     id, tier, tierColor: `global.ui.card.${tierDef(tier)?.color ?? 'tier1'}`, frame: frameStyle(weapon, br), owned, enhanced, ready: canEnhance(c, id),
     count: o?.count ?? 0, spare: enhanced ? o!.count : 0, equipLevel: lv, locked: owned && level < lv, tag: k >= 0 ? KEYS[k]! : equipped ? 'P' : null,
     name: s?.name ?? pv?.name ?? id, desc: s?.desc ?? pv?.desc ?? '', active: !!s,
-    kind: br === 'base' ? '기본 스킬' : br === 'common' ? '공용 패시브' : `${branchName(weapon, br)} · ${s ? '액티브' : '패시브'}`,
+    kind: br === 'base' ? '기본 스킬' : br === 'common' ? '공용 패시브' : `${br} ${branchName(weapon, br)} · ${s ? '액티브' : '패시브'}`,
     color: plain ? SK.key : branchColor(weapon, br), branchName: plain ? null : branchName(weapon, br), equipped,
     variants: Object.values(vars).map((v) => ({ name: v.name, desc: v.desc })), variantIndex: o?.variant ? Object.keys(vars).indexOf(o.variant) : -1,
     ...(pv ? { pointDesc: pv.pointDesc } : {}), cost: passiveCost(id, enhanced), dust: dustOf(id), craft: craftPriceOf(id),

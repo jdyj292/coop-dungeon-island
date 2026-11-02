@@ -90,7 +90,7 @@ export class Island extends Phaser.Scene {
       this.stage?.panels.onPointerMove(p.x, p.y);
     });
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onPointerDown(p));
-    this.input.on('wheel', (_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => this.stage?.panels.onWheel(dy));
+    this.input.on('pointerup', (p: Phaser.Input.Pointer) => this.stage?.panels.onPointerUp(p.x, p.y));
     this.events.once('shutdown', () => {
       this.settings.destroy();
       this.hud.destroy();
@@ -100,7 +100,7 @@ export class Island extends Phaser.Scene {
       this.input.keyboard!.off('keydown');
       this.input.off('pointermove');
       this.input.off('pointerdown');
-      this.input.off('wheel');
+      this.input.off('pointerup');
     });
     music.play('island');
     void this.connect();
