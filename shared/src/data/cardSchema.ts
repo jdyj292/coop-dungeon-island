@@ -22,7 +22,7 @@ export const tier = z.object({
 export const card = z.object({
   weapon: z.string(),
   kind: z.enum(['active', 'passive']),
-  branch: z.enum(['base', 'A', 'B', 'common']),
+  branch: z.enum(['A', 'B']),
   tier: tierNo,
   /** 패시브 비용 (없으면 티어, 강화 +1) */
   cost: int.positive().optional(),
@@ -31,7 +31,7 @@ export const card = z.object({
 export const cards = z.object({
   tiers: z.record(numKey, tier),
   cards: z.record(card),
-  /** 무기 → 처음 카드 id (기본 스킬 2장) */
+  /** 무기 → 처음 카드 id (티어 1 액티브 2장) */
   starter: z.record(z.array(z.string()).min(1)),
   /** 무기 → 계열 → [Ⅰ, Ⅱ] 효과 (passives.json effect 키) */
   branchBonus: z.record(z.object({ A: z.array(z.record(z.number())), B: z.array(z.record(z.number())) }).strict()),

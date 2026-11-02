@@ -106,12 +106,12 @@ export class CardShop {
   }
 
   private rows(): ShopView['rows'] {
-    return cardRows(this.weapon, this.view === 'active' ? 'act' : 'pas').filter((r) => r.ids.length).map((r) => ({ name: r.name, color: r.branch === 'base' ? null : r.color, ids: r.ids }));
+    return cardRows(this.weapon, this.view === 'active' ? 'act' : 'pas').filter((r) => r.ids.length).map((r) => ({ name: r.name, color: r.color, ids: r.ids }));
   }
 
   private shopView(now: number): ShopView {
     const rows = this.rows();
-    if (!rows.some((r) => r.ids.includes(this.sel))) this.sel = rows[1]?.ids[0] ?? rows[0]?.ids[0] ?? '';
+    if (!rows.some((r) => r.ids.includes(this.sel))) this.sel = rows[0]?.ids[0] ?? '';
     return {
       tab: this.tab, weapons: MVP_WEAPONS.map((id) => ({ id, name: WEAPONS[id]?.name ?? id })), weapon: this.weapon, opening: this.busy,
       coin: this.conn.me.wallet, dust: this.conn.cards.dust, gifts: this.conn.cards.gifts, giftPack: WELCOME_PACKS.pack, packs: this.packs(), selPack: this.selPack,

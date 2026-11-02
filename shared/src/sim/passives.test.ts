@@ -40,9 +40,9 @@ describe('스킬 정의 변경', () => {
   });
 
   it('검기 연마: 투사체 사거리 ×1.4, 투사체 아닌 스킬은 그대로', () => {
-    const b = { gs_honing: { level: 1 }, gs_wave: { level: 1 }, gs_launch: { level: 1 } };
+    const b = { gs_honing: { level: 1 }, gs_wave: { level: 1 }, gs_earthsplit: { level: 1 } };
     expect(buildSkill(gs, b, 'gs_wave')!.projectile!.range).toBeCloseTo(112);
-    expect(buildSkill(gs, b, 'gs_launch')).toBe(skillDef('gs_launch'));
+    expect(buildSkill(gs, b, 'gs_earthsplit')).toBe(skillDef('gs_earthsplit'));
   });
 
   it('원소 친화: 지속 스킬 반복 횟수·상태 이상 시간 ×1.25, 지속 스킬 아니면 그대로', () => {

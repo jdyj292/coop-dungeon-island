@@ -119,7 +119,7 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
     if (!w) err(`${at}.weapon`, `무기 '${s.weapon}' 없음`);
     else checkPoses(at, s.poses, w.poseSet);
     if (s.mp !== Math.round(s.cooldown * 2)) err(`${at}.mp`, `mp ${s.mp} ≠ 기준 쿨 ${s.cooldown} × 2`);
-    if (s.branch !== 'base' && w && !w.branches) err(`${at}.branch`, `무기 '${s.weapon}'에 branches(계열 이름) 없음`);
+    if (w && !w.branches) err(`${at}.branch`, `무기 '${s.weapon}'에 branches(계열 이름) 없음`);
     for (const [vid, v] of Object.entries(s.variants ?? {})) {
       const vat = `${at}.variants.${vid}`;
       const extra = S.variantExtra.safeParse(v);
@@ -135,9 +135,9 @@ export function crossCheck(d: GameData, refs: CrossRefs, rules: Rules): Issue[] 
     const at = `passives.${id}`;
     if (p.id !== id) err(`${at}.id`, `키와 id('${p.id}')가 다름`);
     uniqueId(p.id, at);
-    // 공용 패시브: weapon '*'(펼친 뒤에는 무기 이름)는 branch common. [기본, 강화] 값 배열·pointDesc 길이 = CARD_LEVELS
-    const common = p.branch === 'common', max = S.CARD_LEVELS;
-    if (p.weapon === '*' ? !common : !d.weapons[p.weapon]) err(`${at}.weapon`, p.weapon === '*' ? `weapon '*'는 branch common만` : `무기 '${p.weapon}' 없음`);
+    // [기본, 강화] 값 배열·pointDesc 길이 = CARD_LEVELS
+    const max = S.CARD_LEVELS;
+    if (!d.weapons[p.weapon]) err(`${at}.weapon`, `무기 '${p.weapon}' 없음`);
     if (p.pointDesc.length !== max) err(`${at}.pointDesc`, `길이 ${p.pointDesc.length} ≠ 카드 단계 ${max} (기본·강화)`);
     const arrays = (v: unknown, path: string): void => {
       if (Array.isArray(v)) { if (v.length !== max) err(path, `[기본, 강화] 값 길이 ${v.length} ≠ ${max}`); }

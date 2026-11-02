@@ -80,11 +80,6 @@ export const canReinput = (p: PlayerState, skill: ActionDef): boolean => p.reinp
 /** 지금 쓸 수 있는 스킬인가: 재입력 또는 쿨타임·MP */
 export const canUseSkill = (p: PlayerState, skill: ActionDef): boolean => canReinput(p, skill) || skillReady(p, skill);
 
-/** 기상 회피 (공용 패시브 quickRise, combat.md 4장): 다운 중 밀림이 끝났으면 회피 키로 다운을 끝내고 바로 회피. 쿨·지구력은 평소대로 */
-export const canQuickRise = (p: PlayerState): boolean =>
-  !!p.perks?.quickRise && !p.downed && p.hurt?.kind === 'down' && !(p.hurt.push && p.hurt.push.left > 0) &&
-  p.backstepCd <= 0 && p.stamina >= PLAYER.stamina.dodge;
-
 /** 회피 가능: 쿨타임이 끝났고 지구력이 1회분 이상이고, 행동 중이면 후딜레이(recovery) 구간 (combat.md 1장) */
 export const canDodge = (p: PlayerState): boolean =>
   p.backstepCd <= 0 && p.stamina >= PLAYER.stamina.dodge && (!p.fighter.run || fighterPhase(p.fighter) === 'recovery');
@@ -118,9 +113,6 @@ export function stepPlayerState(
   // 우물에서 떨어지는 중: 아무 입력도 받지 않음 (dungeon.md 2장)
   if (p.arrive > 0) return out;
   if (input.potion && usePotion(p, input.potion)) out.potion = input.potion;
-  // 기상 회피: 기상 무적 없이 다운을 끝내고 아래 회피로 (회피 무적이 대신). 2·3포인트면 그 회피 쿨이 짧다
-  const rose = input.backstep && canQuickRise(p);
-  if (rose) p.hurt = null;
   if (p.hurt) {
     // 맞아서 밀려남 (벽·장애물에 막힘)
     const push = p.hurt.push;
@@ -139,7 +131,7 @@ export function stepPlayerState(
     p.fighter = newFighter();
     const dir = Math.sign(input.x), dy = Math.sign(input.y);
     p.backstep = { t: 0, dir: dir || dy ? dir : -p.facing, dy };
-    p.backstepCd = bs.cooldown + (dg?.cooldownAdd ?? 0) + (rose ? (p.perks?.quickRiseCooldownAdd ?? 0) : 0);
+    p.backstepCd = bs.cooldown + (dg?.cooldownAdd ?? 0);
     spendStamina(p, st.dodge);
     out.backstepStarted = true;
   }

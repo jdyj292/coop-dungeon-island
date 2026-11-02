@@ -9,8 +9,8 @@ const gs = weaponDef('greatsword'), st = weaponDef('staff');
 const lv1 = (ids: string[]) => Object.fromEntries(ids.map((id) => [id, { level: 1 }]));
 
 describe('계열 보너스', () => {
-  it('기본 스킬·공용 패시브·다른 무기는 세지 않음', () => {
-    expect(branchCounts('greatsword', ['gs_launch', 'greatsword.quickrise', 'gs_whirl', 'gs_heavyhand', 'gs_wave', 'st_orb'])).toEqual({ A: 2, B: 1 });
+  it('처음 카드도 계열로 셈, 다른 무기는 세지 않음', () => {
+    expect(branchCounts('greatsword', ['gs_launch', 'gs_earthsplit', 'gs_whirl', 'gs_heavyhand', 'gs_wave', 'st_orb'])).toEqual({ A: 3, B: 2 });
   });
 
   it('3장 = Ⅰ, 5장 = Ⅱ가 Ⅰ을 대신', () => {

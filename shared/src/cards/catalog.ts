@@ -1,5 +1,5 @@
 // 카드 목록·티어 (docs/skills.md 1장, 데이터 shared/data/cards.json·packs.json, 값 balance.md 7장 카드 경제)
-// 카드 id = 스킬 id(액티브) 또는 패시브 id (공용 패시브는 '<무기>.<id>'). 무기 id는 문자열 (cards.json weapon)
+// 카드 id = 스킬 id(액티브) 또는 패시브 id. 무기 id는 문자열 (cards.json weapon). 모든 카드는 A·B 계열 중 하나
 import type { WeaponDef } from '../actions';
 import { CARD_DATA, COMBAT, PACKS, WEAPONS } from '../data/load';
 import type { CardDef, PackDef, TierDef } from '../data/schema';
@@ -20,7 +20,7 @@ export const TIERS: readonly number[] = Object.keys(CARD_DATA.tiers).map(Number)
 export const isCard = (id: string): boolean => !!CARDS[id];
 export const isActiveCard = (id: string): boolean => CARDS[id]?.kind === 'active';
 export const isPassiveCard = (id: string): boolean => CARDS[id]?.kind === 'passive';
-export const cardBranch = (id: string): CardBranch => CARDS[id]?.branch ?? 'base';
+export const cardBranch = (id: string): CardBranch => CARDS[id]?.branch ?? 'A';
 export const tierOf = (id: string): number => CARDS[id]?.tier ?? 1;
 export const tierDef = (tier: number): TierDef | undefined => CARD_DATA.tiers[String(tier)];
 /** 장착 숙련도 (카드 티어의 equipLevel) */
@@ -33,7 +33,7 @@ export const craftPriceOf = (id: string): number => tierDef(tierOf(id))?.craft ?
 export const passiveCost = (id: string, enhanced: boolean): number => (CARDS[id]?.cost ?? tierOf(id)) + (enhanced ? 1 : 0);
 /** 패시브 비용 한도: base + floor((숙련도 − 1) / every) */
 export const passiveCap = (level: number): number => CARD.passiveCap.base + Math.floor((Math.max(1, level) - 1) / CARD.passiveCap.every);
-/** 처음 카드 (기본 스킬 2장) */
+/** 처음 카드 (티어 1 액티브 2장) */
 export const starterCards = (weapon: string): readonly string[] => CARD_DATA.starter[weapon] ?? [];
 
 const byWeapon = new Map<string, string[]>();

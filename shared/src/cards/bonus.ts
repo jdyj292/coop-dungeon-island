@@ -1,5 +1,5 @@
 // 계열 보너스 (docs/skills.md 1장, 값 cards.json branchBonus): 장착한 같은 계열 카드(액티브 + 패시브) 수로 Ⅰ·Ⅱ.
-// 기본 스킬·공용 패시브는 세지 않는다. Ⅱ가 Ⅰ을 대신. 효과 키는 passives.json effect와 같음 (passives.ts perksOf가 합침)
+// Ⅱ가 Ⅰ을 대신. 효과 키는 passives.json effect와 같음 (passives.ts perksOf가 합침)
 import { CARD_DATA } from '../data/load';
 import { BRANCHES, CARD, CARDS, type Branch } from './catalog';
 

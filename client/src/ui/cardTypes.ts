@@ -53,7 +53,7 @@ export interface CardSource {
   active: (string | null)[];
   passive: string[];
   view: CardView;
-  rows: { branch: Branch | 'base'; name: string; color: string; ids: string[] }[];
+  rows: { branch: Branch; name: string; color: string; ids: string[] }[];
   owned: number;
   total: number;
   bonus: BonusInfo[];

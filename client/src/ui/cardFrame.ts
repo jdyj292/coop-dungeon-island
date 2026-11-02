@@ -1,5 +1,5 @@
 // 카드 테두리 (hud.md 8장, 승인 데모 docs/refs/demos/card_redesign.html): 계열마다 모양·색이 다르다. 티어는 카드 아래 판(cardTier.ts) (테두리 색 아님)
-// 기본·공용 = 얇은 강철 / 대검 A 파쇄 = 두꺼운 돌(깎인 모서리·금·아래 묵직) / B 검기 = 왼쪽 위·오른쪽 아래 사선 + 칼끝 /
+// 모양 없는 무기 = 얇은 강철 / 대검 A 파쇄 = 두꺼운 돌(깎인 모서리·금·아래 묵직) / B 검기 = 왼쪽 위·오른쪽 아래 사선 + 칼끝 /
 // 스태프 A 원소 = 위 불꽃 혀·아래 불씨 / B 중력 = 이중 테두리 + 모서리 밖 별. 없는 카드는 같은 모양의 그림자.
 // 강화 = 몸통 위로 지나가는 빛줄기 + 반짝이는 별 (금테 없음). 붓(Paint)만 받아 카드 창(Graphics)·카드 상점(캔버스)이 같이 쓴다
 import { mix } from './shopPix';
@@ -8,7 +8,7 @@ export type FrameStyle = 'base' | 'gsA' | 'gsB' | 'stA' | 'stB';
 /** 사각형 붓 (색 = palette 경로 또는 #hex) */
 export type Paint = (x: number, y: number, w: number, h: number, color: string, alpha?: number) => void;
 
-/** 무기·계열 → 테두리 모양 (모양 없는 무기·기본·공용은 강철) */
+/** 무기·계열 → 테두리 모양 (모양 없는 무기는 강철) */
 const STYLES: Record<string, Partial<Record<string, FrameStyle>>> = { greatsword: { A: 'gsA', B: 'gsB' }, staff: { A: 'stA', B: 'stB' } };
 export const frameStyle = (weapon: string, branch: string): FrameStyle => STYLES[weapon]?.[branch] ?? 'base';
 

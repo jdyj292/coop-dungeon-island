@@ -88,11 +88,11 @@ describe('카드 교차 참조 (data.md 10장)', () => {
     expect(errors(d)).toEqual(['cards.cards.gs_wave.branch', 'cards.cards.gs_nope', 'skills.gs_whirl']);
   });
 
-  it('없는 티어, 팩 확률 합, 처음 카드가 기본 스킬이 아님, 색 키', () => {
+  it('없는 티어, 팩 확률 합, 처음 카드가 티어 1 액티브가 아님, 색 키', () => {
     const d = fresh();
     d.cards.cards.gs_crush!.tier = 9;
     d.packs.packs['1']!.odds = [80, 30];
-    d.cards.starter.greatsword = ['gs_whirl'];
+    d.cards.starter.greatsword = ['gs_quake'];
     d.packs.packs['2']!.color = 'zzz';
     expect(errors(d)).toEqual(['cards.cards.gs_crush.tier', 'cards.starter.greatsword', 'packs.packs.1.odds', 'packs.packs.2.color']);
   });

@@ -68,8 +68,8 @@ export const R = (g: G, x: number, y: number, w: number, h: number, color: strin
 /** Graphics 붓 (cardFrame.ts) */
 export const paintOf = (g: G): Paint => (x, y, w, h, c, a) => R(g, x, y, w, h, c, a ?? 1);
 
-/** 카드 id → 16×16 아이콘 이름 (hud_icons.json slots, 공용 패시브는 무기 이름을 뺀 id) */
-export const cardIconName = (id: string): string => (icons.slots as Record<string, string>)[id.replace(/^\w+\./, '')] ?? 'empty';
+/** 카드 id → 16×16 아이콘 이름 (hud_icons.json slots) */
+export const cardIconName = (id: string): string => (icons.slots as Record<string, string>)[id] ?? 'empty';
 
 /** 16×16 아이콘. mono = 한 색(그림자), inset = 가장자리를 이만큼 잘라 그림 */
 export function cardIcon(g: G, id: string, x: number, y: number, o: { mono?: string; alpha?: number; inset?: number } = {}): void {
@@ -165,7 +165,7 @@ export interface FaceLook {
   tier: number;
   /** 티어 색 (테두리 아님: 카드 상점 뒷면 빛·티어 3 이름 띠, cards.json tiers color) */
   tierColor: string;
-  /** 계열 테두리 모양·색 (기본·공용은 keyLabel) */
+  /** 계열 테두리 모양·색 */
   frame: FrameStyle;
   color: string;
   owned: boolean;

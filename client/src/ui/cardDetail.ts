@@ -114,7 +114,7 @@ function bonusDetail(p: Painter<CardHit>, s: CardSource): void {
     p.text(X + 10, cy, `${s.bonusAt[i]}장`, on ? SK.coin : SK.key);
     lines.forEach((t, j) => p.text(X + 3, cy + 10 + j * 10, t, on ? SK.coin : SK.dim));
   });
-  wrapKo(`액티브·패시브 모두 셈. 기본 스킬·공용 패시브는 안 셈. ${s.bonusAt.at(-1)}장이 되면 ${s.bonusAt[0]}장 보너스 대신`, MW, 3, 'koSmall')
+  wrapKo(`액티브·패시브 모두 셈. ${s.bonusAt.at(-1)}장이 되면 ${s.bonusAt[0]}장 보너스 대신`, MW, 3, 'koSmall')
     .forEach((l, j) => p.text(X, 140 + j * 10, l, SK.off));
   b.ids.forEach((id, i) => {
     const x = X + i * 18, y = 176;

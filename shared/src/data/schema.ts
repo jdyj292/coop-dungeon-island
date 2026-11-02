@@ -140,7 +140,7 @@ export const skill = playerActionObj.extend({
   name: z.string(),
   /** 스킬 창(K) 설명 (hud.md 8장) */
   desc: z.string().min(1),
-  branch: z.enum(['base', 'A', 'B']),
+  branch: z.enum(['A', 'B']),
   cooldown: pos,
   mp: z.number().int().nonnegative(),
   variants: z.record(z.object({ name: z.string(), desc: z.string() }).passthrough()).optional(),
@@ -182,12 +182,12 @@ export const CARD_LEVELS = 2;
 /** 숫자 하나 또는 [기본, 강화] 값 배열 (길이 = CARD_LEVELS, crossCheck) */
 const perPoint = <T extends z.ZodTypeAny>(t: T) => z.union([t, z.array(t).min(1)]);
 
-/** 패시브 (data.md 3장 passives.json): 계열 보조 + 공용 패시브(weapon '*'·branch common, 무기마다 펼쳐짐).
+/** 패시브 (data.md 3장 passives.json): 계열 보조.
  * 카드로 장착 (티어는 cards.json, skills.md 1장). 값이 배열이면 [기본 카드, 강화 카드] */
 export const passive = z.object({
   id: z.string(),
   weapon: z.string(),
-  branch: z.enum(['A', 'B', 'common']),
+  branch: z.enum(['A', 'B']),
   name: z.string(),
   desc: z.string().min(1),
   /** 카드 창 [기본, 강화] 효과 줄 (길이 = CARD_LEVELS) */
@@ -210,9 +210,6 @@ export const passive = z.object({
     /** 중압: 내가 감속시킨 적은 감속 동안 받는 피해 × takenMul */
     press: z.object({ takenMul: perPoint(pos) }).strict().optional(),
     dodge: z.object({ distanceMul: perPoint(pos), cooldownAdd: perPoint(z.number()) }).strict().optional(),
-    quickRise: z.literal(true).optional(),
-    /** 기상 회피로 시작한 회피의 쿨 더하기 (기상 회피 2·3포인트) */
-    quickRiseCooldownAdd: perPoint(z.number()).optional(),
     // 계열 2단계 보조 (SK-4 3차, skills.md 2·3장)
     /** 여진: 내 down 판정이 맞힌 적 자리에 반경 radius 충격파 coef */
     aftershock: z.object({ coef: perPoint(z.number().nonnegative()), radius: pos }).strict().optional(),

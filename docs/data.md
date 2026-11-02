@@ -84,7 +84,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | comboWindow | recovery가 끝난 뒤 다음 평타 입력을 받아주는 시간. 넘기면 1타로 돌아감 |
 | basic | 평타 단계별 행동 |
 | dash | 달리기 중 평타 |
-| baseSkills | 공용 기본 스킬 id (skills.json) |
+| baseSkills | 처음 스킬 id (skills.json, 도구 run-sim·ttk-sim 기본값. 카드는 cards.json starter) |
 | branches | 계열 이름·특징 `{ A: { name, desc }, B: {…} }` (카드 창 계열 이름). 계열 스킬이 있는 무기는 필수 |
 
 ### 평타 입력 규칙
@@ -102,7 +102,7 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 | weapon | 무기 id |
 | name | 표시 이름 |
 | desc | 카드 창(K) 설명 (필수, 2줄 안: 패널 폭 196px). 변형에도 desc 필수 = 기본 스킬과 무엇이 다른지. 변형 desc는 판정에 덮어쓰지 않음 |
-| branch | base / A / B |
+| branch | A / B (처음 스킬도 계열 하나) |
 | superArmor | 시전 중 슈퍼아머 (combat.md 3장) |
 | repeat | 기본 스킬에도 둘 수 있는 반복 판정 (아래 특수 필드) |
 | onWall | 벽꿍 `{coef}` (아래 특수 필드) |
@@ -124,8 +124,8 @@ shared/data/의 weapons.json, skills.json, monsters.json, player.json, combat.js
 
 - 특수 필드: reinput(재입력 횟수), repeat(`{count, interval, step?, seek?, copies?, coef?, delay?, follow?}` 반복: step = 판정마다 앞으로 px, seek = 판정마다 가까운 맞을 몬스터 쪽으로 px, copies = `[[앞, 깊이], ...]` 자리에 같은 반복을 첫 판정부터 더, coef = 묶음 첫 판정 뒤 판정들의 계수 = 다단(가벼운 경직 light·적중 소리 hitLight·판정마다 시전 소리 없음, 검의 장막·일섬, sim/skillExtras.ts), delay = active 순간에는 판정 없이 이 초 뒤부터 첫 판정(자리·방향은 active 때 그대로, 일섬. trail은 묶음 첫 판정에서만), follow = true면 판정마다 자리·방향을 시전자 지금 자리로(나를 따라다니는 영역, 검의 장막 변형 따라다니는 장막)), after(`{delay, coef}` 후속 판정), onStatusEnd(상태이상 해제 시 판정), onWall(`{coef}` 벽꿍). 기본 스킬에 repeat가 있으면 변형은 일부 키만 덮어써도 됨
 - 적용은 shared/src/cards/build.ts resolveSkill (덮어쓰기 + 특수 필드 + 강화 카드면 계수 × combat.json card.enhancedMul), 특수 판정은 shared/src/sim/skillExtras.ts: 반복·후속 = 시전한 자리·방향에 같은 판정을 예약(반복은 count번 중 첫 판정 뒤 나머지), 해제 = 그 행동이 건 빙결이 풀릴 때 그 몬스터에 한 번(빙결·띄우기 없이), 재입력 = 같은 스킬을 쿨타임·MP 없이 (스킬 recovery 또는 끝난 뒤 combat.json card.reinputWindow 안). status slow = 몬스터 걷는 속도·공격 쿨타임·공격 사이 쉬는 시간이 × (1 − amount)로 흐름
-- 현재 파일: 대검·스태프 공용 기본 스킬 + A·B 계열 액티브(Lv 2~8), 대검 A·B 계열 3단계. 나머지는 skills.md 표를 이 형식으로 옮겨 추가
-- **passives.json (패시브 카드: 계열 보조·공용)**: `{ id, weapon, branch: A|B|common, name, desc, pointDesc: [기본, 강화 줄], effect }`. 티어는 cards.json (10장). effect 값이 배열이면 [기본 카드, 강화 카드] (pointDesc와 함께 길이 2, data-validate), 숫자 하나면 강화와 상관없음. 여러 패시브·계열 보너스가 같은 키면 …Mul은 곱하고 …Add는 더하고 나머지는 덮어씀 (passives.ts perksOf). effect 키: chargeSpeedMul(대검 충전 속도 배율, 최대까지 maxTime / 값), chargeTakenMul(충전 중 받는 피해 배율), skillArmor(모든 스킬 슈퍼아머), skillTakenMul(스킬 시전 중 받는 피해 배율), far `{minDist, mul}`(나와 적 거리가 minDist px 넘으면 피해 배율), projectileRangeMul(투사체 스킬 사거리 배율), lastingMul(lasting 스킬 상태 이상 시간·repeat count 배율, 횟수는 반올림), burn `{element, time, takenMul}`(그 원소 스킬 적중 대상이 time초 동안 받는 피해 배율), press `{takenMul}`(내 status slow에 맞은 적이 감속 동안 받는 피해 배율), dodge `{distanceMul, cooldownAdd}`(회피 거리 배율·쿨 더하기), quickRise(다운 중 회피로 기상), quickRiseCooldownAdd(기상 회피로 시작한 회피의 쿨 더하기), aftershock `{coef, radius}`(내 down 판정이 맞힌 적 자리 충격파), downDamage(다운 대상 피해 배율, 기본 combat.json downDamageMul), launchWave `{skill, coef, speed, range, radius}`(그 스킬 active 때 관통 검기), cycle `{sec}`(스킬 투사체 적중 시 시전 한 번에 한 번 다른 스킬 쿨 감소), freezeAdd(빙결 시간 더하기), overheat `{time, delay}`(스킬 적중 뒤 time초 동안 평타 투사체 한 발 더), repeatEnd `{skill, radiusMul, coef}`(그 반복 스킬 반지름 배율·마지막 판정 뒤 한 번 더), aegis `{radius, time, cooldown}`(스킬 사용 시 범위 안 아군 피해 1회 무효 보호막·내부 쿨), chargeBonusAdd(대검 충전 최대 보너스 더하기), aura `{radius, amount}`(내 둘레 radius px 안 적 감속 amount, 매 틱 0.2초씩 다시 걺), phantom `{delay, mul}`(잔상: 근접 상자·투사체 스킬을 delay초 뒤 같은 자리·방향에서 계수 × mul로 한 번 더, sim/phantom.ts), dance `{window, mul}`(검의 춤: 스킬이 끝나고 window초 안에 시작한 다음 스킬 계수 × mul, actions.ts withCoefMul), 계열 보너스에서 주로 쓰는 projectileCooldownMul(투사체 스킬 기준 쿨 배율)·areaMul(판정 범위 area radius·width·depth 배율)·mpMul(스킬 MP 배율, 반올림)·slowTimeMul·slowAdd(status slow 시간 배율·감속량 더하기) (passives.ts withPerks). launchWave·repeatEnd의 skill은 그 무기 스킬이어야 함(repeatEnd는 repeat 스킬, data-validate). 공용 패시브 = weapon "*"·branch common, 무기마다 `<무기>.<id>` 카드로 펼침 (load.ts). 패시브 id는 행동 id와 겹치면 안 됨 (data-validate). 예산 검사 대상 아님
+- 현재 파일: 대검·스태프 처음 스킬(각자 A·B 계열) + A·B 계열 액티브(Lv 2~8), 대검 A·B 계열 3단계. 나머지는 skills.md 표를 이 형식으로 옮겨 추가
+- **passives.json (패시브 카드: 계열 보조)**: `{ id, weapon, branch: A|B, name, desc, pointDesc: [기본, 강화 줄], effect }`. 티어는 cards.json (10장). effect 값이 배열이면 [기본 카드, 강화 카드] (pointDesc와 함께 길이 2, data-validate), 숫자 하나면 강화와 상관없음. 여러 패시브·계열 보너스가 같은 키면 …Mul은 곱하고 …Add는 더하고 나머지는 덮어씀 (passives.ts perksOf). effect 키: chargeSpeedMul(대검 충전 속도 배율, 최대까지 maxTime / 값), chargeTakenMul(충전 중 받는 피해 배율), skillArmor(모든 스킬 슈퍼아머), skillTakenMul(스킬 시전 중 받는 피해 배율), far `{minDist, mul}`(나와 적 거리가 minDist px 넘으면 피해 배율), projectileRangeMul(투사체 스킬 사거리 배율), lastingMul(lasting 스킬 상태 이상 시간·repeat count 배율, 횟수는 반올림), burn `{element, time, takenMul}`(그 원소 스킬 적중 대상이 time초 동안 받는 피해 배율), press `{takenMul}`(내 status slow에 맞은 적이 감속 동안 받는 피해 배율), dodge `{distanceMul, cooldownAdd}`(회피 거리 배율·쿨 더하기), aftershock `{coef, radius}`(내 down 판정이 맞힌 적 자리 충격파), downDamage(다운 대상 피해 배율, 기본 combat.json downDamageMul), launchWave `{skill, coef, speed, range, radius}`(그 스킬 active 때 관통 검기), cycle `{sec}`(스킬 투사체 적중 시 시전 한 번에 한 번 다른 스킬 쿨 감소), freezeAdd(빙결 시간 더하기), overheat `{time, delay}`(스킬 적중 뒤 time초 동안 평타 투사체 한 발 더), repeatEnd `{skill, radiusMul, coef}`(그 반복 스킬 반지름 배율·마지막 판정 뒤 한 번 더), aegis `{radius, time, cooldown}`(스킬 사용 시 범위 안 아군 피해 1회 무효 보호막·내부 쿨), chargeBonusAdd(대검 충전 최대 보너스 더하기), aura `{radius, amount}`(내 둘레 radius px 안 적 감속 amount, 매 틱 0.2초씩 다시 걺), phantom `{delay, mul}`(잔상: 근접 상자·투사체 스킬을 delay초 뒤 같은 자리·방향에서 계수 × mul로 한 번 더, sim/phantom.ts), dance `{window, mul}`(검의 춤: 스킬이 끝나고 window초 안에 시작한 다음 스킬 계수 × mul, actions.ts withCoefMul), 계열 보너스에서 주로 쓰는 projectileCooldownMul(투사체 스킬 기준 쿨 배율)·areaMul(판정 범위 area radius·width·depth 배율)·mpMul(스킬 MP 배율, 반올림)·slowTimeMul·slowAdd(status slow 시간 배율·감속량 더하기) (passives.ts withPerks). launchWave·repeatEnd의 skill은 그 무기 스킬이어야 함(repeatEnd는 repeat 스킬, data-validate). 패시브 id는 행동 id와 겹치면 안 됨 (data-validate). 예산 검사 대상 아님
 - 예산 검사(balance-check)는 한 번 쓸 때 계수 합 = (coef + (repeat.count − 1) × (repeat.coef ?? coef)) × hits·copies·burst·lanes 수 × 왕복(back × 2). 연쇄는 한 대상 기준, blast·mark 계수는 빠짐. 레벨 배율·대검 충전은 blast·shards·mark·trail·meet·repeat.coef 계수도 키움 (actions.ts scaleExtraCoefs, 검의 춤은 coef·repeat.coef)
 
 ---
@@ -301,8 +301,8 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | 필드 | 설명 |
 |---|---|
 | tiers.<N> | 티어 N (숫자 키 "1"·"2"…, 빠진 번호 없이) `{ equipLevel, dust, craft, color }`: 장착 숙련도, 갈면 조각, 지정 구매 조각, 티어 색 키(palette.json global.ui.card 아래 키: 카드 상점 뒷면 빛·티어 3 공개. 카드 테두리는 계열 색, hud.md 8장) |
-| cards.<id> | `{ weapon, kind: active\|passive, branch: base\|A\|B\|common, tier, cost? }`. id = skills.json 행동 id 또는 passives.json id (공용 패시브는 `<무기>.<id>`). cost = 패시브 비용 (없으면 티어, 강화 +1). 이름·아이콘·설명은 skills.json·passives.json·hud_icons.json에서 |
-| starter.<무기> | 처음 카드 id 목록 (기본 스킬 2장) |
+| cards.<id> | `{ weapon, kind: active\|passive, branch: A\|B, tier, cost? }`. id = skills.json 행동 id 또는 passives.json id. cost = 패시브 비용 (없으면 티어, 강화 +1). 이름·아이콘·설명은 skills.json·passives.json·hud_icons.json에서 |
+| starter.<무기> | 처음 카드 id 목록 (그 무기 티어 1 액티브 2장) |
 | branchBonus.<무기>.<A\|B> | `[Ⅰ, Ⅱ]` 각각 effect 묶음 숫자 값만 (passives.json effect 키: chargeSpeedMul·chargeBonusAdd·projectileRangeMul·projectileCooldownMul·areaMul·mpMul·slowTimeMul·slowAdd 등). 단계 수 = combat.json card.branchBonusAt 길이 |
 
 ### packs.json
@@ -311,4 +311,4 @@ combat.md 3·5장의 공통 수치. 의미·근거는 combat.md, 이 문서는 �
 | packs.<N> | 팩 번호 N (숫자 키) `{ unlockLevel, price, size, minTier, maxTier, odds, lastMinTier, lastOdds?, pity?, color }`: 열리는 숙련도, 가격(코인 = 조각 같은 수), 장수(4), 나오는 티어 범위, odds = minTier부터 티어별 확률(%, 합 100, 1~size−1번째 장), lastMinTier·lastOdds = 마지막 장(lastMinTier 이상, lastOdds는 lastMinTier부터·합 100, 없으면 odds에서 그 티어들만 다시 나눔), pity `{ tier, packs }` = 그 수만큼 열도록 그 티어가 없으면 마지막 장 확정, color = palette.json global.ui.card 아래 키. 굴림 shared/src/cards/pack.ts rollPack(난수를 넣어 줌), 무기에 없는 티어는 아래 티어로(천장도 없음) |
 
 - 무기별 팩은 따로 데이터를 두지 않는다 (팩 번호 × 무기, 카드 목록은 cards.json weapon으로 거름)
-- data-validate (shared/src/data/cardCheck.ts): 모든 액티브·패시브가 카드인지(공용 패시브는 카드가 있는 무기마다), 카드 id가 있는 행동·패시브이고 무기·계열이 같은지, 티어 번호가 1부터 빠짐없는지, tier·팩 티어 범위가 tiers 안인지, 확률 길이·합 100, starter가 그 무기 base 액티브 카드인지, 계열 보너스가 effect 형식인지, welcomePacks 팩이 있는지, palette 색 키가 있는지
+- data-validate (shared/src/data/cardCheck.ts): 모든 액티브·패시브가 카드인지, 카드 id가 있는 행동·패시브이고 무기·계열이 같은지, 티어 번호가 1부터 빠짐없는지, tier·팩 티어 범위가 tiers 안인지, 확률 길이·합 100, starter가 그 무기 티어 1 액티브 카드인지, 계열 보너스가 effect 형식인지, welcomePacks 팩이 있는지, palette 색 키가 있는지

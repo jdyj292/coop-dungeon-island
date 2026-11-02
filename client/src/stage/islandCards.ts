@@ -194,7 +194,7 @@ export class CardPanel implements CardSource {
     } else if (h.kind === 'var') this.variant(h.i);
   }
 
-  /** 키보드 격자: 줄 = 기본·공용 / A / B */
+  /** 키보드 격자: 줄 = A / B */
   private grid(): string[][] {
     return this.rows.map((r) => r.ids).filter((r) => r.length);
   }

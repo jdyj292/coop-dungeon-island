@@ -65,18 +65,12 @@ describe('대검 충전 키 누름 (charge.ts)', () => {
   });
 });
 
-describe('기상 회피 (공용 패시브)', () => {
-  const downed = (quickRise: boolean) => {
+describe('다운 중', () => {
+  it('회피·다른 행동 모두 거절', () => {
     const sim = new RoomSim(gs, { minX: 0, maxX: 1000, minY: 0, maxY: 100 }, { x: 100, y: 50 }, { ai: false });
-    sim.player.perks = quickRise ? { quickRise: true } : {};
     sim.player.hurt = { kind: 'down', left: 0.8 };
-    return sim.player;
-  };
-  it('다운 중 회피는 기상 회피가 있을 때만 받고, 다른 행동은 거절', () => {
-    expect(new InputQueue().onAction(dodgeMsg(1), downed(false), gs)).toBe('state');
-    const p = downed(true), q = new InputQueue();
-    expect(q.onAction({ seq: 1, t: 0, kind: 'basic', x: 0, y: 0, facing: 1 }, p, gs)).toBe('state');
-    expect(q.onAction(dodgeMsg(2), p, gs)).toBeNull();
-    expect(q.take().input.backstep).toBe(true);
+    const q = new InputQueue();
+    expect(q.onAction(dodgeMsg(1), sim.player, gs)).toBe('state');
+    expect(q.onAction({ seq: 2, t: 0, kind: 'basic', x: 0, y: 0, facing: 1 }, sim.player, gs)).toBe('state');
   });
 });

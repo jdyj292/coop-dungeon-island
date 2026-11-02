@@ -1,6 +1,6 @@
 // 패시브 효과 (docs/skills.md 1~3장, 데이터 shared/data/passives.json): 장착한 패시브 카드의 effect([기본, 강화] 값)와 계열 보너스(cards/bonus.ts)를 모은 perks,
 // 스킬 정의에 붙는 효과(슈퍼아머·투사체 사거리·지속·계열 보너스의 쿨·범위·MP·감속)는 withPerks로 정의를 바꾸고,
-// 나머지(충전 속도·충전 중·스킬 중 받는 피해·먼 적 피해·연소·중압·회피, 공용 패시브 기상 회피와 그 쿨)는 PlayerState.perks를 판정에서 본다 (sim/strike.ts, playerHurt.ts, player.ts·charge.ts)
+// 나머지(충전 속도·충전 중·스킬 중 받는 피해·먼 적 피해·연소·중압·회피)는 PlayerState.perks를 판정에서 본다 (sim/strike.ts, playerHurt.ts, player.ts·charge.ts)
 import type { ActionDef, WeaponDef } from './actions';
 import { branchBonuses } from './cards/bonus';
 import { PASSIVES, WEAPONS } from './data/load';
@@ -16,8 +16,6 @@ export type Perks = AtPoint<PassiveEffect>;
 export const NO_PERKS: Perks = Object.freeze({});
 
 export const isPassive = (id: string): boolean => !!PASSIVES[id];
-/** 공용 패시브 (모든 무기, 계열 없음, skills.md 1장) */
-export const isCommonPassive = (id: string): boolean => PASSIVES[id]?.branch === 'common';
 
 const weaponId = (w: WeaponDef): string | undefined => Object.keys(WEAPONS).find((k) => WEAPONS[k] === w);
 

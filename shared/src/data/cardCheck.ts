@@ -17,32 +17,24 @@ export function checkCards(d: GameData, refs: CrossRefs): Issue[] {
   for (const [t, def] of Object.entries(tiers)) color(`cards.tiers.${t}.color`, def.color);
 
   // 카드 → 스킬·패시브
-  const commonIds = Object.values(d.passives).filter((p) => p.weapon === '*').map((p) => p.id);
   for (const [id, c] of Object.entries(cards)) {
     const at = `cards.cards.${id}`;
     if (!d.weapons[c.weapon]) err(`${at}.weapon`, `무기 '${c.weapon}' 없음`);
     if (!hasTier(c.tier)) err(`${at}.tier`, `티어 ${c.tier}가 tiers에 없음`);
-    const [w, pid] = id.split('.');
-    // 공용 패시브: 펼치기 전(data-validate)이면 '*' 원본, 펼친 뒤(게임 로더)면 '<무기>.<id>'
-    const src = c.kind === 'active' ? d.skills[id]
-      : d.passives[id] ?? (pid !== undefined && w === c.weapon && commonIds.includes(pid) ? { weapon: c.weapon, branch: 'common' } : undefined);
-    if (!src) err(at, c.kind === 'active' ? '스킬(skills.json)이 아님' : '패시브(passives.json, 공용은 <무기>.<id>)가 아님');
+    const src = c.kind === 'active' ? d.skills[id] : d.passives[id];
+    if (!src) err(at, c.kind === 'active' ? '스킬(skills.json)이 아님' : '패시브(passives.json)가 아님');
     else {
       if (src.weapon !== c.weapon) err(`${at}.weapon`, `원본 무기 '${src.weapon}'와 다름`);
       if (src.branch !== c.branch) err(`${at}.branch`, `원본 계열 '${src.branch}'와 다름`);
     }
     if (c.cost !== undefined && c.kind !== 'passive') err(`${at}.cost`, '비용은 패시브 카드만');
   }
-  // 스킬·패시브 → 카드 (공용 패시브는 카드가 있는 무기마다)
-  for (const id of Object.keys(d.skills)) if (!cards[id]) err(`skills.${id}`, '카드(cards.json)가 없음');
+  // 스킬·패시브 → 카드
+  for (const id of [...Object.keys(d.skills), ...Object.keys(d.passives)]) if (!cards[id]) err(`${d.skills[id] ? 'skills' : 'passives'}.${id}`, '카드(cards.json)가 없음');
   const cardWeapons = new Set(Object.values(cards).map((c) => c.weapon));
-  for (const p of Object.values(d.passives)) {
-    if (p.weapon !== '*') { if (!cards[p.id] && (p.branch !== 'common' || cardWeapons.has(p.weapon))) err(`passives.${p.id}`, '카드(cards.json)가 없음'); }
-    else for (const w of cardWeapons) if (!cards[`${w}.${p.id}`]) err(`passives.${p.id}`, `카드 '${w}.${p.id}'가 없음`);
-  }
 
   for (const [w, ids] of Object.entries(starter)) {
-    for (const id of ids) if (cards[id]?.weapon !== w || cards[id]?.branch !== 'base' || cards[id]?.kind !== 'active') err(`cards.starter.${w}`, `'${id}'는 이 무기 기본 스킬 카드가 아님`);
+    for (const id of ids) if (cards[id]?.weapon !== w || cards[id]?.tier !== 1 || cards[id]?.kind !== 'active') err(`cards.starter.${w}`, `'${id}'는 이 무기 티어 1 액티브 카드가 아님`);
     if (ids.length > d.combat.card.activeSlots) err(`cards.starter.${w}`, '액티브 칸보다 많음');
   }
   for (const w of cardWeapons) if (!starter[w]) err(`cards.starter`, `무기 '${w}' 처음 카드 없음`);

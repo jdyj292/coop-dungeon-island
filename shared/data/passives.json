@@ -1,5 +1,5 @@
 {
-  "_note": "패시브 카드 (skills.md 1~3장, data.md 3장, 카드 티어는 cards.json). 값이 배열이면 [기본 카드, 강화 카드], 숫자 하나면 강화와 상관없음. pointDesc = [기본, 강화] 효과 줄. effect 키 의미는 data.md. weapon \"*\" = 공용 패시브: 무기마다 카드 '<무기>.<id>'로 펼쳐짐",
+  "_note": "패시브 카드 (skills.md 1~3장, data.md 3장, 카드 티어는 cards.json). 값이 배열이면 [기본 카드, 강화 카드], 숫자 하나면 강화와 상관없음. pointDesc = [기본, 강화] 효과 줄. effect 키 의미는 data.md.",
   "gs_heavyhand": {
     "id": "gs_heavyhand", "weapon": "greatsword", "branch": "A", "name": "무거운 손",
     "desc": "스킬 충전이 빨라지고, 충전 중\n받는 피해가 줄어든다",
@@ -119,11 +119,5 @@
     "desc": "스킬을 쓰면 나와 3타일 안 동료에게\n피해 1회를 막는 보호막 6초",
     "pointDesc": ["내부 쿨 15초", "내부 쿨 10초"],
     "effect": { "aegis": { "radius": 48, "time": 6, "cooldown": [15, 10] } }
-  },
-  "quickrise": {
-    "id": "quickrise", "weapon": "*", "branch": "common", "name": "기상 회피",
-    "desc": "다운 중 회피 키로 바로 일어나며 회피\n(기상 무적 대신 회피 무적, 쿨·지구력 씀)",
-    "pointDesc": ["다운 중 회피로 기상", "+ 그 회피 쿨 -0.2초"],
-    "effect": { "quickRise": true, "quickRiseCooldownAdd": [0, -0.2] }
   }
 }

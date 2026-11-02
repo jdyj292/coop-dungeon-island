@@ -31,7 +31,7 @@
     "weapon": "greatsword",
     "name": "올려베기",
     "desc": "앞의 적을 베어 올려 공중에 띄운다. 땅에 있는 적만 맞는다",
-    "branch": "base",
+    "branch": "B",
     "cooldown": 5,
     "mp": 10,
     "variants": {
@@ -89,7 +89,7 @@
     "weapon": "greatsword",
     "name": "대지가르기",
     "desc": "검을 내려쳐 앞 3타일 직선의 적을 쓰러뜨린다",
-    "branch": "base",
+    "branch": "A",
     "cooldown": 7,
     "mp": 14,
     "variants": {
@@ -160,7 +160,7 @@
     "name": "화염 폭발",
     "desc": "4타일 앞이 잠시 뒤 폭발해 적을 띄운다",
     "element": "fire",
-    "branch": "base",
+    "branch": "A",
     "cooldown": 6,
     "mp": 12,
     "variants": {
@@ -224,7 +224,7 @@
     "desc": "얼음 장판을 깔아 땅의 적을 1.5초 얼린다",
     "element": "ice",
     "lasting": true,
-    "branch": "base",
+    "branch": "A",
     "cooldown": 10,
     "mp": 20,
     "variants": {

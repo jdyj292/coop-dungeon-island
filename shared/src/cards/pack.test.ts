@@ -26,7 +26,7 @@ describe('카드팩', () => {
       expect(r.cards.map(tierOf)).toEqual(r.tiers);
       expect(r.opened).toBe(0);
       for (const t of r.tiers.slice(0, 3)) { n++; if (t === 1) t1++; }
-      expect(r.cards.every((id) => id.startsWith('gs_') || id === 'greatsword.quickrise')).toBe(true);
+      expect(r.cards.every((id) => id.startsWith('gs_'))).toBe(true);
     }
     expect(t1 / n).toBeGreaterThan(0.77);
     expect(t1 / n).toBeLessThan(0.83);

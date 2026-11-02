@@ -1,6 +1,6 @@
 // 카드 창 (K) 그리기 (hud.md 8장, 승인 데모 docs/refs/demos/card_redesign.html, 게임 화면 384×216 기준 좌표):
 // 제목 띠(카드 그림·무기 탭·무기 Lv·조각) / 위 장착 줄(액티브 A S D F · 패시브 "비용 사용/한도"·칸) / 계열 보너스 한 줄 /
-// 액티브·패시브 카드 탭 / 보유 카드(줄 = 기본·공용 / A / B, 티어 짝) / 오른쪽 상세 (cardDetail.ts). 글자는 모두 갈무리7.
+// 액티브·패시브 카드 탭 / 보유 카드(줄 = A / B, 티어 묶음) / 오른쪽 상세 (cardDetail.ts). 글자는 모두 갈무리7.
 // 움직이는 것(강화 반짝임·강화 가능 ▲·강화 번쩍임·조각)은 fx 층에 매 프레임 (나머지는 바뀔 때만). 상태·입력은 stage/islandCards.ts (CardSource)
 import type Phaser from 'phaser';
 import { drawDetail, DETAIL_CARD } from './cardDetail';
@@ -241,7 +241,7 @@ export class CardWindow {
     for (let y = 70; y < 82; y += 2) R(g, 124, y, 1, 1, SK.cardBd);
   }
 
-  /** 액티브/패시브 카드 탭 + 보유 수 + 카드 목록 (줄 = 기본·공용 / A / B, 왼쪽부터 티어 짝) */
+  /** 액티브/패시브 카드 탭 + 보유 수 + 카드 목록 (줄 = A / B, 왼쪽부터 티어 순, 티어 사이 4px) */
   private list(s: CardSource): void {
     const p = this.p, g = p.g;
     let vx = 12;
@@ -258,16 +258,16 @@ export class CardWindow {
     R(g, 13, 100, 224, 108, SK.shade);
     R(g, 12, 99, 224, 108, SK.border);
     R(g, 13, 100, 222, 106, SK.card);
+    const y0 = 100 + Math.ceil((106 - (s.rows.length - 1) * 35 - CH) / 2);
     s.rows.forEach((row, r) => {
-      const y = 104 + r * 35;
+      const y = y0 + r * 35;
       if (r) for (let i = 0; i < 218; i += 2) R(g, 15 + i, y - 4, 1, 1, SK.cardBd);
-      if (row.branch === 'base') p.text(16, y + 10, row.name, SK.key);
-      else {
-        R(g, 14, y + 1, 2, CH - 2, row.color);
-        p.text(18, y + 10, row.name, row.color);
-      }
+      R(g, 14, y + 1, 2, CH - 2, row.color);
+      p.text(18, y + 10, row.name, row.color);
+      let gap = 0;
       row.ids.forEach((id, i) => {
-        const x = 46 + i * 26 + Math.floor(i / 2) * 4, dragged = s.drag?.id === id && s.drag.from === 'list';
+        if (i && s.card(id).tier !== s.card(row.ids[i - 1]!).tier) gap += 4;
+        const x = 44 + i * 26 + gap, dragged = s.drag?.id === id && s.drag.from === 'list';
         this.face(s.card(id), x, y, false, { sel: s.sel === id, hov: s.hover === id });
         if (dragged) R(g, x, y, CW, CH, SK.card, 0.65);
         p.hit(x, y, CW, CH, { kind: 'card', id });
