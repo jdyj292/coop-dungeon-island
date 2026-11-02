@@ -1,6 +1,7 @@
 // 카드 상점 카드·팩 그림 (hud.md 8장 카드 상점, 승인 데모 card_shop.html · card_redesign.html): 작은 카드 24×29(카드 창과 같은 계열 테두리), 큰 카드 앞면 48×64(같은 테두리 2배)·뒷면,
 // 강화 = 반짝임 + 이름 뒤 금색 +, 뒤집기(가로로 줄였다 폄), 뒷면 티어 빛, 카드팩(팩 번호 색, 위아래 톱니·카드 문장)·찢긴 윗부분
 import { cardShell, cardShine, frameInset, readyMark, scaled, shinePhase, type Paint } from './cardFrame';
+import { tierPlate } from './cardTier';
 import type { CardInfo } from './cardTypes';
 import { mix, Pix, SC } from './shopPix';
 
@@ -12,7 +13,7 @@ const paint = (p: Pix<unknown>): Paint => (x, y, w, h, c, a) => p.R(x, y, w, h, 
 /** 작은 카드 (지정 구매 목록, 카드 창과 같은 모양): 계열 테두리·별·아이콘, 강화 = 반짝임, 3장 모임 = ▲, 없는 카드는 그림자. dim = 강화를 마침. t = 초 */
 export function smallCard(p: Pix<unknown>, f: CardInfo, x: number, y: number, t: number, o: { sel?: boolean; hov?: boolean; dim?: boolean } = {}): void {
   const P = paint(p), ins = cardShell(P, f.frame, x, y, CH, f.color, f.owned);
-  for (let i = 0; i < f.tier; i++) p.star(x + ins + 1 + i * 4, y + ins + 1, f.owned ? SC.txt : SC.cardBd);
+  tierPlate(P, x, y, CH, f.tier, f.tierColor, f.owned);
   p.icon(f.id, x + 4, y + 7, f.owned ? {} : { mono: SC.cardBd });
   if (f.owned && f.enhanced) cardShine(P, x + ins, y + ins, CW - ins * 2, CH - ins * 2, t, shinePhase(f.id));
   if (f.ready) readyMark(P, x, y, CH, t);
@@ -24,7 +25,7 @@ export function smallCard(p: Pix<unknown>, f: CardInfo, x: number, y: number, t:
 /** 큰 카드 앞면 48×64: 작은 카드와 같은 계열 테두리 2배(24×32) + 별 + 아이콘 2배 + 이름(강화 = 금색 +). 패시브는 오른쪽 위 P. 반짝임은 bigShine */
 export function bigFace(p: Pix<unknown>, f: CardInfo, x: number, y: number): void {
   const ins = cardShell(scaled(paint(p), x, y, 2), f.frame, x, y, BH / 2, f.color, true) * 2;
-  for (let i = 0; i < f.tier; i++) p.star(x + ins + 2 + i * 4, y + ins + 2, SC.txt);
+  tierPlate(scaled(paint(p), x, y, 2), x, y, BH / 2, f.tier, f.tierColor, true);
   if (!f.active) { p.R(x + BW - ins - 8, y + ins + 2, 6, 5, SC.title); p.tiny('P', x + BW - ins - 7, y + ins + 2, SC.heal); }
   p.R(x + 7, y + 10, 34, 34, SC.title);
   p.icon(f.id, x + 8, y + 11, { sc: 2 });

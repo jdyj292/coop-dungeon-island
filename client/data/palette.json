@@ -100,7 +100,7 @@
       "skillTitle": "#15112a", "skillCard": "#221d38", "skillCardBorder": "#332d4d", "skillShade": "#100c1e", "skillLit": "#2f2948",
       "skillPick": "#3a3020", "skillOn": "#24402a",
       "skillBranch": { "greatsword": { "A": "#FF9A3C", "B": "#6FC3E8" }, "staff": { "A": "#FF9A3C", "B": "#B58AD0" } },
-      "card": { "tier1": "#C3CAD6", "tier2": "#5FB0F0", "tier3": "#D58CF0", "pack1": "#8FD16A", "pack2": "#B58AD0" }
+      "card": { "tier1": "#8a8fa0", "tier2": "#5fbf6a", "tier3": "#4aa3e0", "tier4": "#a56fd8", "tier5": "#e8c04a", "tier6": "#ff8a3c", "tier7": "#e8505a", "tier8": "#ff7ac8", "tier9": "#7fe8e0", "tier10": "#fff2c0", "pack1": "#8FD16A", "pack2": "#B58AD0" }
     }
   },
   "island": {

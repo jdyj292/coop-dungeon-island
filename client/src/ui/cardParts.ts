@@ -5,6 +5,7 @@ import icons from '../../data/sprites/hud_icons.json';
 import { dot } from '../fx/layer';
 import { colorInt } from '../palette';
 import { cardShell, type FrameStyle, type Paint } from './cardFrame';
+import { tierPlate } from './cardTier';
 import { koText, koWidth, type KoText } from './koText';
 import type { FontKey } from './fonts';
 import { drawText } from './pixelFont';
@@ -182,11 +183,11 @@ export interface FaceLook {
   tag: string | null;
 }
 
-/** 카드 24×29: 계열 테두리 · 별(티어) · 아이콘 · 자물쇠(장착 숙련도 모자람) · 꼬리표. 없는 카드는 같은 모양의 그림자.
+/** 카드 24×29: 계열 테두리 · 티어 판 · 아이콘 · 자물쇠(장착 숙련도 모자람) · 꼬리표. 없는 카드는 같은 모양의 그림자.
  * 강화 반짝임·강화 가능 ▲은 움직여서 CardWindow가 따로 그림 (cardFrame.ts cardShine·readyMark). big = 상세 머리(꼬리표 없음). 몸통 시작 거리를 돌려줌 */
 export function cardFace(g: G, f: FaceLook, x: number, y: number, o: { sel?: boolean; hov?: boolean; big?: boolean } = {}): number {
   const ins = cardShell(paintOf(g), f.frame, x, y, CH, f.color, f.owned);
-  for (let i = 0; i < f.tier; i++) star(g, x + ins + 1 + i * 4, y + ins + 1, f.owned ? SK.txt : SK.cardBd);
+  tierPlate(paintOf(g), x, y, CH, f.tier, f.tierColor, f.owned);
   if (!f.owned) cardIcon(g, f.id, x + 4, y + 7, { mono: SK.cardBd });
   else {
     cardIcon(g, f.id, x + 4, y + 7, { alpha: f.locked ? 0.25 : 1 });

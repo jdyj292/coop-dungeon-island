@@ -1,7 +1,7 @@
-// 카드 창 오른쪽 상세 (hud.md 8장, 승인 데모 card_redesign.html): 머리(계열 색·카드·이름(강화 = 금색 +)·종류·티어 별·모자란 장착 Lv) /
+// 카드 창 오른쪽 상세 (hud.md 8장, 승인 데모 card_redesign.html): 머리(계열 색·카드·이름(강화 = 금색 +)·종류·티어 글자·모자란 장착 Lv) /
 // 보유 줄(n/3 · 3장 모임 강화 가능 · 강화 · 남는 장수 · 없으면 지정 구매 가격) / 설명 3줄 / 액티브 = 강화면 변형 2장 고르기, 아니면 변형 이름만 ·
 // 패시브 = 기본/강화 효과·비용 / 아래 = 알림 또는 강화(3장 모이면)·갈기·끼우기 버튼. 계열 보너스 줄에 마우스를 올리면 보너스 상세. 머리 카드는 cardWindow가 그림
-import { buttonBox, cardIcon, dustGem, fitKo, lockIcon, R, roman, SK, star, tiny, type Painter } from './cardParts';
+import { buttonBox, cardIcon, dustGem, fitKo, lockIcon, R, roman, SK, tiny, type Painter } from './cardParts';
 import type { CardBtn, CardHit, CardSource } from './cardTypes';
 import { koWidth, wrapKo } from './koText';
 
@@ -22,8 +22,8 @@ export function drawDetail(p: Painter<CardHit>, s: CardSource): void {
   const nw = p.text(X + 28, 30, fitKo(c.name, 90), c.owned ? SK.txt : SK.dim);
   if (c.enhanced) p.text(X + 29 + nw, 30, '+', SK.coin);
   p.text(X + 28, 41, c.kind, c.color);
-  for (let i = 0; i < c.tier; i++) star(g, X + 29 + i * 4, 54, SK.txt);
-  if (s.level < c.equipLevel) p.text(X + 31 + c.tier * 4, 51, `장착 Lv${c.equipLevel}`, SK.danger);
+  const tw = p.text(X + 28, 51, `티어 ${c.tier}`, SK.txt);
+  if (s.level < c.equipLevel) p.text(X + 34 + tw, 51, `장착 Lv${c.equipLevel}`, SK.danger);
   // 보유 줄
   const RY = 66;
   if (!c.owned) {
